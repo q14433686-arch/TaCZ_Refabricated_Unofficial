@@ -7,6 +7,7 @@ import com.tacz.guns.client.resource.pojo.display.IDisplay;
 import com.tacz.guns.client.resource.pojo.display.LaserConfig;
 import com.tacz.guns.client.resource.pojo.display.gun.TextShow;
 import net.minecraft.resources.Identifier;
+import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -64,6 +65,14 @@ public class AttachmentDisplay implements IDisplay {
     @SerializedName("views_fov")
     @Nullable
     private float[] viewsFov;
+
+    @SerializedName("mode")
+    private String variantMode = "replace";
+    @SerializedName("mount_offset")
+    private @Nullable Vector3f mountOffset;
+
+    public String getVariantMode() { return variantMode; }
+    public @Nullable Vector3f getMountOffset() { return mountOffset != null && mountOffset.isFinite() ? mountOffset : null; }
 
     @SerializedName("sounds")
     private Map<String, SoundData> sounds = Maps.newHashMap();

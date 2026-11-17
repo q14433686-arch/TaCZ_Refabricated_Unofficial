@@ -4,6 +4,10 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
+import com.tacz.guns.api.item.builder.AttachmentItemBuilder;
+import com.tacz.guns.network.message.ClientMessageSelectRefitOption;
+import com.tacz.guns.util.VariantHelper;
+import com.tacz.guns.util.SlotAdapterHelper;
 import com.tacz.guns.util.DefaultGunAttachments;
 import com.tacz.guns.util.ItemNbtUtils;
 import com.tacz.guns.util.VirtualOemAttachment;
@@ -45,6 +49,28 @@ public class PackServerSmoke {
         var explicit = GunItemBuilder.create().setId(id).putAllVirtualAttachment(defaults).putAttachment(type, scope).build();
         var installed = ((IGun) explicit.getItem()).getAttachment(explicit, type);
         helper.assertTrue(!installed.isEmpty() && !VirtualOemAttachment.isMarked(installed), "Explicit recipe item must win over OEM");
+        helper.succeed();
+    }
+
+    @GameTest
+    public void refitOptionsPersistAndRejectIncompatibleTransitions(GameTestHelper helper) {
+        var id = Identifier.parse("port_test:oem");
+        var gun = GunItemBuilder.create().setId(id).build();
+        var item = (IGun) gun.getItem();
+        var type = AttachmentType.SCOPE;
+        var part = AttachmentItemBuilder.create().setId(Identifier.parse("tacz:sight_deltapoint_rifle")).build();
+        var adapter = new ClientMessageSelectRefitOption(0, type, ClientMessageSelectRefitOption.Kind.ADAPTER, Identifier.parse("port_test:mount"));
+        helper.assertTrue(!item.allowAttachment(gun, part), "Adapter-only part allowed directly");
+        helper.assertTrue(adapter.apply(gun) && item.allowAttachment(gun, part), "Nested tag adapter did not enable part");
+        item.installAttachment(gun, part);
+        helper.assertTrue(!new ClientMessageSelectRefitOption(0, type, adapter.kind(), null).apply(gun), "Must unload before removing the required mount");
+        var optic = Identifier.parse("port_test:optic");
+        var variant = new ClientMessageSelectRefitOption(0, type, ClientMessageSelectRefitOption.Kind.VARIANT, optic);
+        helper.assertTrue(variant.apply(gun), "Variant target tag not honored");
+        var saved = ItemNbtUtils.loadItemStack(ItemNbtUtils.saveItemStack(gun));
+        helper.assertTrue(optic.equals(VariantHelper.getVariant(item.getAttachment(saved, type))), "Lost nested variant");
+        helper.assertTrue(adapter.selection().equals(SlotAdapterHelper.getSlotAdapter(saved, type)), "Lost slot adapter");
+        helper.assertTrue(!new ClientMessageSelectRefitOption(0, type, variant.kind(), id).apply(saved), "Unknown variant accepted");
         helper.succeed();
     }
 }

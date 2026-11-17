@@ -2,6 +2,9 @@ package com.tacz.guns.test;
 
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.network.message.ClientMessageSelectRefitOption;
+import com.tacz.guns.util.DefaultGunAttachments;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.resource.network.CommonNetworkCache;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
@@ -22,6 +25,24 @@ public class PackClientSmoke implements FabricClientGameTest {
             world.getConnection().waitForChunksRender();
             context.waitTicks(30);
             context.takeScreenshot("tacz_held_default_gun");
+            var oem = Identifier.parse("port_test:oem");
+            var variant = Identifier.parse("port_test:optic");
+            context.waitFor(client -> CommonNetworkCache.INSTANCE.getAttachmentVariantIndex(variant) != null
+                    && TimelessAPI.getClientAttachmentVariantIndex(variant).isPresent());
+            world.getServer().runOnServer(server -> {
+                var gun = GunItemBuilder.create().setId(oem).putAllVirtualAttachment(DefaultGunAttachments.defaults(oem)).build();
+                if (!new ClientMessageSelectRefitOption(0, AttachmentType.SCOPE, ClientMessageSelectRefitOption.Kind.VARIANT, variant).apply(gun))
+                    throw new AssertionError("Server rejected fixture variant");
+                world.getConnection().getServerPlayer().setItemInHand(InteractionHand.MAIN_HAND, gun);
+            });
+            context.waitFor(client -> {
+                var held = client.player.getMainHandItem();
+                return held.getItem() instanceof IGun gun && oem.equals(gun.getGunId(held)) && gun.getAimingZoom(held) == 1.75f
+                        && TimelessAPI.getClientAttachmentVariantIndex(gun.getAttachment(held, AttachmentType.SCOPE))
+                        .map(index -> index.getAttachmentModel() != null).orElse(false);
+            });
+            context.waitTicks(30);
+            context.takeScreenshot("tacz_held_variant");
         }
     }
 }

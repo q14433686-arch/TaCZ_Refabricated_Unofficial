@@ -18,6 +18,9 @@ import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.MuzzleFlashRender;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
+import com.tacz.guns.client.resource.index.ClientAttachmentVariantIndex;
+import com.tacz.guns.client.resource.index.ClientSlotAdapterIndex;
+import com.tacz.guns.util.SlotAdapterHelper;
 import com.tacz.guns.client.resource.pojo.display.gun.AdsPath;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.util.math.Easing;
@@ -156,6 +159,9 @@ public class FirstPersonRenderGunEvent {
         var scopeIndex = DefaultAssets.isEmptyAttachmentId(scopeId) ? Optional.<ClientAttachmentIndex>empty() : TimelessAPI.getClientAttachmentIndex(scopeId);
         CompoundTag scopeTag = iGun.getAttachmentTag(stack, AttachmentType.SCOPE);
         int zoomNumber = AttachmentItemDataAccessor.getZoomNumberFromTag(scopeTag);
+        var scopeVariant = TimelessAPI.getClientAttachmentVariantIndex(scopeId, scopeTag);
+        Vector3f mountOffset = null;
+        int mountInsert = -1;
         int viewIndex = 1;
         if (DefaultAssets.isEmptyAttachmentId(scopeId)) {
             // 未安装瞄具，使用机瞄定位组
@@ -165,9 +171,11 @@ public class FirstPersonRenderGunEvent {
             List<BedrockPart> scopeNodePath = model.getScopePosPath();
             if (scopeNodePath != null) {
                 aimingNodePath = new ArrayList<>(scopeNodePath);
+                mountInsert = scopeNodePath.size() - 1;
+                mountOffset = getScopeMountOffset(stack, scopeId, scopeVariant);
                 if (scopeIndex.isPresent()) {
-                    BedrockAttachmentModel attachmentModel = scopeIndex.get().getAttachmentModel();
-                    int[] views = scopeIndex.get().getViews();
+                    BedrockAttachmentModel attachmentModel = scopeVariant.map(ClientAttachmentVariantIndex::getAttachmentModel).orElseGet(scopeIndex.get()::getAttachmentModel);
+                    int[] views = scopeVariant.map(ClientAttachmentVariantIndex::getViews).orElseGet(scopeIndex.get()::getViews);
                     viewIndex = views[Math.floorMod(zoomNumber, views.length)] - 1;
                     if (attachmentModel != null) {
                         // 【第 35 轮】把"当前用的是哪一组镜"告诉模型，供组合镜过滤准星。
@@ -183,7 +191,7 @@ public class FirstPersonRenderGunEvent {
                 }
             }
         }
-        Matrix4f aimingViewMatrix = getPositioningNodeInverse(aimingNodePath);
+        Matrix4f aimingViewMatrix = getPositioningNodeInverse(aimingNodePath, mountOffset, mountInsert);
         // 执行两个 scope view 之间的插值
         if (currentViewIndex == -1) {
             currentViewIndex = viewIndex;
@@ -240,10 +248,18 @@ public class FirstPersonRenderGunEvent {
      */
     @Nonnull
     private static Matrix4f getPositioningNodeInverse(List<BedrockPart> nodePath) {
+        return getPositioningNodeInverse(nodePath, null, -1);
+    }
+
+    @Nonnull
+    private static Matrix4f getPositioningNodeInverse(List<BedrockPart> nodePath, Vector3f mountOffset, int mountOffsetInsertIndex) {
         Matrix4f matrix4f = new Matrix4f();
         matrix4f.identity();
         if (nodePath != null) {
             for (int i = nodePath.size() - 1; i >= 0; i--) {
+                if (mountOffset != null && i == mountOffsetInsertIndex) {
+                    matrix4f.translate(-mountOffset.x() / 16.0F, mountOffset.y() / 16.0F, -mountOffset.z() / 16.0F);
+                }
                 BedrockPart part = nodePath.get(i);
                 // 计算反向的旋转
                 matrix4f.rotate(Axis.XN.rotation(part.xRot));
@@ -258,6 +274,30 @@ public class FirstPersonRenderGunEvent {
             }
         }
         return matrix4f;
+    }
+
+    private static Vector3f getScopeMountOffset(ItemStack gunItem, Identifier scopeId,
+                                                Optional<ClientAttachmentVariantIndex> scopeVariant) {
+        Vector3f combinedOffset = new Vector3f();
+        boolean hasOffset = false;
+
+        Identifier adapterId = SlotAdapterHelper.getEffectiveSlotAdapter(gunItem, AttachmentType.SCOPE, scopeId);
+        if (adapterId != null) {
+            Vector3f adapterOffset = TimelessAPI.getClientSlotAdapterIndex(adapterId)
+                    .map(ClientSlotAdapterIndex::getMountOffset)
+                    .orElse(null);
+            if (adapterOffset != null) {
+                combinedOffset.add(adapterOffset);
+                hasOffset = true;
+            }
+        }
+
+        Vector3f variantOffset = scopeVariant.map(ClientAttachmentVariantIndex::getMountOffset).orElse(null);
+        if (variantOffset != null) {
+            combinedOffset.add(variantOffset);
+            hasOffset = true;
+        }
+        return hasOffset ? combinedOffset : null;
     }
 
     private static void applyShootSwayAndRotation(BedrockGunModel model, float aimingProgress) {

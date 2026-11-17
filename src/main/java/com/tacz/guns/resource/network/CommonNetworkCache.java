@@ -1,5 +1,11 @@
 package com.tacz.guns.resource.network;
 
+import com.tacz.guns.resource.index.CommonSlotAdapterIndex;
+import com.tacz.guns.resource.pojo.data.attachment.SlotAdapterData;
+import com.tacz.guns.resource.pojo.SlotAdapterIndexPOJO;
+import com.tacz.guns.resource.index.CommonAttachmentVariantIndex;
+import com.tacz.guns.resource.pojo.data.attachment.VariantData;
+import com.tacz.guns.resource.pojo.AttachmentVariantIndexPOJO;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
@@ -31,6 +37,10 @@ import java.util.*;
 public enum CommonNetworkCache implements ICommonResourceProvider {
     INSTANCE;
 
+    private final Map<Identifier, VariantData> attachmentVariantData = new HashMap<>();
+    private final Map<Identifier, CommonAttachmentVariantIndex> attachmentVariantIndex = new HashMap<>();
+    private final Map<Identifier, SlotAdapterData> slotAdapterData = new HashMap<>();
+    private final Map<Identifier, CommonSlotAdapterIndex> slotAdapterIndex = new HashMap<>();
     public Map<Identifier, GunData> gunData = new HashMap<>();
     public Map<Identifier, AttachmentData> attachmentData = new HashMap<>();
     public Map<Identifier, RecipeFilter> recipeFilter = new HashMap<>();
@@ -133,7 +143,19 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
         return allowAttachmentTags.get(registryName);
     }
 
+    @Override public @Nullable VariantData getAttachmentVariantData(Identifier id) { return attachmentVariantData.get(id); }
+    @Override public @Nullable CommonAttachmentVariantIndex getAttachmentVariantIndex(Identifier id) { return attachmentVariantIndex.get(id); }
+    @Override public Set<Map.Entry<Identifier, CommonAttachmentVariantIndex>> getAllAttachmentVariants() { return attachmentVariantIndex.entrySet(); }
+
+    @Override public @Nullable SlotAdapterData getSlotAdapterData(Identifier id) { return slotAdapterData.get(id); }
+    @Override public @Nullable CommonSlotAdapterIndex getSlotAdapterIndex(Identifier id) { return slotAdapterIndex.get(id); }
+    @Override public Set<Map.Entry<Identifier, CommonSlotAdapterIndex>> getAllSlotAdapters() { return slotAdapterIndex.entrySet(); }
+
     public void clear() {
+        slotAdapterData.clear();
+        slotAdapterIndex.clear();
+        attachmentVariantData.clear();
+        attachmentVariantIndex.clear();
         gunData.clear();
         attachmentData.clear();
         gunIndex.clear();
@@ -158,6 +180,8 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
                 case GUN_INDEX:
                 case AMMO_INDEX:
                 case ATTACHMENT_INDEX:
+                case ATTACHMENT_VARIANT_INDEX:
+                case SLOT_ADAPTER_INDEX:
                 case BLOCK_INDEX:
                     delayed.put(entry.getKey(), entry.getValue());
                     break;
@@ -193,6 +217,10 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
                     case GUN_INDEX -> gunIndex.put(entry.getKey(), parse(entry.getValue(), CommonGunIndex.class));
                     case AMMO_INDEX -> ammoIndex.put(entry.getKey(), parse(entry.getValue(), CommonAmmoIndex.class));
                     case ATTACHMENT_DATA -> attachmentData.put(entry.getKey(), AttachmentDataManager.parseData(JsonParser.parseString(entry.getValue()), CommonAssetsManager.GSON));
+                    case ATTACHMENT_VARIANT_DATA -> attachmentVariantData.put(entry.getKey(), parse(entry.getValue(), VariantData.class));
+                    case ATTACHMENT_VARIANT_INDEX -> attachmentVariantIndex.put(entry.getKey(), CommonAttachmentVariantIndex.getInstance(parse(entry.getValue(), AttachmentVariantIndexPOJO.class), this));
+                    case SLOT_ADAPTER_DATA -> slotAdapterData.put(entry.getKey(), parse(entry.getValue(), SlotAdapterData.class));
+                    case SLOT_ADAPTER_INDEX -> slotAdapterIndex.put(entry.getKey(), CommonSlotAdapterIndex.getInstance(parse(entry.getValue(), SlotAdapterIndexPOJO.class), this));
                     case ATTACHMENT_INDEX ->
                             attachmentIndex.put(entry.getKey(), parse(entry.getValue(), CommonAttachmentIndex.class));
                     case ATTACHMENT_TAGS -> resolveAttachmentTag(entry.getKey(), entry.getValue());

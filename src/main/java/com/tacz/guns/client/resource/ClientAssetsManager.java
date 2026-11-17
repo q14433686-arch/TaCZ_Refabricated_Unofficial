@@ -81,6 +81,8 @@ public enum ClientAssetsManager {
     // 配件展示数据
     private DisplayManager<AttachmentDisplay> attachmentDisplay;
     // 方块展示数据
+    private DisplayManager<AttachmentDisplay> attachmentVariantDisplay;
+    private DisplayManager<AttachmentDisplay> slotAdapterDisplay;
     private DisplayManager<BlockDisplay> blockDisplay;
     // 原始基岩版模型
     private LazyJsonDataManager<BedrockModelPOJO> bedrockModel;
@@ -104,6 +106,8 @@ public enum ClientAssetsManager {
             gunDisplay = register(new DisplayManager<>(GunDisplay.class, GSON, "display/guns", "GunDisplayLoader"));
             ammoDisplay = register(new DisplayManager<>(AmmoDisplay.class, GSON, "display/ammo", "AmmoDisplayLoader"));
             attachmentDisplay = register(new DisplayManager<>(AttachmentDisplay.class, GSON, "display/attachments", "AttachmentDisplayLoader"));
+            attachmentVariantDisplay = register(new DisplayManager<>(AttachmentDisplay.class, GSON, "display/attachment_variants", "AttachmentVariantDisplayLoader"));
+            slotAdapterDisplay = register(new DisplayManager<>(AttachmentDisplay.class, GSON, "display/slot_adapters", "SlotAdapterDisplayLoader"));
             blockDisplay = register(new DisplayManager<>(BlockDisplay.class, GSON, "display/blocks", "BlockDisplayLoader"));
 
             bedrockModel = register(new LazyJsonDataManager<>(BedrockModelPOJO.class, GSON, "geo_models", "BedrockModelLoader",
@@ -162,6 +166,12 @@ public enum ClientAssetsManager {
     public AmmoDisplay getAmmoDisplay(Identifier id) {
         return ammoDisplay.getData(id);
     }
+
+    @Nullable
+    public AttachmentDisplay getAttachmentVariantDisplay(Identifier id) { return attachmentVariantDisplay.getData(id); }
+
+    @Nullable
+    public AttachmentDisplay getSlotAdapterDisplay(Identifier id) { return slotAdapterDisplay.getData(id); }
 
     @Nullable
     public BlockDisplay getBlockDisplay(Identifier id) {

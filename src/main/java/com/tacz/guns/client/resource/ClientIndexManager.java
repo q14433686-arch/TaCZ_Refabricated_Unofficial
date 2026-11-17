@@ -9,6 +9,8 @@ import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.resource.index.ClientAmmoIndex;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
+import com.tacz.guns.client.resource.index.ClientAttachmentVariantIndex;
+import com.tacz.guns.client.resource.index.ClientSlotAdapterIndex;
 import com.tacz.guns.client.resource.index.ClientBlockIndex;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
@@ -34,6 +36,8 @@ public class ClientIndexManager {
     public static final Map<Identifier, ClientGunIndex> GUN_INDEX = Maps.newHashMap();
     public static final Map<Identifier, ClientAmmoIndex> AMMO_INDEX = Maps.newHashMap();
     public static final Map<Identifier, ClientAttachmentIndex> ATTACHMENT_INDEX = Maps.newHashMap();
+    public static final Map<Identifier, ClientAttachmentVariantIndex> ATTACHMENT_VARIANT_INDEX = Maps.newHashMap();
+    public static final Map<Identifier, ClientSlotAdapterIndex> SLOT_ADAPTER_INDEX = Maps.newHashMap();
     public static final Map<Identifier, ClientBlockIndex> BLOCK_INDEX = Maps.newHashMap();
 
     public static void clear() {
@@ -41,6 +45,8 @@ public class ClientIndexManager {
         GUN_INDEX.clear();
         AMMO_INDEX.clear();
         ATTACHMENT_INDEX.clear();
+        ATTACHMENT_VARIANT_INDEX.clear();
+        SLOT_ADAPTER_INDEX.clear();
         BLOCK_INDEX.clear();
     }
 
@@ -51,6 +57,14 @@ public class ClientIndexManager {
         loadAmmoIndex();
         loadAttachmentIndex();
         loadBlockIndex();
+        TimelessAPI.getAllCommonAttachmentVariantIndex().forEach(entry -> {
+            try { ATTACHMENT_VARIANT_INDEX.put(entry.getKey(), new ClientAttachmentVariantIndex(entry.getValue().getPojo())); }
+            catch (IllegalArgumentException e) { GunMod.LOGGER.warn("Invalid variant display for {}", entry.getKey(), e); }
+        });
+        TimelessAPI.getAllCommonSlotAdapterIndex().forEach(entry -> {
+            try { SLOT_ADAPTER_INDEX.put(entry.getKey(), new ClientSlotAdapterIndex(entry.getValue().getPojo())); }
+            catch (IllegalArgumentException e) { GunMod.LOGGER.warn("Invalid slot adapter display for {}", entry.getKey(), e); }
+        });
         warmUpInventoryModels();
 
         LocalPlayer player = Minecraft.getInstance().player;
@@ -211,6 +225,7 @@ public class ClientIndexManager {
         IAttachment attachment = IAttachment.getIAttachmentOrNull(stack);
         if (attachment != null) {
             TimelessAPI.getClientAttachmentIndex(attachment.getAttachmentId(stack)).ifPresent(ClientAttachmentIndex::warmUp);
+            TimelessAPI.getClientAttachmentVariantIndex(stack).ifPresent(ClientAttachmentVariantIndex::warmUp);
             return;
         }
         IAmmo ammo = IAmmo.getIAmmoOrNull(stack);

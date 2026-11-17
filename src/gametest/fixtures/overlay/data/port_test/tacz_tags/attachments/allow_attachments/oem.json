@@ -1,3 +1,4 @@
 [
-  "tacz:scope_acog_ta31"
+  "tacz:scope_acog_ta31",
+  "#port_test:adapter/mounts"
 ]

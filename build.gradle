@@ -252,6 +252,14 @@ def smokePack = tasks.register('zipSmokePack', Zip) {
     destinationDirectory = layout.buildDirectory.dir('run/gameTest/tacz')
 }
 tasks.named('runGameTest') { dependsOn smokePack }
+if (project.hasProperty('taczClientSmoke')) {
+    def installClientPack = tasks.register('installClientSmokePack', Copy) {
+        dependsOn tasks.named('deleteGameTestRunDir')
+        from smokePack
+        into layout.buildDirectory.dir('run/clientGameTest/tacz')
+    }
+    tasks.named('runClientGameTest') { dependsOn installClientPack }
+}
 
 test { useJUnitPlatform() }
 

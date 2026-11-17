@@ -158,10 +158,11 @@ public class CameraSetupEvent {
             int zoomNumber = AttachmentItemDataAccessor.getZoomNumberFromTag(scopeTag);
             var display = TimelessAPI.getGunDisplay(stack);
             float base = display.map(GunDisplayInstance::getModelFov).orElse((float) event.getFOV());
-            float modified = TimelessAPI.getClientAttachmentIndex(scopeItemId).map(index -> {
-                float[] fov = index.getViewsFov();
-                return fov[Math.floorMod(zoomNumber, fov.length)];
-            }).orElseGet(() -> display.map(GunDisplayInstance::getZoomModelFov).orElse(base));
+            Identifier resolved = scopeItemId;
+            var fovs = TimelessAPI.getClientAttachmentVariantIndex(resolved, scopeTag).map(index -> index.getViewsFov())
+                    .or(() -> TimelessAPI.getClientAttachmentIndex(resolved).map(index -> index.getViewsFov()));
+            float modified = fovs.map(fov -> fov[Math.floorMod(zoomNumber, fov.length)])
+                    .orElseGet(() -> display.map(GunDisplayInstance::getZoomModelFov).orElse(base));
             AdsFov.Channel curve = display.map(GunDisplayInstance::getAdsFov).map(AdsFov::getModel).orElse(null);
             float progress = fovProgress(livingEntity, (float) event.getPartialTick(), curve);
             event.setFOV(applyFovCurve(ITEM_MODEL_FOV_DYNAMICS, Mth.lerp(progress, base, modified), curve));

@@ -35,24 +35,7 @@ public class MouseHandlerMixin {
             original.call(player, yaw, pitch);
             return;
         }
-        Identifier scopeId = iGun.getAttachmentId(mainHandItem, AttachmentType.SCOPE);
-        if (scopeId.equals(DefaultAssets.EMPTY_ATTACHMENT_ID)) {
-            scopeId = iGun.getBuiltInAttachmentId(mainHandItem, AttachmentType.SCOPE);
-        }
-        float zoomLevel = 1;
-        if (DefaultAssets.isEmptyAttachmentId(scopeId)) {
-            // 缩放倍率
-            zoomLevel = TimelessAPI.getGunDisplay(mainHandItem).map(GunDisplayInstance::getIronZoom).orElse(1f);
-        } else {
-            Optional<ClientAttachmentIndex> optional = TimelessAPI.getClientAttachmentIndex(scopeId);
-            if (optional.isPresent()) {
-                float[] zoom = optional.get().getZoom();
-                if (zoom != null && zoom.length > 0) {
-                    CompoundTag attachmentTag = iGun.getAttachmentTag(mainHandItem, AttachmentType.SCOPE);
-                    zoomLevel = zoom[AttachmentItemDataAccessor.getZoomNumberFromTag(attachmentTag) % zoom.length];
-                }
-            }
-        }
+        float zoomLevel = iGun.getAimingZoom(mainHandItem);
         Minecraft minecraft = Minecraft.getInstance();
         float progress = IGunOperator.fromLivingEntity(player).getSynAimingProgress();
         // 开镜灵敏度系数

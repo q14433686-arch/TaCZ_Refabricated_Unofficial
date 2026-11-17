@@ -7,6 +7,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -67,7 +69,7 @@ public final class AllowAttachmentTagMatcher {
         if (content == null || content.isEmpty()) {
             return Set.of();
         }
-        Set<Identifier> attachments = new HashSet<>();
+        Set<Identifier> attachments = new LinkedHashSet<>();
         Set<Identifier> visited = new HashSet<>();
         if (rootTag != null) {
             visited.add(rootTag);
@@ -97,7 +99,7 @@ public final class AllowAttachmentTagMatcher {
                 }
             }
         }
-        return Set.copyOf(attachments);
+        return Collections.unmodifiableSet(attachments);
     }
 
     public static void resetCache() {

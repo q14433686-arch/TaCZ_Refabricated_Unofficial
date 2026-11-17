@@ -42,6 +42,7 @@ public class NetworkHandler {
         PayloadTypeRegistry.serverboundPlay().register(ClientMessageCraft.TYPE, ClientMessageCraft.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerZoom.TYPE, ClientMessagePlayerZoom.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessageRefitGun.TYPE, ClientMessageRefitGun.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(ClientMessageSelectRefitOption.TYPE, ClientMessageSelectRefitOption.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessageInstallVirtualAttachment.TYPE, ClientMessageInstallVirtualAttachment.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessageUnloadAttachment.TYPE, ClientMessageUnloadAttachment.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerBoltGun.TYPE, ClientMessagePlayerBoltGun.CODEC);
@@ -57,6 +58,7 @@ public class NetworkHandler {
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunHurt.TYPE, ServerMessageGunHurt.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunKill.TYPE, ServerMessageGunKill.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageUpdateEntityData.TYPE, ServerMessageUpdateEntityData.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(ServerMessageSyncGunPackPart.Extended.TYPE, ServerMessageSyncGunPackPart.Extended.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageSyncGunPackPart.TYPE, ServerMessageSyncGunPackPart.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageSyncGunPack.TYPE, ServerMessageSyncGunPack.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunDraw.TYPE, ServerMessageGunDraw.CODEC);
@@ -83,6 +85,7 @@ public class NetworkHandler {
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageCraft.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerZoom.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageRefitGun.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
+        ServerPlayNetworking.registerGlobalReceiver(ClientMessageSelectRefitOption.TYPE, (msg, ctx) -> msg.handle(ctx.player()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageInstallVirtualAttachment.TYPE, (msg, ctx) -> msg.handle(ctx.player()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageUnloadAttachment.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerBoltGun.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
@@ -115,6 +118,7 @@ public class NetworkHandler {
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunHurt.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunKill.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageUpdateEntityData.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
+        ClientPlayNetworking.registerGlobalReceiver(ServerMessageSyncGunPackPart.Extended.TYPE, (msg, ctx) -> msg.payload().handle(ctx.player().connection.getConnection()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageSyncGunPackPart.TYPE, (msg, ctx) -> msg.handle(ctx.player().connection.getConnection()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageSyncGunPack.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunDraw.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));

@@ -747,15 +747,8 @@ public final class ScopePipRenderer {
         if (DefaultAssets.isEmptyAttachmentId(scopeId)) {
             return 1.0f;
         }
-        return TimelessAPI.getClientAttachmentIndex(scopeId).map(index -> {
-            float[] zoom = index.getZoom();
-            if (zoom == null || zoom.length == 0) {
-                return 1.0f;
-            }
-            CompoundTag scopeTag = iGun.getAttachmentTag(stack, AttachmentType.SCOPE);
-            int zoomNumber = AttachmentItemDataAccessor.getZoomNumberFromTag(scopeTag);
-            return zoom[Math.floorMod(zoomNumber, zoom.length)];
-        }).orElse(1.0f);
+        // No scope -> 1 above (do not substitute iron zoom). Otherwise share the variant-aware optical zoom.
+        return iGun.getAimingZoom(stack);
     }
 
     /**

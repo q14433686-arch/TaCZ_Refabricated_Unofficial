@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,9 +42,23 @@ public record ServerMessageSyncGunPackPart(GunPackSync.Part part) implements Cus
 
     @Override public Type<ServerMessageSyncGunPackPart> type() { return TYPE; }
 
-    public record Snapshot(List<ServerMessageSyncGunPackPart> messages, @Nullable ServerMessageSyncGunPack legacy) {
+    // An A-batch client understands chunks but not the additional index ordinals / object-form OEMs.
+    // Negotiate a distinct schema before sending any bytes; keep A and published R1 usable with old packs.
+    public record Extended(ServerMessageSyncGunPackPart payload) implements CustomPacketPayload {
+        public static final Type<Extended> TYPE = new Type<>(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "s2c_pack_part_120"));
+        public static final StreamCodec<FriendlyByteBuf, Extended> CODEC = ServerMessageSyncGunPackPart.CODEC.map(Extended::new, Extended::payload);
+        @Override public Type<Extended> type() { return TYPE; }
+    }
+
+    public record Snapshot(List<ServerMessageSyncGunPackPart> messages, @Nullable ServerMessageSyncGunPack legacy, boolean extended) {
         public void send(ServerPlayer player) {
-            if (ServerPlayNetworking.canSend(player, TYPE)) {
+            if (extended) {
+                if (ServerPlayNetworking.canSend(player, Extended.TYPE)) {
+                    messages.forEach(message -> NetworkHandler.sendToClientPlayer(new Extended(message), player));
+                } else {
+                    player.connection.disconnect(Component.literal("This gun pack uses TaCZ attachment data not supported by your client."));
+                }
+            } else if (ServerPlayNetworking.canSend(player, TYPE)) {
                 messages.forEach(message -> NetworkHandler.sendToClientPlayer(message, player));
             } else if (legacy != null) {
                 NetworkHandler.sendToClientPlayer(legacy, player);
@@ -53,7 +68,22 @@ public record ServerMessageSyncGunPackPart(GunPackSync.Part part) implements Cus
         }
     }
 
-    public static Snapshot prepare(Map<DataType, Map<Identifier, String>> cache) {
+    private static boolean usesNewBuiltinFormat(String json) {
+        if (!json.contains("builtin_attachments")) return false;
+        var root = com.google.gson.JsonParser.parseString(json);
+        if (!root.isJsonObject()) return false;
+        var options = root.getAsJsonObject().get("builtin_attachments");
+        return options != null && options.isJsonObject() && options.getAsJsonObject().entrySet().stream()
+                .anyMatch(entry -> !entry.getValue().isJsonPrimitive() || !entry.getValue().getAsJsonPrimitive().isString());
+    }
+
+    public static Snapshot prepare(Map<DataType, Map<Identifier, String>> input) {
+        var cache = new EnumMap<DataType, Map<Identifier, String>>(DataType.class);
+        input.forEach((type, map) -> {
+            if (!type.needsExtendedSchema() || !map.isEmpty()) cache.put(type, map);
+        });
+        boolean extended = cache.keySet().stream().anyMatch(DataType::needsExtendedSchema)
+                || cache.getOrDefault(DataType.GUN_DATA, Map.of()).values().stream().anyMatch(ServerMessageSyncGunPackPart::usesNewBuiltinFormat);
         var buf = new FriendlyByteBuf(Unpooled.buffer(256, GunPackSync.MAX_SYNC_SIZE));
         try {
             ServerMessageSyncGunPack.writeCache(buf, cache, GunPackSync.MAX_SYNC_SIZE);
@@ -62,10 +92,10 @@ public record ServerMessageSyncGunPackPart(GunPackSync.Part part) implements Cus
             var parts = GunPackSync.compressAndSplit(data);
             GunMod.LOGGER.info("Prepared gun pack sync: {} bytes -> {} compressed bytes, {} part(s)",
                     data.length, parts.getFirst().compressedSize(), parts.size());
-            boolean fitsLegacy = data.length <= 1024 * 1024 && cache.values().stream().flatMap(map -> map.values().stream())
+            boolean fitsLegacy = !extended && data.length <= 1024 * 1024 && cache.values().stream().flatMap(map -> map.values().stream())
                     .allMatch(json -> json.length() <= Short.MAX_VALUE);
             return new Snapshot(parts.stream().map(ServerMessageSyncGunPackPart::new).toList(),
-                    fitsLegacy ? new ServerMessageSyncGunPack(cache) : null);
+                    fitsLegacy ? new ServerMessageSyncGunPack(cache) : null, extended);
         } catch (IOException e) {
             throw new UncheckedIOException("Cannot prepare gun pack snapshot", e);
         } finally {
