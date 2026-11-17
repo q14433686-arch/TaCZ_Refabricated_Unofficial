@@ -14,6 +14,9 @@ import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import com.tacz.guns.client.sound.SoundPlayManager;
 import com.tacz.guns.network.message.ClientMessageLaserColor;
+import com.tacz.guns.network.message.ClientMessageInstallVirtualAttachment;
+import com.tacz.guns.util.VirtualOemAttachment;
+import com.tacz.guns.api.item.builder.AttachmentItemBuilder;
 import com.tacz.guns.network.message.ClientMessageRefitGun;
 import com.tacz.guns.network.message.ClientMessageUnloadAttachment;
 import com.tacz.guns.sound.SoundManager;
@@ -28,6 +31,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
+
+import java.util.*;
 
 @Environment(EnvType.CLIENT)
 public class GunRefitScreen extends Screen {
@@ -126,7 +131,11 @@ public class GunRefitScreen extends Screen {
             IStackTooltip tooltipWidget = (IStackTooltip) w;
             tooltipWidget.renderTooltip(stack -> {
                 if (!stack.isEmpty()) {
-                    graphics.setTooltipForNextFrame(font, Screen.getTooltipFromItem(Minecraft.getInstance(), stack), stack.getTooltipImage(), mouseX, mouseY);
+                    var tooltip = new ArrayList<>(Screen.getTooltipFromItem(Minecraft.getInstance(), stack));
+                    if (isBuiltinOem(stack) && !tooltip.isEmpty()) {
+                        tooltip.set(0, tooltip.getFirst().copy().append(Component.translatable("gui.tacz.refit.builtin_suffix")));
+                    }
+                    graphics.setTooltipForNextFrame(font, tooltip, stack.getTooltipImage(), mouseX, mouseY);
                 }
             });
         });
@@ -171,36 +180,51 @@ public class GunRefitScreen extends Screen {
         }
         int startX = this.width - 30;
         int startY = 50;
-        int pageStart = currentPage * INVENTORY_ATTACHMENT_SLOT_COUNT;
-        int count = 0;
-        int currentY = startY;
         Inventory inventory = player.getInventory();
+        ItemStack gun = player.getMainHandItem();
+        IGun iGun = IGun.getIGunOrNull(gun);
+        if (iGun == null) return;
+        AttachmentType type = RefitTransform.getCurrentTransformType();
+        record Entry(int slot, ItemStack stack) {}
+        var entries = new ArrayList<Entry>();
+        Set<Identifier> displayed = new HashSet<>();
         for (int i = 0; i < inventory.getContainerSize(); i++) {
-            ItemStack inventoryItem = inventory.getItem(i);
-            IAttachment attachment = IAttachment.getIAttachmentOrNull(inventoryItem);
-            IGun iGun = IGun.getIGunOrNull(player.getMainHandItem());
-            if (attachment != null && iGun != null && attachment.getType(inventoryItem) == RefitTransform.getCurrentTransformType()) {
-                if (!iGun.allowAttachment(player.getMainHandItem(), inventoryItem)) {
-                    continue;
-                }
-                count++;
-                if (count <= pageStart) {
-                    continue;
-                }
-                if (count > pageStart + INVENTORY_ATTACHMENT_SLOT_COUNT) {
-                    continue;
-                }
-                InventoryAttachmentSlot button = new InventoryAttachmentSlot(startX, currentY, i, inventory, b -> {
-                    int slotIndex = ((InventoryAttachmentSlot) b).getSlotIndex();
-                    SoundPlayManager.playerRefitSound(inventory.getItem(slotIndex), player, SoundManager.INSTALL_SOUND);
-                    ClientMessageRefitGun message = new ClientMessageRefitGun(slotIndex, inventory.getSelectedSlot(), RefitTransform.getCurrentTransformType());
-                    ClientPlayNetworking.send(message);
-                });
-                this.addRenderableWidget(button);
-                currentY = currentY + SLOT_SIZE;
+            ItemStack stack = inventory.getItem(i);
+            if (stack.getItem() instanceof IAttachment part && part.getType(stack) == type && iGun.allowAttachment(gun, stack)) {
+                entries.add(new Entry(i, stack));
+                displayed.add(part.getAttachmentId(stack));
             }
         }
-        int totalPage = (count - 1) / INVENTORY_ATTACHMENT_SLOT_COUNT;
+        Identifier gunId = iGun.getGunId(gun);
+        displayed.add(iGun.getAttachmentId(gun, type));
+        if (ClientPlayNetworking.canSend(ClientMessageInstallVirtualAttachment.TYPE)) {
+            TimelessAPI.getCommonGunIndex(gunId).map(index -> index.getGunData().getBuiltInAttachmentOptions().get(type)).ifPresent(options ->
+                options.getAttachments().stream().filter(id -> displayed.add(id) && VirtualOemAttachment.shouldShowIcon(gunId, id, type))
+                        .filter(id -> TimelessAPI.getCommonAttachmentIndex(id).filter(index -> index.getType() == type).isPresent())
+                        .sorted(Comparator.comparingInt(id -> TimelessAPI.getCommonAttachmentIndex(id).orElseThrow().getSort()))
+                        .map(id -> AttachmentItemBuilder.create().setId(id).build()).filter(stack -> iGun.allowAttachment(gun, stack))
+                        .forEach(stack -> entries.add(new Entry(-1, stack))));
+        }
+        entries.sort(Comparator.comparingInt(e -> isBuiltinOem(e.stack()) ? 0 : 1));
+        int totalPage = Math.max(0, entries.size() - 1) / INVENTORY_ATTACHMENT_SLOT_COUNT;
+        currentPage = Math.min(currentPage, totalPage);
+        int pageStart = currentPage * INVENTORY_ATTACHMENT_SLOT_COUNT;
+        for (int i = pageStart; i < Math.min(entries.size(), pageStart + INVENTORY_ATTACHMENT_SLOT_COUNT); i++) {
+            Entry entry = entries.get(i);
+            int y = startY + (i - pageStart) * SLOT_SIZE;
+            if (entry.slot() < 0) {
+                this.addRenderableWidget(new InventoryAttachmentSlot(startX, y, entry.stack(), inventory, b -> {
+                    var id = ((IAttachment) entry.stack().getItem()).getAttachmentId(entry.stack());
+                    SoundPlayManager.playerRefitSound(entry.stack(), player, SoundManager.INSTALL_SOUND);
+                    ClientPlayNetworking.send(new ClientMessageInstallVirtualAttachment(inventory.getSelectedSlot(), type, id));
+                }));
+            } else {
+                this.addRenderableWidget(new InventoryAttachmentSlot(startX, y, entry.slot(), inventory, b -> {
+                    SoundPlayManager.playerRefitSound(inventory.getItem(entry.slot()), player, SoundManager.INSTALL_SOUND);
+                    ClientPlayNetworking.send(new ClientMessageRefitGun(entry.slot(), inventory.getSelectedSlot(), type));
+                }));
+            }
+        }
         RefitTurnPageButton turnPageButtonUp = new RefitTurnPageButton(startX, startY - 10, true, b -> {
             if (currentPage > 0) {
                 currentPage--;
@@ -219,6 +243,10 @@ public class GunRefitScreen extends Screen {
         if (currentPage > 0) {
             this.addRenderableWidget(turnPageButtonUp);
         }
+    }
+
+    private static boolean isBuiltinOem(ItemStack stack) {
+        return stack.getItem() instanceof IAttachment part && VirtualOemAttachment.isBuiltinAttachment(part.getAttachmentId(stack));
     }
 
     private void addAttachmentTypeButtons() {
@@ -277,7 +305,7 @@ public class GunRefitScreen extends Screen {
                     ItemStack attachmentItem = button.getAttachmentItem();
                     if (!attachmentItem.isEmpty()) {
                         int freeSlot = inventory.getFreeSlot();
-                        if (freeSlot != -1) {
+                        if (freeSlot != -1 || VirtualOemAttachment.isMarked(attachmentItem)) {
                             SoundPlayManager.playerRefitSound(attachmentItem, player, SoundManager.UNINSTALL_SOUND);
                             ClientMessageUnloadAttachment message = new ClientMessageUnloadAttachment(inventory.getSelectedSlot(), RefitTransform.getCurrentTransformType());
                             ClientPlayNetworking.send(message);

@@ -10,6 +10,7 @@ import com.tacz.guns.api.item.ammo.AmmoSourceRegistry;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.builder.AmmoItemBuilder;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
+import com.tacz.guns.util.DefaultGunAttachments;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.inventory.tooltip.GunTooltip;
@@ -347,6 +348,7 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
             if (key.equals(indexType)) {
                 ItemStack itemStack = GunItemBuilder.create()
                         .setId(entry.getKey())
+                        .putAllVirtualAttachment(DefaultGunAttachments.defaults(entry.getKey()))
                         .setFireMode(gunData.getFireModeSet().get(0))
                         .setAmmoCount(gunData.getAmmoAmount())
                         .setHeatData(gunData.hasHeatData())

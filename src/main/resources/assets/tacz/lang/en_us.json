@@ -165,6 +165,8 @@
   "tooltip.tacz.attachment.pierce.decrease": "- Pierce",
   "tooltip.tacz.attachment.ammo_speed.increase": "+ Ammo Speed",
   "tooltip.tacz.attachment.ammo_speed.decrease": "- Ammo Speed",
+  "tooltip.tacz.attachment.builtin": "§9Built-in attachment",
+  "gui.tacz.refit.builtin_suffix": " (Built-in)",
   "tooltip.tacz.attachment.recoil_push": "+ Recoil Propulsion",
   "tooltip.tacz.attachment.damage.increase": "+ Damage",
   "tooltip.tacz.attachment.damage.decrease": "- Damage",

@@ -1,0 +1,18 @@
+{
+  "ammo": "tacz:762x39",
+  "fire_mode": [
+    "semi"
+  ],
+  "allow_attachment_types": [
+    "scope"
+  ],
+  "builtin_attachments": {
+    "scope": {
+      "attachments": [
+        "tacz:scope_acog_ta31"
+      ],
+      "default_attached": "tacz:scope_acog_ta31",
+      "display_attachment": "tacz:sight_sro_dot"
+    }
+  }
+}

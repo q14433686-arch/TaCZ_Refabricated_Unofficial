@@ -158,6 +158,9 @@ public class ClientAttachmentItemTooltip implements ClientTooltipComponent {
     }
 
     private void addText(AttachmentType type) {
+        if (com.tacz.guns.util.VirtualOemAttachment.isBuiltinAttachment(attachmentId)) {
+            components.add(Component.translatable("tooltip.tacz.attachment.builtin"));
+        }
         TimelessAPI.getClientAttachmentIndex(attachmentId).ifPresent(index -> {
             AttachmentData data = index.getData();
 

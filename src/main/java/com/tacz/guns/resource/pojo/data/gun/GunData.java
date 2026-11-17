@@ -116,7 +116,7 @@ public class GunData {
     private float weight = 0f;
 
     @SerializedName("builtin_attachments")
-    private Map<AttachmentType, Identifier> builtInAttachments = Maps.newHashMap();
+    private Map<AttachmentType, BuiltInAttachment> builtInAttachments = Maps.newHashMap();
 
     @SerializedName("script")
     private Identifier script = null;
@@ -286,7 +286,16 @@ public class GunData {
         return allowAttachments;
     }
 
+    /** Legacy 26.3 API: an empty slot used to expose just its display id. */
     public Map<AttachmentType, Identifier> getBuiltInAttachments() {
+        var displays = new java.util.EnumMap<AttachmentType, Identifier>(AttachmentType.class);
+        builtInAttachments.forEach((type, option) -> {
+            if (option != null && option.getDisplayAttachment() != null) displays.put(type, option.getDisplayAttachment());
+        });
+        return displays;
+    }
+
+    public Map<AttachmentType, BuiltInAttachment> getBuiltInAttachmentOptions() {
         return builtInAttachments;
     }
 

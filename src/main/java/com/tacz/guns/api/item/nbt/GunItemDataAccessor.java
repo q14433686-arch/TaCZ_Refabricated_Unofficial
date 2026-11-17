@@ -314,18 +314,8 @@ public interface GunItemDataAccessor extends IGun {
     @Override
     @NotNull
     default ItemStack getBuiltinAttachment(ItemStack gun, AttachmentType type) {
-        IGun iGun = IGun.getIGunOrNull(gun);
-        if (iGun == null) {
-            return ItemStack.EMPTY;
-        }
-        CommonGunIndex index = TimelessAPI.getCommonGunIndex(iGun.getGunId(gun)).orElse(null);
-        if (index != null) {
-            var builtin = index.getGunData().getBuiltInAttachments();
-            if (builtin.containsKey(type)) {
-                return AttachmentItemBuilder.create().setId(builtin.get(type)).build();
-            }
-        }
-        return ItemStack.EMPTY;
+        Identifier id = getBuiltInAttachmentId(gun, type);
+        return DefaultAssets.isEmptyAttachmentId(id) ? ItemStack.EMPTY : AttachmentItemBuilder.create().setId(id).build();
     }
 
     @Override
@@ -351,9 +341,9 @@ public interface GunItemDataAccessor extends IGun {
         }
         CommonGunIndex index = TimelessAPI.getCommonGunIndex(iGun.getGunId(gun)).orElse(null);
         if (index != null) {
-            var builtin = index.getGunData().getBuiltInAttachments();
-            if (builtin.containsKey(type)) {
-                return builtin.get(type);
+            var option = index.getGunData().getBuiltInAttachmentOptions().get(type);
+            if (option != null && option.getDisplayAttachment() != null) {
+                return option.getDisplayAttachment();
             }
         }
         return DefaultAssets.EMPTY_ATTACHMENT_ID;
