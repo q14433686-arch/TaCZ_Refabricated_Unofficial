@@ -24,7 +24,7 @@ Unless otherwise stated, the source code in this repository follows the license 
   are likewise GPL-3.0 as derivative work of the same module.
   See `docs/MESH_LOADER.md` for the exact scope of the ported versus original parts.
 - Porting changes made in this repository are provided under the same license as the corresponding code they modify.
-- Mayday Animation Engine (MAE) 1.1.1 is bundled as a runtime library under the MIT License
+- Mayday Animation Engine (MAE) 1.1.4 is bundled as a runtime library under the MIT License
   (`com.maydaymemory:mae`, https://github.com/286799714/MaydayAnimationEngine).
 
 The root `LICENSE` file is provided for GitHub license detection and applies to the code portions of this repository where applicable.

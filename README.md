@@ -12,7 +12,10 @@
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
 的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.3 Fabric**。直接上游的版本号为
-`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.3.R1-hotfix3`**。
+`0.7.0-forge1.1.8-hotfix`（已移植基线）；本分支当前源码版本为 **`1.1.8+fabric.26.3.R1-hotfix3`**。
+
+正在按[上游 1.2.0-hotfix 移植账本](docs/investigations/FABRIC_120_PORT_26_3.md)分批移植，
+**暂不声明完整 1.2.0 枪包兼容**；内嵌动画库对齐 MAE 1.1.4，不需要安装 1.21.1 的 SimpleBedrockModel。
 
 > **本分支是 26.3 线，尚无正式发布；CI 产物以对应 Actions 运行页面为准。** R1 基础版已在维护者环境完成一轮实机验证
 > （2026-09-18 ~ 09-21：无光影、Iris 光影、专服三种环境）；R1-hotfix2 新增的枪包 lang 容错、

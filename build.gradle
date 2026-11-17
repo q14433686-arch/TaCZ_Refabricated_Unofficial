@@ -149,7 +149,7 @@ dependencies {
     // MAE (Math Expression Evaluator / animation pose API).
     // Bundle the real library: the former local Pose/DummyPose stubs omitted
     // Pose#getBoneTransforms and could cause binary incompatibility with MAE callers.
-    implementation(include("com.maydaymemory:mae:1.1.1")) {
+    implementation(include("com.maydaymemory:mae:1.1.4")) {
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
         exclude group: 'it.unimi.dsi', module: 'fastutil'
         exclude group: 'org.joml', module: 'joml'
