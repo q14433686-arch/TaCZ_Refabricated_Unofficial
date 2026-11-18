@@ -512,7 +512,7 @@ public final class ScopeBodyRenderTypes {
                         RenderSetup.builder(FLASH_SWIRL_CLIPPED_PIPELINE)
                                 .withTexture("Sampler0", tex)
                                 .withTexture(MASK_SAMPLER, ScopeMaskTextureHandle.ID)
-                                .setTextureTransform(new TextureTransform.OffsetTextureTransform(1.0F, 1.0F))
+                                .setTextureTransform(new TextureTransform.OffsetTextureTransform(0.0F, 0.0F))
                                 .useLightmap()
                                 .useOverlay()
                                 .sortOnUpload()

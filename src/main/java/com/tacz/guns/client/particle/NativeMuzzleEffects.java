@@ -70,7 +70,7 @@ public final class NativeMuzzleEffects {
             born = GunTime.nowMillis();
         }
     }
-    private record Puff(Vec3 origin, Vec3 velocity, long born, float lifetime, float size, float rotation, int light) {}
+    private record Puff(Vec3 origin, Vec3 velocity, long born, float lifetime, float size, float rotation, int light, boolean firstPerson) {}
     public record Diagnostics(long firstFlashSubmits, long thirdFlashSubmits, long smokeBursts, int liveSmoke, int pendingShots, long runtimeFirstFlashes, long runtimeThirdFlashes, long runtimeSmokeBursts) {}
     public static Diagnostics diagnostics() { return new Diagnostics(firstFlashSubmits, thirdFlashSubmits, smokeBursts, PUFFS.size(), SHOTS.size(), runtimeFirstFlashes, runtimeThirdFlashes, runtimeSmokeBursts); }
 
@@ -274,7 +274,7 @@ public final class NativeMuzzleEffects {
             var velocity = pose.transformDirection(direction).normalize().mul(6 * effect.smokeSpeed() * worldScale);
             PUFFS.add(new Puff(new Vec3(origin.x,origin.y,origin.z), new Vec3(velocity.x,velocity.y,velocity.z),
                     GunTime.nowMillis(), .12f + (float)Math.random() * .13f,
-                    size * worldScale * (.8f + (float)Math.random()*.4f), (float)Math.random()*360, light));
+                    size * worldScale * (.8f + (float)Math.random()*.4f), (float)Math.random()*360, light, shot.firstPerson));
         }
         smokeBursts++;
     }
@@ -296,7 +296,9 @@ public final class NativeMuzzleEffects {
             int alpha = (int)gradient(life, 128, 117, 96, 0);
             int grey = (int)gradient(life, 140, 128, 64, 0);
             int color = alpha<<24 | grey<<16 | grey<<8 | grey;
-            quad(collector, pose, RenderTypes.energySwirl(SMOKE_TEXTURE, 0, 0), size, size, frame/6f, (frame+1)/6f, color, puff.light);
+            var type=puff.firstPerson && com.tacz.guns.client.render.scope.ScopeParticleClipping.ready(false)
+                    ? ScopeBodyRenderTypes.flashSwirlClipped(SMOKE_TEXTURE) : RenderTypes.energySwirl(SMOKE_TEXTURE, 0, 0);
+            quad(collector, pose, type, size, size, frame/6f, (frame+1)/6f, color, puff.light);
         }
     }
     private static float gradient(float age, float a, float b, float c, float d) {

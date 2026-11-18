@@ -775,8 +775,14 @@ public final class ScopePipRenderer {
      * <p>掩码判据取 {@link ScopeMaskRenderer#hadMaskLastFrame()}：合成点在手部 pass 之前，
      * 本帧的掩码还没画出来。这就是那一帧延迟的来源，见 {@code IrisScopePip} 的说明。
      */
+    public static boolean opaqueCameraMedium() {
+        var mc = Minecraft.getInstance();
+        return mc.player != null && mc.options.getCameraType().isFirstPerson()
+                && mc.player.isEyeInFluid(net.minecraft.tags.FluidTags.LAVA);
+    }
+
     public static boolean wantsIrisComposite() {
-        if (failed) {
+        if (failed || opaqueCameraMedium()) {
             return false;
         }
         // Classic-FOV pack lenses also composite after Iris; their physical ocular
@@ -1323,7 +1329,7 @@ public final class ScopePipRenderer {
      * {@link ScopeMaskRenderer#renderAtPhaseBoundary()} 之后 —— 见类注释里的顺序论证。
      */
     public static void compositeAtPhaseBoundary() {
-        if (failed || !sceneCaptured) {
+        if (failed || !sceneCaptured || opaqueCameraMedium()) {
             return;
         }
         if (irisOwnsLens()) {

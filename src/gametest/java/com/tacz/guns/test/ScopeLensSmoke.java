@@ -172,8 +172,25 @@ final class ScopeLensSmoke {
             slime.setSize(3,true);slime.setNoAi(true);slime.setNoGravity(true);slime.snapTo(Vec3.atBottomCenterOf(scene.aim));level.addFreshEntity(slime);return slime.getUUID();});
         try {
             ctx.waitFor(mc->mc.level.getEntity(slimeId)!=null);
-            int area=hotArea(capture(ctx,"slime_hot"));
-            if(area<100)throw new AssertionError("Translucent slime missing thermal coverage: "+area);
+            int area=0;
+            for (int angle=0;angle<4;angle++) {
+                final float yaw=angle*45;
+                world.getServer().runOnServer(s->{
+                    var slime=(net.minecraft.world.entity.LivingEntity)world.getConnection().getServerPlayer().level().getEntity(slimeId);
+                    slime.setYRot(yaw);slime.setYHeadRot(yaw);slime.yBodyRot=yaw;
+                });
+                var image=capture(ctx,angle==0?"slime_hot":"slime_hot_angle_"+angle);
+                int hot=hotArea(image);area=Math.max(area,hot);
+                if(hot<100)throw new AssertionError("Translucent slime missing thermal coverage at "+yaw+": "+hot);
+                int inside=0,total=0,r=image.getHeight()/45;
+                for(int y=image.getHeight()/2-r;y<image.getHeight()/2+r;y++)
+                    for(int x=image.getWidth()/2-r;x<image.getWidth()/2+r;x++) {
+                        // Ignore the fixed reticle stroke, NOT the slime's camera-facing face.
+                        if(Math.abs(x-image.getWidth()/2)<3||Math.abs(y-image.getHeight()/2)<3)continue;
+                        total++;if(bright(image.getRGB(x,y)))inside++;
+                    }
+                if(inside<total*.65)throw new AssertionError("Slime camera-facing heat hole at "+yaw+": "+inside+"/"+total);
+            }
             wall(ctx,world,scene,true);
             int leak=hotArea(capture(ctx,"slime_wall"));
             if(leak>area*.03)throw new AssertionError("Slime heat through terrain: "+leak+"/"+area);

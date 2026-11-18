@@ -138,6 +138,13 @@ public final class WorldEmitterManager {
                 case PARTICLES_ADD,ENERGY_SWIRL,PARTICLES_EMISSIVE -> RenderTypes.energySwirl(desc.getTexture(),0,0);
                 case PARTICLES_BLEND -> RenderTypes.entityTranslucent(desc.getTexture());
             };
+            if(a.first && com.tacz.guns.client.render.scope.ScopeParticleClipping.ready(hand)) {
+                type=switch(desc.getMaterial()) {
+                    case PARTICLES_OPAQUE,PARTICLES_ALPHA -> com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.clipped(desc.getTexture());
+                    case PARTICLES_BLEND -> com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.flashTranslucent(desc.getTexture());
+                    case PARTICLES_ADD,ENERGY_SWIRL,PARTICLES_EMISSIVE -> com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.flashSwirlClipped(desc.getTexture());
+                };
+            }
             var billboard=definition.findComponent(ParticleAppearanceBillboard.class);
             var mode=billboard==null?ParticleAppearanceBillboard.FaceCameraMode.ROTATE_XYZ:billboard.faceCameraMode();
             Matrix4f transform=new Matrix4f(hand?emitter.getEmitterTransform():emitter.getWorldTransform());

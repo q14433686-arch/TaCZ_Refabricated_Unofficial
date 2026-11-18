@@ -31,7 +31,9 @@ final class ScopeThermalMaterial {
     private ScopeThermalMaterial() {}
 
     static ModelFeatureRenderer.Submit<?> coverage(ModelFeatureRenderer.Submit<?> model) {
-        if (!model.renderType().hasBlending()) return model;
+        // Replay every eligible body with the sensor material, including the opaque
+        // slime core. Reusing its optical/Iris material makes the face nearest the
+        // copied scene depth disappear while translucent/back faces remain hot.
         var setup = ((ThermalRenderTypeAccessor)(Object)model.renderType()).tacz$thermalSetup();
         var binding = ((ThermalRenderSetupAccessor)(Object)setup).tacz$thermalTextures().get("Sampler0");
         // Nonstandard model shaders without a base texture keep their existing replay.

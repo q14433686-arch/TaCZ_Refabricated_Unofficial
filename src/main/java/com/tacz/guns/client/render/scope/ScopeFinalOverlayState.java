@@ -140,7 +140,9 @@ public final class ScopeFinalOverlayState {
         HandTransform transform = handTransform;
         PENDING_RINGS.clear(); PENDING_RETICLES.clear(); PENDING_TEXT.clear();
         handTransform = null;
-        if (transform == null) {
+        if (transform == null || ScopePipRenderer.opaqueCameraMedium()) {
+            // A no-fog foreground replay must not punch through opaque camera lava.
+            // The ordinary hand pass still owns the physical model below that medium.
             // 排了队但没经过手部阶段边界（异常路径）：没有可信矩阵，宁可不画。
             return;
         }

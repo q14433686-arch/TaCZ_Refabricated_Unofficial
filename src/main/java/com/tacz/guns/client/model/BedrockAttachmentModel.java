@@ -260,6 +260,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         }
         // 第 22 轮：解析准星（分划）节点集合，供 IReticleRenderer 策略使用。
         this.reticleNodes = resolveReticleNodes();
+        indexViewOculars();
     }
 
     /**
@@ -381,13 +382,35 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      */
     @Nullable
     private Integer activeOcularIndex() {
-        boolean wantScope = activeViewGroup == 2;
-        for (Map.Entry<Integer, Boolean> entry : ocularIsScopeByIndex.entrySet()) {
-            if (entry.getValue() == wantScope) {
-                return entry.getKey();
+        return ocularForView.get(activeViewGroup);
+    }
+
+    /** views[] selects scope_view[_N], not a universal sight/scope role. AMG10 and
+     * standard_8x use view 1 for their scope; HAMR uses view 2. Pair each rest-pose
+     * view axis with the ocular on that axis, retaining ocular suffixes for divisions. */
+    private final Map<Integer, Integer> ocularForView = new java.util.HashMap<>();
+
+    private void indexViewOculars() {
+        for (int view = 0; view < scopeViewPaths.size(); view++) {
+            Matrix4f inverseView = restPose(scopeViewPaths.get(view)).invert();
+            double best = Double.POSITIVE_INFINITY;
+            Integer selected = null;
+            for (var entry : ocularByIndex.entrySet()) {
+                var chain = new java.util.ArrayDeque<BedrockPart>();
+                for (var part = entry.getValue(); part != null; part = part.getParent()) chain.push(part);
+                var centre = restPose(new ArrayList<>(chain)).getTranslation(new org.joml.Vector3f());
+                inverseView.transformPosition(centre);
+                double error = centre.x * centre.x + centre.y * centre.y;
+                if (error < best) { best = error; selected = entry.getKey(); }
             }
+            if (selected != null) ocularForView.put(view + 1, selected);
         }
-        return null;
+    }
+
+    private static Matrix4f restPose(List<BedrockPart> path) {
+        PoseStack pose = new PoseStack();
+        for (var part : path) part.translateAndRotateAndScale(pose);
+        return new Matrix4f(pose.last().pose());
     }
 
     /** {@code part} 自身或其任一祖先是否为 {@code ancestor}。 */
@@ -901,6 +924,26 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 poseStack.popPose();
             }
         }
+        if (activeGroupIsScope() && ocularRingPart != null && RenderConfig.SCOPE_OCULAR_RING_FIX.get()) {
+            var chain = new java.util.ArrayDeque<BedrockPart>();
+            for (var p = ocularRingPart.getParent(); p != null; p = p.getParent()) chain.push(p);
+            poseStack.pushPose();
+            try {
+                for (var p : chain) p.translateAndRotateAndScale(poseStack);
+                collectRimGeometry(ocularRingPart, poseStack);
+            } finally { poseStack.popPose(); }
+        }
+    }
+
+    private void collectRimGeometry(BedrockPart part, PoseStack poseStack) {
+        // Some packs put the ocular under ocular_ring. It is NOT physical rim coverage.
+        if (ocularParts.contains(part)) return;
+        poseStack.pushPose();
+        try {
+            part.translateAndRotateAndScale(poseStack);
+            ScopeMaskGeometry.addRim(new Matrix4f(RenderSystem.getModelViewMatrixCopy()).mul(poseStack.last().pose()), part.cubes);
+            for (var child : part.children) collectRimGeometry(child, poseStack);
+        } finally { poseStack.popPose(); }
     }
 
     /**

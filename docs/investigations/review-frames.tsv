@@ -1,5 +1,5 @@
-# Diagnostic nominations: failed runs are evidence, NOT successful acceptance.
+# User AMG10 reproduction, BEFORE the optical-axis fix. Failed runs are not acceptance.
 # run ID	artifact kind	frame (basename without suffix)
-44402791279	smoke	tacz_lens_slime_hot
-44402791201	iris	tacz_lens_pip_bare
-44402791201	iris	tacz_lens_pip_optical
+44410499470	iris	tacz_amg10_zoom_0
+44410499470	iris	tacz_amg10_zoom_2
+44410499525	smoke	tacz_amg10_zoom_2

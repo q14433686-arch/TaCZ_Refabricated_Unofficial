@@ -56,6 +56,11 @@ public final class ScopeMaskGeometry {
     }
 
     private static final List<Entry> ENTRIES = new ArrayList<>();
+    private static final List<Entry> RIMS = new ArrayList<>();
+    public static void addRim(Matrix4f pose, List<BedrockCube> cubes) {
+        if (!cubes.isEmpty()) RIMS.add(new Entry(pose, cubes));
+    }
+    public static List<Entry> rims() { return RIMS; }
 
     /**
      * 本帧的掩码是否<b>也</b>用来裁剪枪身 / 非瞄具配件 / 枪口火光。
@@ -118,6 +123,7 @@ public final class ScopeMaskGeometry {
     public static void clear() {
         lens = null;
         ENTRIES.clear();
+        RIMS.clear();
         viewmodelClipEnabled = false;
     }
 }

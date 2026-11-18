@@ -45,6 +45,7 @@ final class ScopeUserRegressionSmoke {
                             ?"invalid aperture "+w+"x"+h+" at "+(b[1]+b[3])/2:"";
                 });
                 if(!failure.isEmpty())errors.append("zoom ").append(z).append(": ").append(failure).append("; ");
+                checkOwnedParticle(ctx,z);
             }
             if(!errors.isEmpty())throw new AssertionError("AMG10 optical-axis mismatch: "+errors);
             GunMod.LOGGER.info("PORT_AMG10: all three zooms produced bounded on-axis apertures");
@@ -54,5 +55,40 @@ final class ScopeUserRegressionSmoke {
             world.getServer().runOnServer(s->world.getConnection().getServerPlayer().setItemInHand(InteractionHand.MAIN_HAND,saved));
             ctx.waitTicks(25);
         }
+    }
+
+    private static void checkOwnedParticle(ClientGameTestContext ctx,int zoom) {
+        var runtime=com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance();
+        ctx.runOnClient(mc->{
+            var env=new com.tacz.guns.client.particle.bedrock.particle.runtime.ParticleMolangEnvironment();
+            var def=new com.tacz.guns.client.particle.bedrock.particle.data.ParticleEffectDeserializer().parse(
+                    com.google.gson.JsonParser.parseString("""
+                    {"particle_effect":{"description":{"identifier":"port_test:scope_particle","basic_render_parameters":{
+                    "material":"particles_add","texture":"minecraft:textures/particle/generic_0"}},"components":{
+                    "sbm:fp_emitter_local_space":{"position":false,"rotation":false,"velocity":false,"to_world":true},
+                    "minecraft:emitter_rate_instant":{"num_particles":1},"minecraft:emitter_lifetime_once":{"active_time":0.1},
+                    "minecraft:emitter_shape_point":{"offset":[0,0,0]},"minecraft:particle_lifetime_expression":{"max_lifetime":1},
+                    "minecraft:particle_appearance_billboard":{"size":[0.3,0.3],"facing_camera_mode":"rotate_xyz"},
+                    "minecraft:particle_appearance_tinting":{"color":[1,0,1,1]}}}}
+                    """),env);
+            var p=mc.gameRenderer.mainCamera().position().add(mc.player.getLookAngle().scale(2));
+            var matrix=new org.joml.Matrix4f().translation((float)p.x,(float)p.y,(float)p.z);
+            var emitter=runtime.addEmitter(mc.level,matrix,net.minecraft.world.phys.Vec3.ZERO,def,"",mc.player);
+            if(emitter==null)throw new AssertionError("Cannot create scope particle probe");
+            // A detached world-space local effect; deliberately no animated locator to move it off-axis.
+            runtime.bindAnimated(emitter,mc.player.getId(),Identifier.parse("tacz:m700"),"scope_probe_static",true,matrix,matrix);
+        });
+        try {
+            ctx.waitTicks(4);
+            var image=javax.imageio.ImageIO.read(ctx.takeScreenshot("tacz_amg10_particle_"+zoom).toFile());
+            int magenta=0,r=image.getHeight()/16;
+            for(int y=image.getHeight()/2-r;y<image.getHeight()/2+r;y++)for(int x=image.getWidth()/2-r;x<image.getWidth()/2+r;x++) {
+                int c=image.getRGB(x,y),red=c>>>16&255,green=c>>>8&255,blue=c&255;
+                if(red>100&&blue>100&&red>green*1.5&&blue>green*1.5)magenta++;
+            }
+            if(zoom<2?magenta>0:magenta<8)throw new AssertionError("Owned particle aperture policy zoom="+zoom+" magenta="+magenta);
+            GunMod.LOGGER.info("PORT_SCOPE_PARTICLE: AMG10 zoom={} central magenta={}",zoom,magenta);
+        } catch(java.io.IOException e) { throw new java.io.UncheckedIOException(e); }
+        finally { ctx.runOnClient(mc->runtime.clear()); }
     }
 }
