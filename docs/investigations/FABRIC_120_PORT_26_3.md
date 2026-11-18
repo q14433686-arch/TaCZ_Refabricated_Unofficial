@@ -142,3 +142,7 @@ UH-1 的 `text_show` 经 26.3 第一人称 extraction 读取实际游戏方块�
 对实际引用的五个逻辑脚本（M1866、SPAS-12、M1014、Kar98、Mk23）增加 `native-reload-accounting` 来源分类。它们的装填时序沿用包配置，但不再假设「请求几件，弹药源一定供应几件」。`loadMagazineFromReserve(n)` 按剩余容量向原生弹药源或虚拟备弹取用，返回**实装数**；`loadChamberFromReserve()` 只在能装入时返回 true。保留旧 Lua 方法（`putAmmoInMagazine` 仍返回**溢出数**），不把第三方脚本重新解释成这种新语义。空仓 Mk23 与不带镜的 Kar98 在一次 tick 跨过装填与结束两个时间点时，也只结算一次。可审查的 Lua 差异见 [`default-pack-120-reloads.patch`](../../scripts/patches/default-pack-120-reloads.patch)。
 
 `fa23a51` 的专服 `DefaultReloadSmoke` 通过：五份上述逻辑加一份未改写的 HCAR xmag 逻辑，每份各跑 6 个装填场景（生存空仓与战术的零/部分供给、虚拟备弹、创造）。测试用实际 LuaJ 和物品组件，跨过多个供弹时间点，检查已装总数、来源扣量与结束后再次 tick；不是逐帧动画比对。当前 4,176 个内置包文件中，3,929 个与固定 blob 逐字节一致，另外 5 个脚本单列 `native-reload-accounting`，其余适配分类见清单。
+
+### XM157 与查看器：区分命中、提交与实际画面
+
+`64ae477` 修复手部提交时漏乘 ModelView 导致的 XM157 标记剔除。[实体、负对照、恢复与遮挡的原始帧，以及 CI 和失败诊断](FABRIC_120_COMPARISON.md#本轮分块记录)可复核：默认配置有 12 个黄色像素构成中央空心框，不把测距文字算进去。`44f0733` 的 JEI 和 REI 也分别通过了重载前后双向查询、真实页面保持与像素对照。先前 JEI 文件只有世界的一帧不能作为页面证据。上述运行用软件 Vulkan，均不是硬件/光影或异进程联机验收。

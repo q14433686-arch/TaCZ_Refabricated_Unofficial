@@ -25,6 +25,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
@@ -99,8 +100,6 @@ public final class ImpactMarkerSmoke {
             ctx.runOnClient(mc -> hide = false);
             ctx.waitTicks(6);
             Path again = ctx.takeScreenshot("tacz_xm157_restored");
-            int pixels = restoredYellow(on, off, again);
-            if (pixels < 2) throw new AssertionError("XM157 draw callback ran but no restored yellow marker pixels: " + pixels);
             // The same entity remains visible to the player throughout this transition.
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
             ctx.waitFor(mc -> IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(1) < .05f);
@@ -116,7 +115,7 @@ public final class ImpactMarkerSmoke {
             ctx.waitFor(mc -> mc.level.getBlockState(wall).is(Blocks.STONE));
             ctx.waitTicks(6); // beyond the actual XM157 refresh interval
             assertNoDraws(ctx, "behind a solid block");
-            ctx.takeScreenshot("tacz_xm157_occluded");
+            int pixels = checkRing(on, off, again, ctx.takeScreenshot("tacz_xm157_occluded"));
             GunMod.LOGGER.info("PORT_OPTIC: XM157 showed {} restored yellow pixels on entity, zero draws behind wall", pixels);
         } finally {
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
@@ -134,16 +133,40 @@ public final class ImpactMarkerSmoke {
         ctx.runOnClient(mc -> { if (draws != 0) throw new AssertionError("XM157 marker persisted " + condition); });
     }
 
-    private static int restoredYellow(Path on, Path control, Path restored) {
+    private static int checkRing(Path on, Path control, Path restored, Path occluded) {
         try {
-            var a = ImageIO.read(on.toFile()); var b = ImageIO.read(control.toFile()); var c = ImageIO.read(restored.toFile());
-            int n = 0;
-            for (int x = a.getWidth()*3/8; x < a.getWidth()*5/8; x++)
-                for (int y = a.getHeight()*3/8; y < a.getHeight()*5/8; y++)
-                    if (yellow(a.getRGB(x,y)) && !yellow(b.getRGB(x,y)) && yellow(c.getRGB(x,y))) n++;
+            var a = ImageIO.read(on.toFile());
+            var b = ImageIO.read(control.toFile());
+            var c = ImageIO.read(restored.toFile());
+            var d = ImageIO.read(occluded.toFile());
+            if (a == null) throw new AssertionError("Unreadable XM157 frame: " + on);
+            int w = a.getWidth(), h = a.getHeight();
+            for (var frame : new BufferedImage[]{b, c, d}) {
+                if (frame == null || frame.getWidth() != w || frame.getHeight() != h)
+                    throw new AssertionError("Incomparable XM157 frames");
+            }
+            // The range text is yellow too and can shift by a pixel. Only inspect the centre
+            // of the fixed scene (±15px at 854x480); don't count text, HUD or advancement toast.
+            int radius = Math.min(w, h) / 32;
+            int n = 0, x0 = w, x1 = -1, y0 = h, y1 = -1;
+            for (int y = h/2-radius; y <= h/2+radius; y++) {
+                for (int x = w/2-radius; x <= w/2+radius; x++) {
+                    if (yellow(b.getRGB(x, y)) || yellow(d.getRGB(x, y)))
+                        throw new AssertionError("Yellow in suppressed or occluded centre at " + x + "," + y);
+                    if (yellow(a.getRGB(x, y)) && yellow(c.getRGB(x, y))) {
+                        x0 = Math.min(x0,x); x1 = Math.max(x1,x);
+                        y0 = Math.min(y0,y); y1 = Math.max(y1,y);
+                        n++;
+                    }
+                }
+            }
+            if (n < 6 || x1-x0 < 2 || y1-y0 < 2 || yellow(a.getRGB((x0+x1)/2, (y0+y1)/2))
+                    || yellow(c.getRGB((x0+x1)/2, (y0+y1)/2)))
+                throw new AssertionError("No restored hollow XM157 marker: " + n + " pixels in " + x0 + "," + y0 + ".." + x1 + "," + y1);
             return n;
         } catch (IOException ex) { throw new UncheckedIOException(ex); }
     }
+
     private static boolean yellow(int rgb) {
         int r = rgb >>> 16 & 255, g = rgb >>> 8 & 255, b = rgb & 255;
         return r > 110 && g > 110 && Math.min(r,g) > 2*b && Math.abs(r-g) < 48;
