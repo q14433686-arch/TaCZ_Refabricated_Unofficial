@@ -15,3 +15,7 @@
 - 报告区分 `failed`、`skipped`、`partial`、`complete`。无法证明等价的配方不转换，26.3 层写禁用标记以防加载器回退到旧 `recipes/`。缺少的可选物品 ID 记入 `missingItemIds`，不会在产物中被替换成石头。安装前仍要确认对应模组、标签、实际配方、脚本和渲染；`targetFormatValidated` 是格式检查，**`gameValidated` 始终是 false**。
 
 `forge:tag_empty` 不会被偷换成 `not fabric:tags_populated`：26.3 后者检查标签**是否定义**，不是成员数。在确认等价适配之前将这类配方标成需人工处理。旧石切配方的顶层 `count` 移入结果栈。
+
+### 脚本里的时间
+
+本线枪械逻辑 API 和动画 `context` 的 `getCurrentTimestamp()` 返回**玩法毫秒数**：可在同一次游戏会话内做差，单人暂停时冻结。不要用它判断日期，也不要把它当作跨存档的计时起点。如果旧脚本确实要读 Unix 毫秒时间戳，请显式用 `getRealSystemTimestamp()`；勿将两种时钟的值相减。转换器不会自动改写 Lua。

@@ -63,6 +63,7 @@ public class ObjectAnimationRunner {
     private boolean running = false;
     private boolean pausing = false;
     private long lastUpdateNs;
+    private long lastUpdateEpoch = GunTime.epoch();
     /**
      * 当前动画播放进度
      */
@@ -91,6 +92,7 @@ public class ObjectAnimationRunner {
     public void run() {
         if (!running) {
             running = true;
+            lastUpdateEpoch = GunTime.epoch();
             lastUpdateNs = GunTime.nowNanos();
         }
         pausing = false;
@@ -280,12 +282,19 @@ public class ObjectAnimationRunner {
         }
     }
 
+    private long elapsedSinceLastUpdate() {
+        long epoch = GunTime.epoch();
+        long now = GunTime.nowNanos();
+        long elapsed = epoch == lastUpdateEpoch ? Math.max(0, now - lastUpdateNs) : 0;
+        lastUpdateNs = now;
+        lastUpdateEpoch = epoch;
+        return elapsed;
+    }
+
     public void update(boolean blend) {
         long fromTimeNs = progressNs;
-        long currentNs = GunTime.nowNanos();
-        long alphaProgress = currentNs - lastUpdateNs;
+        long alphaProgress = elapsedSinceLastUpdate();
         updateProgress(alphaProgress);
-        lastUpdateNs = currentNs;
         if (isTransitioning) {
             transitionProgressNs += alphaProgress;
             if (transitionProgressNs >= transitionTimeNs) {
@@ -305,9 +314,7 @@ public class ObjectAnimationRunner {
 
     public void updateSoundOnly() {
         long fromTimeNs = progressNs;
-        long currentNs = GunTime.nowNanos();
-        updateProgress(currentNs - lastUpdateNs);
-        lastUpdateNs = currentNs;
+        updateProgress(elapsedSinceLastUpdate());
         ObjectAnimationSoundChannel soundChannel = animation.getSoundChannel();
         if (soundChannel != null && Minecraft.getInstance().player != null) {
             soundChannel.playSound(fromTimeNs / 1e9, progressNs / 1e9, Minecraft.getInstance().player, 16, 1, 1);

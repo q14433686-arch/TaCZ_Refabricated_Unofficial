@@ -40,3 +40,6 @@ timeout -k 20s 10m ./gradlew -PtaczClientSmoke runClientGameTest --console=plain
 for frame in tacz_held_default_gun tacz_held_variant tacz_default_refit tacz_range_readout tacz_display_wall; do
     test -s "$(find "$run/screenshots" -name "*${frame}.png" -print -quit)"
 done
+# These assertions concern timing and persisted/network state; a rendered frame cannot prove them.
+grep -Fq 'PORT_SMOKE_CLIENT: integrated pause/resume and both pack clocks passed' "$run/logs/latest.log"
+grep -Fq 'PORT_SMOKE_CLIENT: reopened same save; new snapshot, one action, saved displays and survival storage transfer passed' "$run/logs/latest.log"

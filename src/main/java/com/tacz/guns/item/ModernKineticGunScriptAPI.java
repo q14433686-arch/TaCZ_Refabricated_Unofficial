@@ -758,13 +758,14 @@ public class ModernKineticGunScriptAPI {
         return func.call().checkboolean();
     }
 
-    /**
-     * 获取当前系统时间，单位毫秒。
-     *
-     * @return 当前系统时间
-     */
+    /** 枪械逻辑时间（毫秒），单人暂停时冻结。不是 Unix 时间戳。 */
     public long getCurrentTimestamp() {
         return GunTime.nowMillis();
+    }
+
+    /** 真实系统时间（Unix 毫秒），用于需要日期的脚本，不用于动作冷却。 */
+    public long getRealSystemTimestamp() {
+        return System.currentTimeMillis();
     }
 
     /**

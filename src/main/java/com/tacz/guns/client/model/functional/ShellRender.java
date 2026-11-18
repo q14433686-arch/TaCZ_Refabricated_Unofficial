@@ -49,7 +49,7 @@ public class ShellRender implements IFunctionalSubmitter {
     }
 
     public void addShell(Vector3f randomVelocity) {
-        if (SHELL_QUEUE.size() > 128) {
+        if (SHELL_QUEUE.size() >= 128) {
             SHELL_QUEUE.pollFirst();
         }
         double xRandom = Math.random() * randomVelocity.x();
@@ -105,7 +105,7 @@ public class ShellRender implements IFunctionalSubmitter {
 
     private void renderSingleShell(ItemDisplayContext transformType1, int light, int overlay, Data data, Vector3f initialVelocity, Vector3f acceleration, Vector3f angularVelocity, BedrockAmmoModel model, Identifier location) {
         // 再检查一次
-        if (data.normal == null && data.pose == null) {
+        if (data.epoch != GunTime.epoch() || data.normal == null || data.pose == null) {
             return;
         }
         // 先初始化到缓存位置和朝向
@@ -147,12 +147,10 @@ public class ShellRender implements IFunctionalSubmitter {
     }
 
     private void checkShellQueue(long lifeTime) {
-        if (!SHELL_QUEUE.isEmpty()) {
-            Data data = SHELL_QUEUE.peekFirst();
-            if ((GunTime.nowMillis() - data.timeStamp) > lifeTime) {
-                SHELL_QUEUE.pollFirst();
-                checkShellQueue(lifeTime);
-            }
+        long now = GunTime.nowMillis(), epoch = GunTime.epoch();
+        for (Data data; (data = SHELL_QUEUE.peekFirst()) != null;) {
+            if (data.epoch == epoch && now - data.timeStamp <= lifeTime) break;
+            SHELL_QUEUE.pollFirst();
         }
     }
 
@@ -360,6 +358,7 @@ public class ShellRender implements IFunctionalSubmitter {
 
     public static class Data {
         public final long timeStamp;
+        final long epoch = GunTime.epoch();
         public final Vector3f randomOffset;
 
         public Matrix3f normal = null;

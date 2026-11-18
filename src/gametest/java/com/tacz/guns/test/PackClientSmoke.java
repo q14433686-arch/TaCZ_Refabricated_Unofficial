@@ -7,6 +7,7 @@ import com.tacz.guns.block.entity.GunDisplayCaseBlockEntity;
 import com.tacz.guns.init.ModBlocks;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
@@ -27,6 +28,7 @@ public class PackClientSmoke implements FabricClientGameTest {
     @Override public void runTest(ClientGameTestContext context) {
         var id = Identifier.parse("tacz:ak47");
         GunMod.LOGGER.info("PORT_SMOKE_CLIENT: creating world");
+        WorldReturnSmoke.Saved saved;
         try (var world = context.worldBuilder().create()) {
             context.waitFor(client -> CommonNetworkCache.INSTANCE.getGunIndex(id) != null
                     && TimelessAPI.getClientGunIndex(id).isPresent());
@@ -67,15 +69,18 @@ public class PackClientSmoke implements FabricClientGameTest {
             world.getServer().runOnServer(server -> world.getConnection().getServerPlayer().setGameMode(GameType.CREATIVE));
             context.waitFor(client -> client.player.isCreative());
             checkCreativePackSidebar(context);
-            checkRacks(context, world, id);
+            var rack = checkRacks(context, world, id);
             var oldDisplay = ExternalRigSmoke.check(context);
             try { ConversionReloadSmoke.run(context, world); }
             catch (java.io.IOException e) { throw new java.io.UncheckedIOException(e); }
             ExternalRigSmoke.afterReload(context, oldDisplay);
+            SessionClockSmoke.pauseAndResume(context);
+            saved = WorldReturnSmoke.prepare(context, world, rack);
         }
+        WorldReturnSmoke.reopen(context, saved);
     }
 
-    private static void checkRacks(ClientGameTestContext context, TestSingleplayerContext world, Identifier gunId) {
+    private static BlockPos checkRacks(ClientGameTestContext context, TestSingleplayerContext world, Identifier gunId) {
         var pos = context.computeOnClient(mc -> mc.player.blockPosition().south(3).above());
         world.getServer().runOnServer(server -> {
             var player = world.getConnection().getServerPlayer();
@@ -111,6 +116,7 @@ public class PackClientSmoke implements FabricClientGameTest {
         world.getConnection().waitForChunksRender();
         context.waitTicks(20);
         saveFrame(context, "tacz_display_wall");
+        return pos;
     }
 
     private static void checkCreativePackSidebar(ClientGameTestContext context) {
