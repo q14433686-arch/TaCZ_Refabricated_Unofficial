@@ -1,6 +1,6 @@
 package com.tacz.guns.client.render.scope;
 
-/** Per-attachment imaging presets for the existing scope window. Order matches scope_lens.fsh. */
+/** Per-attachment imaging presets for the existing scope window. Order matches scope_lens.glsl. */
 public enum ScopeVisionMode {
     NORMAL,
     NIGHT_VISION_GREEN,

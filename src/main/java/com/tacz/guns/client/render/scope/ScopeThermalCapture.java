@@ -45,7 +45,7 @@ public final class ScopeThermalCapture {
     }
 
     static void beginFrame(boolean active) {
-        HOT.clear();
+        if (!HOT.isEmpty()) HOT.clear();
         enabled = active && !failed;
         bodies = null;
         recording = ready = false;
@@ -58,7 +58,11 @@ public final class ScopeThermalCapture {
         if (!type.is(BLACKLIST) && (entity instanceof LivingEntity || type.is(WHITELIST))) HOT.add(state);
     }
 
-    public static void beginWorldPass() { bodies = enabled ? new SubmitNodeStorage() : null; }
+    public static void beginWorldPass() {
+        // If the narrow PIP scene already captured heat, don't collect the same models
+        // a second time when the main scene renders immediately afterwards.
+        bodies = enabled && !ready && !failed ? new SubmitNodeStorage() : null;
+    }
 
     public static boolean beginEntity(EntityRenderState state) {
         boolean previous = recording;
@@ -92,6 +96,14 @@ public final class ScopeThermalCapture {
                 mask = new TextureTarget("tacz_scope_heat", scene.width, scene.height, GpuFormat.RGBA8_UNORM, depth.getFormat());
             }
             var encoder = RenderSystem.getDevice().createCommandEncoder();
+            if (storage.order(0).solid.isEmpty()) {
+                // No eligible body in the frustum: the sensor still shows a cold scene.
+                // Don't copy a full depth image or prepare another feature frame for that.
+                try (var ignored = encoder.createRenderPass(() -> "tacz_scope_heat_empty",
+                        mask.getColorTextureView(), Optional.of(new Vector4f(0f)))) { }
+                ready = true;
+                return;
+            }
             encoder.copyTextureToTexture(depth, mask.getDepthTexture(), 0, 0, 0, 0, 0, scene.width, scene.height);
             var mv = RenderSystem.getModelViewStack();
             mv.pushMatrix();
@@ -104,7 +116,7 @@ public final class ScopeThermalCapture {
                     frame.executeSolid(pass);
                 }
             } finally { mv.popMatrix(); }
-            ready = true; // also when there are zero hot entities: this frame's mask is empty
+            ready = true;
         } catch (RuntimeException ex) {
             failed = true;
             GunMod.LOGGER.warn("[TACZ Scope] Heat capture unavailable; using the optical lens.", ex);

@@ -74,7 +74,8 @@ final class WorldReturnSmoke {
 
     static void reopen(ClientGameTestContext context, Saved saved) {
         context.runOnClient(mc -> {
-            if (saved.epoch == GunTime.epoch() || saved.machine.getExitingTime() != -1) throw new AssertionError("Old put-away deadline survived logout");
+            if (saved.epoch == GunTime.epoch() || saved.machine.getExitingTime() != -1) throw new AssertionError("Old put-away deadline survived logout: epoch="
+                    + saved.epoch + " -> " + GunTime.epoch() + ", deadline=" + saved.machine.getExitingTime());
         });
         try (var world = saved.save.open()) {
             GunMod.LOGGER.info("PORT_SMOKE_CLIENT: rejoined saved world, waiting for new snapshot and persisted stacks");

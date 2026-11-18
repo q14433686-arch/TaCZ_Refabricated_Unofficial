@@ -128,7 +128,10 @@ public class TaCZFabricClient implements ClientModInitializer {
         InputEvent.InteractionKeyMappingTriggered.EVENT.register(ClientPreventGunClick::onClickInput);
 
         ClientTickEvents.START_CLIENT_TICK.register(ClientGunTimeLifecycle::tick);
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> com.tacz.guns.client.render.scope.ScopePipRenderer.invalidateLensResources());
+        // Fabric's DISCONNECT can run from Netty channelInactive. Never destroy GPU
+        // textures in that callback (nor prevent later disconnect listeners from running).
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) ->
+                client.execute(com.tacz.guns.client.render.scope.ScopePipRenderer::invalidateLensResources));
         ClientPlayConnectionEvents.DISCONNECT.register(ClientGunTimeLifecycle::disconnect);
         ClientPlayConnectionEvents.DISCONNECT.register(CommonNetworkCacheEvent::onDisconnect);
 
