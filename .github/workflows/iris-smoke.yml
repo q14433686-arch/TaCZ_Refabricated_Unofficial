@@ -43,8 +43,8 @@ jobs:
           for p in [Path(os.environ['RUNNER_TEMP'])/'tacz-client.log',Path('build/run/clientGameTest/logs/latest.log')]:
             if not p.exists(): continue
             lines=p.read_text(errors='replace').splitlines()
-            for i in [i for i,s in enumerate(lines) if re.search('Caused by:|error:|AssertionError|Failed|Exception|requires ',s)][-15:]:
-              print('::notice::'+' '.join(lines[i:i+3])[:1800].replace('%','%25'))
+            for i in [i for i,s in enumerate(lines) if re.search('com[.]tacz[.]guns[.]test[.]|PORT_|Heat capture|Pack lens|Caused by:|error:|AssertionError|Failed|Exception|requires ',s)][-24:]:
+              print('::notice::'+' '.join(lines[i:i+5])[:1800].replace('%','%25'))
           PY
       - uses: actions/upload-artifact@v4
         if: always()

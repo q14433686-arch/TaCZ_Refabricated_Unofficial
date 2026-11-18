@@ -68,11 +68,14 @@ final class ScopeLensSmoke {
         });
         var prior = ctx.computeOnClient(mc -> new boolean[]{RenderConfig.EXPERIMENTAL_SCOPE_LENS.get(),
                 RenderConfig.SCOPE_THERMAL_ENABLE.get(), RenderConfig.SCOPE_PIP_ENABLE.get(), RenderConfig.SCOPE_PIP_RERENDER.get(),
-                RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.get(), mc.options.bobView().get()});
+                RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.get(), mc.options.bobView().get(), RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.get()});
         try {
             // The normal View Bobbing option also drives pack camera-node animation.
             // Hold the world camera still for this A/B pixel comparison, not the entity renderer.
-            ctx.runOnClient(mc -> mc.options.bobView().set(false));
+            ctx.runOnClient(mc -> {
+                mc.options.bobView().set(false);
+                if (Boolean.getBoolean("tacz.test.iris")) RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.set(true);
+            });
             ctx.waitFor(mc -> mc.level.getEntity(scene.cow) != null && mc.player.getMainHandItem().getItem() instanceof IGun g
                     && SIGHT.equals(g.getAttachmentId(mc.player.getMainHandItem(), AttachmentType.SCOPE)));
             ctx.getInput().lookAt(scene.aim);
@@ -135,6 +138,7 @@ final class ScopeLensSmoke {
             ctx.runOnClient(mc -> {
                 RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.set(prior[4]);
                 mc.options.bobView().set(prior[5]);
+                RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.set(prior[6]);
             });
             flags(ctx, prior[0], prior[1], prior[2], prior[3]);
             world.getServer().runOnServer(s -> { var e = world.getConnection().getServerPlayer().level().getEntity(scene.cow); if (e != null) e.discard(); });
