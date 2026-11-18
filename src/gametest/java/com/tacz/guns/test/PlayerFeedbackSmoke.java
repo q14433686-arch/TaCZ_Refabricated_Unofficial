@@ -42,7 +42,7 @@ public final class PlayerFeedbackSmoke {
                 p.getInventory().setItem(0,p.getMainHandItem().copy());
             });
             ctx.waitFor(mc->mc.player.getMainHandItem().getItem() instanceof IGun && mc.player.getOffhandItem().getItem() instanceof IGun);
-            ctx.runOnClient(mc->{ observing=true;offhand=hotbar=tilts=0;mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);RenderConfig.DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER.set(false); });
+            ctx.runOnClient(mc->{ mc.player.getInventory().setSelectedSlot(1); observing=true;offhand=hotbar=tilts=0;mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);RenderConfig.DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER.set(false); });
             ctx.waitFor(mc->offhand>0&&hotbar>0);
             ctx.runOnClient(mc->{RenderConfig.DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER.set(true);offhand=hotbar=0;});
             ctx.waitTicks(5);
