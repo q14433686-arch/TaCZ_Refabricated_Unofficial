@@ -107,3 +107,10 @@ python3 scripts/verify_120_resources.py
 ### 批量玩法实现跟进
 
 原审计中的空手趴下、趴姿角度、空中散布、同队/实体免伤、方块标签和硬度缺口已提交实现及新增游戏测试，但目前**未获得本轮游戏通过结论**。射手位移和枪声激怒也新增真实生存连接测试，尚不能改写旧的证据等级。具体执行记录和未测项见[玩家清单顶部](FABRIC_120_PLAYER_CHECKLIST.md)及[移植流水](FABRIC_120_PORT_26_3.md)。枪口 `renew` 运行时仍未移植。
+
+
+### 默认枪口原生播放路径（实现先于像素验收）
+
+`NativeMuzzleEffects` 已把默认闪光/烟雾接入第一人称及按 render-state owner 隔离的第三人称主手 locator；烟雾一次投到世界、后续脱离枪口。Glock 无旧贴图的 renew 配置保留，旧纹理路径只处理 legacy。包含烟雾独立开关、配件偏移/缩放、模型瞬时照明和 reload/logout 清理。**这是默认两种 profile 的原生实现，不是一般 Snowstorm/Molang 解释器**；自定义粒子定义/动画关键帧仍缺。
+
+新集成测试目前只声明枪口 geometry submission、单次 smoke burst、开关和清理，不声明像素 parity。编译/JUnit/专服已过，新增客户端结果与截图边界见[玩家清单最新跟进](FABRIC_120_PLAYER_CHECKLIST.md)。早先“运行时完全未移植”的审计结论是历史基线，已被本段部分推进，但不能改成“全部完成”。

@@ -169,3 +169,15 @@ UH-1 的 `text_show` 经 26.3 第一人称 extraction 读取实际游戏方块�
 
 
 参数层 [cc80061 完整构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44343040047)的 Full build（含新增 JUnit）及专服 smoke 已通过；客户端回归仍在安装软件 Vulkan 依赖，尚无该提交的新画面结论。版本一致性 `--strict`、`git diff --check` 通过。
+
+
+### 默认 renew 原生运行时：一起接入第一/第三人称和世界烟雾
+
+`2788d9b` / `4a7ff24` / `3f203f5` / `944e138` 实现并接线 `NativeMuzzleEffects`：由客户端 settled post-fire 建立按实体 ID 隔离的有界请求；实体 render state 透传 owner，主手 functional locator 消费。第一人称 20ms instant 发射从首次 locator 提交起算，第三人称窗口 150ms；第一人称请求不在切到 F5 后重放。烟雾只保存一次世界变换，之后脱离枪口，按玩法时钟积分、衰减，512 个 puff / 128 个射手上限。第一人称用既有手部入口基座归一化及手部/世界 FOV 补偿，不用不稳定的全局 ModelView 猜测坐标。枪口配件 offset（Blockbench /16）与独立 flash/smoke 参数同时生效；Cloth 增加已有翻译键对应的 RenderMuzzleSmoke 开关。
+
+只实现默认两种定义 profile 的原生采样，不是 Snowstorm/Molang 通用运行时。自定义 ID 警告并跳过，不拿 vanilla 粒子替代；默认 ID 下的自定义 JSON 组件、动画关键帧粒子和第三方发射器仍缺失。默认纹理、UV 条帧、生命周期、颜色梯度、阻尼与方向锥已转为原生求值；不能声称全部枪包或逐像素 parity。
+
+`MuzzleEffectsSmoke` 经实际输入检查 AK47、RC1、无旧纹理的 Glock、F5，追踪的另一个人形射手，以及关烟保留火光和 teardown。其计数在 locator/collector 层，截图仅留供复核；不把该计数当成可见像素。早期测试编译报错（lookAt 需要 BlockPos）已修正。`944e138` [构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44347504106)的 Full build、JUnit、专服门禁通过，集成客户端仍在安装 Vulkan 依赖。原镜片/热成像回归在相同客户端测试链中，尚不能先报本轮通过。未发布。
+
+
+上述 `944e138` 客户端实际**未启动**：系统依赖安装步骤达到 10 分钟上限，非游戏断言失败。`install_client_smoke_deps.sh` 增加整次安装的 180 秒限时、临时官方 Ubuntu archive 回退，以及修复 dpkg/刷新/重试的 40/60/240 秒预算；不修改 runner 全局源，不绕过 Vulkan 设备探针或任何客户端门禁。随后的源码也清除保存的旧 level 引用，并使默认烟雾颜色按原定义 0/.3/.6/.9 梯度插值。仍需新 CI 实际验证。

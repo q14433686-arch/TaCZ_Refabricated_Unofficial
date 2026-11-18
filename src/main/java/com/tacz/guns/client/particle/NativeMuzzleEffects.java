@@ -101,7 +101,7 @@ public final class NativeMuzzleEffects {
         PUFFS.removeIf(p -> now < p.born || (now - p.born) / 1000f >= p.lifetime);
     }
     public static void clear() {
-        SHOTS.clear(); PUFFS.clear(); WARNED.clear(); currentOwner = -1;
+        SHOTS.clear(); PUFFS.clear(); WARNED.clear(); currentOwner = -1; level = null; epoch = -1;
     }
 
     private static void onShot(GunFirePostEvent event) {
@@ -240,11 +240,16 @@ public final class NativeMuzzleEffects {
             pose.rotate(com.mojang.math.Axis.ZP.rotationDegrees(puff.rotation));
             float size = puff.size * (.1f + .22f*life);
             int frame = Math.min(5, (int)(life*6));
-            int alpha = (int)(128 * Math.max(0, 1-life/.9f));
-            int grey = (int)(140 - 76*life);
+            int alpha = (int)gradient(life, 128, 117, 96, 0);
+            int grey = (int)gradient(life, 140, 128, 64, 0);
             int color = alpha<<24 | grey<<16 | grey<<8 | grey;
             quad(collector, pose, RenderTypes.energySwirl(SMOKE_TEXTURE, 0, 0), size, size, frame/6f, (frame+1)/6f, color, puff.light);
         }
+    }
+    private static float gradient(float age, float a, float b, float c, float d) {
+        if (age < .3f) return a + (b-a)*(age/.3f);
+        if (age < .6f) return b + (c-b)*((age-.3f)/.3f);
+        return c + (d-c)*Math.min(1,(age-.6f)/.3f);
     }
     public static int flashLight(ItemStack stack, int light) {
         var mc = Minecraft.getInstance();
