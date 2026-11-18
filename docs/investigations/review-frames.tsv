@@ -1,3 +1,7 @@
 # run ID	artifact kind	frame (basename without suffix)
 44231476610	viewer-jei	tacz_viewer_jei
 44231476610	viewer-rei	tacz_viewer_rei
+44233384724	smoke	tacz_xm157_entity
+44233384724	smoke	tacz_xm157_control
+44233384724	smoke	tacz_xm157_restored
+44233384724	smoke	tacz_xm157_occluded

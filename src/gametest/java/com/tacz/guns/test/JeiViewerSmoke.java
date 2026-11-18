@@ -31,5 +31,6 @@ public final class JeiViewerSmoke implements ViewerSmoke, IModPlugin {
         if (match.size() != 1) throw new AssertionError("Expected one JEI recipe for " + gun + ", got " + match.size());
         runtime.getRecipesGui().showRecipes(manager.getRecipeCategory(type), match, List.of());
     }
-    @Override public boolean isOpen(Screen screen) { return runtime != null && runtime.getRecipesGui() == screen; }
+    @Override public boolean isOpen(Screen screen) { return screen != null && runtime != null && runtime.getRecipesGui() == screen
+                && runtime.getRecipesGui().getParentScreen().isPresent(); }
 }

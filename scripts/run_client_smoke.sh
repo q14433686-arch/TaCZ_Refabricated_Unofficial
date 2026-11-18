@@ -45,6 +45,8 @@ esac
 timeout -k 20s 10m ./gradlew "${args[@]}" runClientGameTest --console=plain --stacktrace 2>&1 | tee "$RUNNER_TEMP/tacz-client.log"
 if [[ -n ${TACZ_SMOKE_VIEWER:-} ]]; then
     grep -Fq "PORT_VIEWER: $TACZ_SMOKE_VIEWER showed the reloaded gun; both query directions changed" "$run/logs/latest.log"
+    verdict=$(grep -Eo 'PORT_VIEWER: [[:digit:]]+ of [[:digit:]]+ central samples show the recipe panel against the world control' "$run/logs/latest.log")
+    printf '::notice::%s: %s\n' "$TACZ_SMOKE_VIEWER" "$verdict"
     test -s "$(find "$run/screenshots" -name "*tacz_viewer_$TACZ_SMOKE_VIEWER.png" -print -quit)"
     exit
 fi
