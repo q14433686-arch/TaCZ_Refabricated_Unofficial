@@ -1185,7 +1185,9 @@ public final class ScopePipRenderer {
                         camera.fogData.color,
                         renderSky,
                         false);
-                if (!iris && ScopeLensFrame.needsHeat()) ScopeThermalCapture.finish(pip, camera);
+                // Iris renders the narrow scene into main, not our vanilla redirect.
+                // Capture its depth before the subsequent wide world overwrites it.
+                if (ScopeLensFrame.needsHeat()) ScopeThermalCapture.finish(iris ? main : pip, camera);
             } finally {
                 // 必须最先清：从这里往后（主画面那一遍）各 phase 要恢复
                 // 「取完就清空」的原样，否则节点会一直堆到下一帧去。
@@ -1384,9 +1386,9 @@ public final class ScopePipRenderer {
         if (!ScopeMaskRenderer.claimCompositeSlot()) {
             return;
         }
-        if (!isEnabledForHeldGun()) {
-            return;
-        }
+        boolean pip = isEnabledForHeldGun() && currentAimingProgress() > minAimingProgress();
+        ScopeLensConfig lens = ScopeLensFrame.current();
+        if (!pip && lens == null) return;
         // 让诊断 trace 知道「这一帧真的合成了」—— 光影下没有 SCOPE-PASS，
         // 只有这里能给它一个可扣预算的信号。见 ScopePipTrace.ARMED_FRAME_LIMIT 的说明。
         ScopePipTrace.mark("PIP COMPOSITE (screen space, after the Iris pipeline finished)");
@@ -1399,17 +1401,17 @@ public final class ScopePipRenderer {
         // 于是「合成结果 == 底下已经画好的 1× 画面」，肉眼零变化；
         // 瞄具归位（progress→1）时才到满倍率。顺带与整屏变焦那条老路的公式一致
         // （CameraSetupEvent 的 1 + (zoom-1)·progress），过渡手感也对得上。
-        if (rerenderMode()) {
+        if (pip && narrowScene) {
             // 二次渲染：离屏纹理里已经是用窄 FOV【真画出来】的原生分辨率画面，
             // 屏幕坐标与主画面一一对应。倍率传 1 = 逐像素取用，再放大就是放大两遍。
-            runComposite(1.0f, null, true);
+            runComposite(1.0f, lens, true);
             return;
         }
         float progress = currentAimingProgress();
         float zoom = Math.max(1.0f, scopeMagnification());
         // 总倍率按进度插值，再除掉世界这一帧已经放大的那一份，剩下的才归镜内。
         // 两者相乘恒等于 1+(Z-1)·progress，所以镜内外任何时刻都是同一个总倍率。
-        runComposite((1.0f + (zoom - 1.0f) * progress) / worldZoomAtProgress(progress), null, true);
+        runComposite(pip ? (1.0f + (zoom - 1.0f) * progress) / worldZoomAtProgress(progress) : 1f, lens, pip);
     }
 
     /** 合成本体：读离屏拷贝、按倍率重投影、只写进目镜孔径。两个调用点共用。 */

@@ -37,12 +37,21 @@ probe & probe_pid=$!
 trap 'kill "$probe_pid" 2>/dev/null || true' EXIT
 # Leave time for Gradle/SDL teardown and evidence upload before the enclosing job-step timeout.
 args=(-PtaczClientSmoke)
+if [[ ${TACZ_SMOKE_IRIS:-} == true ]]; then args+=(-PtaczIrisSmoke); fi
 case ${TACZ_SMOKE_VIEWER:-} in
     jei|rei) args+=("-PtaczViewerSmoke=$TACZ_SMOKE_VIEWER");;
     '') ;;
     *) echo 'Expected jei or rei' >&2; exit 2;;
 esac
 timeout -k 20s 10m ./gradlew "${args[@]}" runClientGameTest --console=plain --stacktrace 2>&1 | tee "$RUNNER_TEMP/tacz-client.log"
+if [[ ${TACZ_SMOKE_IRIS:-} == true ]]; then
+    grep -Fq 'PORT_IRIS: active shader pack' "$run/logs/latest.log"
+    grep -Fq 'PORT_LENS: XL50 restored' "$run/logs/latest.log"
+    grep -Fq 'PORT_CORE:' "$run/logs/latest.log"
+    grep -Fq 'PORT_IRIS: thermal and new-item regression passed' "$run/logs/latest.log"
+    grep -E 'PORT_IRIS:|PORT_LENS:|PORT_CORE:' "$run/logs/latest.log" | sed 's/^/::notice::/'
+    exit
+fi
 if [[ -n ${TACZ_SMOKE_VIEWER:-} ]]; then
     grep -Fq "PORT_VIEWER: $TACZ_SMOKE_VIEWER showed the reloaded gun; both query directions changed" "$run/logs/latest.log"
     verdict=$(grep -Eo 'PORT_VIEWER: [[:digit:]]+ of [[:digit:]]+ central samples show the recipe panel against the world control' "$run/logs/latest.log")

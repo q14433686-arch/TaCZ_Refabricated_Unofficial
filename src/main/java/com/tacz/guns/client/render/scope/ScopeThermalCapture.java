@@ -66,7 +66,7 @@ public final class ScopeThermalCapture {
 
     public static boolean beginEntity(EntityRenderState state) {
         boolean previous = recording;
-        recording = bodies != null && HOT.contains(state);
+        recording = bodies != null && HOT.contains(state) && !com.tacz.guns.compat.iris.IrisCompat.isRenderShadow();
         return previous;
     }
 
@@ -88,6 +88,9 @@ public final class ScopeThermalCapture {
         bodies = null;
         ready = false;
         if (storage == null || !enabled || scene.getDepthTexture() == null) return;
+        // Replay vanilla cutout coverage into a private target, never a pack's gbuffer
+        // program (which may have different outputs, alpha semantics and attachments).
+        boolean bypass = ScopePipelinePrewarm.enterIrisBypass();
         try {
             var depth = scene.getDepthTexture();
             if (mask == null || mask.width != scene.width || mask.height != scene.height
@@ -120,6 +123,8 @@ public final class ScopeThermalCapture {
         } catch (RuntimeException ex) {
             failed = true;
             GunMod.LOGGER.warn("[TACZ Scope] Heat capture unavailable; using the optical lens.", ex);
+        } finally {
+            ScopePipelinePrewarm.exitIrisBypass(bypass);
         }
     }
 

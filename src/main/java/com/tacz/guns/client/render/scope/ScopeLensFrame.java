@@ -22,7 +22,7 @@ final class ScopeLensFrame {
         if (expected != null && (disabled || !RenderConfig.EXPERIMENTAL_SCOPE_LENS.get()
                 || !RenderConfig.SCOPE_MASK_ENABLE.get() || mc.player == null || mc.level == null
                 || mc.getCameraEntity() != mc.player || !mc.options.getCameraType().isFirstPerson()
-                || IrisCompat.isUsingRenderPack() || IrisCompat.shouldDisableScopeMaskUnderShaderPack()
+                || IrisCompat.shouldDisableScopeMaskUnderShaderPack()
                 || IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(
                         mc.getDeltaTracker().getGameTimeDeltaPartialTick(false)) <= 0.001f)) expected = null;
         ScopeThermalCapture.beginFrame(needsHeat());

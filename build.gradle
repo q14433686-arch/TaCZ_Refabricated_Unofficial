@@ -262,6 +262,13 @@ if (project.hasProperty('taczViewerSmoke')) {
     }
 }
 
+// CI-only optional runtime. Downloaded, hash-checked pins are never nested in a release.
+if (project.hasProperty('taczIrisSmoke')) {
+    if (!project.hasProperty('taczClientSmoke')) throw new GradleException('Iris smoke needs client tests')
+    dependencies { gametestRuntimeOnly files('build/iris-smoke/iris.jar', 'build/iris-smoke/sodium.jar') }
+    loom.runs.clientGameTest.property 'tacz.test.iris', 'true'
+}
+
 // Install the fixture as an external ZIP (not a mod resource or part of the release jar).
 def smokePack = tasks.register('zipSmokePack', Zip) {
     from 'src/gametest/fixtures/overlay'
@@ -278,6 +285,14 @@ if (project.hasProperty('taczClientSmoke')) {
         from(smokePack) { into 'tacz' }
         // Test-only options, copied after Loom cleans the run dir; never change a user's options.
         from 'src/gametest/clientConfig'
+        if (project.hasProperty('taczIrisSmoke')) {
+            exclude 'options.txt'
+        }
+    }
+    if (project.hasProperty('taczIrisSmoke')) {
+        installClientPack.configure { doLast {
+            copy { from 'src/gametest/irisConfig'; into layout.buildDirectory.dir('run/clientGameTest') }
+        } }
     }
     tasks.named('runClientGameTest') { dependsOn installClientPack }
 }

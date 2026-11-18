@@ -43,6 +43,19 @@ public class PackClientSmoke implements FabricClientGameTest {
             world.getConnection().waitForChunksRender();
             context.waitTicks(30);
             saveFrame(context, "tacz_held_default_gun");
+            if (Boolean.getBoolean("tacz.test.iris")) {
+                context.runOnClient(mc -> {
+                    if (!com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack())
+                        throw new AssertionError("Iris runtime must have a shader pack active, not just be installed");
+                    GunMod.LOGGER.info("PORT_IRIS: active shader pack on {}", com.mojang.blaze3d.systems.RenderSystem.getDevice());
+                });
+                ScopeLensSmoke.run(context, world);
+                CoreCompletionSmoke.run(context, world);
+                ConfigPanelSmoke.run(context);
+                OpticInstallSmoke.run(context, world);
+                GunMod.LOGGER.info("PORT_IRIS: thermal and new-item regression passed");
+                return;
+            }
             // Remote clients get the derived capability, never the server's logic file.
             context.waitFor(client -> {
                 var index = CommonNetworkCache.INSTANCE.getGunIndex(Identifier.parse("port_test:scripted"));

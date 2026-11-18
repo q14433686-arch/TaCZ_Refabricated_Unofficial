@@ -140,7 +140,7 @@ public final class ScopePipelinePrewarm {
 
     private static String lastSignature = null;
 
-    private static boolean enterIrisBypass() {
+    static boolean enterIrisBypass() {
         Field f = bypassField();
         if (f == null) {
             return false;
@@ -155,7 +155,7 @@ public final class ScopePipelinePrewarm {
         return false;
     }
 
-    private static void exitIrisBypass(boolean toggled) {
+    static void exitIrisBypass(boolean toggled) {
         if (!toggled) {
             return;
         }
