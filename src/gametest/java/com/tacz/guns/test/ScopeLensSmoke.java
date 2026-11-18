@@ -293,7 +293,10 @@ final class ScopeLensSmoke {
             if (stripe(a) && stripe(b)) kept++;
             if (max(a)-min(a)>24 && max(a)-max(b)>6 && max(b)>max(a)*.5) darkened++;
         }
-        if (red<20 || kept<.88*Math.max(red, resultRed) || darkened<150)
+        // Display graphics are now restored *after* the optical scene tint. Additional
+        // red reticle pixels are legitimate; only the scene's original stripe must survive.
+        // Magnification is independently checked using contiguous stripe widths above.
+        if (red<20 || kept<.88*red || darkened<150)
             throw new AssertionError("XL50 optics: shared stripe="+kept+", bare="+red+", optical="+resultRed+", darkened="+darkened);
         assertExterior(bare, optical);
     }
