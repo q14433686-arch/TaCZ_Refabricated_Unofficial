@@ -184,10 +184,12 @@ melee、consumable、detonator，以及 explode / sticky / smoke / stun / effect
 2. 枪身、相关配件、枪口火光和准星的 shader 采样该掩码并按区域丢弃片元；
 3. 世界场景本身仍只渲染一次。
 
-这里的离屏目标只保存目镜掩码，**不是第二份世界画面**。默认配置下「镜内放大」依旧来自
+这张目镜掩码本身**不是第二份世界画面**。默认配置下「镜内放大」依旧来自
 整屏 FOV 变焦，镜筒周围的画面会跟着放大——与上游行为一致。代码中的
 `PictureInPictureRenderer` 仅用于枪械工作台的 GUI 模型预览，与瞄具实现无关（本节的
 画中画是 `ScopePipRenderer`，二者是两套东西）。
+
+**26.3 的枪包镜片与 PIP 是两个独立选项。** `EnableExperimentalScopeLens`（默认开）按当前筒镜 display 的 `scope_lens` 在目镜内处理世界画面的拷贝；关掉可恢复无镜片处理的画面，不改变倍率。`EnableScopeThermal`（默认开）只控制热源采集，关掉后热成像镜回到其光学偏色。白热模式下，符合条件且未被方块遮住的实体模型显示为亮色；类型标签 `tacz:thermal_imaging/blacklist` 优先于 `whitelist`。纯红点通道不应用该镜片。启用 Iris 光影包时保留原有合成，不声称支持这套热成像；验证范围见[移植对照表](docs/investigations/FABRIC_120_COMPARISON.md)。
 
 Iris 有单独的 HAND shader 接线；其他 shader pack 仍可能改写自定义管线的最终效果。
 Sulkan 目前没有等价接线，检测到时会回退到不启用镜内掩码裁剪的普通瞄具几何。
@@ -198,7 +200,7 @@ Sulkan 目前没有等价接线，检测到时会回退到不启用镜内掩码�
 新增了可选的镜内画中画：**镜筒外保持 1×，只有镜片内按瞄具倍率放大**。这是对上游行为的
 刻意偏离，属于**实验性功能**：
 
-- **默认完全关闭**（`ScopePipEnable=false`）：不动配置，行为与之前版本完全一致；
+- **PIP 默认关闭**（`ScopePipEnable=false`）：使用整屏 FOV 变焦，枪包镜片效果另行控制；
 - 两种镜内成像方式：**重投影**（默认；复用已渲染好的主画面，代价小，但高倍镜下镜内偏软）
   与**二次渲染**（`ScopePipRerender=true`；用窄 FOV 把世界真画一遍，镜内原生分辨率，
   代价是每帧多一遍完整世界渲染）；

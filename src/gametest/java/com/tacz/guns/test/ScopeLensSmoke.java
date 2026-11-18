@@ -52,7 +52,7 @@ final class ScopeLensSmoke {
             cow.snapTo(Vec3.atBottomCenterOf(aim));
             level.addFreshEntity(cow);
             for (int x=-8; x<=8; x++) for (int y=-7; y<=7; y++) level.setBlock(aim.offset(x,y,-4),
-                    (x == 0 ? Blocks.RED_CONCRETE : Blocks.BLUE_CONCRETE).defaultBlockState(), Block.UPDATE_ALL);
+                    (x == 0 ? Blocks.WOOL.red() : Blocks.WOOL.blue()).defaultBlockState(), Block.UPDATE_ALL);
             return new Scene(cow.getUUID(), aim, BlockPos.containing(p.getEyePosition().lerp(Vec3.atCenterOf(aim), .5)));
         });
         var prior = ctx.computeOnClient(mc -> new boolean[]{RenderConfig.EXPERIMENTAL_SCOPE_LENS.get(),
@@ -143,6 +143,7 @@ final class ScopeLensSmoke {
     }
 
     private static BufferedImage capture(ClientGameTestContext ctx, String name) {
+        ctx.waitFor(mc -> IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(1) > .99f);
         ctx.waitTicks(12);
         try { return ImageIO.read(ctx.takeScreenshot("tacz_lens_" + name).toFile()); }
         catch (IOException e) { throw new UncheckedIOException(e); }

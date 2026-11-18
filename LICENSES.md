@@ -9,6 +9,9 @@ Different parts of this repository may be covered by different licenses.
 Unless otherwise stated, the source code in this repository follows the license of the corresponding upstream project.
 
 - TaCZ / Timeless & Classics Guns: Zero code: GPL-3.0, according to the upstream project license.
+- The 26.3 `scope_lens` display schema and sensor palettes are adapted from
+  [Sh1roCu/TACZ-Refabricated `356bdf9`](https://github.com/Sh1roCu/TACZ-Refabricated/tree/356bdf9d48f2225bac6ceb56adc5576a418517a8/src/main/java/com/tacz/guns/client/renderer/scope)
+  and its `scope_lens.fsh`; world-depth capture and masked RenderPearl composition are native to this port.
 - LRTactical / LesRaisins Tactical Equipements code portions: GPL-3.0, according to the upstream project license.
 - TacZ Mesh Loader [TML] code portions (package `cn.sh1rocu.tacz.compat.meshloader`): GPL-3.0,
   ported from VellEagle/TacZMeshLoader `1.21.1_fabric` v0.1.7

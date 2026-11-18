@@ -127,7 +127,10 @@ public enum ClientAssetsManager {
 
                 @Override
                 public CompletableFuture<Void> reload(SharedState sharedState, Executor backgroundExecutor, PreparationBarrier barrier, Executor gameExecutor) {
-                    return barrier.wait(null).thenRunAsync(ClientIndexManager::reload, gameExecutor);
+                    return barrier.wait(null).thenRunAsync(() -> {
+                        com.tacz.guns.client.render.scope.ScopePipRenderer.invalidateLensResources();
+                        ClientIndexManager.reload();
+                    }, gameExecutor);
                 }
             });
         }

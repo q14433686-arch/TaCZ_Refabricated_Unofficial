@@ -218,6 +218,15 @@ public final class ScopePipRenderer {
     private static boolean sceneCaptured = false;
     private static boolean narrowScene;
 
+    /** Game-thread resource reload or disconnect: never reuse a captured scene/profile there. */
+    public static void invalidateLensResources() {
+        ScopeMaskRenderer.lensLastFrame = ScopeMaskRenderer.lensThisFrame = ScopeLensFrame.expected = null;
+        ScopeLensFrame.disabled = false;
+        sceneCaptured = narrowScene = false;
+        ScopeThermalCapture.close();
+        ScopePipTarget.close();
+    }
+
     /** PIP 合成管线预热（同 {@code ScopeBodyRenderTypes#prewarmCompiledPipelines}）。 */
     public static void prewarmCompiledPipelines() {
         try {
@@ -1315,11 +1324,6 @@ public final class ScopePipRenderer {
             // 见 captureScene：光影下这条路整条让开，镜片只能有一个主人。
             return;
         }
-        // 【诊断】只跑镜内那一遍、不合成。见 ScopePipDebugNoComposite 的说明。
-        if (RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE != null
-                && RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.get()) {
-            return;
-        }
         if (!ScopeMaskRenderer.isInHandPass()) {
             return;
         }
@@ -1334,6 +1338,7 @@ public final class ScopePipRenderer {
         // 同一个字段、不同时刻，这正是设计里说的那一帧延迟。
         if (!ScopeMaskRenderer.hasMaskThisFrame()) return;
         boolean pip = isEnabledForHeldGun() && currentAimingProgress() > minAimingProgress();
+        if (pip && RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.get()) return;
         ScopeLensConfig lens = ScopeLensFrame.current();
         if (!pip && lens == null) return;
         // Classic FOV and true rerender have already magnified the source. Only reproject
