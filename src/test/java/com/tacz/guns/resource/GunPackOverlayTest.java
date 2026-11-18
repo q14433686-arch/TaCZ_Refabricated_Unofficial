@@ -97,6 +97,41 @@ class GunPackOverlayTest {
         }
     }
 
+    @ParameterizedTest @ValueSource(booleans = {false, true})
+    void attachmentTagsAccumulateAcrossPacksButIndexesStillOverride(boolean reverse) throws Exception {
+        Path old = temp.resolve("legacy"), current = temp.resolve("current");
+        String tag = "data/fixture/tacz_tags/attachments/scope.json";
+        String allow = "data/fixture/tacz_tags/attachments/allow_attachments/rifle.json";
+        for (Path root : List.of(old, current)) {
+            Files.createDirectories(root.resolve(tag).getParent());
+            Files.createDirectories(root.resolve(allow).getParent());
+            Files.createDirectories(root.resolve("data/fixture/index/attachments"));
+            Files.writeString(root.resolve("gunpack.meta.json"), "{\"namespace\":\"fixture\"}");
+            Files.writeString(root.resolve("data/fixture/index/attachments/scope.json"), root == old ? "old" : "new");
+        }
+        Files.writeString(old.resolve(tag), "[\"fixture:old\",\"fixture:shared\"]");
+        Files.writeString(current.resolve(tag), "[//comment\n\"fixture:new\",\"fixture:shared\"]");
+        Files.writeString(old.resolve(allow), "[\"#fixture:scope\"]");
+        Files.writeString(current.resolve(allow), "[\"fixture:exclusive\"]");
+        var a = new GunPackLoader.GunPack(old, "fixture");
+        var b = new GunPackLoader.GunPack(current, "fixture");
+        var supplier = GunPackLoader.supplier(null, reverse ? List.of(b,a) : List.of(a,b));
+        var info = new PackLocationInfo("fixture", Component.literal("Fixture"), PackSource.DEFAULT, Optional.empty());
+        try (var resources = supplier.openResources(info, null).findFirst().orElseThrow()) {
+            var id = Identifier.parse("fixture:tacz_tags/attachments/scope.json");
+            var values = new Gson().fromJson(read(resources.getResource(PackType.SERVER_DATA,id)), String[].class);
+            assertEquals(java.util.Set.of("fixture:old","fixture:new","fixture:shared"), java.util.Set.of(values));
+            Map<Identifier, IoSupplier<InputStream>> listed = new HashMap<>();
+            resources.listResources(PackType.SERVER_DATA,"fixture","tacz_tags",listed::put);
+            assertEquals(read(resources.getResource(PackType.SERVER_DATA,id)), read(listed.get(id)));
+            var roots = new Gson().fromJson(read(resources.getResource(PackType.SERVER_DATA,
+                    Identifier.parse("fixture:tacz_tags/attachments/allow_attachments/rifle.json"))), String[].class);
+            assertEquals(java.util.Set.of("#fixture:scope","fixture:exclusive"),java.util.Set.of(roots));
+            assertEquals(reverse ? "new" : "old",read(resources.getResource(PackType.SERVER_DATA,
+                    Identifier.parse("fixture:index/attachments/scope.json"))));
+        }
+    }
+
     private static void check(PackResources pack, PackType type, String dir, String name, String expected) throws Exception {
         var id = Identifier.parse("fixture:" + dir + "/" + name);
         Map<Identifier, IoSupplier<InputStream>> listed = new HashMap<>();

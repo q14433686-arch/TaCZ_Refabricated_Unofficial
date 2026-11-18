@@ -78,3 +78,6 @@ printf '::notice::%s\n' "$(grep -F 'PORT_MUZZLE:' "$run/logs/latest.log")"
 
 grep -Fq 'PORT_FEEDBACK: back-mounted toggle, actual ordinary-hurt render hook and same-level impact delivery controls passed' "$run/logs/latest.log"
 printf '::notice::%s\n' "$(grep -F 'PORT_FEEDBACK:' "$run/logs/latest.log")"
+
+grep -Fq "PORT_OPTIC_INSTALL:" "$run/logs/latest.log"
+printf '::notice::%s\n' "$(grep -F 'PORT_OPTIC_INSTALL:' "$run/logs/latest.log")"

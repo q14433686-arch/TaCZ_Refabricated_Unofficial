@@ -32,7 +32,12 @@ public class AmmoStorageScreen extends AbstractContainerScreen<AmmoStorageMenu> 
         super.extractBackground(graphics, mouseX, mouseY, partialTick);
         int storageHeight = CONTAINER_ROWS * 18 + 17 + AmmoStorageMenu.STATUS_HEIGHT;
         graphics.blit(RenderPipelines.GUI_TEXTURED, CONTAINER_LOCATION, leftPos, topPos, 0, 0, imageWidth, 17, 256, 256);
-        graphics.fill(leftPos, topPos + 17, leftPos + imageWidth, topPos + 17 + AmmoStorageMenu.STATUS_HEIGHT, 0xFFC6C6C6);
+        // Extend a plain scanline of the chest header, including its bevel/transparent margins.
+        // A full-width gray fill protrudes beyond the side frame at large GUI scales.
+        for (int row = 0; row < AmmoStorageMenu.STATUS_HEIGHT; row++) {
+            graphics.blit(RenderPipelines.GUI_TEXTURED, CONTAINER_LOCATION, leftPos, topPos + 17 + row,
+                    0, 13, imageWidth, 1, 256, 256);
+        }
         graphics.blit(RenderPipelines.GUI_TEXTURED, CONTAINER_LOCATION, leftPos, topPos + 17 + AmmoStorageMenu.STATUS_HEIGHT,
                 0, 17, imageWidth, CONTAINER_ROWS * 18, 256, 256);
         graphics.blit(RenderPipelines.GUI_TEXTURED, CONTAINER_LOCATION, leftPos, topPos + storageHeight, 0, 126, imageWidth, 96, 256, 256);

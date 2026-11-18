@@ -57,7 +57,8 @@ public class DelegatingPackResources extends AbstractPackMetadataResources imple
         // All disk/zip layers now go through PathPackResources, which already normalizes recipes.
         Set<Identifier> seen = new HashSet<>();
         ResourceOutput emitOnce = (id, supplier) -> {
-            if (seen.add(id)) resourceOutput.accept(id, supplier);
+            if (seen.add(id)) resourceOutput.accept(id, isAttachmentTag(type, id)
+                    ? getResource(type, id) : supplier);
         };
         for (PackResources pack : getCandidatePacks(type, resourceNamespace)) {
             ResourceOutput output = GunPackLangCompat.mayListLangFiles(paths)
@@ -87,6 +88,17 @@ public class DelegatingPackResources extends AbstractPackMetadataResources imple
     @Nullable
     @Override
     public IoSupplier<InputStream> getResource(PackType type, Identifier location) {
+        if (isAttachmentTag(type, location)) {
+            List<IoSupplier<InputStream>> parts = new ArrayList<>();
+            for (PackResources pack : getCandidatePacks(type, location.getNamespace())) {
+                var part = pack.getResource(type, location);
+                if (part != null) parts.add(part);
+            }
+            if (parts.isEmpty()) return null;
+            // A composite pack hides its children from listMatchingResourceStacks. These tags
+            // are additive arrays, not winner-takes-all indexes; preserve all child values.
+            return () -> com.tacz.guns.util.AttachmentTagLayers.merge(location.toString(), parts);
+        }
         for (PackResources pack : getCandidatePacks(type, location.getNamespace())) {
             var supplier = pack.getResource(type, location);
             if (supplier != null) {
@@ -95,6 +107,11 @@ public class DelegatingPackResources extends AbstractPackMetadataResources imple
             }
         }
         return null;
+    }
+
+    private static boolean isAttachmentTag(PackType type, Identifier id) {
+        return type == PackType.SERVER_DATA && id.getPath().startsWith("tacz_tags/attachments/")
+                && id.getPath().endsWith(".json");
     }
 
     @Nullable

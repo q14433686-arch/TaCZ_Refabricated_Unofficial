@@ -67,6 +67,7 @@ public class PackClientSmoke implements FabricClientGameTest {
             });
             context.waitTicks(30);
             saveFrame(context, "tacz_held_variant");
+            OpticInstallSmoke.run(context, world);
             DefaultRefitSmoke.run(context, world);
             saveFrame(context, "tacz_default_refit");
             RangefinderSmoke.run(context, world);
