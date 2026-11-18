@@ -399,6 +399,7 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
     }
 
     protected void onHitEntity(TacHitResult result, Vec3 startVec, Vec3 endVec) {
+        if (EntityUtil.isBulletDamageIgnored(result.getEntity())) return;
         if (result.getEntity() instanceof ITargetEntity targetEntity) {
             DamageSource source = this.damageSources().thrown(this, this.getOwner());
             targetEntity.onProjectileHit(this, result, source, this.getDamage(result.getLocation()));
@@ -430,7 +431,7 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
         sources = Pair.of(preEvent.getDamageSource(NON_ARMOR_PIERCING), preEvent.getDamageSource(ARMOR_PIERCING));
         headshot = preEvent.isHeadShot();
         headShotMultiplier = preEvent.getHeadshotMultiplier();
-        if (entity == null) {
+        if (entity == null || EntityUtil.isBulletDamageIgnored(entity)) {
             return;
         }
         // 点燃
@@ -747,7 +748,7 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
 
     @Override
     public boolean ownedBy(@Nullable Entity entity) {
-        if (entity == null) {
+        if (entity == null || EntityUtil.isBulletDamageIgnored(entity)) {
             return false;
         }
         return super.ownedBy(entity);

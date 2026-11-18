@@ -44,6 +44,9 @@ public enum InaccuracyType {
      * @return 不准度情况
      */
     public static InaccuracyType getInaccuracyType(LivingEntity livingEntity) {
+        if (!livingEntity.onGround() && com.tacz.guns.config.sync.SyncConfig.USE_HIP_FIRE_INACCURACY_WHILE_AIRBORNE.get()) {
+            return isMove(livingEntity) ? MOVE : STAND;
+        }
         float aimingProgress = IGunOperator.fromLivingEntity(livingEntity).getSynAimingProgress();
         // 瞄准优先级最高
         if (aimingProgress == 1.0f) {

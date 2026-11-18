@@ -78,6 +78,17 @@ public class EntityUtil {
 
     @Nullable
     protected static EntityKineticBullet.EntityResult getHitResult(Projectile bulletEntity, Entity entity, Vec3 startVec, Vec3 endVec) {
+        if (isBulletDamageIgnored(entity)) {
+            return null;
+        }
+        // Filter before picking the nearest hit, so an ignored ally cannot hide an enemy behind it.
+        Entity owner = bulletEntity.getOwner();
+        if (com.tacz.guns.config.common.AmmoConfig.IGNORE_TEAM_FRIENDLY_FIRE.get() && owner != null) {
+            net.minecraft.world.scores.Team team = owner.getTeam();
+            if (team != null && team.isAlliedTo(entity.getTeam()) && !team.isAllowFriendlyFire()) {
+                return null;
+            }
+        }
         AABB boundingBox = HitboxHelper.getFixedBoundingBox(entity, bulletEntity.getOwner());
         // 计算射线与实体 boundingBox 的交点
         Vec3 hitPos = boundingBox.clip(startVec, endVec).orElse(null);
@@ -101,5 +112,13 @@ public class EntityUtil {
             headshot = true;
         }
         return new EntityKineticBullet.EntityResult(entity, hitPos, headshot);
+    }
+    public static boolean isBulletDamageIgnored(@Nullable Entity entity) {
+        if (entity == null || !com.tacz.guns.config.common.AmmoConfig.ENABLE_BULLET_DAMAGE_IGNORE_LIST.get()) {
+            return false;
+        }
+        Entity core = entity instanceof net.minecraft.world.entity.boss.EnderDragonPart part ? part.parentMob : entity;
+        Identifier entityId = BuiltInRegistries.ENTITY_TYPE.getKey(core.getType());
+        return !BuiltInRegistries.ENTITY_TYPE.getDefaultKey().equals(entityId) && com.tacz.guns.config.common.AmmoConfig.BULLET_DAMAGE_IGNORE_LIST.get().contains(entityId.toString());
     }
 }

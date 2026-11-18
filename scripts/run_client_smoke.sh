@@ -70,3 +70,5 @@ printf '::notice::%s\n' "$verdict"
 
 printf '::notice::%s\n' "$(grep -F 'PORT_SHOT: DB-2 bare/cancel/ground/air impulses and both positions' "$run/logs/latest.log")"
 grep -Fq 'PORT_SHOT: DB-2 bare/cancel/ground/air impulses and both positions' "$run/logs/latest.log"
+
+grep -Fq 'PORT_MOVEMENT: empty-hand crawl, disabled exit, pose ownership and airborne ADS option passed' "$run/logs/latest.log"
