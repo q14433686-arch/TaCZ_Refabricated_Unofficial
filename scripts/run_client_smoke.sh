@@ -67,3 +67,6 @@ verdict=$(grep -Eo 'PORT_LENS: XL50 restored [[:digit:]]+ classic / [[:digit:]]+
 printf '::notice::%s\n' "$verdict"
 verdict=$(grep -Eo 'PORT_LENS_SCALE: stripe 1x=[[:digit:]]+ px; classic bare/optical=[[:digit:]]+/[[:digit:]]+ px; PIP bare/optical=[[:digit:]]+/[[:digit:]]+ px' "$run/logs/latest.log")
 printf '::notice::%s\n' "$verdict"
+
+printf '::notice::%s\n' "$(grep -F 'PORT_SHOT: DB-2 bare/cancel/ground/air impulses and both positions' "$run/logs/latest.log")"
+grep -Fq 'PORT_SHOT: DB-2 bare/cancel/ground/air impulses and both positions' "$run/logs/latest.log"
