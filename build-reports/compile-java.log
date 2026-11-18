@@ -1,4 +1,4 @@
-commit: 578e67baf2c9967abfb77bc630c0fa458066f4a1
+commit: cb40d4db61f0dd1283ab423d4f86bb444a80da92
 Fetching distribution.
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
@@ -31,7 +31,7 @@ Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
 2 warnings
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795037673234.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795037984554.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -41,7 +41,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 11s
+BUILD SUCCESSFUL in 1m 3s
 1 actionable task: 1 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
   private void bobHurt(net.minecraft.client.renderer.state.level.CameraRenderState, com.mojang.blaze3d.vertex.PoseStack);
@@ -197,6 +197,36 @@ public class net.minecraft.client.renderer.rendertype.RenderType {
   public boolean sortOnUpload();
   public boolean forceSolidModelPhase();
   private static net.minecraft.client.renderer.rendertype.RenderType lambda$new$0(net.minecraft.client.renderer.rendertype.RenderSetup, net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding);
+}
+Compiled from "RenderSetup.java"
+public final class net.minecraft.client.renderer.rendertype.RenderSetup {
+  final com.mojang.renderpearl.api.pipeline.RenderPipeline pipeline;
+  final net.minecraft.client.renderer.oit.OitPipelineSet oitPipelineSet;
+  final java.util.Map<java.lang.String, net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding> textures;
+  final net.minecraft.client.renderer.rendertype.TextureTransform textureTransform;
+  final net.minecraft.client.renderer.rendertype.RenderSetup$OutlineProperty outlineProperty;
+  final java.lang.String outlineTextureName;
+  final boolean useLightmap;
+  final boolean useOverlay;
+  final boolean affectsCrumbling;
+  final boolean sortOnUpload;
+  final net.minecraft.client.renderer.rendertype.LayeringTransform layeringTransform;
+  final boolean forceSolidModelPhase;
+  private net.minecraft.client.renderer.rendertype.RenderSetup(com.mojang.renderpearl.api.pipeline.RenderPipeline, net.minecraft.client.renderer.oit.OitPipelineSet, java.util.Map<java.lang.String, net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding>, boolean, boolean, net.minecraft.client.renderer.rendertype.LayeringTransform, net.minecraft.client.renderer.rendertype.TextureTransform, net.minecraft.client.renderer.rendertype.RenderSetup$OutlineProperty, java.lang.String, boolean, boolean, boolean);
+  public java.lang.String toString();
+  public static net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder builder(com.mojang.renderpearl.api.pipeline.RenderPipeline);
+  public java.util.List<net.minecraft.client.renderer.rendertype.PreparedRenderType$Texture> prepareTextures(net.minecraft.client.renderer.texture.TextureManager, com.mojang.blaze3d.systems.SamplerCache, com.mojang.renderpearl.api.textures.GpuTextureView, com.mojang.renderpearl.api.textures.GpuTextureView);
+}
+Compiled from "RenderSetup.java"
+final class net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding extends java.lang.Record {
+  private final net.minecraft.resources.Identifier location;
+  private final java.util.function.Supplier<com.mojang.renderpearl.api.textures.GpuSampler> sampler;
+  net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding(net.minecraft.resources.Identifier, java.util.function.Supplier<com.mojang.renderpearl.api.textures.GpuSampler>);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public net.minecraft.resources.Identifier location();
+  public java.util.function.Supplier<com.mojang.renderpearl.api.textures.GpuSampler> sampler();
 }
         14: new           #199                // class org/joml/Matrix4f
         17: dup
