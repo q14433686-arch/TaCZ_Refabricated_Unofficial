@@ -1,5 +1,8 @@
 # 1.2.0-hotfix → 26.3：玩家能感觉到什么？
 
+> **当前状态入口**：[玩家反馈修复及剩余项复查](FABRIC_120_REAUDIT.md)。下方早期“未移植/待运行”表述保留为历史基线，不能忽略后续已实现、已验收的修正，也不能据历史绿灯跳过本次回归。
+
+
 > **批量实现进度（本轮）**：以下原审计结论保留作基线。现已提交 `ShotConsequencesSmoke`、`MovementRulesSmoke`、`BulletRulesSmoke`；趴下/空中散布和命中规则已接线，**新增专服方块/实体筛选测试已通过；集成客户端测试尚待运行，不能整体改标“已验证”**。主源码的龙部件包名错误已修正；最新构建见 [5f78983 工作流](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44337530393)。`renew` 枪口运行时仍缺失，未因本轮修改而变成已实现。
 
 
