@@ -60,14 +60,19 @@ final class ScopeLensSmoke {
             // transition on woven wool can change individual pixels even outside the scope.
             var red = BuiltInRegistries.BLOCK.getOptional(Identifier.parse("minecraft:red_concrete")).orElseThrow().defaultBlockState();
             var blue = BuiltInRegistries.BLOCK.getOptional(Identifier.parse("minecraft:blue_concrete")).orElseThrow().defaultBlockState();
+            // Keep the measuring stripe beside (not behind) the cow: its moving head
+            // and legs are legitimate different pixels, not evidence of optical zoom.
             for (int x=-8; x<=8; x++) for (int y=-7; y<=7; y++)
-                level.setBlock(aim.offset(x,y,-4), x == 0 ? red : blue, Block.UPDATE_ALL);
+                level.setBlock(aim.offset(x,y,-4), x == -1 ? red : blue, Block.UPDATE_ALL);
             return new Scene(cow.getUUID(), aim, BlockPos.containing(p.getEyePosition().lerp(Vec3.atCenterOf(aim), .5)));
         });
         var prior = ctx.computeOnClient(mc -> new boolean[]{RenderConfig.EXPERIMENTAL_SCOPE_LENS.get(),
                 RenderConfig.SCOPE_THERMAL_ENABLE.get(), RenderConfig.SCOPE_PIP_ENABLE.get(), RenderConfig.SCOPE_PIP_RERENDER.get(),
-                RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.get()});
+                RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.get(), mc.options.bobView().get()});
         try {
+            // The normal View Bobbing option also drives pack camera-node animation.
+            // Hold the world camera still for this A/B pixel comparison, not the entity renderer.
+            ctx.runOnClient(mc -> mc.options.bobView().set(false));
             ctx.waitFor(mc -> mc.level.getEntity(scene.cow) != null && mc.player.getMainHandItem().getItem() instanceof IGun g
                     && SIGHT.equals(g.getAttachmentId(mc.player.getMainHandItem(), AttachmentType.SCOPE)));
             ctx.getInput().lookAt(scene.aim);
@@ -117,7 +122,10 @@ final class ScopeLensSmoke {
             GunMod.LOGGER.info("PORT_LENS: XL50 restored {} classic / {} PIP heat pixels; wall and live tag veto cold", classic, pip);
         } finally {
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
-            ctx.runOnClient(mc -> RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.set(prior[4]));
+            ctx.runOnClient(mc -> {
+                RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.set(prior[4]);
+                mc.options.bobView().set(prior[5]);
+            });
             flags(ctx, prior[0], prior[1], prior[2], prior[3]);
             world.getServer().runOnServer(s -> { var e = world.getConnection().getServerPlayer().level().getEntity(scene.cow); if (e != null) e.discard(); });
         }
@@ -188,11 +196,11 @@ final class ScopeLensSmoke {
     // At the centre the XL50 has zero geometric distortion. Use the upper quartile
     // of row widths: the cow, reticle and readout interrupt the stripe in some rows.
     private static int stripeWidth(BufferedImage img) {
-        int x0 = img.getWidth() / 2, y0 = img.getHeight() / 2, radius = img.getHeight() / 8;
-        int[] widths = new int[2 * radius];
+        int x0 = img.getWidth() / 2, y0 = img.getHeight() / 2, rx = img.getHeight() / 5, ry = img.getHeight() / 8;
+        int[] widths = new int[2 * ry];
         for (int row = 0; row < widths.length; row++) {
-            for (int x = x0 - radius; x < x0 + radius; x++) {
-                if (stripe(img.getRGB(x, y0 - radius + row))) widths[row]++;
+            for (int x = x0 - rx; x < x0 + rx; x++) {
+                if (stripe(img.getRGB(x, y0 - ry + row))) widths[row]++;
             }
         }
         Arrays.sort(widths);
