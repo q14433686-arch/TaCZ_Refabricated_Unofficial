@@ -15,6 +15,7 @@
 `0.7.0-forge1.1.8-hotfix`（已移植基线）；本分支当前源码版本为 **`1.1.8+fabric.26.3.R1-hotfix3`**。
 
 正在分批移植上游 1.2.0-hotfix。想知道霰弹枪能否推动射手、开火有没有枪口烟、生物会不会被枪声吸引，请看[玩家可感变化清单](docs/investigations/FABRIC_120_PLAYER_CHECKLIST.md)；实现和测试记录见[移植账本](docs/investigations/FABRIC_120_PORT_26_3.md)。
+普通 `26.3` 与 `26.3_tacz-1.2.X` 的功能并不相同。各条线实际还缺什么、哪些只是待实测，见 [26.X 待移植项复核（2026-11-18）](docs/investigations/PORT_GAPS_26X_2026_11_18.md)。
 **暂不声明完整 1.2.0 枪包兼容**；内嵌动画库对齐 MAE 1.1.4，不需要安装 1.21.1 的 SimpleBedrockModel。
 
 > **本分支是 26.3 线，尚无正式发布；CI 产物以对应 Actions 运行页面为准。** R1 基础版已在维护者环境完成一轮实机验证
