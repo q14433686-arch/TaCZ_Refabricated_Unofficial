@@ -1,4 +1,8 @@
 {
+  "config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render": "隐藏第三人称备用枪械",
+  "config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render.desc": "隐藏玩家模型上的副手与未选中快捷栏枪械；主手枪械仍正常显示。",
+  "config.tacz.client.render.gun_hurt_bob_multiplier": "持枪受伤倾斜倍率",
+  "config.tacz.client.render.gun_hurt_bob_multiplier.desc": "持枪时普通伤害的第一人称倾斜倍率（0–1）。前后方向伤害额外减半；枪击专用反馈单独处理。",
   "config.tacz.client.render.hit_particle_enable": "命中粒子开关",
   "config.tacz.client.render.hit_particle_enable.desc": "子弹产生弹孔时，是否生成额外命中粒子",
   "config.tacz.client.render.hit_extra_particle_enable": "枪械额外命中特效",

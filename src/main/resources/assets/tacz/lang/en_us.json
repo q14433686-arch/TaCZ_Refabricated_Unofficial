@@ -1,4 +1,8 @@
 {
+  "config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render": "Hide third-person spare guns",
+  "config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render.desc": "Hide offhand and unselected hotbar guns on player models; the main-hand gun stays visible.",
+  "config.tacz.client.render.gun_hurt_bob_multiplier": "Held-gun hurt tilt multiplier",
+  "config.tacz.client.render.gun_hurt_bob_multiplier.desc": "Ordinary first-person damage tilt while holding a gun (0–1). Front/back hits are additionally halved; gunshot-specific feedback is separate.",
   "config.tacz.client.render.hit_particle_enable": "Hit Particles Enable",
   "config.tacz.client.render.hit_particle_enable.desc": "Whether or not to spawn extra hit particles when bullets leave bullet holes",
   "config.tacz.client.render.hit_extra_particle_enable": "Gun Extra Hit Effects",

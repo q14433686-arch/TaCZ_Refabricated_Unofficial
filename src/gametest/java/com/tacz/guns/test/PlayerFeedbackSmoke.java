@@ -48,7 +48,7 @@ public final class PlayerFeedbackSmoke {
             ctx.waitTicks(5);
             ctx.runOnClient(mc->{if(offhand!=0||hotbar!=0)throw new AssertionError("Hidden back-mounted gun still submitted");mc.options.setCameraType(CameraType.FIRST_PERSON);});
             ctx.waitTicks(3);
-            world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer();p.invulnerableTime=0;p.hurtServer(p.level(),p.damageSources().generic(),1);});
+            world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer();p.hurtServer(p.level(),p.damageSources().generic(),1);});
             ctx.waitFor(mc->tilts>0);
             checkImpactPackets(ctx,world);
             GunMod.LOGGER.info("PORT_FEEDBACK: back-mounted toggle, actual ordinary-hurt render hook and same-level impact delivery controls passed");
