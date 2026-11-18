@@ -12,6 +12,8 @@ import java.util.List;
 public class ParticleInstance {
     // 位置（局部坐标）
     public float x, y, z;
+    /** Shape-space birth position used by parametric relative_position. */
+    public float originX,originY,originZ;
     // 速度
     public float vx, vy, vz;
     // 颜色
@@ -54,6 +56,7 @@ public class ParticleInstance {
      */
     public void reset() {
         x = y = z = 0;
+        originX=originY=originZ=0;
         vx = vy = vz = 0;
         r = g = b = a = 1f;
         width = height = 0.1f;

@@ -33,6 +33,15 @@ public class AnimationController {
         }
     }
 
+    /** Resolve only locally authored prototype events; never consume a shared runner for a remote owner. */
+    public synchronized AnimationParticleEvent resolveParticleToken(String token) {
+        for(var animation:prototypes.values()){
+            var channel=animation.getParticleChannel();if(channel==null)continue;
+            for(var frame:channel.frames())for(var event:frame.events())if(event.token().equals(token))return event;
+        }
+        return null;
+    }
+
     public boolean containPrototype(String name) {
         return prototypes.containsKey(name);
     }

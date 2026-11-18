@@ -38,9 +38,17 @@ public record ParticleMotionParametric(
     /** 兼容旧调用方（Phase 4 后移除） */
     public void applyLegacy(ParticleInstance p, MolangContext<?> ctx, float dt) {
         if (relativePosition != null) {
-            p.x = (float) relativePosition[0].evaluate(ctx);
-            p.y = (float) relativePosition[1].evaluate(ctx);
-            p.z = (float) relativePosition[2].evaluate(ctx);
+            var position=new org.joml.Vector3f(p.originX+(float) relativePosition[0].evaluate(ctx),
+                    p.originY+(float) relativePosition[1].evaluate(ctx),p.originZ+(float) relativePosition[2].evaluate(ctx));
+            if(p.worldSpace)p.emitter.getWorldTransform().transformPosition(position);
+            else if(p.fpDetached)p.emitter.getEmitterTransform().transformPosition(position);
+            p.x=position.x;p.y=position.y;p.z=position.z;
+        }
+        if(direction!=null){
+            var vector=new org.joml.Vector3f((float)direction[0].evaluate(ctx),(float)direction[1].evaluate(ctx),(float)direction[2].evaluate(ctx));
+            if(p.worldSpace)p.emitter.getWorldTransform().transformDirection(vector);
+            else if(p.fpDetached)p.emitter.getEmitterTransform().transformDirection(vector);
+            p.vx=vector.x;p.vy=vector.y;p.vz=vector.z;
         }
         if (rotation != null) {
             p.rotation = (float) rotation.evaluate(ctx);

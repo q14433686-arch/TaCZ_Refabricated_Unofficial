@@ -31,6 +31,8 @@ public class NetworkHandler {
      * Must be called on both client and server (common init).
      */
     public static void registerPayloads() {
+        PayloadTypeRegistry.serverboundPlay().register(AnimationParticleMessages.Request.TYPE,AnimationParticleMessages.Request.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(AnimationParticleMessages.Delivery.TYPE,AnimationParticleMessages.Delivery.CODEC);
         // C2S (serverbound play)
         PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerShoot.TYPE, ClientMessagePlayerShoot.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessageAmmoStorageClick.TYPE, ClientMessageAmmoStorageClick.STREAM_CODEC);
@@ -87,6 +89,8 @@ public class NetworkHandler {
 
     public static void registerC2SPackets() {
         registerPayloads();
+        ServerPlayNetworking.registerGlobalReceiver(AnimationParticleMessages.Request.TYPE,(message,context)->
+                context.server().execute(()->AnimationParticleMessages.relay(message,context.player())));
 
         ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerShoot.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageAmmoStorageClick.TYPE, ClientMessageAmmoStorageClick::handle);
@@ -115,6 +119,8 @@ public class NetworkHandler {
 
     @Environment(EnvType.CLIENT)
     public static void registerS2CPackets() {
+        ClientPlayNetworking.registerGlobalReceiver(AnimationParticleMessages.Delivery.TYPE,(message,context)->
+                context.client().execute(()->com.tacz.guns.client.particle.RemoteAnimationParticles.accept(message)));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessagePackWarnings.TYPE,ServerMessagePackWarnings::handle);
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageBulletHitBlock.TYPE, ServerMessageBulletHitBlock::handle);
         ClientPlayNetworking.registerGlobalReceiver(IEntityAdditionalSpawnData.EXTRA_DATA_TYPE, (payload, context) -> {

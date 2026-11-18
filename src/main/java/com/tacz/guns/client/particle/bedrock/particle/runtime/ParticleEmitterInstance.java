@@ -196,6 +196,7 @@ public class ParticleEmitterInstance {
             shape.applyPosition(p, molang.getContext(), RANDOM);
         }
 
+        p.originX=p.x;p.originY=p.y;p.originZ=p.z;
         // 粒子 Runtime 组件
         p.updateComponents = new ArrayList<>();
         for (IParticleComponentDefinition def : definition.particlePreset().components()) {
@@ -258,7 +259,8 @@ public class ParticleEmitterInstance {
         }
 
         float oldX=p.x, oldY=p.y, oldZ=p.z;
-        p.tick(dt);
+        if(definition.findComponent(ParticleMotionParametric.class)==null)p.tick(dt);
+        else {p.age+=dt;if(p.age>=p.maxLifetime)p.alive=false;}
         ParticleWorldPhysics.move(this,p,oldX,oldY,oldZ,dt);
 
         // 过期事件由 ParticleLifetimeExpression.Runtime.update() 处理

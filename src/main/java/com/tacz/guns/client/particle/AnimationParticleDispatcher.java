@@ -27,7 +27,7 @@ public final class AnimationParticleDispatcher {
         var mc=Minecraft.getInstance();
         if(mc.player==null||mc.level==null||mode==null)return;
         boolean first=mode.firstPerson();
-        if(!first&&(!GunItemRendererWrapper.IS_MAIN_HAND_SUBMIT||NativeMuzzleEffects.currentOwner()!=mc.player.getId()))return;
+        if(!first&&!GunItemRendererWrapper.IS_MAIN_HAND_SUBMIT)return;
         var gun=com.tacz.guns.api.item.IGun.getIGunOrNull(stack);
         if(gun==null)return;
         int owner=first?mc.player.getId():NativeMuzzleEffects.currentOwner();
@@ -35,11 +35,14 @@ public final class AnimationParticleDispatcher {
         runtime.updateAnchors(owner,gun.getGunId(stack),model,root,first,collector,light);
         var display=TimelessAPI.getGunDisplay(stack).orElse(null);
         if(display==null||display.getAnimationStateMachine()==null)return;
-        var events=display.getAnimationStateMachine().getAnimationController().consumeParticleEvents();
+        boolean remote=owner!=mc.player.getId();
+        var events=remote?RemoteAnimationParticles.consume(owner,gun.getGunId(stack))
+                :display.getAnimationStateMachine().getAnimationController().consumeParticleEvents();
         for(var event:events){
             String locator=event.locator()==null||event.locator().isBlank()?com.tacz.guns.client.model.GunModelConstant.MUZZLE_FLASH_ORIGIN_NODE:event.locator();
             var node=model.getNode(locator);
             if(node==null){warn(event.effect()+": missing locator "+locator);continue;}
+            if(!remote)RemoteAnimationParticles.send(gun.getGunId(stack),event);
             Deque<BedrockPart> chain=new ArrayDeque<>();
             for(var n=node;n!=null;n=n.getParent())chain.push(n);
             PoseStack pose=new PoseStack();pose.last().pose().set(root.last().pose());pose.last().normal().set(root.last().normal());

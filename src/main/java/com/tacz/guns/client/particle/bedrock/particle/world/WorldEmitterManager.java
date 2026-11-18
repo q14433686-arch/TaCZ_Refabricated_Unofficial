@@ -62,7 +62,7 @@ public final class WorldEmitterManager {
     public int particleCount(){return active.stream().mapToInt(e->e.emitter.getParticleCount()).sum();}
     public long spawned(){return spawned;}
     public long rendered(){return rendered;}
-    public void clear(){active.clear();pending.clear();eventBudget=0;level=null;}
+    public void clear(){active.clear();pending.clear();eventBudget=0;level=null;com.tacz.guns.client.particle.RemoteAnimationParticles.clear();}
     public void register(){
         if(registered)return;registered=true;
         ClientTickEvents.END_CLIENT_TICK.register(mc->{
@@ -129,8 +129,8 @@ public final class WorldEmitterManager {
             var emitter=a.emitter;var definition=emitter.getDefinition();var desc=definition.getDescription();
             RenderType type=switch(desc.getMaterial()){
                 case PARTICLES_OPAQUE,PARTICLES_ALPHA -> RenderTypes.entityCutout(desc.getTexture());
-                case PARTICLES_ADD,ENERGY_SWIRL -> RenderTypes.energySwirl(desc.getTexture(),0,0);
-                case PARTICLES_BLEND,PARTICLES_EMISSIVE -> RenderTypes.entityTranslucent(desc.getTexture());
+                case PARTICLES_ADD,ENERGY_SWIRL,PARTICLES_EMISSIVE -> RenderTypes.energySwirl(desc.getTexture(),0,0);
+                case PARTICLES_BLEND -> RenderTypes.entityTranslucent(desc.getTexture());
             };
             var billboard=definition.findComponent(ParticleAppearanceBillboard.class);
             var mode=billboard==null?ParticleAppearanceBillboard.FaceCameraMode.ROTATE_XYZ:billboard.faceCameraMode();
