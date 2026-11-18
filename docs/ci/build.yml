@@ -121,9 +121,8 @@ jobs:
           PY
 
       - name: Install software Vulkan WSI for client smoke
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install --no-install-recommends -y mesa-vulkan-drivers vulkan-tools x11-utils xauth xvfb libflite1
+        timeout-minutes: 10
+        run: bash scripts/install_client_smoke_deps.sh
 
       - name: Client smoke (Mesa software rendering, integrated world and held gun)
         timeout-minutes: 12
