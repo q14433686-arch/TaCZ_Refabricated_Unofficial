@@ -5,10 +5,14 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.builder.BlockItemBuilder;
 import com.tacz.guns.api.item.gun.GunItemManager;
 import com.tacz.guns.compat.jei.category.AmmoQueryCategory;
+import com.tacz.guns.compat.jei.category.GunAmmoQueryCategory;
+import com.tacz.guns.compat.jei.category.GunAttachmentQueryCategory;
 import com.tacz.guns.compat.jei.category.AttachmentQueryCategory;
 import com.tacz.guns.compat.jei.category.GunSmithTableCategory;
 import com.tacz.guns.compat.jei.entry.AttachmentQueryEntry;
 import com.tacz.guns.compat.recipeviewer.AmmoQueryEntry;
+import com.tacz.guns.compat.recipeviewer.AttachmentQueryData;
+import com.tacz.guns.compat.recipeviewer.GunAmmoQueryEntry;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.init.ModItems;
 import com.tacz.guns.init.ModRecipe;
@@ -51,6 +55,8 @@ public class GunModPlugin implements IModPlugin {
         }
         registration.addRecipeCategories(
                 new AttachmentQueryCategory(registration.getJeiHelpers().getGuiHelper()),
+                new GunAmmoQueryCategory(registration.getJeiHelpers().getGuiHelper()),
+                new GunAttachmentQueryCategory(registration.getJeiHelpers().getGuiHelper()),
                 new AmmoQueryCategory(registration.getJeiHelpers().getGuiHelper()));
     }
 
@@ -85,10 +91,13 @@ public class GunModPlugin implements IModPlugin {
             });
         }
 
+        var attachments = AttachmentQueryData.load();
         registration.addRecipes(AttachmentQueryCategory.ATTACHMENT_QUERY,
-                AttachmentQueryEntry.getAllAttachmentQueryEntries());
-        registration.addRecipes(AmmoQueryCategory.AMMO_QUERY,
-                AmmoQueryEntry.getAllAmmoQueryEntries());
+                attachments.attachmentQueries().stream().map(AttachmentQueryEntry::new).toList());
+        registration.addRecipes(GunAttachmentQueryCategory.GUN_ATTACHMENT_QUERY, attachments.gunAttachmentQueries());
+        var ammo = GunAmmoQueryEntry.getAllGunAmmoQueryEntries();
+        registration.addRecipes(GunAmmoQueryCategory.GUN_AMMO_QUERY, ammo);
+        registration.addRecipes(AmmoQueryCategory.AMMO_QUERY, AmmoQueryEntry.getAllAmmoQueryEntries(ammo));
     }
 
     @Override

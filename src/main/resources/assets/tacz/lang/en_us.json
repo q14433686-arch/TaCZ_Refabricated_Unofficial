@@ -1,4 +1,12 @@
 {
+  "jei.tacz.gun_attachment_query.title": "Gun Attachments",
+  "jei.tacz.gun_attachment_query.group": "%s (%s)",
+  "jei.tacz.gun_attachment_query.page": "Page %s/%s",
+  "jei.tacz.gun_ammo_query.title": "Gun Ammunition",
+  "jei.tacz.gun_ammo_query.ammo": "Ammunition",
+  "jei.tacz.ammo_query.title": "Ammo-compatible Guns",
+  "jei.tacz.ammo_query.guns": "Compatible guns (%s)",
+  "jei.tacz.ammo_query.page": "Page %s/%s",
   "jei.tacz.gun_smith_table.recipe_unavailable": "This recipe is not available at this workbench",
   "block.tacz.ammo_storage": "Iron Ammo Storage",
   "block.tacz.ammo_storage_gold": "Gold Ammo Storage",

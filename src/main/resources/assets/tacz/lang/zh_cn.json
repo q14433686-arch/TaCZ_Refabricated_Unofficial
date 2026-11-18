@@ -1,4 +1,12 @@
 {
+  "jei.tacz.gun_attachment_query.title": "枪械配件查询",
+  "jei.tacz.gun_attachment_query.group": "%s（%s）",
+  "jei.tacz.gun_attachment_query.page": "第 %s/%s 页",
+  "jei.tacz.gun_ammo_query.title": "枪械弹药查询",
+  "jei.tacz.gun_ammo_query.ammo": "使用弹药",
+  "jei.tacz.ammo_query.title": "弹药适用枪械",
+  "jei.tacz.ammo_query.guns": "适用枪械（%s）",
+  "jei.tacz.ammo_query.page": "第 %s/%s 页",
   "jei.tacz.gun_smith_table.recipe_unavailable": "这张工作台不能制造该配方",
   "block.tacz.ammo_storage": "铁弹药库",
   "block.tacz.ammo_storage_gold": "金弹药库",

@@ -21,7 +21,7 @@ public class GunSmithTableDisplay extends BasicDisplay {
                         .map(com.tacz.guns.crafting.GunSmithTableIngredient::getIngredient)
                         .filter(ingredient -> ingredient != null && !ingredient.isEmpty())
                         .collect(Collectors.toList())),
-                Collections.singletonList(EntryIngredients.of(recipe.getOutput())), Optional.ofNullable(entry.getKey()));
+                Collections.singletonList(EntryIngredients.of(recipe.getOutput())), Optional.of(recipe.getId()));
         this.recipe = recipe;
         this.entry = entry;
     }

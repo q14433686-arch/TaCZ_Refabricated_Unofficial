@@ -2,6 +2,9 @@ package com.tacz.guns.test;
 
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.compat.recipeviewer.AmmoQueryEntry;
+import com.tacz.guns.compat.recipeviewer.AttachmentQueryData;
+import com.tacz.guns.compat.recipeviewer.GunAmmoQueryEntry;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.api.item.builder.AttachmentItemBuilder;
@@ -43,6 +46,25 @@ public class PackServerSmoke {
                 "Viewer selection must belong to this menu and be consumed once");
         var ammoTable = new com.tacz.guns.inventory.GunSmithTableMenu(2, inv, Identifier.parse("tacz:ammo_workbench"));
         helper.assertTrue(!ammoTable.selectFromViewer(gunId, true) && ammoTable.consumeRecipeSelection() == null, "Viewer bypassed the table filter");
+        helper.succeed();
+    }
+
+    @GameTest
+    public void bothViewerDirectionsUseTheSameIndexedStacks(GameTestHelper helper) {
+        var pairs = GunAmmoQueryEntry.getAllGunAmmoQueryEntries();
+        var first = pairs.stream().filter(e -> Identifier.parse("tacz:ak47").equals(
+                ((IGun) e.getGunStack().getItem()).getGunId(e.getGunStack()))).findFirst().orElseThrow();
+        var pages = AmmoQueryEntry.getAllAmmoQueryEntries(java.util.Collections.nCopies(55, first));
+        helper.assertTrue(pages.size() == 2 && pages.getFirst().getGunStacks().size() == 54 && pages.getLast().getGunStacks().size() == 1
+                && pages.getLast().getPageNumber() == 2 && pages.getLast().getTotalGunCount() == 55
+                && pages.getLast().getAmmoStack() == first.getAmmoStack(), "Ammo reverse pages lost/duplicated entries");
+        var parts = AttachmentQueryData.load();
+        var reverse = parts.gunAttachmentQueries().getFirst();
+        var part = reverse.getAttachmentStacks().getFirst();
+        helper.assertTrue(parts.attachmentQueries().stream().anyMatch(e -> e.getAttachmentStack() == part
+                        && (e.getAllowGunStacks().contains(reverse.getGunStack()) || e.getExtraAllowGunStacks().contains(reverse.getGunStack()))),
+                "Reverse attachment result missing its forward relation");
+        helper.assertTrue(parts.compatibilityChecks() <= (long) parts.attachmentCount() * parts.gunCount(), "Rescanned compatibility per direction");
         helper.succeed();
     }
 
