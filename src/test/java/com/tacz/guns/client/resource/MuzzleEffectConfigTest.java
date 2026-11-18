@@ -55,4 +55,22 @@ class MuzzleEffectConfigTest {
             assertNull(attachment.getSmokeDirectionConfig());
         }
     }
+
+    @Test void resolvedSilencerKeepsSmokeAndAttachmentOverridesGunDirection() {
+        var flash = gson.fromJson("{\"type\":\"renew\",\"smoke_direction\":[0,0,-1]}", MuzzleFlash.class);
+        var silent = com.tacz.guns.client.particle.MuzzleEffectParameters.resolve(flash, null, true);
+        assertEquals(0f, silent.flashScale());
+        assertNotNull(silent.firstSmoke());
+        var part = gson.fromJson("{\"flash_hider\":0.2,\"smoke_hider\":2,\"smoke_count_scale\":2,\"smoke_direction\":[0,1,0]}", AttachmentData.class);
+        var resolved = com.tacz.guns.client.particle.MuzzleEffectParameters.resolve(flash, part, true);
+        assertEquals(.2f, resolved.flashScale());
+        assertEquals(2f, resolved.smokeSize()); // Default size is 1, not the absent-field sentinel 0.
+        assertEquals(30f, resolved.smokeCount()); // Default definition count is 15.
+        assertEquals(3, resolved.flashLight());
+        assertArrayEquals(new float[]{0,-1,0}, resolved.smokeDirection().directions()[0], .0001f);
+        var bare = com.tacz.guns.client.particle.MuzzleEffectParameters.resolve(flash, null, false);
+        assertEquals(0f, bare.smokeSize()); // No multiplier: retain definition's default sentinel.
+        assertArrayEquals(new float[]{0,0,-1}, bare.smokeDirection().directions()[0], .0001f);
+        assertNull(com.tacz.guns.client.particle.MuzzleEffectParameters.resolve(gson.fromJson("{}", MuzzleFlash.class), null, false));
+    }
 }
