@@ -108,6 +108,17 @@ public abstract class GameRendererMixin {
         }
     }
 
+    // Keep the death roll and direction rotations vanilla. Only scale the hurt-tilt rotation.
+    @org.spongepowered.asm.mixin.injection.ModifyArg(method = "bobHurt", at = @At(value = "INVOKE", target = "Lcom/mojang/math/Axis;rotationDegrees(F)Lorg/joml/Quaternionf;", ordinal = 2), index = 0)
+    private float tacz$heldGunHurtTilt(float angle) {
+        if (minecraft.options.getCameraType().isFirstPerson()
+                && minecraft.getCameraEntity() instanceof LocalPlayer player && !player.isDeadOrDying()
+                && player.getMainHandItem().getItem() instanceof com.tacz.guns.api.item.gun.AbstractGunItem) {
+            return GunHurtBobTweak.heldGunTilt(angle, player.getHurtDir(), com.tacz.guns.config.client.RenderConfig.GUN_HURT_BOB_MULTIPLIER.get());
+        }
+        return angle;
+    }
+
     @Inject(method = "bobView", at = @At("HEAD"), cancellable = true)
     private void tacz$bobView(CameraRenderState cameraState, PoseStack poseStack, CallbackInfo ci) {
         if (this.tacz$isItemInHandBobPass()) {

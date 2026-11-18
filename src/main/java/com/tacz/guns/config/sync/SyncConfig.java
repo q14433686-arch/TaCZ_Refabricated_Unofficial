@@ -6,6 +6,7 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import java.util.List;
 
 public class SyncConfig {
+    public static ForgeConfigSpec.IntValue BULLET_HIT_BLOCK_EFFECT_SEND_DISTANCE;
     // 交互键的判断是在客户端执行的，但是需要服务端来控制
     public static ForgeConfigSpec.ConfigValue<List<String>> INTERACT_KEY_WHITELIST_BLOCKS;
     public static ForgeConfigSpec.ConfigValue<List<String>> INTERACT_KEY_WHITELIST_ENTITIES;
@@ -84,6 +85,7 @@ public class SyncConfig {
 
     private static void misc(ForgeConfigSpec.Builder builder) {
         builder.push("misc");
+        BULLET_HIT_BLOCK_EFFECT_SEND_DISTANCE = builder.comment("Impact effect send radius; 0 means unlimited in the same level, shooter is always included").defineInRange("BulletHitBlockEffectSendDistance", 128, 0, Integer.MAX_VALUE);
 
         builder.comment("The entity's head hitbox during the headshot");
         builder.comment("Format: touhou_little_maid:maid [-0.5, 1.0, -0.5, 0.5, 1.5, 0.5]");

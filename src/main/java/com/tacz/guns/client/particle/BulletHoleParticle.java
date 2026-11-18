@@ -38,6 +38,7 @@ import org.joml.Quaternionf;
  */
 public class BulletHoleParticle extends SingleQuadParticle {
     private final Direction direction;
+    private final float surfaceOffset;
     private final BlockPos pos;
     private int uOffset;
     private int vOffset;
@@ -50,6 +51,7 @@ public class BulletHoleParticle extends SingleQuadParticle {
     private BulletHoleParticle(ClientLevel world, double x, double y, double z, Direction direction, BlockPos pos, ImpactStyle style) {
         super(world, x, y, z, getSpriteForPos(pos));
         this.direction = direction;
+        this.surfaceOffset = this.random.nextFloat() * .005f + .005f;
         this.pos = pos;
         this.lifetime = this.getLifetimeFromConfig(world);
         this.hasPhysics = false;
@@ -194,7 +196,7 @@ public class BulletHoleParticle extends SingleQuadParticle {
             // 右乘基变换；Rz(180°) 对齐原 XZ 四边形的 UV 走向。
             Quaternionf quaternion = this.direction.getRotation()
                     .mul(new Quaternionf().rotationX(-Mth.HALF_PI).rotateZ(Mth.PI));
-            float offset = 0.01F * this.getQuadSize(partialTicks);
+            float offset = this.surfaceOffset;
             Vec3 camPos = camera.position();
             float x = (float) (Mth.lerp(partialTicks, this.xo, this.x) - camPos.x()) + this.direction.getStepX() * offset;
             float y = (float) (Mth.lerp(partialTicks, this.yo, this.y) - camPos.y()) + this.direction.getStepY() * offset;

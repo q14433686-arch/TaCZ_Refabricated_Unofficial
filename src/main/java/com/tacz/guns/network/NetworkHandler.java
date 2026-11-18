@@ -71,6 +71,7 @@ public class NetworkHandler {
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunActionPost.TYPE, ServerMessageGunActionPost.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageAmmoStorageContents.TYPE, ServerMessageAmmoStorageContents.STREAM_CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunUnload.TYPE, ServerMessageGunUnload.STREAM_CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(ServerMessageBulletHitBlock.TYPE, ServerMessageBulletHitBlock.STREAM_CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunReload.TYPE, ServerMessageGunReload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunShoot.TYPE, ServerMessageGunShoot.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageSyncBaseTimestamp.TYPE, ServerMessageSyncBaseTimestamp.CODEC);
@@ -108,6 +109,7 @@ public class NetworkHandler {
 
     @Environment(EnvType.CLIENT)
     public static void registerS2CPackets() {
+        ClientPlayNetworking.registerGlobalReceiver(ServerMessageBulletHitBlock.TYPE, ServerMessageBulletHitBlock::handle);
         ClientPlayNetworking.registerGlobalReceiver(IEntityAdditionalSpawnData.EXTRA_DATA_TYPE, (payload, context) -> {
             context.client().execute(() -> {
                 Entity entity = Objects.requireNonNull(context.client().level).getEntity(payload.entityId());

@@ -6,6 +6,8 @@ import net.minecraftforge.common.ForgeConfigSpec;
 public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue ENABLE_LASER_FADE_OUT;
     public static ForgeConfigSpec.BooleanValue RENDER_MUZZLE_SMOKE;
+    public static ForgeConfigSpec.BooleanValue DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER;
+    public static ForgeConfigSpec.DoubleValue GUN_HURT_BOB_MULTIPLIER;
     public static ForgeConfigSpec.BooleanValue ILLUMINATED_REAL_SKY;
     public static ForgeConfigSpec.IntValue GUN_LOD_RENDER_DISTANCE;
     public static ForgeConfigSpec.BooleanValue HIT_PARTICLE_ENABLE;
@@ -279,6 +281,8 @@ public class RenderConfig {
 
     public static void init(ForgeConfigSpec.Builder builder) {
         builder.push("render");
+        DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER = builder.comment("Hide third-person offhand and unselected hotbar guns; keep main hand visible").define("DisableThirdPersonOffhandAndHotbarGunRender", false);
+        GUN_HURT_BOB_MULTIPLIER = builder.comment("First-person ordinary hurt tilt while holding a gun; front/back hits are additionally halved").defineInRange("GunHurtBobMultiplier", 0.1, 0, 1);
         RENDER_MUZZLE_SMOKE = builder.comment("Render detached renew muzzle smoke independently of flash").define("RenderMuzzleSmoke", true);
 
         builder.comment("Whether or not apply fadeout effect on the laser beam. Close this may improve laser performance under some shaders.");
