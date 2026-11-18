@@ -33,6 +33,11 @@ final class OpticInstallSmoke {
             }
             return hosts;
         });
+        var saved=world.getServer().computeOnServer(s->{
+            var p=world.getConnection().getServerPlayer();var inv=p.getInventory();int slot=inv.getSelectedSlot();
+            return java.util.List.of(inv.getItem(slot).copy(),inv.getItem((slot+1)%9).copy());
+        });
+        try {
         for(var pair : pairs.entrySet()) {
             int hand=world.getServer().computeOnServer(s->{
                 var p=world.getConnection().getServerPlayer();var inv=p.getInventory();int slot=inv.getSelectedSlot();
@@ -50,6 +55,12 @@ final class OpticInstallSmoke {
             });
             ctx.waitFor(mc->mc.player.getMainHandItem().getItem() instanceof IGun g && pair.getKey().equals(g.getAttachmentId(mc.player.getMainHandItem(),AttachmentType.SCOPE))
                     && mc.player.getInventory().getItem(source).isEmpty());
+        }
+        } finally {
+            world.getServer().runOnServer(s->{
+                var p=world.getConnection().getServerPlayer();var inv=p.getInventory();int slot=inv.getSelectedSlot();
+                inv.setItem(slot,saved.get(0));inv.setItem((slot+1)%9,saved.get(1));p.inventoryMenu.broadcastChanges();
+            });
         }
         GunMod.LOGGER.info("PORT_OPTIC_INSTALL: {} default scopes found hosts and installed through C2S with inventory settlement",pairs.size());
     }
