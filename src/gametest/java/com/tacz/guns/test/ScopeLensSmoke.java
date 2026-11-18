@@ -92,8 +92,8 @@ final class ScopeLensSmoke {
             var pipVeto = capture(ctx, "pip_tagged");
             flags(ctx, true, true, false, false);
             var veto = capture(ctx, "classic_tagged");
-            int classic = heatPixels(hot, behind, restored, veto);
-            int pip = heatPixels(pipHot, pipWall, pipRestored, pipVeto);
+            int classic = heatPixels(optical, hot, behind, restored, veto);
+            int pip = heatPixels(pipOptics, pipHot, pipWall, pipRestored, pipVeto);
             GunMod.LOGGER.info("PORT_LENS: XL50 restored {} classic / {} PIP heat pixels; wall and live tag veto cold", classic, pip);
         } finally {
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
@@ -124,11 +124,13 @@ final class ScopeLensSmoke {
     private static void blacklistCow(ClientGameTestContext ctx, TestSingleplayerContext world) {
         // This is Loom's disposable test gameDir. Use the same real external-pack reload as a player;
         // put the cow on BOTH lists to prove that the veto wins (not cached entity classification).
-        var reloaded = world.getServer().computeOnServer(s -> {
+        try {
             var pack = Files.createTempDirectory(FabricLoader.getInstance().getGameDir().resolve("tacz"), "lens-smoke-");
             Files.writeString(pack.resolve("gunpack.meta.json"), "{\"namespace\":\"lens_smoke\",\"dependencies\":{\"minecraft\":\"[26.3]\"}}");
             var tags = Files.createDirectories(pack.resolve("data/tacz/tags/entity_type/thermal_imaging"));
             for (String list : new String[]{"whitelist", "blacklist"}) Files.writeString(tags.resolve(list+".json"), "{\"values\":[\"minecraft:cow\"]}");
+        } catch (IOException e) { throw new UncheckedIOException(e); }
+        var reloaded = world.getServer().computeOnServer(s -> {
             var packs = s.getPackRepository();
             packs.reload();
             return s.reloadResources(packs.getSelectedIds());
@@ -151,31 +153,46 @@ final class ScopeLensSmoke {
 
     private static void assertOptics(BufferedImage bare, BufferedImage optical) {
         int w=bare.getWidth(), h=bare.getHeight(), radius=h/8;
-        int red=0, kept=0, darkened=0, outside=0, unchanged=0;
+        int red=0, kept=0, darkened=0;
         for (int y=h/2-radius; y<h/2+radius; y++) for (int x=0; x<w; x++) {
             int a=bare.getRGB(x,y), b=optical.getRGB(x,y);
             if (Math.abs(x-w/2) < radius) {
                 if (stripe(a)) { red++; if (stripe(b)) kept++; }
                 if (max(a)-min(a)>24 && max(a)-max(b)>6 && max(b)>max(a)*.5) darkened++;
-            } else if (Math.abs(x-w/2)>w/3 && max(a)-min(a)>20) {
-                outside++;
-                if (Math.abs(r(a)-r(b))+Math.abs(g(a)-g(b))+Math.abs(b(a)-b(b))<12) unchanged++;
             }
         }
-        if (red<20 || kept<.88*red || darkened<150 || outside<200 || unchanged<.88*outside)
-            throw new AssertionError("XL50 optics: stripe="+kept+"/"+red+", darkened="+darkened+", exterior="+unchanged+"/"+outside);
+        if (red<20 || kept<.88*red || darkened<150)
+            throw new AssertionError("XL50 optics: stripe="+kept+"/"+red+", darkened="+darkened);
+        assertExterior(bare, optical);
     }
 
-    private static int heatPixels(BufferedImage hot, BufferedImage wall, BufferedImage restored, BufferedImage veto) {
-        int w=hot.getWidth(), h=hot.getHeight(), radius=h/9, n=0, leaked=0;
+    private static void assertExterior(BufferedImage a, BufferedImage b) {
+        int w=a.getWidth(), h=a.getHeight(), samples=0, kept=0;
+        for (int y=3*h/8; y<5*h/8; y++) for (int x=0; x<w; x+=2) {
+            int u=a.getRGB(x,y), v=b.getRGB(x,y);
+            if (Math.abs(x-w/2)<=w/3 || max(u)-min(u)<=20) continue;
+            samples++;
+            if (Math.abs(r(u)-r(v))+Math.abs(g(u)-g(v))+Math.abs(b(u)-b(v))<12) kept++;
+        }
+        if (samples<200 || kept<.88*samples) throw new AssertionError("XL50 changed the exterior: kept="+kept+"/"+samples);
+    }
+
+    private static int heatPixels(BufferedImage optical, BufferedImage hot, BufferedImage wall, BufferedImage restored, BufferedImage veto) {
+        assertExterior(optical, hot);
+        int w=hot.getWidth(), h=hot.getHeight(), radius=h/9, n=0, wallLeaks=0, tagLeaks=0, backdrop=0;
         for (int y=h/2-radius; y<h/2+radius; y++) for (int x=w/2-radius; x<w/2+radius; x++) {
-            int a=hot.getRGB(x,y), d=veto.getRGB(x,y);
-            if (bright(a) && bright(restored.getRGB(x,y)) && cold(d)) {
+            int a=hot.getRGB(x,y), o=optical.getRGB(x,y);
+            if (cold(a) && max(o)-min(o)>24) backdrop++;
+            // Identify coverage WITHOUT looking at either negative. Exclude white reticle/text
+            // already bright with thermal disabled; don't credit a tag veto merely for being gray.
+            if (bright(a) && bright(restored.getRGB(x,y)) && !bright(o)) {
                 n++;
-                if (!cold(wall.getRGB(x,y))) leaked++;
+                if (!cold(wall.getRGB(x,y))) wallLeaks++;
+                if (!cold(veto.getRGB(x,y))) tagLeaks++;
             }
         }
-        if (n < 40 || leaked > .02*n) throw new AssertionError("XL50 geometry did not survive/occlude: restored="+n+", not cold behind wall="+leaked);
+        if (n < 40 || backdrop < 200 || wallLeaks > .02*n || tagLeaks > .02*n)
+            throw new AssertionError("XL50 restored="+n+", cold backdrop="+backdrop+", not cold: wall="+wallLeaks+", tag="+tagLeaks);
         return n;
     }
 

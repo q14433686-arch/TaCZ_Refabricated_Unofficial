@@ -50,7 +50,8 @@ if [[ -n ${TACZ_SMOKE_VIEWER:-} ]]; then
     test -s "$(find "$run/screenshots" -name "*tacz_viewer_$TACZ_SMOKE_VIEWER.png" -print -quit)"
     exit
 fi
-for frame in tacz_held_default_gun tacz_held_variant tacz_default_refit tacz_range_readout tacz_display_wall tacz_xm157_{entity,control,restored,occluded}; do
+for frame in tacz_held_default_gun tacz_held_variant tacz_default_refit tacz_range_readout tacz_display_wall tacz_xm157_{entity,control,restored,occluded} \
+        tacz_lens_{classic,pip}_{bare,optical,hot,wall,restored,tagged}; do
     test -s "$(find "$run/screenshots" -name "*${frame}.png" -print -quit)"
 done
 grep -Fq 'PORT_CATALOG: client loaded 229 indexes' "$run/logs/latest.log"
