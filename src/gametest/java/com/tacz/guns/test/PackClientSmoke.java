@@ -79,6 +79,7 @@ public class PackClientSmoke implements FabricClientGameTest {
             PlayerFeedbackSmoke.run(context, world);
             ConfigPanelSmoke.run(context);
             OpticInstallSmoke.run(context, world);
+            CoreCompletionSmoke.run(context, world);
             world.getServer().runOnServer(server -> world.getConnection().getServerPlayer().setGameMode(GameType.CREATIVE));
             context.waitFor(client -> client.player.isCreative());
             var rack = checkRacks(context, world, id);

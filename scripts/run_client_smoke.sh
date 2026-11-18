@@ -83,3 +83,6 @@ grep -Fq "PORT_OPTIC_INSTALL:" "$run/logs/latest.log"
 printf '::notice::%s\n' "$(grep -F 'PORT_OPTIC_INSTALL:' "$run/logs/latest.log")"
 grep -Fq 'PORT_CONFIG:' "$run/logs/latest.log"
 printf '::notice::%s\n' "$(grep -F 'PORT_CONFIG:' "$run/logs/latest.log")"
+
+grep -Fq 'PORT_CORE:' "$run/logs/latest.log"
+printf '::notice::%s\n' "$(grep -F 'PORT_CORE:' "$run/logs/latest.log")"

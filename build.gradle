@@ -265,6 +265,8 @@ if (project.hasProperty('taczViewerSmoke')) {
 // Install the fixture as an external ZIP (not a mod resource or part of the release jar).
 def smokePack = tasks.register('zipSmokePack', Zip) {
     from 'src/gametest/fixtures/overlay'
+    // Authored player acceptance probes are also exercised by the automated external ZIP.
+    from('tools/player-acceptance-pack') { exclude 'gunpack.meta.json', 'README.md' }
     archiveFileName = 'tacz-port-smoke.zip'
     destinationDirectory = layout.buildDirectory.dir('run/gameTest/tacz')
 }

@@ -1,0 +1,7 @@
+{
+  "namespace": "port_acceptance",
+  "dependencies": {
+    "minecraft": "[26.3]",
+    "tacz": ">=1.1.8"
+  }
+}

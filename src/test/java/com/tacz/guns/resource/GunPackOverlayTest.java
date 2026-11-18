@@ -34,6 +34,14 @@ class GunPackOverlayTest {
               {"directory":"late","minecraft":">=26.1 <27"}]}}
             """;
 
+    @Test void compatibilityNoticeOnlyForMismatchWithoutMatchingOverlay() throws Exception {
+        var v=Version.parse("26.3");
+        assertFalse(GunPackLoader.needsConversion(null,v,List.of()));
+        assertFalse(GunPackLoader.needsConversion("[26.3]",v,List.of()));
+        assertTrue(GunPackLoader.needsConversion("[1.21.1]",v,List.of()));
+        assertFalse(GunPackLoader.needsConversion("[1.21.1]",v,List.of("compat_26_3")));
+    }
+
     @Test void rangeDialectAndBundledDependency() throws Exception {
         Version v = Version.parse("1.1.8+fabric.26.3.R1-hotfix3");
         assertTrue(GunPackVersions.matches("[1.1.8,1.2.0)", v));

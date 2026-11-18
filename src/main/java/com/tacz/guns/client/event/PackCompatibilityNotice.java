@@ -19,6 +19,7 @@ public final class PackCompatibilityNotice {
     private static int delay;
     private PackCompatibilityNotice(){}
     public static void accept(Collection<String> names){for(String name:names)pending.add(name.replaceAll("[\\p{Cntrl}§]",""));}
+    public static Set<String> announcedPacks(){return Set.copyOf(announced);}
     public static void reset(){pending.clear();announced.clear();delay=0;}
     public static void register(){
         ClientPlayConnectionEvents.JOIN.register((handler,sender,client)->{delay=20;accept(GunPackLoader.INSTANCE.getPacksNeedingConversion(PackType.CLIENT_RESOURCES));});
