@@ -53,14 +53,29 @@ compilation is not equivalent to those tests passing.
   screenshot shows the silhouette restored but too cold. Optical translucent alpha/OIT
   must not be treated as heat coverage. A dedicated texture-cutout coverage replay for
   blended models now keeps the original pose, UVs and copied terrain depth, writes unit
-  sensor coverage, and leaves ordinary scene materials untouched. Full regression pending;
-  the heat threshold and behind-wall assertion are unchanged.
+  sensor coverage, and leaves ordinary scene materials untouched. Full regression passed
+  on `36ccf05` (see runs below); the heat threshold and behind-wall assertion are unchanged.
 - `44402791201` failed earlier in the optical PIP A/B stripe check (4,030 shared of
   4,868 baseline red pixels). Both original frames are retained for diagnosis; no threshold
   was lowered and the prior successful Iris run does not override this failure.
 - The short-lived flash fix advances existing particles before emitter updates, so newborn
   20ms particles are not killed by the same 50ms client tick before extraction. A dedicated
   assertion checks both the initial render opportunity and expiry on the next tick.
+
+### Latest complete same-source regression: `36ccf05`
+
+| Workflow | Run | Result |
+|---|---|---|
+| compile-check | `44404475566` | **passed** |
+| Full build, server smoke, ordinary Vulkan client suite, jars | `44404475582` | **passed** |
+| Iris/Sodium authored-shader client suite | `44404475529` | **passed** |
+
+Both client paths include `SnowstormSmoke` and `RemoteParticleSmoke`; neither is skipped.
+The ordinary suite reported 2,815 classic / 2,529 PIP heat pixels and 12 restored XM157
+marker pixels, with zero marker draws behind the wall. Iris reported 2,541 classic /
+2,427 PIP heat pixels, and 2,425 after shader off/on. Both retained terrain/tag veto checks.
+The earlier PIP stripe A/B failure is retained above as intermittent evidence, not erased
+by a later pass. This batch does not establish third-party shader or full pack/material parity.
 
 Optional Sable/Simulated/EMI/Accelerated Rendering 26.3 dependency/API availability remains an
 independent integration prerequisite, not something this particle source port can substitute for.
