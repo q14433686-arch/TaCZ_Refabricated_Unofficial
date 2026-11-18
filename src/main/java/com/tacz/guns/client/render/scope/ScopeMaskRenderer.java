@@ -125,8 +125,8 @@ public final class ScopeMaskRenderer {
             // 即 Globals + DynamicTransforms + Projection + Fog，
             // 正是 core/position 这套 shader 需要的全套。直接复用，不再手拼。
             .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_mask"))
-            .withVertexShader("tacz:core/scope_mask_coverage")
-            .withFragmentShader("tacz:core/scope_mask_coverage")
+            .withVertexShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_mask_coverage"))
+            .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_mask_coverage"))
             // 不混合、不写深度：掩码就是「盖到=白，没盖到=清空色」的二值图，
             // 直接覆写即可。Optional.empty() 表示【不启用 blend】
             // （对照 ColorTargetState 的两个构造：单参版是「带 blend」，
