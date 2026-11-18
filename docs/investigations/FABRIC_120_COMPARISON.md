@@ -114,3 +114,18 @@ python3 scripts/verify_120_resources.py
 `NativeMuzzleEffects` 已把默认闪光/烟雾接入第一人称及按 render-state owner 隔离的第三人称主手 locator；烟雾一次投到世界、后续脱离枪口。Glock 无旧贴图的 renew 配置保留，旧纹理路径只处理 legacy。包含烟雾独立开关、配件偏移/缩放、模型瞬时照明和 reload/logout 清理。**这是默认两种 profile 的原生实现，不是一般 Snowstorm/Molang 解释器**；自定义粒子定义/动画关键帧仍缺。
 
 新集成测试目前只声明枪口 geometry submission、单次 smoke burst、开关和清理，不声明像素 parity。编译/JUnit/专服已过，新增客户端结果与截图边界见[玩家清单最新跟进](FABRIC_120_PLAYER_CHECKLIST.md)。早先“运行时完全未移植”的审计结论是历史基线，已被本段部分推进，但不能改成“全部完成”。
+
+#### 本轮原始画面复核（f5df369，非上游对照图）
+
+6 张均经 [review-frames 原样回传](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44351420690)，不是生成图、拼接图或挑亮度修图：
+
+| 场景 | 原始帧 | 人工复核能确认的范围 |
+|---|---|---|
+| AK47 第一人称 | [first](../../build-reports/visual/44350306969-tacz_muzzle_first.png) | 可见默认条纹贴图的烟团；该帧近镜头烟雾占据很大面积，未与上游同场景对照，不能判定大小一致。 |
+| RC1 配件 | [RC1](../../build-reports/visual/44350306969-tacz_muzzle_rc1.png) | 装消音器后仍有烟；没有同一瞬间的裸枪/配件光斑测量，不能据此声称闪光恰好缩至 20%。 |
+| Glock 17 | [Glock](../../build-reports/visual/44350306969-tacz_muzzle_glock.png) | 无旧纹理的 renew 枪实际显示烟团；火光提交另由测试断言，此图不单独证明火光像素。 |
+| F5 | [F5](../../build-reports/visual/44350306969-tacz_muzzle_f5.png) | 本机第三人称场景中可见烟团；仍缺逐帧转身时闪光锚点像素跟踪。 |
+| 关闭烟雾 | [smoke off](../../build-reports/visual/44350306969-tacz_muzzle_smoke_off.png) | 此帧无上述烟团；测试另要求 flash geometry 提交继续发生，不用一张无烟图证明闪光可见。 |
+| 追踪 Husk | [tracked](../../build-reports/visual/44350306969-tacz_muzzle_tracked.png) | 另一个真实服务端实体位于画面，附近可见烟；测试验证其主手 locator 的提交，不是独立第二玩家进程。 |
+
+这些截图在按键发射与随后提交检查后抓取，**并未保证都落在 20ms 火光寿命内**。因此不作为六张“火光验收帧”宣传。仍需同步的闪光 on/off 像素采样、移动/转身后的烟雾轨迹及上游同场景尺度对照；近镜头烟团较大的观感也应在该对照中复核，而不是凭提交计数宣称视觉完成。

@@ -184,3 +184,7 @@ UH-1 的 `text_show` 经 26.3 第一人称 extraction 读取实际游戏方块�
 
 
 `f5df369` 的[组合完整运行](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44350306969/job/134963801958)已成功：官方源回退确实被触发，安装成功后客户端实跑 `PORT_MUZZLE`，AK47/RC1/Glock 第一人称、F5、追踪 Husk、关烟保留火光和清空提交门禁通过。并非独立双客户端/逐像素验收。相同运行同时通过 `PORT_SHOT`，XL50 stripe 7 / 45:45 / 38:38 px，恢复热像素 2676/2528、墙和 tag veto，以及 XM157 12 像素框。完整 smoke 工件 `14447918090`（直接下载在沙箱 EOF）；已提名 6 张原始截图经既有 review-frames 流程回传本分支供检查。随后只对“未知 flash ID / debug 禁用时不应抬高枪模亮度”增加保护，需其源码提交自己的 CI 结果。
+
+6 张原始帧已通过既有回传流程进入 `build-reports/visual/44350306969-tacz_muzzle_*.png` 并逐张查看，具体能/不能证明的内容见[原始画面复核](FABRIC_120_COMPARISON.md#本轮原始画面复核f5df369非上游对照图)。它们可确认默认烟团出现及关烟对照，但并未同步 20ms 火光窗口；裸枪第一人称近镜头烟团面积较大，无上游同场景对照，保留为待复核观感，不宣称尺度一致。
+
+最后的源码 `ef9ce98`（包含未知 flash/debug 禁用时的枪模亮度保护）也通过 [独立编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44351420683)及[完整构建与集成客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44351420622/job/134967780026)。`PORT_MUZZLE`、`PORT_SHOT` 均实际输出通过；XL50 2636/2503 恢复热点、7 / 45:45 / 38:38 px 及 XM157 12 像素框回归通过。此后仅文档/原始截图回传，无运行时代码变化。`--strict`、脚本 bash 语法、`git diff --check` 通过；安装器 mock 控制流验证 primary 失败→dpkg→官方源刷新→重试通过，官方源回退又经两次实际 CI 成功。未升级版本、未发布。
