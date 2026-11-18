@@ -16,7 +16,9 @@ final class ThermalOverlaySmoke {
     static void run(ClientGameTestContext ctx,TestSingleplayerContext world){
         var scope=Identifier.parse("port_test:thermal_overlay");
         boolean heat=ctx.computeOnClient(mc->RenderConfig.SCOPE_THERMAL_ENABLE.get());
+        var prior=ctx.computeOnClient(mc->new boolean[]{RenderConfig.EXPERIMENTAL_SCOPE_LENS.get(),RenderConfig.SCOPE_PIP_ENABLE.get(),RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.get()});
         try{
+            ctx.runOnClient(mc->{RenderConfig.EXPERIMENTAL_SCOPE_LENS.set(true);RenderConfig.SCOPE_PIP_ENABLE.set(false);RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.set(true);});
             world.getServer().runOnServer(s->world.getConnection().getServerPlayer().setItemInHand(InteractionHand.MAIN_HAND,
                     GunItemBuilder.create().setId(Identifier.parse("tacz:m700")).putAttachment(AttachmentType.SCOPE,scope).setAmmoCount(3).build()));
             ctx.waitFor(mc->mc.player.getMainHandItem().getItem() instanceof IGun gun&&scope.equals(gun.getAttachmentId(mc.player.getMainHandItem(),AttachmentType.SCOPE)));
@@ -31,6 +33,6 @@ final class ThermalOverlaySmoke {
             }
             if(counts[0]<8||counts[1]<counts[0]*.85)throw new AssertionError("Thermal converted display color: "+counts[0]+" -> "+counts[1]);
             GunMod.LOGGER.info("PORT_THERMAL_OVERLAY: red glyph pixels {} optical / {} thermal",counts[0],counts[1]);
-        }finally{ctx.getInput().releaseKey(AimKey.AIM_KEY);ctx.runOnClient(mc->RenderConfig.SCOPE_THERMAL_ENABLE.set(heat));}
+        }finally{ctx.getInput().releaseKey(AimKey.AIM_KEY);ctx.runOnClient(mc->{RenderConfig.SCOPE_THERMAL_ENABLE.set(heat);RenderConfig.EXPERIMENTAL_SCOPE_LENS.set(prior[0]);RenderConfig.SCOPE_PIP_ENABLE.set(prior[1]);RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.set(prior[2]);});}
     }
 }
