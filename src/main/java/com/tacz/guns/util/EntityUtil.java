@@ -117,7 +117,7 @@ public class EntityUtil {
         if (entity == null || !com.tacz.guns.config.common.AmmoConfig.ENABLE_BULLET_DAMAGE_IGNORE_LIST.get()) {
             return false;
         }
-        Entity core = entity instanceof net.minecraft.world.entity.boss.EnderDragonPart part ? part.parentMob : entity;
+        Entity core = entity instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragonPart part ? part.parentMob : entity;
         Identifier entityId = BuiltInRegistries.ENTITY_TYPE.getKey(core.getType());
         return !BuiltInRegistries.ENTITY_TYPE.getDefaultKey().equals(entityId) && com.tacz.guns.config.common.AmmoConfig.BULLET_DAMAGE_IGNORE_LIST.get().contains(entityId.toString());
     }
