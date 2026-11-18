@@ -75,3 +75,6 @@ grep -Fq 'PORT_MOVEMENT: empty-hand crawl, disabled exit, pose ownership and air
 
 grep -Fq 'PORT_MUZZLE: AK47/Glock first-person, F5, tracked shooter, smoke-off flash and teardown submissions passed' "$run/logs/latest.log"
 printf '::notice::%s\n' "$(grep -F 'PORT_MUZZLE:' "$run/logs/latest.log")"
+
+grep -Fq 'PORT_FEEDBACK: back-mounted toggle, actual ordinary-hurt render hook and same-level impact delivery controls passed' "$run/logs/latest.log"
+printf '::notice::%s\n' "$(grep -F 'PORT_FEEDBACK:' "$run/logs/latest.log")"

@@ -2,6 +2,6 @@
   "required": true,
   "package": "com.tacz.guns.test.mixin",
   "compatibilityLevel": "JAVA_21",
-  "client": ["RangeTextObserver", "ImpactDrawObserver"],
+  "client": ["RangeTextObserver", "ImpactDrawObserver", "FeedbackObservers", "HurtTiltObserver", "ImpactPacketObserver"],
   "injectors": { "defaultRequire": 1 }
 }
