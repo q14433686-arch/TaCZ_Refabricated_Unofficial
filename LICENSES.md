@@ -43,9 +43,12 @@ The bundled default pack credits **TACZ Dev Team** and specifies **CC BY-NC-ND 4
 (see its `assets/tacz/gunpack_info.json`). The incremental 1.2.0 resources are tracked
 in [`RESOURCE_IMPORT_120.tsv`](RESOURCE_IMPORT_120.tsv), pinned to
 [Sh1roCu/TACZ-Refabricated `356bdf9`](https://github.com/Sh1roCu/TACZ-Refabricated/tree/356bdf9d48f2225bac6ceb56adc5576a418517a8).
-The imported ammo, QR-24, grips, risers and UH-1 models, textures, animations, sounds,
-displays and pack locales retain the source bytes. The ledger marks 26.3 recipe
-adaptations separately and records their source hashes. These resources are not relicensed as GPL.
+The full effective built-in pack is tracked in [`DEFAULT_PACK_120.tsv`](DEFAULT_PACK_120.tsv):
+source blob for every file, shipped SHA-256, source/overlay path and adaptation. Models,
+textures, animations and audio are not redrawn, transcoded or relicensed. The adaptation
+column identifies 26.3 metadata, recipes, advancements, loot and script changes. See
+[`scripts/port_default_pack_120.py`](scripts/port_default_pack_120.py) to reproduce it.
+These resources are not relicensed as GPL; this port is not a new distribution permission.
 
 ## Third-party Content Packs
 

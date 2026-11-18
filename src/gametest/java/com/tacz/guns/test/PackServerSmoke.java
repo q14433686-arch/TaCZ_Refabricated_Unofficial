@@ -33,6 +33,7 @@ public class PackServerSmoke {
         com.tacz.guns.GunMod.LOGGER.info("PORT_SMOKE_SERVER: 26.3 overlay and tacz:ak47 loaded");
         helper.assertTrue(helper.getLevel().getServer().getAdvancements().get(Identifier.parse("port_test:criteria")) != null,
                 "Advancement criteria did not register/decode from the pack");
+        DefaultCatalogSmoke.server(helper.getLevel().getServer());
         var assets = com.tacz.guns.resource.CommonAssetsManager.getInstance();
         var addedAmmo = Identifier.parse("tacz:300blk");
         helper.assertTrue(TimelessAPI.getCommonAmmoIndex(addedAmmo).orElseThrow().getStackSize() == 50, "Missing new default ammo");

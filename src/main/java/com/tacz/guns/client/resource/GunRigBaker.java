@@ -21,6 +21,7 @@ final class GunRigBaker {
         var id = lod ? low.getModelLocation() : display.getModelLocation();
         var texture = lod ? low.getModelTexture() : display.getModelTexture();
         var pojo = id == null ? null : ClientAssetsManager.INSTANCE.getBedrockModelPOJO(id);
+        if (lod && pojo == null) return null; // optional LOD (several upstream displays only ship high detail)
         // Preserve the missing-high fallback and use the *selected* geo and texture for mesh models too.
         if (!lod && pojo == null && low != null && low.getModelLocation() != null) {
             GunMod.LOGGER.warn("Missing high-detail model {}; trying {}", id, low.getModelLocation());

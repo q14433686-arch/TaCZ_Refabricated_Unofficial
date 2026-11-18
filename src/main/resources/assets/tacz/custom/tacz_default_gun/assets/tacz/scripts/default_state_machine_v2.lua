@@ -506,11 +506,12 @@ function movement_track_states.walk.update(this, context)
             state.mode = 0
             context:runAnimation("idle", track, true, LOOP, 0.6)
         end
-    elseif (context:getAimingProgress() > 0.5) then
+    elseif (context:isAiming() or context:getAimingProgress() > 0.05) then
         -- 如果正在喵准，则需要播放 walk_aiming 动画
         if (state.mode ~= 1) then
             state.mode = 1
             context:runAnimation("walk_aiming", track, true, LOOP, 0.3)
+            context:anchorWalkDist()
         end
     elseif (context:isInputUp()) then
         -- 如果正在向前走，则需要播放 walk_forward 动画

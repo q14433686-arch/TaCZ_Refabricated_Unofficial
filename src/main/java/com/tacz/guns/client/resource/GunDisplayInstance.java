@@ -17,6 +17,8 @@ import com.tacz.guns.api.client.animation.statemachine.LuaStateMachineFactory;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
 import com.tacz.guns.client.model.BedrockGunModel;
+import com.tacz.guns.client.model.BedrockAmmoModel;
+import com.tacz.guns.client.resource.pojo.model.BedrockVersion;
 import com.tacz.guns.client.resource.pojo.animation.bedrock.BedrockAnimationFile;
 import com.tacz.guns.client.resource.pojo.display.LaserConfig;
 import com.tacz.guns.client.resource.pojo.display.ammo.AmmoParticle;
@@ -85,6 +87,7 @@ public class GunDisplayInstance {
     private @Nullable Identifier hudEmptyTexture;
 
     private @Nullable ShellEjection shellEjection;
+    private @Nullable BedrockAmmoModel shellModel;
     private @Nullable MuzzleFlash muzzleFlash;
     private LayerGunShow offhandShow = new LayerGunShow();
     private @Nullable Int2ObjectArrayMap<LayerGunShow> hotbarShow;
@@ -219,6 +222,7 @@ public class GunDisplayInstance {
             }
             checkTextureAndModel(display);
             checkTextShow(display);
+            bakeShellOverride();
             modelLoaded = true;
         }
     }
@@ -500,6 +504,25 @@ public class GunDisplayInstance {
         shellEjection = display.getShellEjection();
     }
 
+    private void bakeShellOverride() {
+        if (shellEjection == null || shellEjection.getModelLocation() == null || shellEjection.getModelTexture() == null) return;
+        var pojo = ClientAssetsManager.INSTANCE.getBedrockModelPOJO(shellEjection.getModelLocation());
+        if (pojo == null) return;
+        if (BedrockVersion.isLegacyVersion(pojo) && pojo.getGeometryModelLegacy() != null)
+            shellModel = new BedrockAmmoModel(pojo, BedrockVersion.LEGACY);
+        else if (BedrockVersion.isNewVersion(pojo) && pojo.getGeometryModelNew() != null)
+            shellModel = new BedrockAmmoModel(pojo, BedrockVersion.NEW);
+    }
+
+    public @Nullable BedrockAmmoModel getShellModel() {
+        ensureModelLoaded();
+        return shellModel;
+    }
+
+    public @Nullable Identifier getShellTextureLocation() {
+        return shellEjection == null ? null : shellEjection.getModelTexture();
+    }
+
     private void checkGunAmmo(GunDisplay display) {
         GunAmmo displayGunAmmo = display.getGunAmmo();
         if (displayGunAmmo == null) {
@@ -513,7 +536,7 @@ public class GunDisplayInstance {
         if (particle != null) {
             try {
                 String name = particle.getName();
-                if (StringUtils.isNoneBlank()) {
+                if (StringUtils.isNotBlank(name)) {
                     particle.setParticleOptions(ParticleArgument.readParticle(new StringReader(name), RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY)));
                     Preconditions.checkArgument(particle.getCount() > 0, "particle count must be greater than 0");
                     Preconditions.checkArgument(particle.getLifeTime() > 0, "particle life time must be greater than 0");

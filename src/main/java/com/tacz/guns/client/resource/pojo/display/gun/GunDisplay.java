@@ -302,6 +302,7 @@ public class GunDisplay implements IDisplay {
         if (gunLod != null && gunLod.modelTexture != null) {
             gunLod.modelTexture = converter.idToFile(gunLod.modelTexture);
         }
+        if (shellEjection != null) shellEjection.init();
         if (muzzleFlash != null && muzzleFlash.texture != null) {
             muzzleFlash.texture = converter.idToFile(muzzleFlash.texture);
         }

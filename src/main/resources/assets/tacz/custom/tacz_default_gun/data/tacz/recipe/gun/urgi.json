@@ -1,0 +1,21 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 56
+    },
+    {
+      "item": "#c:gems/lapis",
+      "count": 10
+    },
+    {
+      "item": "#minecraft:logs",
+      "count": 12
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:urgi"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

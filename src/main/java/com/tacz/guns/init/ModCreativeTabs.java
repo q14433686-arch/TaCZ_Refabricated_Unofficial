@@ -86,6 +86,11 @@ public class ModCreativeTabs {
             .icon(() -> GunItemBuilder.create().setId(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "ai_awp")).build())
             .displayItems((parameters, output) -> output.acceptAll(AbstractGunItem.fillItemCategory(GunTabType.SNIPER))).build());
 
+    public static CreativeModeTab GUN_DMR_TAB = regiser("dmr", CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
+            .title(Component.translatable("tacz.type.dmr.name"))
+            .icon(() -> GunItemBuilder.create().setId(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "mk14")).build())
+            .displayItems((parameters, output) -> output.acceptAll(AbstractGunItem.fillItemCategory(GunTabType.DMR))).build());
+
     public static CreativeModeTab GUN_RIFLE_TAB = regiser("rifle", CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
             .title(Component.translatable("tacz.type.rifle.name"))
             .icon(() -> GunItemBuilder.create().setId(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "ak47")).build())

@@ -1,0 +1,29 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 130
+    },
+    {
+      "item": "#c:ingots/gold",
+      "count": 18
+    },
+    {
+      "item": "#c:gems/diamond",
+      "count": 4
+    },
+    {
+      "item": "#c:rods/blaze",
+      "count": 6
+    },
+    {
+      "item": "#c:gems/quartz",
+      "count": 4
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:hcar"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}
