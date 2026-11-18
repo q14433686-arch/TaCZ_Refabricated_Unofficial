@@ -80,6 +80,7 @@ public final class ScopeThermalCapture {
             DepthStencilState depth = model.renderType().pipeline().getDepthStencilState();
             if (depth == null || depth.equals(new DepthStencilState(com.mojang.renderpearl.api.pipeline.CompareOp.ALWAYS_PASS, false))
                     || depth.equals(new DepthStencilState(com.mojang.renderpearl.api.pipeline.CompareOp.ALWAYS_PASS, true))) return;
+            node = ScopeThermalMaterial.coverage(model);
         }
         bodies.order(0).solid.submit(node);
     }
@@ -136,6 +137,7 @@ public final class ScopeThermalCapture {
 
     static void close() {
         beginFrame(false);
+        ScopeThermalMaterial.clear();
         failed = false;
         if (mask != null) {
             try { mask.destroyBuffers(); }

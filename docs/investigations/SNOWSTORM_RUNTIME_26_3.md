@@ -49,7 +49,15 @@ compilation is not equivalent to those tests passing.
   `build-reports/visual/44399210018-tacz_lens_slime_hot.png` and the Iris counterpart.
   Pinned 26.3 bytecode confirms blended models invoke `FeatureRenderPhase.submit`, while
   the thermal hook intercepted only `SimpleFeatureRenderPhase.submit`. The additional
-  interface-site hook is awaiting a full non-shader regression; the threshold is unchanged.
+  interface-site hook alone was insufficient: `44402791279` still failed, and its original
+  screenshot shows the silhouette restored but too cold. Optical translucent alpha/OIT
+  must not be treated as heat coverage. A dedicated texture-cutout coverage replay for
+  blended models now keeps the original pose, UVs and copied terrain depth, writes unit
+  sensor coverage, and leaves ordinary scene materials untouched. Full regression pending;
+  the heat threshold and behind-wall assertion are unchanged.
+- `44402791201` failed earlier in the optical PIP A/B stripe check (4,030 shared of
+  4,868 baseline red pixels). Both original frames are retained for diagnosis; no threshold
+  was lowered and the prior successful Iris run does not override this failure.
 - The short-lived flash fix advances existing particles before emitter updates, so newborn
   20ms particles are not killed by the same 50ms client tick before extraction. A dedicated
   assertion checks both the initial render opportunity and expiry on the next tick.
