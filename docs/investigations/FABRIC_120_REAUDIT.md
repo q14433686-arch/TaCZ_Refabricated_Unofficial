@@ -81,3 +81,27 @@ PORT_OPTIC_INSTALL: 39 default scopes found hosts and installed through C2S with
 ```
 
 同次完整构建、服务端烟测、全部客户端门禁再次通过；XM157为12像素，XL50经典2706/PIP2508，stripe为7/45:45/38:38。未据此宣称独立进程重启、独立双客户端、用户14枪包或 Iris 矩阵完成。
+
+## 剩余项批次：背包直读枪模、枪包提示、动画粒子通道
+
+源码与测试 `b07f94c`（主实现 `3643d34`）：[完整构建 44368846181](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44368846181)，job `135030020322` **success**；[compile-check 44368846184](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44368846184) 和 [viewer runtimes 44368846315](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44368846315) 均 **success**。
+
+```text
+PORT_CORE: inventory/model counts 17/26/9, magazine 3, inspect particle render dispatch and warning packet/client dismissal passed
+PORT_CONFIG: 9 Cloth render/ammo controls built with correct defaults and save consumers; client/common FCAP TOML persistence passed
+PORT_OPTIC_INSTALL: 39 default scopes found hosts and installed through C2S with inventory settlement
+```
+
+- 外置测试 ZIP 加入原创 `tools/player-acceptance-pack`，真实服务端改库存并同步：17发散弹、9发弹药盒，枪模 PAPI 依次17/26/9；普通枪3。与 HUD 的缓存读数核对，不是只测独立整数函数。
+- 真实检视按键，不开枪；模型渲染路径消费关键帧并提交原生/无参数 Minecraft 粒子 >=4 次。不是像素/材质对比，不证明完整 Snowstorm、远端玩家或光影兼容。
+- 真实 S2C 枪包名称消息、客户端公告去重状态、本地 dismiss 命令设置开关路径通过；重启持久化、两客户端隔离和完整按钮视觉仍交人工验收。
+- JUnit 增加0帧、半开时间边界、跨循环顺序、超长卡顿限额、数组/脚本字段解析、非法时间；版本提示分类覆盖匹配、不匹配及 overlay。
+- 已有固定场景回归仍通过：XM157恢复12黄色像素/遮墙零；XL50经典2707/PIP2498热像素；stripe7/45:45/38:38；实际受伤反馈、枪口和射击结果门禁保留。
+
+证据 artifact `smoke-b07f94c30288a22e39cdd17eaa98240d46e8a082`（14458762400）包括实际客户端日志/截图。此次本地下载遇 blob EOF，**未人工打开新探针截图**，不能把自动提交计数说成已看图。
+
+完整中文准备/操作/预期/证据清单：[PLAYER_ACCEPTANCE_120_REMAINDER.md](PLAYER_ACCEPTANCE_120_REMAINDER.md)。
+
+### 不能合并进“已完成”的部分
+
+通用 Snowstorm/Molang 引擎仍是源代码移植工作，非只缺依赖。现通道跳过过渡混合期间事件，只支持本地持枪上下文；自定义效果、脚本、远端第三人称生命周期尚未完成。Sable/Simulated/EMI/Accelerated Rendering 的26.3依赖和实际运行环境尚未核实；核对到的公开源码/发布目标仍是1.21.1，不能据此断言所有平台不存在新版。具体来源与下一步见清单E节。
