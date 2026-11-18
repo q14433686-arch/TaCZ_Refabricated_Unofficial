@@ -22,6 +22,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - run: python3 scripts/prepare_iris_smoke.py
       - run: bash scripts/install_client_smoke_deps.sh
+      - run: sudo apt-get install --no-install-recommends -y libgl1-mesa-dri libglx-mesa0 libegl-mesa0 mesa-utils
       - name: Real Iris and Sodium with an active authored shader pack (OpenGL software)
         env:
           SDL_VIDEO_DRIVER: x11
@@ -30,7 +31,8 @@ jobs:
           MESA_GLSL_VERSION_OVERRIDE: '460'
           ALSOFT_DRIVERS: 'null'
           TACZ_SMOKE_IRIS: 'true'
-        run: xvfb-run -a bash scripts/run_client_smoke.sh
+          SDL_VIDEO_X11_FORCE_EGL: '1'
+        run: xvfb-run -a -s '-screen 0 1280x1024x24 +extension GLX +render -noreset' bash -c 'glxinfo -B; bash scripts/run_client_smoke.sh'
       - name: Summarize failures
         if: failure()
         run: |

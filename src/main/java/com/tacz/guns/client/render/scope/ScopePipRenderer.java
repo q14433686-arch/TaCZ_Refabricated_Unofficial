@@ -779,6 +779,9 @@ public final class ScopePipRenderer {
         if (failed) {
             return false;
         }
+        // Classic-FOV pack lenses also composite after Iris; their physical ocular
+        // ring must be restored after that composite even with PIP disabled.
+        if (ScopeLensFrame.expected != null && IrisCompat.isUsingRenderPack()) return true;
         if (RenderConfig.SCOPE_PIP_ENABLE == null || !RenderConfig.SCOPE_PIP_ENABLE.get()) {
             return false;
         }

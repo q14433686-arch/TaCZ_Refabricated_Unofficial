@@ -123,6 +123,9 @@ public final class ScopeThermalCapture {
         } catch (RuntimeException ex) {
             failed = true;
             GunMod.LOGGER.warn("[TACZ Scope] Heat capture unavailable; using the optical lens.", ex);
+            var player = Minecraft.getInstance().player;
+            if (player != null) player.sendSystemMessage(net.minecraft.network.chat.Component
+                    .translatable("message.tacz.scope.thermal_unavailable").withStyle(net.minecraft.ChatFormatting.YELLOW));
         } finally {
             ScopePipelinePrewarm.exitIrisBypass(bypass);
         }

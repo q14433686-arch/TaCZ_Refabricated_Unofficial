@@ -539,5 +539,6 @@
   "message.tacz.pack_compatibility.dismiss": "[Don't show again]",
   "message.tacz.pack_compatibility.dismissed": "Gun pack compatibility warnings are now hidden.",
   "message.tacz.pack_compatibility.help": "Conversion guide:\nProcess local packs in a singleplayer world with cheats enabled; contact the server administrator about server packs.\n1. Run %s to check the packs.\n2. Run %s to export converted packs.\n3. After conversion, follow the instructions to replace the original packs with the new content packs generated in tacz-converted/, then restart the game.",
-  "message.tacz.pack_compatibility.command.hover": "Click to fill the chat input."
+  "message.tacz.pack_compatibility.command.hover": "Click to fill the chat input.",
+  "message.tacz.scope.thermal_unavailable": "Thermal capture failed; this lens is temporarily optical only. See latest.log for the error; reload resources after correcting the renderer or shader setup."
 }

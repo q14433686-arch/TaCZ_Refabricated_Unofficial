@@ -113,12 +113,22 @@ final class ScopeLensSmoke {
             var pipWall = capture(ctx, "pip_wall");
             wall(ctx, world, scene, false);
             var pipRestored = capture(ctx, "pip_restored");
+            BufferedImage afterToggle = null;
+            if (Boolean.getBoolean("tacz.test.iris")) {
+                toggleShaders(ctx, false);
+                toggleShaders(ctx, true);
+                afterToggle = capture(ctx, "pip_shader_restored");
+            }
             blacklistCow(ctx, world);
             var pipVeto = capture(ctx, "pip_tagged");
             flags(ctx, true, true, false, false);
             var veto = capture(ctx, "classic_tagged");
             int classic = heatPixels(optical, hot, behind, restored, veto);
             int pip = heatPixels(pipOptics, pipHot, pipWall, pipRestored, pipVeto);
+            if (afterToggle != null) {
+                int toggled = heatPixels(pipOptics, afterToggle, pipWall, pipRestored, pipVeto);
+                GunMod.LOGGER.info("PORT_IRIS: shader off/on restored {} heat pixels", toggled);
+            }
             GunMod.LOGGER.info("PORT_LENS: XL50 restored {} classic / {} PIP heat pixels; wall and live tag veto cold", classic, pip);
         } finally {
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
@@ -129,6 +139,19 @@ final class ScopeLensSmoke {
             flags(ctx, prior[0], prior[1], prior[2], prior[3]);
             world.getServer().runOnServer(s -> { var e = world.getConnection().getServerPlayer().level().getEntity(scene.cow); if (e != null) e.discard(); });
         }
+    }
+
+    private static void toggleShaders(ClientGameTestContext ctx, boolean enabled) {
+        ctx.runOnClient(mc -> {
+            try {
+                Class<?> iris = Class.forName("net.irisshaders.iris.Iris");
+                Object config = iris.getMethod("getIrisConfig").invoke(null);
+                config.getClass().getMethod("setShadersEnabled", boolean.class).invoke(config, enabled);
+                iris.getMethod("reload").invoke(null);
+            } catch (ReflectiveOperationException e) { throw new AssertionError("Real Iris reload failed", e); }
+        });
+        ctx.waitTicks(5);
+        ctx.waitFor(mc -> com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack() == enabled);
     }
 
     private static void flags(ClientGameTestContext ctx, boolean lens, boolean heat, boolean pip, boolean rerender) {
