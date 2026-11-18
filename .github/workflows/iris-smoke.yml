@@ -22,7 +22,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - run: python3 scripts/prepare_iris_smoke.py
       - run: bash scripts/install_client_smoke_deps.sh
-      - run: sudo apt-get install --no-install-recommends -y libgl1-mesa-dri libglx-mesa0 libegl-mesa0 mesa-utils
+        env:
+          TACZ_SMOKE_IRIS: 'true'
       - name: Real Iris and Sodium with an active authored shader pack (OpenGL software)
         env:
           SDL_VIDEO_DRIVER: x11

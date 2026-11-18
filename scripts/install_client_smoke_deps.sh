@@ -2,6 +2,9 @@
 # Provision the Ubuntu runner, not a player's machine. A renderer/WSI probe still runs inside Xvfb.
 set -euo pipefail
 packages=(mesa-vulkan-drivers vulkan-tools x11-utils xauth xvfb libflite1)
+if [[ ${TACZ_SMOKE_IRIS:-} == true ]]; then
+    packages+=(libgl1-mesa-dri libglx-mesa0 libegl-mesa0 mesa-utils)
+fi
 missing=()
 for package in "${packages[@]}"; do
     if [[ $(dpkg-query -W -f='${Status}' "$package" 2>/dev/null || true) != 'install ok installed' ]]; then
