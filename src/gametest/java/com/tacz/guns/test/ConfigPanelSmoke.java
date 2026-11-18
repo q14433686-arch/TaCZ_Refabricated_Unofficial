@@ -32,6 +32,24 @@ final class ConfigPanelSmoke {
                 }
             }
             if(checked!=3)throw new AssertionError("Missing or duplicate new render settings: "+checked);
+            var ammo=root.getOrCreateCategory(Component.translatable("config.tacz.common.ammo"));
+            Map<String,Object> rules=Map.of(
+                    "destroy_blocks",com.tacz.guns.config.common.AmmoConfig.DEFAULT_DESTROY_BLOCKS,
+                    "destroy_block_hardness_threshold",1D,"ignore_team_friendly_fire",false,
+                    "enable_bullet_damage_ignore_list",false,
+                    "bullet_damage_ignore_list",com.tacz.guns.config.common.AmmoConfig.DEFAULT_BULLET_DAMAGE_IGNORE_LIST,
+                    "explosive_ammo_destroys_blocks",true);
+            int ruleCount=0;
+            for(Object candidate:ammo.getEntries()) {
+                if(!(candidate instanceof AbstractConfigListEntry<?> entry))continue;
+                for(var rule:rules.entrySet()) {
+                    if(entry.getFieldName().equals(Component.translatable("config.tacz.common.ammo."+rule.getKey()))) {
+                        if(!entry.getDefaultValue().orElseThrow().equals(rule.getValue()))throw new AssertionError("Incorrect ammo reset default "+rule.getKey());
+                        entry.save();ruleCount++;
+                    }
+                }
+            }
+            if(ruleCount!=6)throw new AssertionError("Missing ammo rule controls: "+ruleCount);
             root.build(); // build the actual menu, not just isolated entries
             boolean hide=RenderConfig.DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER.get();
             boolean smoke=RenderConfig.RENDER_MUZZLE_SMOKE.get();
@@ -55,7 +73,7 @@ final class ConfigPanelSmoke {
                 RenderConfig.GUN_HURT_BOB_MULTIPLIER.set(tilt);
                 ConfigPersist.saveAll();
             }
-            GunMod.LOGGER.info("PORT_CONFIG: new Cloth render controls built with correct defaults, save consumers and FCAP TOML persistence passed");
+            GunMod.LOGGER.info("PORT_CONFIG: 9 Cloth render/ammo controls built with correct defaults and save consumers; client FCAP TOML persistence passed");
         });
     }
 }
