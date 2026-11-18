@@ -62,6 +62,7 @@ public final class NativeMuzzleEffects {
         final int frame = 4 + (int)(Math.random() * 14);
         long flashBorn = -1;
         boolean smoked;
+        boolean customFlashed;
         boolean smokeEnabled = true;
         Shot(MuzzleEffectParameters effect, Identifier gun, boolean firstPerson, float offset) {
             this.effect = effect; this.gun = gun; this.firstPerson = firstPerson; this.offset = offset;
@@ -161,7 +162,8 @@ public final class NativeMuzzleEffects {
         if (!shot.smoked) {
             shot.smoked = true; // Includes disabled/missing effects: don't burst when options change later.
             Identifier definition = first ? effect.firstSmoke() : effect.thirdSmoke();
-            if (shot.smokeEnabled && RenderConfig.RENDER_MUZZLE_SMOKE.get() && supported(definition, SMOKE) && effect.smokeSize() >= 0 && effect.smokeSpeed() > 0) {
+            if (shot.smokeEnabled && RenderConfig.RENDER_MUZZLE_SMOKE.get()
+                    && !customEffect(definition,shot,pose,first,id,effect.smokeSize()) && supported(definition, SMOKE) && effect.smokeSize() >= 0 && effect.smokeSpeed() > 0) {
                 Matrix4f worldPose = first ? GunItemRendererWrapper.muzzleWorldPose(pose.last().pose())
                         : new Matrix4f(pose.last().pose()).setTranslation(
                             pose.last().pose().m30() + (float)mc.gameRenderer.mainCamera().position().x,
@@ -171,6 +173,11 @@ public final class NativeMuzzleEffects {
             }
         }
         Identifier definition = first ? effect.firstFlash() : effect.thirdFlash();
+        if (!shot.customFlashed && !RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) {
+            shot.customFlashed = true;
+            if (customEffect(definition,shot,pose,first,id,effect.flashScale())) return true;
+        }
+        if (com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader.getInstance().getDefinition(definition)!=null) return true;
         // Starting the 20ms particle at the first locator submit guarantees the instant
         // emitter has one frame even when event handling and extraction straddle a slow frame.
         if (shot.flashBorn < 0) shot.flashBorn = GunTime.nowMillis();
@@ -208,6 +215,22 @@ public final class NativeMuzzleEffects {
             return true;
         }
         return false;
+    }
+
+    private static boolean customEffect(Identifier id,Shot shot,PoseStack pose,boolean first,int owner,float scale) {
+        var definition=com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader.getInstance().getDefinition(id);
+        if(definition==null)return false;
+        if(!Float.isFinite(scale)||scale<=0)return true;
+        var mc=Minecraft.getInstance();
+        Matrix4f hand=new Matrix4f(pose.last().pose()).scale(Math.min(32,scale));
+        Matrix4f world=first?GunItemRendererWrapper.muzzleWorldPose(hand)
+                :new Matrix4f(hand).translateLocal((float)mc.gameRenderer.mainCamera().position().x,
+                        (float)mc.gameRenderer.mainCamera().position().y,(float)mc.gameRenderer.mainCamera().position().z);
+        var runtime=com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance();
+        var emitter=runtime.addEmitter(mc.level,world,Vec3.ZERO,definition,"");
+        if(emitter!=null)runtime.bindAnimated(emitter,owner,shot.gun,
+                com.tacz.guns.client.model.GunModelConstant.MUZZLE_FLASH_ORIGIN_NODE,first,hand,world);
+        return true;
     }
 
     private static boolean supported(Identifier actual, Identifier profile) {

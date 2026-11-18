@@ -488,6 +488,7 @@ public class ParticleEmitterInstance {
         this.fpToWorld = toWorld;
     }
 
+    public void disableFPMode() { fpMode=false; }
     public boolean isFPMode() { return fpMode; }
 
     // ==================== 事件系统 ====================

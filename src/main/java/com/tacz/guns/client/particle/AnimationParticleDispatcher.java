@@ -28,6 +28,11 @@ public final class AnimationParticleDispatcher {
         if(mc.player==null||mc.level==null||mode==null)return;
         boolean first=mode.firstPerson();
         if(!first&&(!GunItemRendererWrapper.IS_MAIN_HAND_SUBMIT||NativeMuzzleEffects.currentOwner()!=mc.player.getId()))return;
+        var gun=com.tacz.guns.api.item.IGun.getIGunOrNull(stack);
+        if(gun==null)return;
+        int owner=first?mc.player.getId():NativeMuzzleEffects.currentOwner();
+        var runtime=com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance();
+        runtime.updateAnchors(owner,gun.getGunId(stack),model,root,first,collector,light);
         var display=TimelessAPI.getGunDisplay(stack).orElse(null);
         if(display==null||display.getAnimationStateMachine()==null)return;
         var events=display.getAnimationStateMachine().getAnimationController().consumeParticleEvents();
@@ -46,7 +51,10 @@ public final class AnimationParticleDispatcher {
             if(definition!=null){
                 var emitter=com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance()
                         .addEmitter(mc.level,world,net.minecraft.world.phys.Vec3.ZERO,definition,event.preEffectScript());
-                if(emitter!=null)submitted++;
+                if(emitter!=null){
+                    runtime.bindAnimated(emitter,owner,gun.getGunId(stack),locator,first,new Matrix4f(pose.last().pose()),world);
+                    submitted++;
+                }
                 continue;
             }
             if(event.preEffectScript()!=null&&!event.preEffectScript().isBlank()){

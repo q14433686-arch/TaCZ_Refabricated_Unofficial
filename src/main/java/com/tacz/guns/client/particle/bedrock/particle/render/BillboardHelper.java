@@ -205,8 +205,17 @@ public final class BillboardHelper {
                 transformDirection(axisY, viewPose, 0, 1, 0);
                 axisY.normalize();
             }
-            default -> {
-                // EMITTER_TRANSFORM_* 等模式：保持默认
+            case EMITTER_TRANSFORM_XY -> {
+                transformDirection(axisX,velPose,1,0,0);transformDirection(axisY,velPose,0,1,0);
+                axisX.normalize();axisY.normalize();
+            }
+            case EMITTER_TRANSFORM_XZ -> {
+                transformDirection(axisX,velPose,1,0,0);transformDirection(axisY,velPose,0,0,1);
+                axisX.normalize();axisY.normalize();
+            }
+            case EMITTER_TRANSFORM_YZ -> {
+                transformDirection(axisX,velPose,0,1,0);transformDirection(axisY,velPose,0,0,1);
+                axisX.normalize();axisY.normalize();
             }
         }
     }

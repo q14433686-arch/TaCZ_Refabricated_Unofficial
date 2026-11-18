@@ -13,7 +13,8 @@ public record ParticleTintingStatic(MolangExpression r, MolangExpression g, Mola
         implements IParticleComponentDefinition, IParticleComponent {
 
     @Override public int order() { return 210; }
-    @Override public boolean requireUpdate() { return false; }
+    @Override public boolean requireUpdate() { return true; }
+    @Override public void update(ParticleInstance p) { apply(p); }
 
     @Override
     public void apply(ParticleInstance p) {

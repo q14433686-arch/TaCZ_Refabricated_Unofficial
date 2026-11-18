@@ -29,7 +29,6 @@ public record ParticleInitialization(
     public void update(ParticleInstance p) {
         if (p.emitter == null) return;
         var ctx = p.emitter.getMolang().getContext();
-        if (perRenderExpression != null) perRenderExpression.evaluate(ctx);
         if (perUpdateExpression != null) perUpdateExpression.evaluate(ctx);
     }
 
