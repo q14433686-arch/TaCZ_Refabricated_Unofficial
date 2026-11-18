@@ -3,6 +3,7 @@ package com.tacz.guns.config.common;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 public class OtherConfig {
+    public static ForgeConfigSpec.BooleanValue HIDE_GUN_PACK_COMPATIBILITY_WARNING;
     public static ForgeConfigSpec.BooleanValue DEFAULT_PACK_DEBUG;
     public static ForgeConfigSpec.IntValue TARGET_SOUND_DISTANCE;
     public static ForgeConfigSpec.DoubleValue SERVER_HITBOX_OFFSET;
@@ -11,6 +12,7 @@ public class OtherConfig {
 
     public static void init(ForgeConfigSpec.Builder builder) {
         builder.push("other");
+        HIDE_GUN_PACK_COMPATIBILITY_WARNING = builder.comment("Hide client gun pack version mismatch warnings; does not enable or convert incompatible packs").define("HideGunPackCompatibilityWarning", false);
 
         builder.comment("Deprecated: now move to .minecraft/tacz/tacz-pre.toml or <your version>/tacz/tacz-pre.toml");
         builder.comment("When enabled, the reload command will not overwrite the default model file under config");

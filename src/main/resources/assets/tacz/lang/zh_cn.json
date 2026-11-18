@@ -1,4 +1,7 @@
 {
+  "config.tacz.common.other.hide_gun_pack_compatibility_warning.desc": "隐藏进入世界时的版本不匹配提示；不会让枪包自动兼容。",
+  "message.tacz.pack_compatibility.notice": "以下枪包未声明支持当前 Minecraft 版本：%s",
+  "message.tacz.pack_compatibility.hidden": "已在本客户端隐藏警告，可在 TaCZ 其他设置中重新开启。",
   "config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render": "隐藏第三人称备用枪械",
   "config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render.desc": "隐藏玩家模型上的副手与未选中快捷栏枪械；主手枪械仍正常显示。",
   "config.tacz.client.render.gun_hurt_bob_multiplier": "持枪受伤倾斜倍率",

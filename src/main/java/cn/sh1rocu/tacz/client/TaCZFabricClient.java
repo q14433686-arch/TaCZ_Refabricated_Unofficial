@@ -128,6 +128,7 @@ public class TaCZFabricClient implements ClientModInitializer {
 
         InputEvent.InteractionKeyMappingTriggered.EVENT.register(ClientPreventGunClick::onClickInput);
 
+        com.tacz.guns.client.event.PackCompatibilityNotice.register();
         ClientTickEvents.START_CLIENT_TICK.register(ClientGunTimeLifecycle::tick);
         ClientPlayConnectionEvents.DISCONNECT.register(CommonNetworkCacheEvent::onDisconnect);
 

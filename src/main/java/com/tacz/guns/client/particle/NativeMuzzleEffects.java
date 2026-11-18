@@ -89,6 +89,7 @@ public final class NativeMuzzleEffects {
         currentOwner = id == null ? -1 : id;
         return old;
     }
+    public static int currentOwner(){return currentOwner;}
     public static void endEntity(int old) { currentOwner = old; }
 
     private static void synchronizeSession() {
@@ -101,6 +102,7 @@ public final class NativeMuzzleEffects {
         PUFFS.removeIf(p -> now < p.born || (now - p.born) / 1000f >= p.lifetime);
     }
     public static void clear() {
+        com.tacz.guns.client.particle.AnimationParticleDispatcher.clear();
         SHOTS.clear(); PUFFS.clear(); WARNED.clear(); currentOwner = -1; level = null; epoch = -1;
     }
 
@@ -185,6 +187,27 @@ public final class NativeMuzzleEffects {
         context.add(out -> quad(out, pose, type, size, size, u, u + 1f/18, 0xffffffff, 15728880));
         if (first) firstFlashSubmits++; else thirdFlashSubmits++;
         return true;
+    }
+
+    /** Native shipped profiles are reusable from animation keyframes without a synthetic gun shot. */
+    public static boolean submitAnimationProfile(Identifier id, PoseStack pose, Matrix4f world, boolean first, int light, SubmitNodeCollector collector) {
+        synchronizeSession();
+        if (id.equals(SMOKE)) {
+            if (RenderConfig.RENDER_MUZZLE_SMOKE.get()) {
+                var parameters = new MuzzleEffectParameters(null, SMOKE, null, SMOKE, 0, 0, 1, 1, 15, null);
+                emitSmoke(new Shot(parameters, id, first, 0), world, light, first ? GunItemRendererWrapper.muzzleWorldScale() : 1);
+            }
+            return true;
+        }
+        if (id.equals(FLASH)) {
+            if (!RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) {
+                var type = first && ScopeBodyRenderTypes.maskReadyForViewmodel(true)
+                        ? ScopeBodyRenderTypes.flashSwirlClipped(FLASH_TEXTURE) : RenderTypes.energySwirl(FLASH_TEXTURE, 0, 0);
+                quad(collector, copy(pose), type, .45f, .45f, 4f/18, 5f/18, 0xffffffff, 15728880);
+            }
+            return true;
+        }
+        return false;
     }
 
     private static boolean supported(Identifier actual, Identifier profile) {

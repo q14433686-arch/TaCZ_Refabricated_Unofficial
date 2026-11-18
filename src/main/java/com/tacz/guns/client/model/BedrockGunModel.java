@@ -343,6 +343,7 @@ public class BedrockGunModel extends BedrockAnimatedModel {
                 com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.clipForViewmodel(
                         renderType, gunTexture, transformType != null && transformType.firstPerson()),
                 light, overlay);
+        com.tacz.guns.client.particle.AnimationParticleDispatcher.submit(gunItem, this, poseStack, transformType, collector, light);
         if (impactMarker != null && transformType != null && transformType.firstPerson())
             impactMarker.submit(gunItem, poseStack, collector, false, overlay);
     }

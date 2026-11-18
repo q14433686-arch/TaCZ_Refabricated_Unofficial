@@ -71,6 +71,12 @@ public class NetworkHandler {
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunActionPost.TYPE, ServerMessageGunActionPost.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageAmmoStorageContents.TYPE, ServerMessageAmmoStorageContents.STREAM_CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunUnload.TYPE, ServerMessageGunUnload.STREAM_CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(ServerMessagePackWarnings.TYPE, ServerMessagePackWarnings.CODEC);
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler,sender,server)->{
+            var names=com.tacz.guns.resource.GunPackLoader.INSTANCE.getPacksNeedingConversion(net.minecraft.server.packs.PackType.SERVER_DATA);
+            if(!names.isEmpty() && ServerPlayNetworking.canSend(handler.player,ServerMessagePackWarnings.TYPE))
+                ServerPlayNetworking.send(handler.player,new ServerMessagePackWarnings(names));
+        });
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageBulletHitBlock.TYPE, ServerMessageBulletHitBlock.STREAM_CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunReload.TYPE, ServerMessageGunReload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunShoot.TYPE, ServerMessageGunShoot.CODEC);
@@ -109,6 +115,7 @@ public class NetworkHandler {
 
     @Environment(EnvType.CLIENT)
     public static void registerS2CPackets() {
+        ClientPlayNetworking.registerGlobalReceiver(ServerMessagePackWarnings.TYPE,ServerMessagePackWarnings::handle);
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageBulletHitBlock.TYPE, ServerMessageBulletHitBlock::handle);
         ClientPlayNetworking.registerGlobalReceiver(IEntityAdditionalSpawnData.EXTRA_DATA_TYPE, (payload, context) -> {
             context.client().execute(() -> {

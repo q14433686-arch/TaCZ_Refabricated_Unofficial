@@ -17,6 +17,10 @@ public class ObjectAnimation {
      */
     private final Map<String, List<ObjectAnimationChannel>> channels = new HashMap<>();
     private @Nullable ObjectAnimationSoundChannel soundChannel;
+    private @Nullable ObjectAnimationParticleChannel particleChannel;
+    protected void includeDuration(double duration){if(Double.isFinite(duration)&&duration>=0)maxEndTimeS=Math.max(maxEndTimeS,(float)duration);}
+    public @Nullable ObjectAnimationParticleChannel getParticleChannel(){return particleChannel;}
+    protected void setParticleChannel(ObjectAnimationParticleChannel channel){particleChannel=channel;maxEndTimeS=Math.max(maxEndTimeS,(float)channel.getEndTimeS());}
     /**
      * 播放类型
      */
@@ -39,6 +43,7 @@ public class ObjectAnimation {
         this.name = source.name;
         this.playType = source.playType;
         this.maxEndTimeS = source.maxEndTimeS;
+        this.particleChannel = source.particleChannel;
         for (Map.Entry<String, List<ObjectAnimationChannel>> entry : source.channels.entrySet()) {
             List<ObjectAnimationChannel> newList = new ArrayList<>();
             for (ObjectAnimationChannel channel : entry.getValue()) {

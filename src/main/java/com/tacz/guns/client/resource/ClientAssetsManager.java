@@ -71,6 +71,7 @@ public enum ClientAssetsManager {
             .registerTypeAdapter(ItemStack.class, new ItemStackSerializer())
             .registerTypeAdapter(AnimationKeyframes.class, new AnimationKeyframesSerializer())
             .registerTypeAdapter(SoundEffectKeyframes.class, new SoundEffectKeyframesSerializer())
+            .registerTypeAdapter(com.tacz.guns.client.resource.pojo.animation.bedrock.ParticleEffectKeyframes.class, new com.tacz.guns.client.resource.serialize.ParticleEffectKeyframesSerializer())
             .create();
 
     // 枪械展示数据

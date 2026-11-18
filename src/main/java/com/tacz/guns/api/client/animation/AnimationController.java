@@ -135,6 +135,15 @@ public class AnimationController {
         }
     }
 
+    synchronized public java.util.List<AnimationParticleEvent> consumeParticleEvents() {
+        var result=new java.util.ArrayList<AnimationParticleEvent>();
+        for(var runner:currentRunners)if(runner!=null){
+            result.addAll(runner.consumeParticleEvents());
+            if(runner.getTransitionTo()!=null)result.addAll(runner.getTransitionTo().consumeParticleEvents());
+        }
+        return result.size()>256?java.util.List.copyOf(result.subList(0,256)):java.util.List.copyOf(result);
+    }
+
     synchronized public void updateSoundOnly() {
         for (int i = 0; i < currentRunners.size(); i++) {
             updateByTrack(i, true);

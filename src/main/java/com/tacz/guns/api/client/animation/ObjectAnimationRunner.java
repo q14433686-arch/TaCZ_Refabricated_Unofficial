@@ -60,6 +60,16 @@ public class ObjectAnimationRunner {
      * 用于动画过渡，储存的是过渡起点动画需要恢复到原位的channel
      */
     protected ArrayList<ObjectAnimationChannel> recoverChannels;
+    private final List<AnimationParticleEvent> pendingParticles = new ArrayList<>();
+    private boolean firstParticleUpdate = true;
+    public List<AnimationParticleEvent> consumeParticleEvents(){var result=List.copyOf(pendingParticles);pendingParticles.clear();return result;}
+    private void collectParticles(long elapsed){
+        var channel=animation.getParticleChannel();
+        if(channel!=null && running && !isTransitioning){
+            channel.collect(progressNs/1e9,elapsed/1e9,animation.getMaxEndTimeS(),animation.playType==ObjectAnimation.PlayType.LOOP,firstParticleUpdate,pendingParticles);
+            firstParticleUpdate=false;
+        }
+    }
     private boolean running = false;
     private boolean pausing = false;
     private long lastUpdateNs;
@@ -114,6 +124,7 @@ public class ObjectAnimationRunner {
     }
 
     public void reset() {
+        pendingParticles.clear();firstParticleUpdate=true;
         progressNs = 0;
     }
 
@@ -122,6 +133,7 @@ public class ObjectAnimationRunner {
     }
 
     public void setProgressNs(long progressNs) {
+        pendingParticles.clear();firstParticleUpdate=progressNs==0;
         this.progressNs = progressNs;
     }
 
@@ -294,6 +306,7 @@ public class ObjectAnimationRunner {
     public void update(boolean blend) {
         long fromTimeNs = progressNs;
         long alphaProgress = elapsedSinceLastUpdate();
+        collectParticles(alphaProgress);
         updateProgress(alphaProgress);
         if (isTransitioning) {
             transitionProgressNs += alphaProgress;
@@ -314,7 +327,9 @@ public class ObjectAnimationRunner {
 
     public void updateSoundOnly() {
         long fromTimeNs = progressNs;
-        updateProgress(elapsedSinceLastUpdate());
+        long elapsed = elapsedSinceLastUpdate();
+        collectParticles(elapsed);
+        updateProgress(elapsed);
         ObjectAnimationSoundChannel soundChannel = animation.getSoundChannel();
         if (soundChannel != null && Minecraft.getInstance().player != null) {
             soundChannel.playSound(fromTimeNs / 1e9, progressNs / 1e9, Minecraft.getInstance().player, 16, 1, 1);

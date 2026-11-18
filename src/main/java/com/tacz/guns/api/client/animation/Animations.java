@@ -171,6 +171,10 @@ public class Animations {
                 }
                 animation.setSoundChannel(soundChannel);
             }
+            if (bedrockAnimation.getParticleEffects() != null) {
+                animation.setParticleChannel(bedrockAnimation.getParticleEffects().channel());
+                animation.includeDuration(bedrockAnimation.getAnimationLength());
+            }
             result.add(animation);
         }
         return result;
