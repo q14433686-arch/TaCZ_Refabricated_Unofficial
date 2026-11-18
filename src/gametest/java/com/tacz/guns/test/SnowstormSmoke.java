@@ -23,11 +23,22 @@ final class SnowstormSmoke {
        "minecraft:particle_appearance_tinting":{"color":[1,0,1,1]}
       }}}
       """;
+    private static final class EventAnimation extends com.tacz.guns.api.client.animation.ObjectAnimation {
+        EventAnimation(String name){super(name);includeDuration(1);setParticleChannel(new com.tacz.guns.api.client.animation.ObjectAnimationParticleChannel(
+            java.util.List.of(new com.tacz.guns.api.client.animation.ObjectAnimationParticleChannel.Keyframe(0,
+                java.util.List.of(new com.tacz.guns.api.client.animation.AnimationParticleEvent(net.minecraft.resources.Identifier.parse("port_acceptance:runtime_probe"),"muzzle_flash","variable.count = 3;"))))));}
+    }
     static void run(ClientGameTestContext ctx,TestSingleplayerContext world){
         ctx.runOnClient(mc->{
             if(com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader.getInstance()
                     .getDefinition(net.minecraft.resources.Identifier.parse("port_acceptance:runtime_probe"))==null)
                 throw new AssertionError("External-pack particle definition was not loaded");
+            var controller=new com.tacz.guns.api.client.animation.AnimationController(java.util.List.of(new EventAnimation("source"),new EventAnimation("target")),(node,type)->null);
+            controller.runAnimation(0,"source",com.tacz.guns.api.client.animation.ObjectAnimation.PlayType.PLAY_ONCE_STOP,0);
+            controller.runAnimation(0,"target",com.tacz.guns.api.client.animation.ObjectAnimation.PlayType.PLAY_ONCE_STOP,.2f);
+            controller.update();
+            if(controller.consumeParticleEvents().size()!=1||!controller.consumeParticleEvents().isEmpty())
+                throw new AssertionError("Transition target particle was dropped or consumed twice");
             var compiler=new ParticleMolangEnvironment();
             var def=new ParticleEffectDeserializer().parse(JsonParser.parseString(DEFINITION),compiler);
             var curveJson=JsonParser.parseString(DEFINITION).getAsJsonObject();
