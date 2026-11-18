@@ -118,6 +118,7 @@ public enum ClientAssetsManager {
             gltfAnimation = register(new GltfManager());
             scriptManager = register(new ScriptManager(new FileToIdConverter("scripts", ".lua"), libList));
             packInfo = register(new PackInfoManager());
+            register(com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader.getInstance());
             register(new IdentifiableResourceReloadListener() {
                 static final Identifier ID = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "client_index_manager_reload");
 

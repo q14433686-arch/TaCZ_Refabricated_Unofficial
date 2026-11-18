@@ -32,9 +32,6 @@ public final class AnimationParticleDispatcher {
         if(display==null||display.getAnimationStateMachine()==null)return;
         var events=display.getAnimationStateMachine().getAnimationController().consumeParticleEvents();
         for(var event:events){
-            if(event.preEffectScript()!=null&&!event.preEffectScript().isBlank()){
-                warn(event.effect()+": pre_effect_script requires a Molang backend");continue;
-            }
             String locator=event.locator()==null||event.locator().isBlank()?com.tacz.guns.client.model.GunModelConstant.MUZZLE_FLASH_ORIGIN_NODE:event.locator();
             var node=model.getNode(locator);
             if(node==null){warn(event.effect()+": missing locator "+locator);continue;}
@@ -45,6 +42,16 @@ public final class AnimationParticleDispatcher {
             Matrix4f world=first?GunItemRendererWrapper.muzzleWorldPose(pose.last().pose())
                     :new Matrix4f(pose.last().pose()).translateLocal((float)mc.gameRenderer.mainCamera().position().x,
                         (float)mc.gameRenderer.mainCamera().position().y,(float)mc.gameRenderer.mainCamera().position().z);
+            var definition=com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader.getInstance().getDefinition(event.effect());
+            if(definition!=null){
+                var emitter=com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance()
+                        .addEmitter(mc.level,world,net.minecraft.world.phys.Vec3.ZERO,definition,event.preEffectScript());
+                if(emitter!=null)submitted++;
+                continue;
+            }
+            if(event.preEffectScript()!=null&&!event.preEffectScript().isBlank()){
+                warn(event.effect()+": scripts require a Snowstorm definition, not a parameterless native particle");continue;
+            }
             if(NativeMuzzleEffects.submitAnimationProfile(event.effect(),pose,world,first,light,collector)){submitted++;continue;}
             var type=BuiltInRegistries.PARTICLE_TYPE.getValue(event.effect());
             if(type instanceof SimpleParticleType simple){
