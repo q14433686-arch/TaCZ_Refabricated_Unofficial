@@ -20,6 +20,7 @@ import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
 import com.tacz.guns.config.common.AmmoConfig;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
+import com.tacz.guns.entity.shooter.GunScriptGuard;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.event.ServerMessageGunFire;
 import com.tacz.guns.resource.index.CommonGunIndex;
@@ -51,6 +52,7 @@ import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
@@ -60,6 +62,7 @@ public class ModernKineticGunScriptAPI {
     private LivingEntity shooter;
 
     private ShooterDataHolder dataHolder;
+    private long boundDraw;
 
     private ItemStack itemStack;
 
@@ -156,10 +159,9 @@ public class ModernKineticGunScriptAPI {
         // 连发间隔
         long period = modifyProperty(GunProperties.RuntimeOnly.BURST_SHOOT_INTERVAL, Long.class, fireMode == FireMode.BURST ? gunData.getBurstShootInterval() : 1);
 
-        CycleTaskHelper.addCycleTask(
-                () -> runShootCycle(consumeAmmo, gunData, bulletData, gunOperator, shotDamageMultiplier,
-                        inaccuracy, soundDistance, useSilenceSound, processedSpeed, bulletAmount),
-                period, cycles);
+        scheduleCycle("shoot_cycle", () -> runShootCycle(consumeAmmo, gunData, bulletData, gunOperator,
+                shotDamageMultiplier, inaccuracy, soundDistance, useSilenceSound, processedSpeed, bulletAmount),
+                0, period, cycles);
     }
 
     /**
@@ -174,6 +176,8 @@ public class ModernKineticGunScriptAPI {
         // 触发击发事件
         GunFireEvent gunFireEvent = new GunFireEvent(shooter, itemStack, LogicalSide.SERVER);
         GunFireEvent.CALLBACK.invoker().post(gunFireEvent);
+        // A pre listener may switch stacks or redraw synchronously.
+        if (!isBoundDraw()) return false;
         boolean fire = !gunFireEvent.isCanceled();
         if (fire) {
             NetworkHandler.sendToTrackingEntity(new ServerMessageGunFire(shooter.getId(), itemStack), shooter);
@@ -748,7 +752,20 @@ public class ModernKineticGunScriptAPI {
      */
     public void safeAsyncTask(LuaValue value, long delayMs, long periodMs, int cycles) {
         LuaFunction func = value.checkfunction();
-        CycleTaskHelper.addCycleTask(() -> runLuaCycleTask(func), delayMs, periodMs, cycles);
+        scheduleCycle("safe_async_task", () -> runLuaCycleTask(func), delayMs, periodMs, cycles);
+    }
+
+    private void scheduleCycle(String operation, BooleanSupplier task, long delayMs, long periodMs, int cycles) {
+        // The action closes over this particular stack, not just a gun ID. Dropping an old callback
+        // must not cancel the reload/script data of a replacement of the same type.
+        CycleTaskHelper.addCycleTask(() -> isBoundDraw() && GunScriptGuard.run(dataHolder, shooter, gunId,
+                operation, task::getAsBoolean, false), delayMs, periodMs, cycles);
+    }
+
+    private boolean isBoundDraw() {
+        return dataHolder != null && boundDraw == dataHolder.drawGeneration() && !dataHolder.gunScriptFailed
+                && !shooter.isRemoved() && !shooter.isDeadOrDying() && shooter.getMainHandItem() == itemStack
+                && !itemStack.isEmpty() && gunId.equals(dataHolder.currentGunId) && gunId.equals(abstractGunItem.getGunId(itemStack));
     }
 
     /**
@@ -936,6 +953,7 @@ public class ModernKineticGunScriptAPI {
 
     public void setDataHolder(ShooterDataHolder dataHolder) {
         this.dataHolder = dataHolder;
+        this.boundDraw = dataHolder == null ? -1 : dataHolder.drawGeneration();
     }
 
     public boolean useInventoryAmmo() {

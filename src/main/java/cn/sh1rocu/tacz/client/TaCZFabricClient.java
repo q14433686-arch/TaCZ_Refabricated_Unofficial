@@ -9,7 +9,7 @@ import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.event.SwapItemWithOffHand;
 import com.tacz.guns.api.event.common.EntityHurtByGunEvent;
 import com.tacz.guns.api.event.common.EntityKillByGunEvent;
-import com.tacz.guns.api.event.common.GunFireEvent;
+import com.tacz.guns.api.event.common.GunFirePostEvent;
 import com.tacz.guns.client.animation.screen.RefitTransform;
 import com.tacz.guns.client.compat.RecipeViewerReloadBridge;
 import com.tacz.guns.client.event.*;
@@ -118,7 +118,7 @@ public class TaCZFabricClient implements ClientModInitializer {
         BeforeRenderHandEvent.CALLBACK.register(CameraSetupEvent::applyItemInHandCameraAnimation);
         ViewportEvent.FOV.register(CameraSetupEvent::applyScopeMagnification);
         ViewportEvent.FOV.register(CameraSetupEvent::applyGunModelFovModifying);
-        GunFireEvent.CALLBACK.register(CameraSetupEvent::initialCameraRecoil);
+        GunFirePostEvent.EVENT.register(CameraSetupEvent::initialCameraRecoilPost);
         ViewportEvent.CAMERA.register(CameraSetupEvent::applyCameraRecoil);
         ComputeFovModifierEvent.CALLBACK.register(CameraSetupEvent::onComputeMovementFov);
 
@@ -138,7 +138,7 @@ public class TaCZFabricClient implements ClientModInitializer {
         // 以免再有人把它误当作第一人称链路来排查。
 
         RenderItemInHandBobEvent.VIEW.register(FirstPersonRenderGunEvent::cancelItemInHandViewBobbing);
-        GunFireEvent.CALLBACK.register(FirstPersonRenderGunEvent::onGunFire);
+        GunFirePostEvent.EVENT.register(FirstPersonRenderGunEvent::onGunFirePost);
 
         ClientTickEvents.START_CLIENT_TICK.register(client -> InventoryEvent.onPlayerChangeSelect(client, false));
         ClientTickEvents.END_CLIENT_TICK.register(client -> InventoryEvent.onPlayerChangeSelect(client, true));

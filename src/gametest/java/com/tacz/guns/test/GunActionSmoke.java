@@ -34,7 +34,8 @@ public class GunActionSmoke {
         var entity = helper.spawn(EntityTypes.ZOMBIE, BlockPos.ZERO);
         var data = new ShooterDataHolder();
         var gun = GunItemBuilder.create().setId(Identifier.parse("port_test:oem")).build();
-        data.currentGunItem = () -> gun;
+        entity.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, gun);
+        data.setCurrentGunItem(entity::getMainHandItem);
         var aim = new LivingEntityAim(entity, data);
         data.reloadStateType = ReloadState.StateType.EMPTY_RELOAD_FINISHING;
         aim.aim(true);

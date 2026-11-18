@@ -133,6 +133,17 @@ public class LivingEntityShoot {
         if (boltType == Bolt.MANUAL_ACTION && !hasAmmoInBarrel) {
             return ShootResult.NEED_BOLT;
         }
+        // 触发射击事件
+        long acceptedDraw = data.drawGeneration();
+        GunShootEvent gunShootEvent = new GunShootEvent(shooter, currentGunItem, LogicalSide.SERVER);
+        GunShootEvent.CALLBACK.invoker().post(gunShootEvent);
+        if (gunShootEvent.isCanceled()) {
+            return ShootResult.FORGE_EVENT_CANCEL;
+        }
+
+        // A cancelled trigger must not move ammo into the chamber. Listeners may also replace the held stack.
+        if (acceptedDraw != data.drawGeneration() || data.gunScriptFailed || currentGunItem != shooter.getMainHandItem()
+                || !gunId.equals(iGun.getGunId(currentGunItem))) return ShootResult.UNKNOWN_FAIL;
         // 闭膛的膛内检查逻辑
         if (boltType == Bolt.CLOSED_BOLT && !hasAmmoInBarrel) {
             // 两种不同的上膛情况
@@ -143,13 +154,6 @@ public class LivingEntityShoot {
             }
             iGun.setBulletInBarrel(currentGunItem, true);
         }
-        // 触发射击事件
-        GunShootEvent gunShootEvent = new GunShootEvent(shooter, currentGunItem, LogicalSide.SERVER);
-        GunShootEvent.CALLBACK.invoker().post(gunShootEvent);
-        if (gunShootEvent.isCanceled()) {
-            return ShootResult.FORGE_EVENT_CANCEL;
-        }
-
         NetworkHandler.sendToTrackingEntity(new ServerMessageGunShoot(shooter.getId(), currentGunItem), shooter);
         data.lastShootTimestamp = data.shootTimestamp;
         data.heatTimestamp = GunTime.nowMillis();

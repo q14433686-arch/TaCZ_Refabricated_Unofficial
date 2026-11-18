@@ -121,9 +121,16 @@ public class LivingEntityReload {
         ItemStack held = data.currentGunItem == null ? null : data.currentGunItem.get();
         boolean finished = false;
         if (held != null && held.getItem() instanceof AbstractGunItem gun && TimelessAPI.getCommonGunIndex(gun.getGunId(held)).isPresent()) {
-            boolean wasReloading = data.reloadStateType.isReloading();
+            long draw = data.drawGeneration();
             result = gun.tickReload(data, held, shooter);
-            finished = wasReloading && !result.getStateType().isReloading();
+            // An immediate script callback may abort this operation (or start another draw).
+            // Do not reinstall its stale result or announce an interruption as a successful finish.
+            if (draw != data.drawGeneration() || data.gunScriptFailed || data.reloadTimestamp == -1) return new ReloadState();
+            if (held != shooter.getMainHandItem() || held.isEmpty() || !gun.getGunId(held).equals(data.currentGunId)) {
+                data.cancelGunScriptState();
+                return new ReloadState();
+            }
+            finished = data.reloadStateType.isReloading() && !result.getStateType().isReloading();
         }
         data.reloadStateType = result.getStateType();
         if (!data.reloadStateType.isReloading()) data.reloadTimestamp = -1;

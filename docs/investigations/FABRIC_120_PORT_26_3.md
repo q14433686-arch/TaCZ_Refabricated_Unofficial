@@ -116,3 +116,15 @@ UH-1 的 `text_show` 经 26.3 第一人称 extraction 读取实际游戏方块�
 新增门禁：集成服使用暂停界面，跨客户端 tick 检查冻结/恢复和两种 LuaJ 宿主的时间；退出到标题，再用 `TestWorldSave.open()` 打开**原存档**，要求新的服务端快照、保留含配件的物品和两块陈列，以及一次本地/服务端事件和一次生存菜单的具名库存转移。它仍是一个进程里的新集成服，不是同时在线的旁观者，也不证明所有历史存档或跨维度切换。
 
 `d05637d` 的独立编译、Full build 和专服步骤通过；该次运行在安装 Mesa 测试依赖时被新推送取代，**没有客户端结论**。包含上述时钟修正及测试的 `bbc03b3` 已通过 [compile-check](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44220410704) 和[完整 build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44220410616)。此次 Mesa 客户端实际观察到 UH-1 的远、近遮挡读数随世界变化；暂停五个客户端 tick 再恢复；重开原存档后，本地与服务端各收到一次开火后事件，弹药库中的 17 件具名弹药转入玩家背包，3 件普通弹药仍在库中。日志和截图在 [smoke 工件](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44220410616/artifacts/14390991870)；未做像素判读或 Iris/独立双客户端验证。
+
+### 默认包全量清单与运行时门禁
+
+`955ebc4` 不再按示例枪分批复制：从同一 pin 解析 4,176 个有效路径，其中 229 个采用组件时代的 overlay 对应物，再转换成 26.3 会实际读取的布局与字段。每个成品路径的来源、blob、转换分类与 SHA-256 见 [`DEFAULT_PACK_120.tsv`](../../DEFAULT_PACK_120.tsv)。`python3 scripts/verify_120_resources.py` 可离线复核；`python3 scripts/port_default_pack_120.py /tmp/tacz-upstream.git` 另从固定 Git 对象验算，不加 `--write` 不落盘。[246 个上游缺口](DEFAULT_PACK_120_SOURCE_GAPS.tsv)保留了精确引用者；不能把可选 LOD、声音回退和真正缺失项混称为 246 个运行错误。
+
+[编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44226492723)和[全量工作流](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44226492728)的 Full build、专服 GameTest 和单份 MAE 检查已通过。专服断言覆盖 70 把枪、126 个配件、25 种弹药、5 个转接座、3 个块的索引，以及逻辑脚本引用、23 个进度、202 个工作台配方及其材料。客户端是另一道门禁：逐个打开主模型与状态机，并核对 M1897 的专用弹壳材质。渲染全部外观、逐动作脚本、`renew` 粒子、镜片/热成像或第三方包行为，均不能从以上计数推导。
+
+### 服务端脚本动作与旁观事件
+
+以一次 draw 为边界隔离 LuaJ 异常；错误清空换弹/拉栓/待执行近战与脚本临时值，但不重置射击冷却，不把部分已执行的脚本当成可回滚事务。延迟 Lua 回调和同一轮的后续 cycle 还必须属于原 draw、原主手物品实例；不改旧包的 `runLuaCycleTask` / `runShootCycle` 接点。先投票再提交本地开火效果；取消触发不再挪动弹药。`inventory_cooling_per_tick` 在服务端的未选中物品上生效，主手仍走原 `tick_heat`。
+
+新测试分别覆盖非法 Lua 返回值、嵌套即时回调失败、换枪后旧定时器、库存冷却，以及一个真实追踪客户端收到**其他实体**的成功事件。后者也在同一连接上撤销单项 Fabric 接收能力、等服务端协商生效再检查旧事件；不是使用历史客户端 JAR，也不是两个独立客户端。通过与否以包含这些测试的源码 SHA 对应工作流为准。

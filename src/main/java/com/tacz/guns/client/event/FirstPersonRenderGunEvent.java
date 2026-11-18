@@ -9,6 +9,7 @@ import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.client.other.KeepingItemRenderer;
 import com.tacz.guns.api.event.common.GunFireEvent;
+import com.tacz.guns.api.event.common.GunFirePostEvent;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor;
@@ -90,25 +91,31 @@ public class FirstPersonRenderGunEvent {
         }
     }
 
+    // Kept callable for 26.3 integrations. Our own listener only runs after all pre callbacks voted.
     public static void onGunFire(GunFireEvent event) {
-        if (event.getLogicalSide().isClient()) {
-            LivingEntity shooter = event.getShooter();
-            LocalPlayer player = Minecraft.getInstance().player;
-            if (!shooter.equals(player)) {
-                return;
-            }
-            ItemStack mainHandItem = player.getMainHandItem();
-            IGun iGun = IGun.getIGunOrNull(mainHandItem);
-            if (iGun == null) {
-                return;
-            }
-            TimelessAPI.getClientGunIndex(iGun.getGunId(mainHandItem)).ifPresent(gunIndex -> {
-                // 记录开火时间戳，用于后坐力程序动画
-                shootTimeStamp = GunTime.nowMillis();
-                // 记录枪口火焰数据
-                MuzzleFlashRender.onShoot();
-            });
+        if (!event.isCanceled() && event.getLogicalSide().isClient()) onGunFire(event.getShooter());
+    }
+
+    public static void onGunFirePost(GunFirePostEvent event) {
+        if (event.getLogicalSide().isClient()) onGunFire(event.getShooter());
+    }
+
+    private static void onGunFire(LivingEntity shooter) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (!shooter.equals(player)) {
+            return;
         }
+        ItemStack mainHandItem = player.getMainHandItem();
+        IGun iGun = IGun.getIGunOrNull(mainHandItem);
+        if (iGun == null) {
+            return;
+        }
+        TimelessAPI.getClientGunIndex(iGun.getGunId(mainHandItem)).ifPresent(gunIndex -> {
+            // 记录开火时间戳，用于后坐力程序动画
+            shootTimeStamp = GunTime.nowMillis();
+            // 记录枪口火焰数据
+            MuzzleFlashRender.onShoot();
+        });
     }
 
     private static boolean bulletFromPlayer(Entity entity) {

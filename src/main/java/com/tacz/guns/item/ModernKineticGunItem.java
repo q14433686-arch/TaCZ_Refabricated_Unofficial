@@ -26,6 +26,8 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -59,6 +61,32 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
 
     public ModernKineticGunItem(Properties properties) {
         super(properties.stacksTo(1));
+    }
+
+    @Override
+    public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, @Nullable EquipmentSlot slot) {
+        super.inventoryTick(stack, level, entity, slot);
+        if (!(entity instanceof Player player) || stack == player.getMainHandItem()) {
+            return;
+        }
+        TimelessAPI.getCommonGunIndex(getGunId(stack)).ifPresent(index -> {
+            GunHeatData heatData = index.getGunData().getHeatData();
+            if (heatData == null) {
+                return;
+            }
+            float cooling = heatData.getInventoryCoolingPerTick();
+            if (!Float.isFinite(cooling) || cooling <= 0) {
+                return;
+            }
+            float heat = getHeatAmount(stack);
+            if (heat > 0) {
+                heat = Math.max(0, heat - cooling);
+                setHeatAmount(stack, heat);
+            }
+            if (heat <= 0 && isOverheatLocked(stack)) {
+                setOverheatLocked(stack, false);
+            }
+        });
     }
 
     @Override
@@ -146,7 +174,11 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
                     Varargs varargs = func.invoke(CoerceJavaToLua.coerce(api));
                     int typeOrdinary = varargs.arg(1).checkint();
                     long countDown = varargs.arg(2).checklong();
-                    reloadState.setStateType(ReloadState.StateType.values()[typeOrdinary]);
+                    var types = ReloadState.StateType.values();
+                    if (typeOrdinary < 0 || typeOrdinary >= types.length) {
+                        throw new LuaError("invalid tick_reload state: " + typeOrdinary);
+                    }
+                    reloadState.setStateType(types[typeOrdinary]);
                     reloadState.setCountDown(countDown);
                     return reloadState;
                 })

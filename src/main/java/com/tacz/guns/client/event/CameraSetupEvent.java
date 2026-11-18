@@ -11,6 +11,7 @@ import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.client.other.KeepingItemRenderer;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.event.common.GunFireEvent;
+import com.tacz.guns.api.event.common.GunFirePostEvent;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
@@ -183,49 +184,55 @@ public class CameraSetupEvent {
         return curve == null || curve.isSmooth() ? smoothed : target;
     }
 
+    // Kept callable for 26.3 integrations. Our own listener only runs after all pre callbacks voted.
     public static void initialCameraRecoil(GunFireEvent event) {
-        if (event.getLogicalSide().isClient()) {
-            LivingEntity shooter = event.getShooter();
-            LocalPlayer player = Minecraft.getInstance().player;
-            if (!shooter.equals(player)) {
-                return;
-            }
-            ItemStack mainHandItem = player.getMainHandItem();
-            if (!(mainHandItem.getItem() instanceof IGun iGun)) {
-                return;
-            }
-            AttachmentCacheProperty cacheProperty = IGunOperator.fromLivingEntity(player).getCacheProperty();
-            if (cacheProperty == null) {
-                return;
-            }
-            Identifier gunId = iGun.getGunId(mainHandItem);
-            Optional<ClientGunIndex> gunIndexOptional = TimelessAPI.getClientGunIndex(gunId);
-            if (gunIndexOptional.isEmpty()) {
-                return;
-            }
-            ClientGunIndex gunIndex = gunIndexOptional.get();
-            GunData gunData = gunIndex.getGunData();
-            // 获取所有配件对摄像机后坐力的修改
-            ParameterizedCachePair<Float, Float> attachmentRecoilModifier = cacheProperty.getCache(RecoilModifier.ID);
-            IClientPlayerGunOperator clientPlayerGunOperator = IClientPlayerGunOperator.fromLocalPlayer(player);
-            float partialTicks = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
-            float aimingProgress = clientPlayerGunOperator.getClientAimingProgress(partialTicks);
-            float zoom = iGun.getAimingZoom(mainHandItem);
-            float aimingRecoilModifier = 1 - aimingProgress + aimingProgress / (float) Math.min(Math.sqrt(zoom), 1.5);
-            // 如果是趴下，那么后坐力按 data 设计减少（默认为降低一半）
-            if (!player.isSwimming() && player.getPose() == Pose.SWIMMING) {
-                aimingRecoilModifier = aimingRecoilModifier * gunData.getCrawlRecoilMultiplier();
-            }
-            float pitchMod = (float) attachmentRecoilModifier.left().eval(aimingRecoilModifier);
-            float yawMod = (float) attachmentRecoilModifier.right().eval(aimingRecoilModifier);
-            pitchSplineFunction = gunData.getRecoil().genPitchSplineFunction(pitchMod);
-            yawSplineFunction = gunData.getRecoil().genYawSplineFunction(yawMod);
-            shootTimeStamp = GunTime.nowMillis();
-            xRotO = 0;
-            yRotO = 0;
-            if (RenderConfig.RECOIL_DEBUG.get()) {
-                debugLogRecoilFire(player, aimingRecoilModifier, pitchMod, yawMod, pitchSplineFunction, yawSplineFunction);
-            }
+        if (!event.isCanceled() && event.getLogicalSide().isClient()) initialCameraRecoil(event.getShooter());
+    }
+
+    public static void initialCameraRecoilPost(GunFirePostEvent event) {
+        if (event.getLogicalSide().isClient()) initialCameraRecoil(event.getShooter());
+    }
+
+    private static void initialCameraRecoil(LivingEntity shooter) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (!shooter.equals(player)) {
+            return;
+        }
+        ItemStack mainHandItem = player.getMainHandItem();
+        if (!(mainHandItem.getItem() instanceof IGun iGun)) {
+            return;
+        }
+        AttachmentCacheProperty cacheProperty = IGunOperator.fromLivingEntity(player).getCacheProperty();
+        if (cacheProperty == null) {
+            return;
+        }
+        Identifier gunId = iGun.getGunId(mainHandItem);
+        Optional<ClientGunIndex> gunIndexOptional = TimelessAPI.getClientGunIndex(gunId);
+        if (gunIndexOptional.isEmpty()) {
+            return;
+        }
+        ClientGunIndex gunIndex = gunIndexOptional.get();
+        GunData gunData = gunIndex.getGunData();
+        // 获取所有配件对摄像机后坐力的修改
+        ParameterizedCachePair<Float, Float> attachmentRecoilModifier = cacheProperty.getCache(RecoilModifier.ID);
+        IClientPlayerGunOperator clientPlayerGunOperator = IClientPlayerGunOperator.fromLocalPlayer(player);
+        float partialTicks = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
+        float aimingProgress = clientPlayerGunOperator.getClientAimingProgress(partialTicks);
+        float zoom = iGun.getAimingZoom(mainHandItem);
+        float aimingRecoilModifier = 1 - aimingProgress + aimingProgress / (float) Math.min(Math.sqrt(zoom), 1.5);
+        // 如果是趴下，那么后坐力按 data 设计减少（默认为降低一半）
+        if (!player.isSwimming() && player.getPose() == Pose.SWIMMING) {
+            aimingRecoilModifier = aimingRecoilModifier * gunData.getCrawlRecoilMultiplier();
+        }
+        float pitchMod = (float) attachmentRecoilModifier.left().eval(aimingRecoilModifier);
+        float yawMod = (float) attachmentRecoilModifier.right().eval(aimingRecoilModifier);
+        pitchSplineFunction = gunData.getRecoil().genPitchSplineFunction(pitchMod);
+        yawSplineFunction = gunData.getRecoil().genYawSplineFunction(yawMod);
+        shootTimeStamp = GunTime.nowMillis();
+        xRotO = 0;
+        yRotO = 0;
+        if (RenderConfig.RECOIL_DEBUG.get()) {
+            debugLogRecoilFire(player, aimingRecoilModifier, pitchMod, yawMod, pitchSplineFunction, yawSplineFunction);
         }
     }
 
