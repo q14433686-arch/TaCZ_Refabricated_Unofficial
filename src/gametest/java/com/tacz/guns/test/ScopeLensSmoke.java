@@ -38,8 +38,12 @@ final class ScopeLensSmoke {
     static void run(ClientGameTestContext ctx, TestSingleplayerContext world) {
         Scene scene = world.getServer().computeOnServer(server -> {
             var p = world.getConnection().getServerPlayer();
-            p.setItemInHand(InteractionHand.MAIN_HAND, GunItemBuilder.create().setId(Identifier.parse("tacz:qr_24"))
-                    .putAttachment(AttachmentType.SCOPE, SIGHT).setAmmoCount(3).build());
+            // M700's default allow-list includes #tacz:scope. QR-24 does not accept the XL50.
+            var gun = GunItemBuilder.create().setId(Identifier.parse("tacz:m700"))
+                    .putAttachment(AttachmentType.SCOPE, SIGHT).setAmmoCount(3).build();
+            if (!(gun.getItem() instanceof IGun g) || !SIGHT.equals(g.getAttachmentId(gun, AttachmentType.SCOPE)))
+                throw new AssertionError("XL50 not installed on the server's M700");
+            p.setItemInHand(InteractionHand.MAIN_HAND, gun);
             var level = p.level();
             var aim = p.blockPosition().north(40).above(16);
             for (int i = 1; i <= 44; i++) {
