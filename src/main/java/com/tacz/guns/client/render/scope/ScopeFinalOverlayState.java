@@ -73,11 +73,11 @@ public final class ScopeFinalOverlayState {
     private static final int FINAL_OCULAR_RING_ORDER = 20_001;
 
     private static final List<RingDraw> PENDING_RETICLES = new ArrayList<>();
-    private static final List<java.util.function.Consumer<net.minecraft.client.renderer.SubmitNodeCollector>> PENDING_TEXT = new ArrayList<>();
+    private static final List<java.util.function.Consumer<net.minecraft.client.renderer.OrderedSubmitNodeCollector>> PENDING_TEXT = new ArrayList<>();
     public static void queueReticle(BedrockRenderSnapshot snapshot, RenderType type) {
         if (!snapshot.isEmpty()) PENDING_RETICLES.add(new RingDraw(snapshot, type));
     }
-    public static void queueText(java.util.function.Consumer<net.minecraft.client.renderer.SubmitNodeCollector> task) { PENDING_TEXT.add(task); }
+    public static void queueText(java.util.function.Consumer<net.minecraft.client.renderer.OrderedSubmitNodeCollector> task) { PENDING_TEXT.add(task); }
     private static boolean empty() { return PENDING_RINGS.isEmpty() && PENDING_RETICLES.isEmpty() && PENDING_TEXT.isEmpty(); }
     private static final List<RingDraw> PENDING_RINGS = new ArrayList<>();
     @Nullable
