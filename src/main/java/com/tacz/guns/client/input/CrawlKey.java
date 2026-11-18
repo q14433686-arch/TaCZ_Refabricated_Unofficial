@@ -22,66 +22,30 @@ public class CrawlKey {
             TaCZKeyCategory.TACZ);
 
     public static void onCrawlPress(InputEvent.Key event) {
-        if (isInGame() && CRAWL_KEY.matches(InputConstants.Type.KEYBOARD.getOrCreate(event.getKey()))) {
-            if (!SyncConfig.ENABLE_CRAWL.get()) {
-                return;
-            }
-            LocalPlayer player = Minecraft.getInstance().player;
-            if (player == null || player.isSpectator() || player.isPassenger()) {
-                return;
-            }
-            if (!(player instanceof IClientPlayerGunOperator operator)) {
-                return;
-            }
-            if (player.getMainHandItem().getItem() instanceof IGun iGun) {
-                // 如果不允许下蹲，则禁止进行下蹲
-                if (!iGun.isCanCrawl(player.getMainHandItem())) {
-                    IClientPlayerGunOperator.fromLocalPlayer(player).crawl(false);
-                    return;
-                }
-                boolean action = true;
-                if (!KeyConfig.HOLD_TO_CRAWL.get()) {
-                    action = !operator.isCrawl();
-                }
-                if (event.getAction() == InputConstants.PRESS) {
-                    IClientPlayerGunOperator.fromLocalPlayer(player).crawl(action);
-                }
-                if (KeyConfig.HOLD_TO_CRAWL.get() && event.getAction() == InputConstants.RELEASE) {
-                    IClientPlayerGunOperator.fromLocalPlayer(player).crawl(false);
-                }
-            }
+        if (CRAWL_KEY.matches(InputConstants.Type.KEYBOARD.getOrCreate(event.getKey()))) {
+            if (event.getAction() == InputConstants.PRESS) onCrawlControllerPress(true);
+            else if (event.getAction() == InputConstants.RELEASE) onCrawlControllerPress(false);
         }
     }
 
     public static boolean onCrawlControllerPress(boolean isPress) {
-        if (!isInGame()) {
-            return false;
-        }
-        if (!SyncConfig.ENABLE_CRAWL.get()) {
-            return false;
-        }
         LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null || player.isSpectator() || player.isPassenger()) {
-            return false;
+        if (!(player instanceof IClientPlayerGunOperator operator)) return false;
+        boolean hold = KeyConfig.HOLD_TO_CRAWL.get();
+        // Releasing a held input must not be blocked by a changed item/config/state.
+        if (!isPress) {
+            if (hold) operator.crawl(false);
+            return hold;
         }
-        if (!(player instanceof IClientPlayerGunOperator operator)) {
-            return false;
-        }
-        if (!IGun.mainHandHoldGun(player)) {
-            return false;
-        }
-        boolean action = true;
-        if (!KeyConfig.HOLD_TO_CRAWL.get()) {
-            action = !operator.isCrawl();
-        }
-        if (isPress) {
-            IClientPlayerGunOperator.fromLocalPlayer(player).crawl(action);
+        if (!isInGame()) return false;
+        if (operator.isCrawl() && !hold) {
+            operator.crawl(false);
             return true;
         }
-        if (KeyConfig.HOLD_TO_CRAWL.get()) {
-            IClientPlayerGunOperator.fromLocalPlayer(player).crawl(false);
-            return true;
-        }
-        return false;
+        if (!SyncConfig.ENABLE_CRAWL.get() || player.isSpectator() || player.isPassenger()) return false;
+        IGun gun = IGun.getIGunOrNull(player.getMainHandItem());
+        if (gun == null ? !SyncConfig.ENABLE_CRAWL_WITHOUT_GUN.get() : !gun.isCanCrawl(player.getMainHandItem())) return false;
+        operator.crawl(true);
+        return true;
     }
 }
