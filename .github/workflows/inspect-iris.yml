@@ -30,7 +30,9 @@ jobs:
             subprocess.run(['gh','run','download',run,'-R',os.environ['GITHUB_REPOSITORY'],'-n','iris-'+meta['head_sha'],'-D',tmp],check=True)
             for p in pathlib.Path(tmp).rglob('latest.log'):
               lines=p.read_text(errors='replace').splitlines()
-              for i,s in enumerate(lines):
+              print('::notice::LAST LOG LINES: '+' '.join(lines[-25:])[:12000].replace('%','%25'))
+              matches = [(i,s) for i,s in enumerate(lines) if re.search(r'PORT_|AssertionError|Exception|timed out|Timeout|FATAL|ERROR',s)]
+              for i,s in matches[-22:]:
                 if re.search(r'com[.]tacz[.]guns[.]test[.]|PORT_|Heat capture|Pack lens|Shader compilation|GLSL|ShaderCompile|shader.*failed|AssertionError|Exception|timed out|Timeout|FATAL|ERROR',s,re.I):
                   print('::notice::'+' '.join(lines[max(0,i-1):i+3])[:2000].replace('%','%25'))
               print('::notice::LAST LOG LINES: '+' '.join(lines[-18:])[:3000].replace('%','%25'))
