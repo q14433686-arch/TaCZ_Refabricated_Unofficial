@@ -13,7 +13,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.Entity;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -30,65 +30,41 @@ public class InteractKey {
 
     public static void onInteractKeyPress(InputEvent.Key event) {
         if (isInGame() && event.getAction() == InputConstants.PRESS && INTERACT_KEY.matches(InputConstants.Type.KEYBOARD.getOrCreate(event.getKey()))) {
-            doInteractLogic();
+            doInteractLogic(false);
         }
     }
 
     public static void onInteractMousePress(InputEvent.MouseButton.Post event) {
         if (isInGame() && event.getAction() == InputConstants.PRESS && INTERACT_KEY.matches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
-            doInteractLogic();
+            doInteractLogic(false);
         }
     }
 
     public static boolean onInteractControllerPress(boolean isPress) {
-        if (isInGame() && isPress) {
-            Minecraft mc = Minecraft.getInstance();
-            LocalPlayer player = mc.player;
-            if (player == null || player.isSpectator()) {
-                return false;
-            }
-            if (!IGun.mainHandHoldGun(player)) {
-                return false;
-            }
-            HitResult hitResult = mc.hitResult;
-            if (hitResult == null) {
-                return false;
-            }
-            if (hitResult instanceof BlockHitResult blockHitResult) {
-                interactBlock(blockHitResult, player, mc);
-                return true;
-            }
-            if (hitResult instanceof EntityHitResult entityHitResult) {
-                interactEntity(entityHitResult, mc);
-                return true;
-            }
+        return isPress && isInGame() && doInteractLogic(true);
+    }
+
+    public static boolean sharesUseBinding(KeyMapping use) {
+        return !use.isUnbound() && KeyMappingHelper.getBoundKeyOf(INTERACT_KEY).equals(KeyMappingHelper.getBoundKeyOf(use));
+    }
+
+    private static boolean doInteractLogic(boolean controller) {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (player == null || player.isSpectator() || !IGun.mainHandHoldGun(player)) return false;
+        boolean vanillaUse = !controller && sharesUseBinding(mc.options.keyUse);
+        if (mc.hitResult instanceof BlockHitResult blockHitResult && blockHitResult.getType() == HitResult.Type.BLOCK) {
+            interactBlock(blockHitResult, player, mc, vanillaUse);
+            return true;
+        }
+        if (mc.hitResult instanceof EntityHitResult entityHitResult) {
+            if (!vanillaUse && InteractKeyConfigRead.canInteractEntity(entityHitResult.getEntity())) mc.startUseItem();
+            return true;
         }
         return false;
     }
 
-    private static void doInteractLogic() {
-        Minecraft mc = Minecraft.getInstance();
-        LocalPlayer player = mc.player;
-        if (player == null || player.isSpectator()) {
-            return;
-        }
-        if (!IGun.mainHandHoldGun(player)) {
-            return;
-        }
-        HitResult hitResult = mc.hitResult;
-        if (hitResult == null) {
-            return;
-        }
-        if (hitResult instanceof BlockHitResult blockHitResult) {
-            interactBlock(blockHitResult, player, mc);
-            return;
-        }
-        if (hitResult instanceof EntityHitResult entityHitResult) {
-            interactEntity(entityHitResult, mc);
-        }
-    }
-
-    private static void interactBlock(BlockHitResult blockHitResult, LocalPlayer player, Minecraft mc) {
+    private static void interactBlock(BlockHitResult blockHitResult, LocalPlayer player, Minecraft mc, boolean vanillaUse) {
         BlockPos blockPos = blockHitResult.getBlockPos();
         BlockState block = player.level().getBlockState(blockPos);
         if (block.getBlock() instanceof AmmoStorageBlock) {
@@ -96,14 +72,7 @@ public class InteractKey {
                 ClientPlayNetworking.send(new ClientMessageAmmoStorageInteract(blockPos));
             return;
         }
-        if (InteractKeyConfigRead.canInteractBlock(block)) {
-            mc.startUseItem();
-        }
-    }
-
-    private static void interactEntity(EntityHitResult entityHitResult, Minecraft mc) {
-        Entity entity = entityHitResult.getEntity();
-        if (InteractKeyConfigRead.canInteractEntity(entity)) {
+        if (!vanillaUse && InteractKeyConfigRead.canInteractBlock(block)) {
             mc.startUseItem();
         }
     }

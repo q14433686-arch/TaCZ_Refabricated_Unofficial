@@ -2,6 +2,12 @@ package com.tacz.guns.test;
 
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.block.entity.GunPegboardBlockEntity;
+import com.tacz.guns.block.entity.GunDisplayCaseBlockEntity;
+import com.tacz.guns.init.ModBlocks;
+import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.item.ItemStack;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.network.message.ClientMessageSelectRefitOption;
@@ -58,7 +64,31 @@ public class PackClientSmoke implements FabricClientGameTest {
             world.getServer().runOnServer(server -> world.getConnection().getServerPlayer().setGameMode(GameType.CREATIVE));
             context.waitFor(client -> client.player.isCreative());
             checkCreativePackSidebar(context);
+            checkRacks(context, world, id);
         }
+    }
+
+    private static void checkRacks(ClientGameTestContext context, TestSingleplayerContext world, Identifier gunId) {
+        var pos = context.computeOnClient(mc -> mc.player.blockPosition().south(3).above());
+        world.getServer().runOnServer(server -> {
+            var player = world.getConnection().getServerPlayer();
+            var level = player.level();
+            var gun = GunItemBuilder.create().setId(gunId).build();
+            player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            level.setBlock(pos, ModBlocks.GLOW_GUN_PEGBOARD.defaultBlockState(), Block.UPDATE_ALL);
+            level.setBlock(pos.east(), ModBlocks.GUN_DISPLAY_CASE.defaultBlockState(), Block.UPDATE_ALL);
+            var board = (GunPegboardBlockEntity) level.getBlockEntity(pos);
+            var cabinet = (GunDisplayCaseBlockEntity) level.getBlockEntity(pos.east());
+            board.setColor(0x4088bb, false);
+            if (!board.setItem(6, gun) || !board.rotateItem(6) || !cabinet.setItem(9, gun)) throw new AssertionError("Couldn't populate display racks");
+        });
+        context.waitFor(mc -> mc.level.getBlockEntity(pos) instanceof GunPegboardBlockEntity board && board.getRenderData() == 0x4088bb
+                && board.getRotation(6) == 1 && board.getItem(6).getItem() instanceof IGun g && g.getGunId(board.getItem(6)).equals(gunId)
+                && mc.level.getBlockEntity(pos.east()) instanceof GunDisplayCaseBlockEntity cabinet && !cabinet.getItem(9).isEmpty());
+        context.getInput().lookAt(pos);
+        world.getConnection().waitForChunksRender();
+        context.waitTicks(20);
+        saveFrame(context, "tacz_display_wall");
     }
 
     private static void checkCreativePackSidebar(ClientGameTestContext context) {

@@ -11,6 +11,8 @@ public class SyncConfig {
     public static ForgeConfigSpec.ConfigValue<List<String>> INTERACT_KEY_WHITELIST_ENTITIES;
     public static ForgeConfigSpec.ConfigValue<List<String>> INTERACT_KEY_BLACKLIST_BLOCKS;
     public static ForgeConfigSpec.ConfigValue<List<String>> INTERACT_KEY_BLACKLIST_ENTITIES;
+    public static ForgeConfigSpec.ConfigValue<List<String>> GUN_PEGBOARD_WHITELIST_ITEMS;
+    public static ForgeConfigSpec.ConfigValue<List<String>> GUN_PEGBOARD_BLACKLIST_ITEMS;
     public static ForgeConfigSpec.BooleanValue ENABLE_TABLE_FILTER;
     public static ForgeConfigSpec.BooleanValue SERVER_SHOOT_NETWORK_V;
     public static ForgeConfigSpec.BooleanValue SERVER_SHOOT_COOLDOWN_V;
@@ -32,6 +34,10 @@ public class SyncConfig {
 
     public static void init(ForgeConfigSpec.Builder builder) {
         interactKey(builder);
+        builder.push("gun_pegboard");
+        GUN_PEGBOARD_WHITELIST_ITEMS = builder.comment("Additional item ids permitted on display walls").define("GunPegboardWhitelistItems", Lists.newArrayList());
+        GUN_PEGBOARD_BLACKLIST_ITEMS = builder.comment("Denied display item ids (overrides whitelist and built-ins)").define("GunPegboardBlacklistItems", Lists.newArrayList());
+        builder.pop();
         baseMultiplier(builder);
         misc(builder);
     }

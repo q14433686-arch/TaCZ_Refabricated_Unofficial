@@ -74,3 +74,11 @@ python3 scripts/audit_upstream_120.py /tmp/tacz-upstream.git --local cc990c3
 ### 26.3 判据与客户端取证
 
 `3ea742f` 在主源码编译失败：判据仍引用旧 `ContextAwarePredicate` / `EntityPredicate.ADVANCEMENT_CODEC`，收枪声音残留旧异步 accessor。`641ac67` 改用 26.3 的 `Optional<Holder<LootItemCondition>>` 和对应 codec，保留 player 谓词，并在所属客户端线程播放声音。[compile-check](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44205735081) 与 [build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44205735097) 的 Full build、专服 GameTest 和嵌套 MAE 步骤通过，已覆盖脚本卸弹、备弹上限、旧弹药源、进度文件加载及单测。此次 Mesa 预检通过、集成服已启动并保存世界，不再卡在启动对话框；**客户端步骤仍失败（255）**。Checks 中可见 `flite` 缺失，不能据此认定它是终止原因；没有从 artifact 核实两帧。增加缺失的运行库、阶段标记及 crash-report 摘要以定位下一次失败。
+
+### 弹药库、查看器与首个双帧门禁
+
+`35901c8` 的 compile-check 和 Full build 均止于主源码编译，未执行方块测试。`221d54e` 纠正 26.3 block、菜单尺寸、tooltip 和配方 stream codec；[Full build / 专服](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44211747065)通过。`AmmoStorageSmoke` 实际查找 Fabric SIDED、回滚嵌套事务、区分具名组件；由掉落表取物，查找两级真实配方，放置后取出原有 73 件。客户端已保存默认帧，但切到测试变体时因 `RecoilModifier` 解引用缺省轴而崩溃，非 Vulkan 初始化问题。
+
+`664ac54` 让 JEI/REI 的工作台跳转只在当前菜单排队选中有效配方；服务端合成、材料和旧包同步通道不变。`52fcd92` 对省略的相机关键帧轴使用零基值。`808c45d` 复用同一批已验证的物品关系生成双向查询，弹药反向和每类配件按 54 件分页；弹药库升级由真实配方提供 3×3 原版 display，而不是复制合成逻辑。该 SHA 的 [compile-check](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44212555153) 与 [完整 build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44212555050) **均通过**：JUnit、专服（含跳转只选一次/不可跨台、共享查询/55 项分页、库存和升级）、单份 MAE 1.1.4、软件 Vulkan 集成世界、持有默认与变体物品、派生脚本能力/倍率/模型断言及两份非空 PNG。工件 `smoke-808c45da8c47719ed1ab504db4ee66beb322b894`。文件产生不等于截图已经人工判读，菜单断言也不等于已安装两种查看器联网操作。
+
+`819a1d2` 创造栏侧栏的 [compile-check](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44213002226) 与 [完整 build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44213002082) 已绿。集成世界切创造模式，真实打开 rifle tab、点击 `port_test`，核对隔离结果与注册 tab 未缩小，再点 All 恢复。此 SHA 不含后续展示墙，亦未覆盖所有 tab、可选查看器或实际服务器重连。

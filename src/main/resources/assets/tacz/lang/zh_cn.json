@@ -1,4 +1,13 @@
 {
+  "gui.tacz.display_case.locked_hint": "已上锁。[%s] 解锁。",
+  "gui.tacz.display_case.unlocked_hint": "已解锁。[%s] 上锁。",
+  "block.tacz.gun_pegboard": "挂板",
+  "tooltip.tacz.gun_pegboard.dye": "可使用染料改变颜色，或用炼药锅清除颜色。",
+  "tooltip.tacz.gun_pegboard.link_color": "默认挂板与染色挂板相邻时将会自动连接颜色",
+  "block.tacz.glow_gun_pegboard": "发光挂板",
+  "block.tacz.gun_display_case": "枪械展示柜",
+  "item.tacz.gun_display_case": "枪械展示柜",
+  "tooltip.tacz.gun_display_case": "可用于展示您的私人收藏，且非常安全。",
   "config.tacz.client.render.creative_pack_sidebar": "创造模式内容包侧栏",
   "config.tacz.client.render.creative_pack_sidebar.desc": "是否显示 TACZ 创造模式物品栏的内容包侧栏。关闭后同时清除内容包筛选，显示当前分类的全部物品。",
   "gui.tacz.creative_pack_filter.all": "全部",

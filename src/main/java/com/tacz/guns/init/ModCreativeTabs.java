@@ -31,6 +31,9 @@ public class ModCreativeTabs {
                 output.acceptAll(GunSmithTableItem.fillItemCategory());
                 output.accept(ModItems.TARGET);
                 output.accept(ModItems.STATUE);
+                output.accept(ModItems.GUN_DISPLAY_CASE);
+                output.accept(ModItems.GUN_PEGBOARD);
+                output.accept(ModItems.GLOW_GUN_PEGBOARD);
                 output.accept(ModItems.AMMO_STORAGE);
                 output.accept(ModItems.AMMO_STORAGE_GOLD);
                 output.accept(ModItems.AMMO_STORAGE_DIAMOND);

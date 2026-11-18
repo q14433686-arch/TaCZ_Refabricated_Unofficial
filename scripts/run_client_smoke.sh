@@ -37,6 +37,6 @@ probe & probe_pid=$!
 trap 'kill "$probe_pid" 2>/dev/null || true' EXIT
 # Leave time for Gradle/SDL teardown and evidence upload before the enclosing job-step timeout.
 timeout -k 20s 10m ./gradlew -PtaczClientSmoke runClientGameTest --console=plain --stacktrace 2>&1 | tee "$RUNNER_TEMP/tacz-client.log"
-for frame in tacz_held_default_gun tacz_held_variant; do
+for frame in tacz_held_default_gun tacz_held_variant tacz_display_wall; do
     test -s "$(find "$run/screenshots" -name "*${frame}.png" -print -quit)"
 done

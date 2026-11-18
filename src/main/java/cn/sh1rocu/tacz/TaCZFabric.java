@@ -190,6 +190,8 @@ public class TaCZFabric implements ModInitializer {
 
         ServerPlayerEvents.AFTER_RESPAWN.register(PlayerRespawnEvent::onPlayerRespawn);
 
+        AttackBlockCallback.EVENT.register(DisplayRackInteractions::attack);
+        net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.register(DisplayRackInteractions::use);
         AttackBlockCallback.EVENT.register(PreventGunClick::onLeftClickBlock);
 
         ServerTickEvents.START_SERVER_TICK.register(ServerTickEvent::onServerTick);

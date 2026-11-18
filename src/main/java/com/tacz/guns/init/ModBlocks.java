@@ -4,6 +4,8 @@ import com.tacz.guns.block.entity.AmmoStorageBlockEntity;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.block.*;
 import com.tacz.guns.block.entity.GunSmithTableBlockEntity;
+import com.tacz.guns.block.entity.GunDisplayCaseBlockEntity;
+import com.tacz.guns.block.entity.GunPegboardBlockEntity;
 import com.tacz.guns.block.entity.StatueBlockEntity;
 import com.tacz.guns.block.entity.TargetBlockEntity;
 import net.minecraft.core.Registry;
@@ -38,6 +40,16 @@ public class ModBlocks {
     public static final Block AMMO_STORAGE_GOLD = storage("ammo_storage_gold", AmmoStorageBlock.GOLD_CAPACITY_STACKS);
     public static final Block AMMO_STORAGE_DIAMOND = storage("ammo_storage_diamond", AmmoStorageBlock.DIAMOND_CAPACITY_STACKS);
     public static final BlockEntityType<AmmoStorageBlockEntity> AMMO_STORAGE_BE = registerBlockEntity("ammo_storage", AmmoStorageBlockEntity.TYPE);
+
+    public static final Block GUN_DISPLAY_CASE = registerBlock("gun_display_case", new GunDisplayCaseBlock(displayProperties("gun_display_case", SoundType.GLASS).strength(0.5f, 1200f)));
+    public static final Block GUN_PEGBOARD = registerBlock("gun_pegboard", new GunPegboardBlock(false, displayProperties("gun_pegboard", SoundType.METAL)));
+    public static final Block GLOW_GUN_PEGBOARD = registerBlock("glow_gun_pegboard", new GunPegboardBlock(true, displayProperties("glow_gun_pegboard", SoundType.METAL)));
+    public static final BlockEntityType<GunDisplayCaseBlockEntity> GUN_DISPLAY_CASE_BE = registerBlockEntity("gun_display_case", GunDisplayCaseBlockEntity.TYPE);
+    public static final BlockEntityType<GunPegboardBlockEntity> GUN_PEGBOARD_BE = registerBlockEntity("gun_pegboard", GunPegboardBlockEntity.TYPE);
+
+    private static BlockBehaviour.Properties displayProperties(String name, SoundType sound) {
+        return BlockBehaviour.Properties.of().setId(blockKey(name)).sound(sound).strength(5f, 6f).noOcclusion().pushReaction(PushReaction.POPPED);
+    }
 
     private static Block storage(String name, int capacity) {
         return registerBlock(name, new AmmoStorageBlock(capacity, BlockBehaviour.Properties.of().setId(blockKey(name)).sound(SoundType.METAL)
