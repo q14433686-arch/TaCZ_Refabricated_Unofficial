@@ -1,6 +1,6 @@
 # 1.2.0-hotfix → 26.3：玩家能感觉到什么？
 
-> **批量实现进度（本轮）**：以下原审计结论保留作基线。现已提交 `ShotConsequencesSmoke`、`MovementRulesSmoke`、`BulletRulesSmoke`；趴下/空中散布和命中规则已接线，**新增游戏验收尚未通过，不能改标“已验证”**。主源码的龙部件包名错误已修正；最新构建见 [5f78983 工作流](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44337530393)。`renew` 枪口运行时仍缺失，未因本轮修改而变成已实现。
+> **批量实现进度（本轮）**：以下原审计结论保留作基线。现已提交 `ShotConsequencesSmoke`、`MovementRulesSmoke`、`BulletRulesSmoke`；趴下/空中散布和命中规则已接线，**新增专服方块/实体筛选测试已通过；集成客户端测试尚待运行，不能整体改标“已验证”**。主源码的龙部件包名错误已修正；最新构建见 [5f78983 工作流](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44337530393)。`renew` 枪口运行时仍缺失，未因本轮修改而变成已实现。
 
 本轮验收拆为：
 1. **射击结果**：真实生存连接，调用默认枪服务端 `shoot`（含 Lua/扣弹/事件），测 DB-2 裸枪、超压反冲弹、取消、地面/跳跃的有符号速度增量及后续双端 Z 坐标；活体生物的沉默/禁用/取消/半径/已有目标对照。不是键鼠触发链，也尚未覆盖骑乘、创造玩家、负向射击方向和自定义倍率。

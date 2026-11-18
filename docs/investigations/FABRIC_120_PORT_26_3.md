@@ -158,4 +158,4 @@ UH-1 的 `text_show` 经 26.3 第一人称 extraction 读取实际游戏方块�
 
 测试分为服务端 `BulletRulesSmoke` 和集成连接 `ShotConsequencesSmoke` / `MovementRulesSmoke`，客户端 runner 要求结果日志。前者调用真实击中处理但不是飞行子弹；射击测试调用默认物品服务端 shoot（包括 Lua），不伪造速度包/激怒回调，也不声称验证键鼠开火链。尚缺矩阵见[玩家清单顶部](FABRIC_120_PLAYER_CHECKLIST.md)。本轮尚未改 `renew` 运行时。
 
-执行记录：`f0161ea` 独立 compile-check 成功，完整 build 在依赖 `org.ow2:ow2:1.5.1` 解析失败，未运行游戏。`2482635` 完整 build 实际报出 `EnderDragonPart` 包名迁移错误，已在 `5f78983` 修正；[后续工作流](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44337530393)正在验证，不能拿此前热成像绿色结果代替本轮验收。未发布。
+执行记录：`f0161ea` 独立 compile-check 成功，完整 build 在依赖 `org.ow2:ow2:1.5.1` 解析失败，未运行游戏。`2482635` 完整 build 实际报出 `EnderDragonPart` 包名迁移错误，已在 `5f78983` 修正；[后续工作流](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44337530393)的 Full build 和专服 smoke 已通过（包括新增 `BulletRulesSmoke`）；客户端仍停留在安装软件 Vulkan 依赖阶段，未得到 `PORT_SHOT` / `PORT_MOVEMENT` 通过结果，不能拿此前热成像绿色结果代替本轮验收。未发布。
