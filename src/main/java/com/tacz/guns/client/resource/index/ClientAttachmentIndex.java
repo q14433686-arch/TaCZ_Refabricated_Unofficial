@@ -48,6 +48,8 @@ public class ClientAttachmentIndex {
     private boolean isScope;
     private boolean isSight;
     private boolean showMuzzle;
+    private float muzzleFlashOffset;
+    public float getMuzzleFlashOffset() { return muzzleFlashOffset; }
     private boolean showMount;
     private @Nullable String adapterNodeName;
     private @Nullable String tooltipKey;
@@ -119,6 +121,7 @@ public class ClientAttachmentIndex {
         index.isSight = display.isSight();
         index.adapterNodeName = display.getAdapterNodeName();
         index.showMuzzle = display.isShowMuzzle();
+        index.muzzleFlashOffset = display.getMuzzleFlashOffset();
         index.showMount = display.isShowMount();
         index.laserConfig = display.getLaserConfig();
         return display;

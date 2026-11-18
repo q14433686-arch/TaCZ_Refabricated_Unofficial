@@ -61,6 +61,7 @@ public final class NativeMuzzleEffects {
         final float rotation = (float)(Math.random() * 120 - 60);
         final int frame = 4 + (int)(Math.random() * 14);
         boolean smoked;
+        boolean smokeEnabled = true;
         Shot(MuzzleEffectParameters effect, Identifier gun, boolean firstPerson, float offset) {
             this.effect = effect; this.gun = gun; this.firstPerson = firstPerson; this.offset = offset;
             born = GunTime.nowMillis();
@@ -132,7 +133,9 @@ public final class NativeMuzzleEffects {
         var effect = MuzzleEffectParameters.resolve(display.getMuzzleFlash(), data, silenced);
         boolean first = shooter == mc.player && mc.options.getCameraType().isFirstPerson();
         if (SHOTS.size() >= 128 && !SHOTS.containsKey(shooter.getId())) return;
-        SHOTS.put(shooter.getId(), new Shot(effect, gun.getGunId(stack), first, offset));
+        Shot shot = new Shot(effect, gun.getGunId(stack), first, offset);
+        shot.smokeEnabled = data == null || (data.getSmokeHider() > 0 && data.getSmokeCountScale() > 0 && data.getSmokeSpeedScale() > 0);
+        SHOTS.put(shooter.getId(), shot);
     }
 
     /** True means renew owns this locator, even when no flash is active. */
@@ -155,7 +158,7 @@ public final class NativeMuzzleEffects {
         if (!shot.smoked) {
             shot.smoked = true; // Includes disabled/missing effects: don't burst when options change later.
             Identifier definition = first ? effect.firstSmoke() : effect.thirdSmoke();
-            if (RenderConfig.RENDER_MUZZLE_SMOKE.get() && supported(definition, SMOKE) && effect.smokeSize() >= 0 && effect.smokeSpeed() > 0) {
+            if (shot.smokeEnabled && RenderConfig.RENDER_MUZZLE_SMOKE.get() && supported(definition, SMOKE) && effect.smokeSize() >= 0 && effect.smokeSpeed() > 0) {
                 Matrix4f worldPose = first ? GunItemRendererWrapper.muzzleWorldPose(pose.last().pose())
                         : new Matrix4f(pose.last().pose()).setTranslation(
                             pose.last().pose().m30() + (float)mc.gameRenderer.mainCamera().position().x,

@@ -278,8 +278,8 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue SCOPE_PIP_DEBUG_GPU_MEM;
 
     public static void init(ForgeConfigSpec.Builder builder) {
-        RENDER_MUZZLE_SMOKE = builder.comment("Render detached renew muzzle smoke independently of flash").define("RenderMuzzleSmoke", true);
         builder.push("render");
+        RENDER_MUZZLE_SMOKE = builder.comment("Render detached renew muzzle smoke independently of flash").define("RenderMuzzleSmoke", true);
 
         builder.comment("Whether or not apply fadeout effect on the laser beam. Close this may improve laser performance under some shaders.");
         ENABLE_LASER_FADE_OUT = builder.define("EnableLaserFadeOut", true);

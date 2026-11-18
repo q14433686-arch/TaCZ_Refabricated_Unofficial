@@ -72,3 +72,6 @@ printf '::notice::%s\n' "$(grep -F 'PORT_SHOT: DB-2 bare/cancel/ground/air impul
 grep -Fq 'PORT_SHOT: DB-2 bare/cancel/ground/air impulses and both positions' "$run/logs/latest.log"
 
 grep -Fq 'PORT_MOVEMENT: empty-hand crawl, disabled exit, pose ownership and airborne ADS option passed' "$run/logs/latest.log"
+
+grep -Fq 'PORT_MUZZLE: AK47/Glock first-person, F5, tracked shooter, smoke-off flash and teardown submissions passed' "$run/logs/latest.log"
+printf '::notice::%s\n' "$(grep -F 'PORT_MUZZLE:' "$run/logs/latest.log")"

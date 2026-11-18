@@ -35,6 +35,11 @@ public class AttachmentDisplay implements IDisplay {
 
     @SerializedName("show_muzzle")
     private boolean showMuzzle = false;
+    @SerializedName("muzzle_flash_offset")
+    private float muzzleFlashOffset;
+    public float getMuzzleFlashOffset() {
+        return Float.isFinite(muzzleFlashOffset) && muzzleFlashOffset >= 0 ? muzzleFlashOffset : 0;
+    }
 
     @SerializedName("show_mount")
     private boolean showMount = true;
