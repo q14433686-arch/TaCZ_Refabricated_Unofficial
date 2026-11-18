@@ -255,8 +255,10 @@ tasks.named('runGameTest') { dependsOn smokePack }
 if (project.hasProperty('taczClientSmoke')) {
     def installClientPack = tasks.register('installClientSmokePack', Copy) {
         dependsOn tasks.named('deleteGameTestRunDir')
-        from smokePack
-        into layout.buildDirectory.dir('run/clientGameTest/tacz')
+        into layout.buildDirectory.dir('run/clientGameTest')
+        from(smokePack) { into 'tacz' }
+        // Test-only options, copied after Loom cleans the run dir; never change a user's options.
+        from 'src/gametest/clientConfig'
     }
     tasks.named('runClientGameTest') { dependsOn installClientPack }
 }

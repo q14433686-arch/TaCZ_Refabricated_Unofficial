@@ -34,7 +34,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -117,9 +117,15 @@ jobs:
               print('::notice::' + jar.name + ' contains one registered ' + deps[0] + '; server overlay smoke passed')
           PY
 
+      - name: Install software Vulkan WSI for client smoke
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install --no-install-recommends -y mesa-vulkan-drivers vulkan-tools x11-utils xauth xvfb
+
       - name: Client smoke (Mesa software rendering, integrated world and held gun)
         timeout-minutes: 12
         env:
+          SDL_VIDEO_DRIVER: x11
           LIBGL_ALWAYS_SOFTWARE: 'true'
           ALSOFT_DRIVERS: 'null'
         run: xvfb-run -a bash scripts/run_client_smoke.sh
@@ -139,7 +145,7 @@ jobs:
               print('::notice::' + text[:3000].strip().replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
           for p in [*client.glob('logs/latest.log'), *Path(os.environ['RUNNER_TEMP']).glob('tacz-*.log')]:
               lines = p.read_text(errors='replace').splitlines()
-              for line in list(dict.fromkeys(s for s in lines if re.search(r'Caused by:|error:|FAILED|AssertionError', s)))[-8:]: message(p.name + ': ' + line)
+              for line in list(dict.fromkeys(s for s in lines if re.search(r'BackendCreationException|Caused by:|error:|FAILED|AssertionError', s)))[-8:]: message(p.name + ': ' + line)
               note(str(p.name) + ' tail:\n' + '\n'.join(lines[-14:]))
           for p in sorted(client.glob('diagnostics/threads-*.txt'))[-2:]:
               sections = re.split(r'\n(?=")', p.read_text(errors='replace'))
