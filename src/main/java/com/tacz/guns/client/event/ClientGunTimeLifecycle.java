@@ -15,6 +15,7 @@ public final class ClientGunTimeLifecycle {
     private ClientGunTimeLifecycle() {}
     public static void tick(Minecraft client) { GunTime.setPaused(client.level != null && client.isPaused()); }
     public static void disconnect(ClientPacketListener connection, Minecraft client) {
+        com.tacz.guns.client.model.papi.RangefinderReadout.clear();
         if (client.player != null) IClientPlayerGunOperator.fromLocalPlayer(client.player).getDataHolder().cancelPendingActions();
         GunTime.resetEpoch();
         LocalPlayerDataHolder.clientClickButtonTimestamp = -1L;

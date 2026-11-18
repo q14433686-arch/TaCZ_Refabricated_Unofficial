@@ -48,6 +48,11 @@ def check_content(index_path):
     display = read(asset(index['display'], f'display/{kind}', '.json'))
     for part in (display, display.get('lod', {}), display.get('muzzle_flash', {})):
         check_model(part)
+    if nodes := display.get('text_show'):
+        model = read(asset(display['model'], 'geo_models', '.json'))
+        geometry = model.get('minecraft:geometry', [v for k, v in model.items() if k.startswith('geometry.')])
+        bones = {bone['name'] for g in geometry for bone in g.get('bones', [])}
+        assert not nodes.keys() - bones, f'{index_path.name}: missing text nodes {nodes.keys() - bones}'
     for sound in display.get('sounds', {}).values():
         asset(sound if isinstance(sound, str) else sound['id'], 'tacz_sounds', '.ogg')
     if kind == 'guns':

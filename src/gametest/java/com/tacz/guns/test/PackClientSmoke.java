@@ -63,6 +63,7 @@ public class PackClientSmoke implements FabricClientGameTest {
             saveFrame(context, "tacz_held_variant");
             DefaultRefitSmoke.run(context, world);
             saveFrame(context, "tacz_default_refit");
+            RangefinderSmoke.run(context, world);
             world.getServer().runOnServer(server -> world.getConnection().getServerPlayer().setGameMode(GameType.CREATIVE));
             context.waitFor(client -> client.player.isCreative());
             checkCreativePackSidebar(context);

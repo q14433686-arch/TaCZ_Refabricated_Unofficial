@@ -102,3 +102,9 @@ python3 scripts/audit_upstream_120.py /tmp/tacz-upstream.git --local cc990c3
 `464b13a` 的 [编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44216851071) 和 [build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44216851054) 通过。`GunRigBaker` 统一原生与 TML 模型工厂，外显高模与手持动画的可变节点不共享，远距使用独立 LOD。`DisplayBake` 在提交时不等待后台任务，未就绪用已加载的另一档或图标；重建索引后不再取旧结果。`ExternalRigSmoke` 用含三角网格的测试包核对三套骨架、两档材质和柜上实际 FIXED 提交，数据重载之后旧 display 不再返回模型。这验证的是软件 Vulkan 和本线 collector/TML，不是 SBM、Iris 硬件矩阵或性能测量。
 
 下一份默认内容为 QR-24、AFG/Troy 握把和 5 个转接座；仅同步 16 份原列表除新增 adapter 标签外不变的旧枪 allowlist，其余旧枪随各自的附件/标签一起迁移。新增 transfer/schema 走法：**带 `index/slot_adapters` 的默认包需要支持扩展快照的客户端**；不能把新枚举发送给旧客户端。没有扩展字段的小包仍保留旧同步路径。该切片不把 `muzzle_flash.type: renew` 的旧四边形回退冒充 Snowstorm 粒子实现。
+
+`095f592` 的 [编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44217511834)和 [build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44217511851) 均通过。专服用实际配方得到 QR-24，并解析五个转接座；集成客户端持有该枪，解析 Lua 状态机、模型、ADS 和转接座偏移，真实发送 C2S 请求，验证不兼容的瞄具不被消耗、安装依赖的座后可安装、不能拆掉仍需要的座、握把和背包状态已同步。累计 300 个哈希；截图和日志见该 run 的 `smoke-095f592…` 工件。不是公网双客户端，也不以截图存在证明每个姿态都正确。
+
+### 镜内测距文字
+
+UH-1 的 `text_show` 经 26.3 第一人称 extraction 读取实际游戏方块距离，文字沿用现有遮罩/原版文字回退，不在渲染提交时再查世界。`%rangefinder%` 只在含占位符的文本里计算；配置按节点区分，默认 512 方块/2 游戏 tick、未命中为 `---`，读数上限 1024 方块。实体查询仅扫描至首个可碰撞方块，分段并复用同一刷新周期的结果。`RangefinderSmoke` 的观察器**仅在测试模组**，用于核对持物开镜时远、近两块遮挡物对应的文字。此切片只处理读数，不含落点标记、热成像或光影兼容结论。

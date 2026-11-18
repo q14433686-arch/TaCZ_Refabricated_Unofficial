@@ -45,6 +45,7 @@ public class ClientIndexManager {
     static long revision() { return revision; }
 
     public static void clear() {
+        com.tacz.guns.client.model.papi.RangefinderReadout.clear();
         GUN_DISPLAY.values().forEach(GunDisplayInstance::retireModels);
         ++revision;
         GUN_DISPLAY.clear();

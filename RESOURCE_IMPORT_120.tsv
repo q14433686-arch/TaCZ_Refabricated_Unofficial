@@ -313,3 +313,15 @@ f811ff059a9775fe8b04ca82a24bf365c8421e5eaa6e97aa2ef6dcdd9dbf9e8a	assets/tacz/cus
 
 # 26.3 recipe adaptation of compat_1_21_1/data/tacz/recipe/attachments/grip_troy.json; source SHA-256 ad3c25e13914a33f262b077e75fe4086d7d1f596a183dc8938ffdb4b829d49a4.
 6740bea05eec22f6670669934dade0009c0e136db6514bc43dc19508739b74ee	assets/tacz/custom/tacz_default_gun/data/tacz/recipe/attachments/grip_troy.json
+
+# UH-1 distance readout: matching display, text nodes, materials and common index/data. Source bytes.
+083cff15e130017ce0dca4ff714ba52ddbd8926da416acc195e1f52699bcc3d8	assets/tacz/custom/tacz_default_gun/assets/tacz/display/attachments/sight_uh1_display.json
+3b77fdfa76072d4ec5822db856165e91846c115b3872787232bf3921c1037133	assets/tacz/custom/tacz_default_gun/assets/tacz/geo_models/attachment/sight_uh1_geo.json
+032d0a8e6bbad13167a703a0078be2d0daa684b90a707a68ca92ab4a18f27cdd	assets/tacz/custom/tacz_default_gun/assets/tacz/textures/attachment/slot/sight_uh1.png
+337b5094713ae1f8cb11f39bac6896592393e7978812c4eb5e654917c2af4b8f	assets/tacz/custom/tacz_default_gun/assets/tacz/textures/attachment/uv/sight_uh1.png
+3a884bc74d7c3dd35602f53f47161b6292cbc4113e50416295bb997e8b57399c	assets/tacz/custom/tacz_default_gun/assets/tacz/textures/attachment/uv/sight_uh1_s.png
+7c9cd7e1f12e2f04a99256de98e63fc441d621cf5d32d0f8a5d82ef332e40a8f	assets/tacz/custom/tacz_default_gun/data/tacz/data/attachments/sight_uh1_data.json
+3af567c3ef07a7cd64748674d1bb2f0e6c954c0cd9a8e5801665f6d2821373de	assets/tacz/custom/tacz_default_gun/data/tacz/index/attachments/sight_uh1.json
+
+# 26.3 recipe adaptation of compat_1_21_1/data/tacz/recipe/attachments/sight_uh1.json; source SHA-256 438ec4bcb0b69b8b8618beaa195b8a4dc72c7113310294934369b6de60440896.
+6de1b9428c0ec4eda6d9f3bc31d906c8ac471c0ebe616d916fda5c4216ec997f	assets/tacz/custom/tacz_default_gun/data/tacz/recipe/attachments/sight_uh1.json

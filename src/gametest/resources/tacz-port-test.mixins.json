@@ -1,0 +1,7 @@
+{
+  "required": true,
+  "package": "com.tacz.guns.test.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": ["RangeTextObserver"],
+  "injectors": { "defaultRequire": 1 }
+}
