@@ -120,7 +120,7 @@ jobs:
       - name: Install software Vulkan WSI for client smoke
         run: |
           sudo apt-get update -qq
-          sudo apt-get install --no-install-recommends -y mesa-vulkan-drivers vulkan-tools x11-utils xauth xvfb
+          sudo apt-get install --no-install-recommends -y mesa-vulkan-drivers vulkan-tools x11-utils xauth xvfb libflite1
 
       - name: Client smoke (Mesa software rendering, integrated world and held gun)
         timeout-minutes: 12
@@ -147,6 +147,15 @@ jobs:
               lines = p.read_text(errors='replace').splitlines()
               for line in list(dict.fromkeys(s for s in lines if re.search(r'BackendCreationException|Caused by:|error:|FAILED|AssertionError', s)))[-8:]: message(p.name + ': ' + line)
               note(str(p.name) + ' tail:\n' + '\n'.join(lines[-14:]))
+          for p in sorted(client.glob('crash-reports/crash-*.txt'))[-1:]:
+              lines = p.read_text(errors='replace').splitlines()
+              start = next((i for i, line in enumerate(lines) if line.startswith('Description:')), 0)
+              note(p.name + ':\n' + '\n'.join(lines[start:start+24]))
+          for p in client.glob('logs/latest.log'):
+              lines = p.read_text(errors='replace').splitlines()
+              for i in [i for i, line in enumerate(lines) if re.search(r'PORT_SMOKE_CLIENT|GameTest.*(?:[Ee]xception|[Ff]ail)|(?:IllegalStateException|AssertionError|MixinTransformerError|NullPointerException|NoSuchMethodError):|Encountered an unexpected exception', line)][-10:]:
+                  note('client: ' + '\n'.join(lines[i:i+6]))
+          for p in client.glob('screenshots/**/*.png'): note(f'{p.name}: {p.stat().st_size} bytes')
           for p in sorted(client.glob('diagnostics/threads-*.txt'))[-2:]:
               sections = re.split(r'\n(?=")', p.read_text(errors='replace'))
               for t in sections:
@@ -164,6 +173,7 @@ jobs:
             build/run/clientGameTest/logs/latest.log
             build/run/clientGameTest/screenshots/**/*.png
             build/run/clientGameTest/diagnostics/*.txt
+            build/run/clientGameTest/crash-reports/*.txt
             build/test-results/test/*.xml
           if-no-files-found: warn
           retention-days: 7

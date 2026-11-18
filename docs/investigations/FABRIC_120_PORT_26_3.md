@@ -70,3 +70,7 @@ python3 scripts/audit_upstream_120.py /tmp/tacz-upstream.git --local cc990c3
 `ae2c879` 的主源码编译通过，但 [build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44203224937) 在 `compileGametestJava` 提示测试用了旧 `EntityType.HUSK`，那次没有运行服端断言。`e8b7616` 改用 26.3 `EntityTypes`： [build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44203594821) 的 Full build、专服 overlay/默认包和 MAE 验证通过，包含 OEM、转接座移除拒绝、变体序列化和 finish-reload 转移用例。**客户端仍失败**：105s/285s 两份 render thread 栈都停在 `SDL_ShowSimpleMessageBox → MessageBox.error → Minecraft.<init>`；最新日志明确报 Vulkan 缺 `VK_KHR_surface`。不是进入世界后的倍率/模型断言失败。CI 改为固定 Ubuntu 24.04、安装 Mesa Vulkan 软件驱动、在 Xvfb 内预检 CPU ICD 与 WSI，测试专用 options 选择 Vulkan。不据此宣称 Iris 或硬件渲染通过。
 
 后续切片：`353ad0d` 主动卸弹/回收、客户端定时任务与本地暂停时钟，`3c87a2c` 目镜子树 bake 与共享配件 mesh 加载，`b4a5557` 进度判据、`fdcda33` 成功开火后的原版生物声音反应。新增脚本回收/弹药箱、虚拟备弹上限、旧 AmmoSource 零接收和时钟/取消测试。**上述 e8b7616 的结果不覆盖这些提交。**
+
+### 26.3 判据与客户端取证
+
+`3ea742f` 在主源码编译失败：判据仍引用旧 `ContextAwarePredicate` / `EntityPredicate.ADVANCEMENT_CODEC`，收枪声音残留旧异步 accessor。`641ac67` 改用 26.3 的 `Optional<Holder<LootItemCondition>>` 和对应 codec，保留 player 谓词，并在所属客户端线程播放声音。[compile-check](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44205735081) 与 [build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44205735097) 的 Full build、专服 GameTest 和嵌套 MAE 步骤通过，已覆盖脚本卸弹、备弹上限、旧弹药源、进度文件加载及单测。此次 Mesa 预检通过、集成服已启动并保存世界，不再卡在启动对话框；**客户端步骤仍失败（255）**。Checks 中可见 `flite` 缺失，不能据此认定它是终止原因；没有从 artifact 核实两帧。增加缺失的运行库、阶段标记及 crash-report 摘要以定位下一次失败。
