@@ -55,6 +55,16 @@ final class SnowstormSmoke {
             var first=new ParticleEmitterInstance(def,a);var second=new ParticleEmitterInstance(def,b);
             first.tick(.05f);second.tick(.05f);
             if(first.getParticleCount()!=3||second.getParticleCount()!=7)throw new AssertionError("Compiled Molang context leaked between emitters");
+            var shortJson=JsonParser.parseString(DEFINITION).getAsJsonObject();
+            shortJson.getAsJsonObject("particle_effect").getAsJsonObject("components")
+                    .getAsJsonObject("minecraft:particle_lifetime_expression").addProperty("max_lifetime",.02);
+            var shortEnv=new ParticleMolangEnvironment();shortEnv.eval("variable.count = 1;");
+            var shortEmitter=new ParticleEmitterInstance(new ParticleEffectDeserializer().parse(shortJson,compiler),shortEnv);
+            shortEmitter.tick(.05f);
+            if(shortEmitter.getParticleCount()!=1||shortEmitter.getParticles().getFirst().age!=0)
+                throw new AssertionError("Sub-tick flash died before its first render opportunity");
+            shortEmitter.tick(.05f);
+            if(shortEmitter.getParticleCount()!=0)throw new AssertionError("Sub-tick flash did not expire next tick");
             if(Math.abs(a.eval("math.sin(90) + math.pow(2,3)")-9)>1e-6)throw new AssertionError("Molang math failed");
             for(int i=0;i<20;i++){first.tick(.05f);second.tick(.05f);}
             if(!first.isFinished()||!second.isFinished())throw new AssertionError("Emitter/particle lifetime not collected");

@@ -124,12 +124,14 @@ public class ParticleEmitterInstance {
             return;
         }
 
-        this.currentDt = dt;
+        // Advance only particles that existed at the start of this simulation step.
+        // Updating newborns immediately would kill a 20ms muzzle flash in the same
+        // 50ms client tick that emitted it, before any render can observe it.
+        updateParticles(dt);
         bindEmitterContext();
         for (IEmitterComponent c : emitterUpdateComponents) {
             c.update(this);
         }
-        updateParticles(dt);
     }
 
     private void restartCycle() {
