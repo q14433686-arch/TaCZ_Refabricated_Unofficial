@@ -17,6 +17,7 @@ import com.tacz.guns.client.init.ClientSetupEvent;
 import com.tacz.guns.client.init.ModContainerScreen;
 import com.tacz.guns.client.init.ModEntitiesRender;
 import com.tacz.guns.client.init.ParticleFactories;
+import com.tacz.guns.client.render.scope.ScopePipRenderer;
 import com.tacz.guns.client.renderer.block.GunSmithTableRenderer;
 import com.tacz.guns.client.renderer.block.StatueRenderer;
 import com.tacz.guns.client.renderer.block.TargetRenderer;
@@ -128,11 +129,6 @@ public class TaCZFabricClient implements ClientModInitializer {
         InputEvent.InteractionKeyMappingTriggered.EVENT.register(ClientPreventGunClick::onClickInput);
 
         ClientTickEvents.START_CLIENT_TICK.register(ClientGunTimeLifecycle::tick);
-        // Fabric's DISCONNECT can run from Netty channelInactive. Never destroy GPU
-        // textures in that callback (nor prevent later disconnect listeners from running).
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) ->
-                client.execute(com.tacz.guns.client.render.scope.ScopePipRenderer::invalidateLensResources));
-        ClientPlayConnectionEvents.DISCONNECT.register(ClientGunTimeLifecycle::disconnect);
         ClientPlayConnectionEvents.DISCONNECT.register(CommonNetworkCacheEvent::onDisconnect);
 
         // 26.2: 第一人称入口不再走 SimpleBedrockModel 的 RenderHandEvent。
@@ -158,7 +154,12 @@ public class TaCZFabricClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(
                 com.tacz.guns.client.render.scope.ScopePipelinePrewarm::tick);
         SwapItemWithOffHand.CALLBACK.register(InventoryEvent::onPlayerSwapMainHand);
+        // MinecraftMixin fires this at GameRenderer.resetData on both the voluntary
+        // and remote-disconnect paths, before the outgoing player is detached. Do not
+        // touch game-owned state from Netty, or enqueue cleanup that can outlive this world.
         ClientPlayerNetworkEvent.LOGGING_OUT.register(InventoryEvent::onPlayerLoggedOut);
+        ClientPlayerNetworkEvent.LOGGING_OUT.register(ClientGunTimeLifecycle::onPlayerLoggedOut);
+        ClientPlayerNetworkEvent.LOGGING_OUT.register(event -> ScopePipRenderer.invalidateLensResources());
 
         PlayerEvent.LOGGED_IN.register(PlayerEnterWorld::onPlayerEnterWorld);
 

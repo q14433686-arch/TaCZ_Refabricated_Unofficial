@@ -51,7 +51,7 @@ if [[ -n ${TACZ_SMOKE_VIEWER:-} ]]; then
     exit
 fi
 for frame in tacz_held_default_gun tacz_held_variant tacz_default_refit tacz_range_readout tacz_display_wall tacz_xm157_{entity,control,restored,occluded} \
-        tacz_lens_{classic,pip}_{bare,optical,hot,wall,restored,tagged}; do
+        tacz_lens_pip_1x tacz_lens_{classic,pip}_{bare,optical,hot,wall,restored,tagged}; do
     test -s "$(find "$run/screenshots" -name "*${frame}.png" -print -quit)"
 done
 grep -Fq 'PORT_CATALOG: client loaded 229 indexes' "$run/logs/latest.log"
@@ -64,4 +64,6 @@ grep -Fq 'PORT_SMOKE_CLIENT: reopened same save; new snapshot, one action, saved
 verdict=$(grep -Eo 'PORT_OPTIC: XM157 showed [[:digit:]]+ restored yellow pixels on entity, zero draws behind wall' "$run/logs/latest.log")
 printf '::notice::%s\n' "$verdict"
 verdict=$(grep -Eo 'PORT_LENS: XL50 restored [[:digit:]]+ classic / [[:digit:]]+ PIP heat pixels; wall and live tag veto cold' "$run/logs/latest.log")
+printf '::notice::%s\n' "$verdict"
+verdict=$(grep -Eo 'PORT_LENS_SCALE: stripe 1x=[[:digit:]]+ px; classic bare/optical=[[:digit:]]+/[[:digit:]]+ px; PIP bare/optical=[[:digit:]]+/[[:digit:]]+ px' "$run/logs/latest.log")
 printf '::notice::%s\n' "$verdict"

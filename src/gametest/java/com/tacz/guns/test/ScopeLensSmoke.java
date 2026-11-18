@@ -28,6 +28,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.UUID;
 
 /** Real XL50 against a striped backdrop. No test shader, fake mask, glReadPixels or glowing flag. */
@@ -55,12 +56,17 @@ final class ScopeLensSmoke {
             cow.setNoGravity(true);
             cow.snapTo(Vec3.atBottomCenterOf(aim));
             level.addFreshEntity(cow);
-            for (int x=-8; x<=8; x++) for (int y=-7; y<=7; y++) level.setBlock(aim.offset(x,y,-4),
-                    (x == 0 ? Blocks.WOOL.red() : Blocks.WOOL.blue()).defaultBlockState(), Block.UPDATE_ALL);
+            // Low-frequency, saturated vanilla surfaces: at 6x a slight subpixel FOV
+            // transition on woven wool can change individual pixels even outside the scope.
+            var red = BuiltInRegistries.BLOCK.getOptional(Identifier.parse("minecraft:red_concrete")).orElseThrow().defaultBlockState();
+            var blue = BuiltInRegistries.BLOCK.getOptional(Identifier.parse("minecraft:blue_concrete")).orElseThrow().defaultBlockState();
+            for (int x=-8; x<=8; x++) for (int y=-7; y<=7; y++)
+                level.setBlock(aim.offset(x,y,-4), x == 0 ? red : blue, Block.UPDATE_ALL);
             return new Scene(cow.getUUID(), aim, BlockPos.containing(p.getEyePosition().lerp(Vec3.atCenterOf(aim), .5)));
         });
         var prior = ctx.computeOnClient(mc -> new boolean[]{RenderConfig.EXPERIMENTAL_SCOPE_LENS.get(),
-                RenderConfig.SCOPE_THERMAL_ENABLE.get(), RenderConfig.SCOPE_PIP_ENABLE.get(), RenderConfig.SCOPE_PIP_RERENDER.get()});
+                RenderConfig.SCOPE_THERMAL_ENABLE.get(), RenderConfig.SCOPE_PIP_ENABLE.get(), RenderConfig.SCOPE_PIP_RERENDER.get(),
+                RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.get()});
         try {
             ctx.waitFor(mc -> mc.level.getEntity(scene.cow) != null && mc.player.getMainHandItem().getItem() instanceof IGun g
                     && SIGHT.equals(g.getAttachmentId(mc.player.getMainHandItem(), AttachmentType.SCOPE)));
@@ -82,10 +88,20 @@ final class ScopeLensSmoke {
 
             flags(ctx, false, false, true, false);
             ctx.waitFor(mc -> ScopePipRenderer.suppressesWorldFovZoom());
+            // Same ADS, camera, hand and mask; suppress ONLY the PIP composite. At a
+            // world share of zero this gives us a real 1x image to measure, not just a flag.
+            float zoom = ctx.computeOnClient(mc -> {
+                if (ScopePipRenderer.currentWorldZoom() != 1f) throw new AssertionError("Fixture requires pure PIP");
+                RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.set(true);
+                return ScopePipRenderer.currentMagnification();
+            });
+            var wide = capture(ctx, "pip_1x");
+            ctx.runOnClient(mc -> RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.set(false));
             var pipBare = capture(ctx, "pip_bare");
             flags(ctx, true, false, true, false);
             var pipOptics = capture(ctx, "pip_optical");
             assertOptics(pipBare, pipOptics);
+            assertZoom(zoom, wide, bare, optical, pipBare, pipOptics);
             flags(ctx, true, true, true, false);
             var pipHot = capture(ctx, "pip_hot");
             wall(ctx, world, scene, true);
@@ -101,6 +117,7 @@ final class ScopeLensSmoke {
             GunMod.LOGGER.info("PORT_LENS: XL50 restored {} classic / {} PIP heat pixels; wall and live tag veto cold", classic, pip);
         } finally {
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
+            ctx.runOnClient(mc -> RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.set(prior[4]));
             flags(ctx, prior[0], prior[1], prior[2], prior[3]);
             world.getServer().runOnServer(s -> { var e = world.getConnection().getServerPlayer().level().getEntity(scene.cow); if (e != null) e.discard(); });
         }
@@ -151,22 +168,61 @@ final class ScopeLensSmoke {
     private static BufferedImage capture(ClientGameTestContext ctx, String name) {
         ctx.waitFor(mc -> IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(1) > .99f);
         ctx.waitTicks(12);
+        // ADS progress is not the world FOV: SecondOrderDynamics converges on its own
+        // clock. Wait for the actual projection of this stationary, non-sprinting camera.
+        double[] projection = new double[2];
+        try {
+            ctx.waitFor(mc -> {
+                double worldZoom = RenderConfig.SCOPE_PIP_ENABLE.get() ? ScopePipRenderer.currentWorldZoom() : ScopePipRenderer.currentMagnification();
+                projection[0] = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.projectionMatrix.m11();
+                projection[1] = worldZoom / Math.tan(Math.toRadians(mc.options.fov().get() * .5));
+                return Math.abs(projection[0] - projection[1]) < .0005 * projection[1];
+            }, 200);
+        } catch (AssertionError e) {
+            throw new AssertionError(name + ": world projection m11=" + projection[0] + ", expected=" + projection[1], e);
+        }
         try { return ImageIO.read(ctx.takeScreenshot("tacz_lens_" + name).toFile()); }
         catch (IOException e) { throw new UncheckedIOException(e); }
     }
 
-    private static void assertOptics(BufferedImage bare, BufferedImage optical) {
-        int w=bare.getWidth(), h=bare.getHeight(), radius=h/8;
-        int red=0, kept=0, darkened=0;
-        for (int y=h/2-radius; y<h/2+radius; y++) for (int x=0; x<w; x++) {
-            int a=bare.getRGB(x,y), b=optical.getRGB(x,y);
-            if (Math.abs(x-w/2) < radius) {
-                if (stripe(a)) { red++; if (stripe(b)) kept++; }
-                if (max(a)-min(a)>24 && max(a)-max(b)>6 && max(b)>max(a)*.5) darkened++;
+    // At the centre the XL50 has zero geometric distortion. Use the upper quartile
+    // of row widths: the cow, reticle and readout interrupt the stripe in some rows.
+    private static int stripeWidth(BufferedImage img) {
+        int x0 = img.getWidth() / 2, y0 = img.getHeight() / 2, radius = img.getHeight() / 8;
+        int[] widths = new int[2 * radius];
+        for (int row = 0; row < widths.length; row++) {
+            for (int x = x0 - radius; x < x0 + radius; x++) {
+                if (stripe(img.getRGB(x, y0 - radius + row))) widths[row]++;
             }
         }
-        if (red<20 || kept<.88*red || darkened<150)
-            throw new AssertionError("XL50 optics: stripe="+kept+"/"+red+", darkened="+darkened);
+        Arrays.sort(widths);
+        return widths[3 * widths.length / 4];
+    }
+
+    private static void assertZoom(float zoom, BufferedImage wide, BufferedImage... zoomed) {
+        int unit = stripeWidth(wide);
+        int[] widths = Arrays.stream(zoomed).mapToInt(ScopeLensSmoke::stripeWidth).toArray();
+        // One thresholded texel at 1x becomes a few pixels after reconstruction. Still
+        // distinguish 1x, the pack's 6x, and applying that magnification a second time.
+        float expected = unit * zoom;
+        if (unit < 3 || zoom != 6f || Arrays.stream(widths).anyMatch(n -> Math.abs(n - expected) > .25f * expected))
+            throw new AssertionError("XL50 stripe at 1x=" + unit + ", at " + zoom + "x=" + Arrays.toString(widths));
+        GunMod.LOGGER.info("PORT_LENS_SCALE: stripe 1x={} px; classic bare/optical={}/{} px; PIP bare/optical={}/{} px",
+                unit, widths[0], widths[1], widths[2], widths[3]);
+    }
+
+    private static void assertOptics(BufferedImage bare, BufferedImage optical) {
+        int w=bare.getWidth(), h=bare.getHeight(), radius=h/8;
+        int red=0, resultRed=0, kept=0, darkened=0;
+        for (int y=h/2-radius; y<h/2+radius; y++) for (int x=w/2-radius+1; x<w/2+radius; x++) {
+            int a=bare.getRGB(x,y), b=optical.getRGB(x,y);
+            if (stripe(a)) red++;
+            if (stripe(b)) resultRed++;
+            if (stripe(a) && stripe(b)) kept++;
+            if (max(a)-min(a)>24 && max(a)-max(b)>6 && max(b)>max(a)*.5) darkened++;
+        }
+        if (red<20 || kept<.88*Math.max(red, resultRed) || darkened<150)
+            throw new AssertionError("XL50 optics: shared stripe="+kept+", bare="+red+", optical="+resultRed+", darkened="+darkened);
         assertExterior(bare, optical);
     }
 

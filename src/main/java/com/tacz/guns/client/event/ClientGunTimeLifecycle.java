@@ -1,5 +1,6 @@
 package com.tacz.guns.client.event;
 
+import cn.sh1rocu.tacz.api.event.ClientPlayerNetworkEvent;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.client.gameplay.LocalPlayerDataHolder;
 import com.tacz.guns.util.time.GunTime;
@@ -8,15 +9,16 @@ import com.tacz.guns.client.gui.overlay.KillAmountOverlay;
 import com.tacz.guns.client.model.functional.MuzzleFlashRender;
 import com.tacz.guns.client.renderer.other.GunHurtBobTweak;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientPacketListener;
 
 /** Only the client entry point drives pause. Disconnect invalidates deferred work even on a memory connection. */
 public final class ClientGunTimeLifecycle {
     private ClientGunTimeLifecycle() {}
     public static void tick(Minecraft client) { GunTime.setPaused(client.level != null && client.isPaused()); }
-    public static void disconnect(ClientPacketListener connection, Minecraft client) {
+    public static void onPlayerLoggedOut(ClientPlayerNetworkEvent.LoggingOut event) {
+        var player = event.getPlayer();
+        if (player == null) return; // No play session (e.g. closing from the title screen).
         com.tacz.guns.client.model.papi.RangefinderReadout.clear();
-        if (client.player != null) IClientPlayerGunOperator.fromLocalPlayer(client.player).getDataHolder().cancelPendingActions();
+        IClientPlayerGunOperator.fromLocalPlayer(player).getDataHolder().cancelPendingActions();
         GunTime.resetEpoch();
         LocalPlayerDataHolder.clientClickButtonTimestamp = -1L;
         RefitTransform.resetTimestamps();

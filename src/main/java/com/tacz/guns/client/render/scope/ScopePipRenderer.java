@@ -220,6 +220,7 @@ public final class ScopePipRenderer {
 
     /** Game-thread resource reload or disconnect: never reuse a captured scene/profile there. */
     public static void invalidateLensResources() {
+        ScopeMaskGeometry.clear();
         ScopeMaskRenderer.lensLastFrame = ScopeMaskRenderer.lensThisFrame = ScopeLensFrame.expected = null;
         ScopeLensFrame.disabled = false;
         sceneCaptured = narrowScene = false;

@@ -49,6 +49,14 @@ public class CommonNetworkCacheEvent {
      * {@code reload()} 何时被调用。此处已有过多次基于推理的错误修改，务必先取证。</p>
      */
     public static void onDisconnect(ClientPacketListener handler, Minecraft client) {
+        // Packet application, viewer state and the chunk receiver are game-thread owned.
+        client.execute(() -> {
+            var current = client.getConnection();
+            if (current == null || current == handler) clearDisconnected(handler);
+        });
+    }
+
+    private static void clearDisconnected(ClientPacketListener handler) {
         ServerMessageSyncGunPackPart.clearPendingSync();
         if (handler.getConnection() == null || handler.getConnection().isMemoryConnection()) {
             return;

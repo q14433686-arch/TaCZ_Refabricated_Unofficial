@@ -125,9 +125,13 @@ public final class ScopeThermalCapture {
 
     static @Nullable TextureTarget current() { return ready ? mask : null; }
 
-    public static void close() {
+    static void close() {
         beginFrame(false);
         failed = false;
-        if (mask != null) { mask.destroyBuffers(); mask = null; }
+        if (mask != null) {
+            try { mask.destroyBuffers(); }
+            catch (RuntimeException ex) { GunMod.LOGGER.warn("[TACZ Scope] Could not release the heat target.", ex); }
+            finally { mask = null; }
+        }
     }
 }
