@@ -149,9 +149,9 @@ final class ScopeLensSmoke {
         ctx.runOnClient(mc -> {
             try {
                 Class<?> iris = Class.forName("net.irisshaders.iris.Iris");
-                Object config = iris.getMethod("getIrisConfig").invoke(null);
-                config.getClass().getMethod("setShadersEnabled", boolean.class).invoke(config, enabled);
-                iris.getMethod("reload").invoke(null);
+                // Same entry point as Iris' keybinding: saves before reload(), whose
+                // initialize() would otherwise read the old on-disk value back in.
+                iris.getMethod("toggleShaders", net.minecraft.client.Minecraft.class, boolean.class).invoke(null, mc, enabled);
             } catch (ReflectiveOperationException e) { throw new AssertionError("Real Iris reload failed", e); }
         });
         ctx.waitTicks(5);
