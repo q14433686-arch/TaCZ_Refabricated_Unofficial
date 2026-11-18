@@ -37,7 +37,22 @@ The old native muzzle profiles remain supported independently; unknown effects n
 
 `SnowstormSmoke`, `RemoteParticleSmoke`, and the extended `CoreCompletionSmoke` are executable
 client game tests, wired into both the ordinary and Iris smoke paths. This new batch's successful
-compilation is not equivalent to those tests passing. Record final run IDs below when known.
+compilation is not equivalent to those tests passing.
+
+- `44401153019`: compile-check **passed**, source `2eaae88`.
+- `44401153034`: Iris/Sodium client suite **passed** on `2eaae88`, including muzzle
+  effects with smoke disabled, Snowstorm visible-magenta/lifetime/isolated-variable checks,
+  transition target consumption, and tracked-owner S2C delivery/expiry. Shader off/on
+  restored 2,217 heat pixels. This is the authored CI shader, not a third-party shader certification.
+- The matching non-shader Vulkan build reached the client but failed the translucent slime
+  thermal check (0 bright pixels). Original frames are retained under
+  `build-reports/visual/44399210018-tacz_lens_slime_hot.png` and the Iris counterpart.
+  Pinned 26.3 bytecode confirms blended models invoke `FeatureRenderPhase.submit`, while
+  the thermal hook intercepted only `SimpleFeatureRenderPhase.submit`. The additional
+  interface-site hook is awaiting a full non-shader regression; the threshold is unchanged.
+- The short-lived flash fix advances existing particles before emitter updates, so newborn
+  20ms particles are not killed by the same 50ms client tick before extraction. A dedicated
+  assertion checks both the initial render opportunity and expiry on the next tick.
 
 Optional Sable/Simulated/EMI/Accelerated Rendering 26.3 dependency/API availability remains an
 independent integration prerequisite, not something this particle source port can substitute for.
