@@ -31,7 +31,7 @@ python3 scripts/verify_120_resources.py
 
 ## 功能对照（不要把构建、游戏内断言、像素检查混成一栏）
 
-下表「已跑」取自 [最近的基线整套 CI](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44229658444) 及[历史分块运行](FABRIC_120_PORT_26_3.md)。客户端为真实 MC + Mesa 软件 Vulkan，不是独显。没有逐张看过的图不作画质判定。
+下表「已跑」取自[默认包基线 CI](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44229658444) 及[历史分块运行](FABRIC_120_PORT_26_3.md)。客户端为真实 MC + Mesa 软件 Vulkan，不是独显。没有逐张看过的图不作画质判定。
 
 | 上游能力 → 本线实现/差别 | 已跑到哪一步 | 剩余验收/边界 |
 |---|---|---|
@@ -49,7 +49,7 @@ python3 scripts/verify_120_resources.py
 | 命中表面、弹壳、FP tracer → 原粒子协议/客户端工厂 | 实际 display 控制弹孔开关，弹壳 override 加载、六面朝向检查 | 发射轨迹、声音及光影不由 provider 返回值证明 |
 | `renew` 烟雾/动画粒子通道 → 基线**只有**旧 flash 回退 | 68 个 display、2 定义文件、默认动画 0 个 `particle_effects` keyframe | 绑定/脱离、第一/三人称、按定义取样与重载、第三方关键帧运行时 |
 | `text_show`、落点 → `RangefinderReadout` + snapshot 字形 | 真 UH-1 显示两个方块距离；`64ae477` 的 XM157 原图在准星中心恢复一个 4×4 的空心黄框（12 像素），解除瞄准、墙后不提交 | 非默认色和比例目前是单测；其它 rig、PIP/Iris/独显仍需实测 |
-| ocular / `scope_lens` / vision → 本线 mask/PIP/Iris final owner | 节点 bake、已有掩码路径；10 个镜片 display 不等于 10 个渲染通过 | 镜片轮廓/材质参数、镜内夜视/冷热实体、PIP 开关、Iris 开关的画面 |
+| ocular / `scope_lens` / vision → 按实际目镜选择 display；与原生 PIP 共用一次合成 | [XL50 配置、倍率和热源对照](#原生镜片与热成像) | 混合目镜、透明/自定义实体、其它色盘与独显；Iris 光影下保留原路径 |
 | MAE、依赖和开发工具 → 1 份 nested MAE；26.3 无混淆，非上游旧 jar 环境 | CI 验 jar 内容和无额外可选模组的游戏加载 | EMI、Sable、Simulated、AR 等无经验证等价集成；不靠空方法/换包名打勾 |
 | 26.3 独有的 LR、AmmoSource、TML、PAL/YSM、Iris/Voxy 等 | 不因上游树缺失而删除。见 [LR 和 mesh 的署名](../../LICENSES.md)、[本线 YSM](../YSM_COMPAT.md) | 分别保留自己的回归边界，不能从 1.21.1 推断 26.3 可用性 |
 
@@ -71,7 +71,28 @@ python3 scripts/verify_120_resources.py
 
    `02ac73e` 的[严格像素门禁与全量 build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44234829581/job/134568328848)及[独立编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44234829578)通过：`PORT_OPTIC: XM157 showed 12 restored yellow pixels on entity, zero draws behind wall`。这次中心小窗口内两张负对照均无黄像素，正对照和恢复帧均保留空心。可取[该次日志/PNG](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44234829581/artifacts/14397295863)或[CI 测试 JAR](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44234829581/artifacts/14397465462)。
 
-### 下一块的实现边界（源码对照，尚未移植）
+### 原生镜片与热成像
 
-- **`scope_lens` 不等于 PIP**。目标树的 [ScopeLensRenderer / ScopeLensContour / ScopeThermalRenderer](https://github.com/Sh1roCu/TACZ-Refabricated/tree/356bdf9d48f2225bac6ceb56adc5576a418517a8/src/main/java/com/tacz/guns/client/renderer/scope) 分别处理镜片、轮廓、实体热源；热源按当前标签与可见性采集，并用场景深度遮挡。26.3 移植时需要按实际激活的镜组（含替换/叠加与内置配件）处理；镜外世界不能变色，PIP 已放大的画面不能再放大一遍。验收应含原色/镜内处理对照、可见/墙后/名单变更、关热成像退回光学，以及 PIP、Iris 各自的合成位置。不能用全屏灰阶代替热源。
+目标树的 [ScopeLensRenderer / ScopeLensContour / ScopeThermalRenderer](https://github.com/Sh1roCu/TACZ-Refabricated/tree/356bdf9d48f2225bac6ceb56adc5576a418517a8/src/main/java/com/tacz/guns/client/renderer/scope) 用旧 GL 采集镜片轮廓和已绘制的热源。本端没有引入 GL framebuffer 调用。`scope_lens` 解析普通光学、两种夜视、三种热色盘，限定输入范围；缺省/未知模式与关闭热采集时回到光学。
+
+- **谁拥有镜片**：从实际提交了有效目镜几何的 display 取配置（含内置/替换件），不用放大倍率猜测镜片种类。用上一帧决定要不要拷贝世界，合成前须与**本帧**目镜的配置一致。仅有红点组、或多个不同配置的目镜共用一张掩码时，不套用单一滤镜。边缘距离从实际掩码有界取样，**不是**上游的完整 jump-flood 距离场。
+- **热像是什么**：世界提取时读实体类型标签、存活/可见性；只取世界提交的普通 solid 模型、物品和方块节点，不重调实体渲染器，不取名牌、轮廓或碰撞箱。用世界深度的私有副本测试其材质，透明清屏后留下的覆盖才是热源。无可用深度退回光学；截至此块不含半透明/自定义几何的完整支持。
+- **倍率归属**：普通 FOV 变焦和窄 FOV 二次渲染以 1× 采样，重投影 PIP 只在同一次片元合成里取一次镜内倍率；镜外 discard。启用 Iris 光影时不运行此 sensor 路径，不宣称光影兼容。
+- **验收**：[ScopeLensSmoke](../../src/gametest/java/com/tacz/guns/test/ScopeLensSmoke.java) 经典 FOV 与重投影 PIP 各拍原色、光学、白热、石墙、移墙恢复、热标签重载六帧。另拍一张同样开镜但**只**关掉重投影合成的 1× 帧。用红条宽度测量倍率，用蓝底检查镜内偏色和镜外保色；白热帧与恢复帧共有、且光学帧原本不亮的像素，须在两张负对照里分别变冷。测试在游戏运行中把牛同时加入白名单和黑名单，验证黑名单优先。初次 [QR-24 夹具超时](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44240278132)：该枪的默认允许表不含 XL50，**没有**跑到镜片验收。后来改用包允许的 M700，并在服务端检查装备结果，不绕开允许表。
+
+[第一次 M700 运行](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44240794013/job/134587917796)越过镜片断言，但退回标题时旧收枪期限仍有效，整套未过。镜片纹理和动作定时现在跟现有 `LOGGING_OUT` 一起在客户端卸载世界时收尾，而不是从可能位于 Netty 线程的回调销毁 GPU 对象；网络快照仍保留单人连接的清理规则。另一次[像素检查](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44242392074/job/134593145145)只有 13,322 / 17,160 个镜外色样稳定，**不**作为镜外一致的证据。夹具改用平整的原版混凝土色板，等实际世界投影到位才比较，保留镜外像素阈值。其后一次[经典变焦对照](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44243966018/job/134598284133)虽有偏色，但红条重叠不足；将条纹与牛错开放置，并在取帧期间关闭视角摇晃，避免把动画位移当成滤镜效果。
+
+**通过的运行**：[`e92a998` 完整构建、专服、客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608846/job/134600441865) · [独立编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608818) · [全部 13 帧和日志](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608846/artifacts/14401181401)。同一视角，[1× 对照](../../build-reports/visual/44244608846-tacz_lens_pip_1x.png)的红条宽 **7 px**；下表是在 XL50 默认 6× 档测得的值。条宽为中央取样区各行红像素数的上四分位；重投影对低分辨率源图重建，不能把阈值化条宽当成精确倍率校准。
+
+| 无光影路径 | 原色 → 开光学镜片：红条宽 | 移墙后重合白热像素 | 原始帧（同一运行，未裁剪） |
+|---|---:|---:|---|
+| 经典世界 FOV | 45 → 45 px | 2,559 | [原色](../../build-reports/visual/44244608846-tacz_lens_classic_bare.png) · [光学](../../build-reports/visual/44244608846-tacz_lens_classic_optical.png) · [白热](../../build-reports/visual/44244608846-tacz_lens_classic_hot.png) · [石墙](../../build-reports/visual/44244608846-tacz_lens_classic_wall.png) · [恢复](../../build-reports/visual/44244608846-tacz_lens_classic_restored.png) |
+| 重投影 PIP | 38 → 38 px | 2,499 | [原色](../../build-reports/visual/44244608846-tacz_lens_pip_bare.png) · [光学](../../build-reports/visual/44244608846-tacz_lens_pip_optical.png) · [白热](../../build-reports/visual/44244608846-tacz_lens_pip_hot.png) · [石墙](../../build-reports/visual/44244608846-tacz_lens_pip_wall.png) · [恢复](../../build-reports/visual/44244608846-tacz_lens_pip_restored.png) · [双标签否决](../../build-reports/visual/44244608846-tacz_lens_pip_tagged.png) |
+
+[回存的原始帧](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44245218048)为 854×480。按测试窗口重读 RGB：经典 / PIP 的镜内彩色变暗像素分别为 **11,267 / 11,851**；原色→光学、光学→白热这两组镜外对照，各自 **17,160 / 17,160** 个色样都在 RGB 误差门槛内（经典原色→光学有 8 个不是字节完全相等）。复核墙帧时，两条路径的恢复点中均有 **0** 个仍呈中性白热；经典有 10 个位置落在红色分划上，不计作冷黑。PIP 双标签帧只剩 2 个这样的红色分划像素，没有中性白热。两个模式完整的墙及标签判据都是独立要求 ≥98% 恢复点变冷，不能用消失的色板、准星或单一灰阶滤镜代替热源判据。
+
+**尚未验证**：窄 FOV 二次渲染、切换镜组/替换件时的实际像素、白名单单独启用非生物实体、其它色盘、独显及 Iris 光影包。普通 solid 牛的白热结果不代表任意材质，也不是整套上游效果逐像素复现。
+
+### 仍待移植
+
 - **`renew` 不等于旧四边形火光**。上游 [`MuzzleFlash`](https://github.com/Sh1roCu/TACZ-Refabricated/blob/356bdf9d48f2225bac6ceb56adc5576a418517a8/src/main/java/com/tacz/guns/client/resource/pojo/display/gun/MuzzleFlash.java) 分第一/三人称粒子定义；本端 `GunDisplayInstance.checkMuzzleFlash` 仍会丢弃无旧贴图的定义。验收要能单独观察两个视角、绑定/脱离和资源重载；默认包没有动画粒子关键帧，这项需要自制或有权使用的夹具。

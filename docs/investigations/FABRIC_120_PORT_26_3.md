@@ -2,7 +2,7 @@
 
 **不是 release notes。** 目标是同等玩法/内容包语义，不是把 1.21.1 的 jar、mixin 或资源目录直接覆盖上来。阶段门禁未全部通过前，保留本线 1.1.8 SemVer 核心；不要放宽 `dependencies.tacz` 冒充 1.2.0。
 
-**最近通过整套门禁的源码：[`fa23a51`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/commit/fa23a51398780850666da99bc4e915c0966e4692)。** [编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44229658378) · [完整构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44229658444) · [测试 JAR](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44229658444/artifacts/14395031220) · [服务端/客户端日志与截图](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44229658444/artifacts/14395385015)。默认目录、动作隔离与创造栏重载都有游戏内证据；`renew` 粒子、镜片热成像/落点标记、实际查看器与独立多人客户端仍未过对应门禁。下文按提交顺序保留较早阶段的结果。
+**最近通过整套门禁的源码：[`e92a998`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/commit/e92a998a576fe909ac68c34b78a8c46bc1ac8d95)。** [编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608818) · [完整构建 / 专服 / Mesa 客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608846/job/134600441865) · [测试 JAR](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608846/artifacts/14401960049) · [日志和原始截图](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608846/artifacts/14401181401)。本次新增 XL50 的镜内偏色、白热实体、遮挡和重投影倍率对照；不是所有瞄具、光影、独显或独立多人的验收。下文按提交顺序保留较早阶段结果。
 
 **后续逐块推进及四树全量对照见 [全量对比与当前门禁](FABRIC_120_COMPARISON.md)**（含未变化与本地独有文件）。以下历史表不随新提交回写。
 
@@ -146,3 +146,7 @@ UH-1 的 `text_show` 经 26.3 第一人称 extraction 读取实际游戏方块�
 ### XM157 与查看器：区分命中、提交与实际画面
 
 `64ae477` 修复手部提交时漏乘 ModelView 导致的 XM157 标记剔除。[实体、负对照、恢复与遮挡的原始帧，以及 CI 和失败诊断](FABRIC_120_COMPARISON.md#本轮分块记录)可复核：默认配置有 12 个黄色像素构成中央空心框，不把测距文字算进去。`44f0733` 的 JEI 和 REI 也分别通过了重载前后双向查询、真实页面保持与像素对照。先前 JEI 文件只有世界的一帧不能作为页面证据。上述运行用软件 Vulkan，均不是硬件/光影或异进程联机验收。
+
+### XL50：测倍率、偏色和可见热源，而不是看截图是否灰了
+
+从 `f8020ae` 起，镜片绑定到实际提交的目镜。`e92a998` 的[完整运行](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608846/job/134600441865)检查默认包允许的 M700 + XL50、固定相机的 13 张游戏截图和旧存档重开。1× 对照红条宽 **7 px**；在 6× 档，经典变焦的原色/光学都是 **45/45 px**，重投影 PIP 是 **38/38 px**（阈值化的条宽，不是两种采样逐像素相同）。移墙后分别有 **2,559 / 2,499** 个与第一次可见时重合的白热点；放墙或同时把牛加入黑白名单后，这些位置通过冷像素门禁。镜外色样及原始帧见[像素对照和边界](FABRIC_120_COMPARISON.md#原生镜片与热成像)。完整 run 也要求重进后收枪期限失效、新快照、恰好一次动作与库存守恒；没有在测试里重设时钟。`aac6223` 的 [JEI / REI 独立运行](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44243966031)亦通过。未升级版本、未发布。
