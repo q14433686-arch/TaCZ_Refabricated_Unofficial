@@ -9,6 +9,7 @@ import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.client.input.ShootKey;
 import com.tacz.guns.client.particle.NativeMuzzleEffects;
 import com.tacz.guns.config.client.RenderConfig;
+import com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.minecraft.client.CameraType;
@@ -36,9 +37,9 @@ final class MuzzleEffectsSmoke {
             shoot(ctx, true, "tacz_muzzle_f5");
             ctx.runOnClient(mc -> { mc.options.setCameraType(CameraType.FIRST_PERSON); RenderConfig.RENDER_MUZZLE_SMOKE.set(false); NativeMuzzleEffects.clear(); });
             equip(ctx, world, "ak47", FireMode.AUTO);
-            long bursts = ctx.computeOnClient(mc -> NativeMuzzleEffects.diagnostics().smokeBursts());
+            long bursts = ctx.computeOnClient(mc -> smokeBursts());
             shoot(ctx, false, "tacz_muzzle_smoke_off");
-            if (ctx.computeOnClient(mc -> NativeMuzzleEffects.diagnostics().smokeBursts()) != bursts)
+            if (ctx.computeOnClient(mc -> smokeBursts()) != bursts)
                 throw new AssertionError("Smoke-off emitted a world burst");
             checkTrackedShooter(ctx, world);
             ctx.runOnClient(mc -> NativeMuzzleEffects.clear());
@@ -69,22 +70,41 @@ final class MuzzleEffectsSmoke {
     }
 
     private static void shoot(ClientGameTestContext ctx, boolean third, String screenshot) {
-        long before = ctx.computeOnClient(mc -> third ? NativeMuzzleEffects.diagnostics().thirdFlashSubmits() : NativeMuzzleEffects.diagnostics().firstFlashSubmits());
+        long before = ctx.computeOnClient(mc -> flashes(third));
+        long geometry = ctx.computeOnClient(mc -> WorldEmitterManager.getInstance().rendered());
+        long nativeBefore = ctx.computeOnClient(mc -> nativeFlashes(third));
         boolean smokeEnabled = ctx.computeOnClient(mc -> RenderConfig.RENDER_MUZZLE_SMOKE.get());
-        long bursts = ctx.computeOnClient(mc -> NativeMuzzleEffects.diagnostics().smokeBursts());
+        long bursts = ctx.computeOnClient(mc -> smokeBursts());
         // Semi fires once per press, automatic holds through several render frames.
         for (int attempt=0; attempt<5; attempt++) {
             ctx.getInput().holdKey(ShootKey.SHOOT_KEY);
             try { ctx.waitTicks(3); } finally { ctx.getInput().releaseKey(ShootKey.SHOOT_KEY); }
             ctx.waitTicks(1);
-            if (ctx.computeOnClient(mc -> (third ? NativeMuzzleEffects.diagnostics().thirdFlashSubmits() : NativeMuzzleEffects.diagnostics().firstFlashSubmits()) > before)) {
-                if (smokeEnabled && ctx.computeOnClient(mc -> NativeMuzzleEffects.diagnostics().smokeBursts()) <= bursts)
+            if (ctx.computeOnClient(mc -> (flashes(third)) > before)) {
+                if (smokeEnabled && ctx.computeOnClient(mc -> smokeBursts()) <= bursts)
                     throw new AssertionError("Flash submitted without a detached smoke burst: " + screenshot);
+                // Runtime admissions alone are not evidence of a render. Native backend
+                // already counts actual submits; the new backend must also submit geometry.
+                if(ctx.computeOnClient(mc -> nativeFlashes(third)) == nativeBefore)
+                    ctx.waitFor(mc -> WorldEmitterManager.getInstance().rendered() > geometry);
                 ctx.takeScreenshot(screenshot);
                 return;
             }
         }
-        throw new AssertionError("No native muzzle geometry for " + screenshot + ": " + ctx.computeOnClient(mc -> NativeMuzzleEffects.diagnostics()));
+        throw new AssertionError("No muzzle emission/render geometry for " + screenshot + ": " + ctx.computeOnClient(mc -> NativeMuzzleEffects.diagnostics()));
+    }
+
+    private static long nativeFlashes(boolean third) {
+        var d=NativeMuzzleEffects.diagnostics();
+        return third?d.thirdFlashSubmits():d.firstFlashSubmits();
+    }
+    private static long flashes(boolean third) {
+        var d=NativeMuzzleEffects.diagnostics();
+        return nativeFlashes(third)+(third?d.runtimeThirdFlashes():d.runtimeFirstFlashes());
+    }
+    private static long smokeBursts() {
+        var d=NativeMuzzleEffects.diagnostics();
+        return d.smokeBursts()+d.runtimeSmokeBursts();
     }
 
     private static void checkTrackedShooter(ClientGameTestContext ctx, TestSingleplayerContext world) {
@@ -104,7 +124,9 @@ final class MuzzleEffectsSmoke {
             world.getConnection().waitForClientboundEntityUpdates(EntityTypes.HUSK);
             ctx.getInput().lookAt(net.minecraft.core.BlockPos.containing(mob.position().add(0,1,0)));
             ctx.runOnClient(mc -> RenderConfig.RENDER_MUZZLE_SMOKE.set(true));
-            long before = ctx.computeOnClient(mc -> NativeMuzzleEffects.diagnostics().thirdFlashSubmits());
+            long before = ctx.computeOnClient(mc -> flashes(true));
+            long geometry = ctx.computeOnClient(mc -> WorldEmitterManager.getInstance().rendered());
+            long nativeBefore = ctx.computeOnClient(mc -> nativeFlashes(true));
             for (int i=0; i<6; i++) {
                 world.getServer().runOnServer(s -> {
                     var api = ScriptGuardSmoke.bind(mob);
@@ -113,8 +135,10 @@ final class MuzzleEffectsSmoke {
                 });
                 ctx.waitTicks(2);
             }
-            if (ctx.computeOnClient(mc -> NativeMuzzleEffects.diagnostics().thirdFlashSubmits()) <= before)
+            if (ctx.computeOnClient(mc -> flashes(true)) <= before)
                 throw new AssertionError("Tracked shooter's main-hand locator did not submit a flash");
+            if(ctx.computeOnClient(mc -> nativeFlashes(true)) == nativeBefore)
+                ctx.waitFor(mc -> WorldEmitterManager.getInstance().rendered() > geometry);
             ctx.takeScreenshot("tacz_muzzle_tracked");
         } finally { world.getServer().runOnServer(s -> mob.discard()); }
     }

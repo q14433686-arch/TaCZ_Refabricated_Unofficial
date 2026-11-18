@@ -49,6 +49,7 @@ public final class NativeMuzzleEffects {
     private static long epoch = -1;
     private static Object level;
     private static long firstFlashSubmits, thirdFlashSubmits, smokeBursts;
+    private static long runtimeFirstFlashes, runtimeThirdFlashes, runtimeSmokeBursts;
 
     private NativeMuzzleEffects() {}
 
@@ -70,8 +71,8 @@ public final class NativeMuzzleEffects {
         }
     }
     private record Puff(Vec3 origin, Vec3 velocity, long born, float lifetime, float size, float rotation, int light) {}
-    public record Diagnostics(long firstFlashSubmits, long thirdFlashSubmits, long smokeBursts, int liveSmoke, int pendingShots) {}
-    public static Diagnostics diagnostics() { return new Diagnostics(firstFlashSubmits, thirdFlashSubmits, smokeBursts, PUFFS.size(), SHOTS.size()); }
+    public record Diagnostics(long firstFlashSubmits, long thirdFlashSubmits, long smokeBursts, int liveSmoke, int pendingShots, long runtimeFirstFlashes, long runtimeThirdFlashes, long runtimeSmokeBursts) {}
+    public static Diagnostics diagnostics() { return new Diagnostics(firstFlashSubmits, thirdFlashSubmits, smokeBursts, PUFFS.size(), SHOTS.size(), runtimeFirstFlashes, runtimeThirdFlashes, runtimeSmokeBursts); }
 
     public static void register() {
         GunFirePostEvent.EVENT.register(NativeMuzzleEffects::onShot);
@@ -163,7 +164,7 @@ public final class NativeMuzzleEffects {
             shot.smoked = true; // Includes disabled/missing effects: don't burst when options change later.
             Identifier definition = first ? effect.firstSmoke() : effect.thirdSmoke();
             if (shot.smokeEnabled && RenderConfig.RENDER_MUZZLE_SMOKE.get()
-                    && !customEffect(definition,shot,pose,first,id,effect.smokeSize()) && supported(definition, SMOKE) && effect.smokeSize() >= 0 && effect.smokeSpeed() > 0) {
+                    && !customEffect(definition,shot,pose,first,id,effect.smokeSize(),true) && supported(definition, SMOKE) && effect.smokeSize() >= 0 && effect.smokeSpeed() > 0) {
                 Matrix4f worldPose = first ? GunItemRendererWrapper.muzzleWorldPose(pose.last().pose())
                         : new Matrix4f(pose.last().pose()).setTranslation(
                             pose.last().pose().m30() + (float)mc.gameRenderer.mainCamera().position().x,
@@ -175,7 +176,7 @@ public final class NativeMuzzleEffects {
         Identifier definition = first ? effect.firstFlash() : effect.thirdFlash();
         if (!shot.customFlashed && !RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) {
             shot.customFlashed = true;
-            if (customEffect(definition,shot,pose,first,id,effect.flashScale())) return true;
+            if (customEffect(definition,shot,pose,first,id,effect.flashScale(),false)) return true;
         }
         if (com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader.getInstance().getDefinition(definition)!=null) return true;
         // Starting the 20ms particle at the first locator submit guarantees the instant
@@ -217,7 +218,7 @@ public final class NativeMuzzleEffects {
         return false;
     }
 
-    private static boolean customEffect(Identifier id,Shot shot,PoseStack pose,boolean first,int owner,float scale) {
+    private static boolean customEffect(Identifier id,Shot shot,PoseStack pose,boolean first,int owner,float scale,boolean smoke) {
         var definition=com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader.getInstance().getDefinition(id);
         if(definition==null)return false;
         if(!Float.isFinite(scale)||scale<=0)return true;
@@ -228,8 +229,14 @@ public final class NativeMuzzleEffects {
                         (float)mc.gameRenderer.mainCamera().position().y,(float)mc.gameRenderer.mainCamera().position().z);
         var runtime=com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance();
         var emitter=runtime.addEmitter(mc.level,world,Vec3.ZERO,definition,"",mc.level.getEntity(owner));
-        if(emitter!=null)runtime.bindAnimated(emitter,owner,shot.gun,
-                com.tacz.guns.client.model.GunModelConstant.MUZZLE_FLASH_ORIGIN_NODE,first,hand,world);
+        if(emitter!=null) {
+            runtime.bindAnimated(emitter,owner,shot.gun,
+                    com.tacz.guns.client.model.GunModelConstant.MUZZLE_FLASH_ORIGIN_NODE,first,hand,world);
+            // Admissions are deliberately separate from native geometry submission counts.
+            if(smoke)runtimeSmokeBursts++;
+            else if(first)runtimeFirstFlashes++;
+            else runtimeThirdFlashes++;
+        }
         return true;
     }
 

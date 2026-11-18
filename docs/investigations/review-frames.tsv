@@ -1,14 +1,5 @@
-# Current nominations only. Earlier original frames remain linked from FABRIC_120_COMPARISON.md.
+# Current diagnostic nominations: failed runs are evidence, NOT successful acceptance.
 # run ID	artifact kind	frame (basename without suffix)
-44350306969	smoke	tacz_muzzle_rc1
-44350306969	smoke	tacz_muzzle_glock
-44350306969	smoke	tacz_muzzle_f5
-44350306969	smoke	tacz_muzzle_smoke_off
-44350306969	smoke	tacz_muzzle_tracked
-44363012970	smoke	tacz_ammo_storage_frame
-44375655879	iris	tacz_lens_classic_hot
-44375655879	iris	tacz_lens_classic_wall
-44375655879	iris	tacz_lens_pip_shader_restored
-44387359385	iris	tacz_overlay_true
-44387359385	iris	tacz_lens_slime_hot
-44387359385	iris	tacz_lens_motion_0
+44399210018	smoke	tacz_lens_slime_hot
+44399210018	smoke	tacz_lens_motion_0
+44399210037	iris	tacz_lens_slime_hot

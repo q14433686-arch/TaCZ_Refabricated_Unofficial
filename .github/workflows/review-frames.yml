@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
-      - name: Collect lossless frames from named successful same-branch test runs
+      - name: Collect lossless frames from explicitly named completed same-branch test runs
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -32,7 +32,7 @@ jobs:
                   output = dest / f'{run}-{frame}.png'
                   if output.exists(): continue
                   meta = json.loads(subprocess.check_output(['gh','api',f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{run}']))
-                  assert meta['event']=='push' and meta['head_branch']==os.environ['GITHUB_REF_NAME'] and meta['conclusion']=='success'
+                  assert meta['event']=='push' and meta['head_branch']==os.environ['GITHUB_REF_NAME'] and meta['conclusion'] in ('success','failure')
                   assert meta['path']=='.github/workflows/'+('build.yml' if kind=='smoke' else 'iris-smoke.yml' if kind=='iris' else 'viewer-smoke.yml')
                   artifact = kind+'-'+meta['head_sha']; root = Path(tmp)/artifact
                   if not root.exists(): subprocess.run(['gh','run','download',run,'-n',artifact,'-D',str(root)],check=True)
