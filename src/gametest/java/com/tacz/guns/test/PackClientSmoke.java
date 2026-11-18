@@ -50,6 +50,7 @@ public class PackClientSmoke implements FabricClientGameTest {
                     GunMod.LOGGER.info("PORT_IRIS: active shader pack on {}", com.mojang.blaze3d.systems.RenderSystem.getDevice());
                 });
                 ScopeLensSmoke.run(context, world);
+                ThermalOverlaySmoke.run(context, world);
                 RangefinderSmoke.run(context, world);
                 ImpactMarkerSmoke.run(context, world);
                 ShotConsequencesSmoke.run(context, world);

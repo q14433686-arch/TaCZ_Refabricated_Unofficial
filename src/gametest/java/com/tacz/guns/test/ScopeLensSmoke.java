@@ -122,6 +122,7 @@ final class ScopeLensSmoke {
                 toggleShaders(ctx, true);
                 afterToggle = capture(ctx, "pip_shader_restored");
             }
+            dynamicHeat(ctx, world, scene);
             blacklistCow(ctx, world);
             var pipVeto = capture(ctx, "pip_tagged");
             flags(ctx, true, true, false, false);
@@ -143,6 +144,42 @@ final class ScopeLensSmoke {
             flags(ctx, prior[0], prior[1], prior[2], prior[3]);
             world.getServer().runOnServer(s -> { var e = world.getConnection().getServerPlayer().level().getEntity(scene.cow); if (e != null) e.discard(); });
         }
+    }
+
+    private static int hotArea(BufferedImage img) {
+        int n=0, w=img.getWidth(),h=img.getHeight(),r=h/9;
+        for(int y=h/2-r;y<h/2+r;y++)for(int x=w/2-r;x<w/2+r;x++)if(bright(img.getRGB(x,y)))n++;
+        return n;
+    }
+    private static void dynamicHeat(ClientGameTestContext ctx, TestSingleplayerContext world, Scene scene) {
+        int min=Integer.MAX_VALUE,max=0;
+        for(int frame=0;frame<12;frame++) {
+            final int f=frame;
+            world.getServer().runOnServer(s->{var cow=world.getConnection().getServerPlayer().level().getEntity(scene.cow);
+                cow.snapTo(Vec3.atBottomCenterOf(scene.aim).add(Math.sin(f*.8)*.3,0,0));});
+            ctx.waitTicks(2);
+            int area;
+            try { area=hotArea(ImageIO.read(ctx.takeScreenshot("tacz_lens_motion_"+frame).toFile())); }
+            catch(IOException e){throw new UncheckedIOException(e);}
+            min=Math.min(min,area);max=Math.max(max,area);
+        }
+        if(min<100||min<max*.65)throw new AssertionError("Moving thermal coverage dropped: "+min+"/"+max);
+        world.getServer().runOnServer(s->{var cow=world.getConnection().getServerPlayer().level().getEntity(scene.cow);cow.snapTo(Vec3.atBottomCenterOf(scene.aim));});
+        GunMod.LOGGER.info("PORT_THERMAL_DYNAMIC: 12 motion samples retained {}/{} hot pixels",min,max);
+        var slimeId=world.getServer().computeOnServer(s->{var level=world.getConnection().getServerPlayer().level();
+            level.getEntity(scene.cow).snapTo(Vec3.atBottomCenterOf(scene.aim).add(12,0,0));
+            var slime=new net.minecraft.world.entity.monster.Slime(EntityTypes.SLIME,level);
+            slime.setSize(3,true);slime.setNoAi(true);slime.setNoGravity(true);slime.snapTo(Vec3.atBottomCenterOf(scene.aim));level.addFreshEntity(slime);return slime.getUUID();});
+        try {
+            ctx.waitFor(mc->mc.level.getEntity(slimeId)!=null);
+            int area=hotArea(capture(ctx,"slime_hot"));
+            if(area<100)throw new AssertionError("Translucent slime missing thermal coverage: "+area);
+            wall(ctx,world,scene,true);
+            int leak=hotArea(capture(ctx,"slime_wall"));
+            if(leak>area*.03)throw new AssertionError("Slime heat through terrain: "+leak+"/"+area);
+            wall(ctx,world,scene,false);
+            GunMod.LOGGER.info("PORT_THERMAL_SLIME: {} hot pixels, {} behind wall",area,leak);
+        } finally {world.getServer().runOnServer(s->{var level=world.getConnection().getServerPlayer().level();var slime=level.getEntity(slimeId);if(slime!=null)slime.discard();level.getEntity(scene.cow).snapTo(Vec3.atBottomCenterOf(scene.aim));});}
     }
 
     private static void toggleShaders(ClientGameTestContext ctx, boolean enabled) {
