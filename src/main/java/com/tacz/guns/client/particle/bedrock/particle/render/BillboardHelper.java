@@ -12,7 +12,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Billboard quad 构建工具。
@@ -36,15 +35,14 @@ public final class BillboardHelper {
      * 仅处理局部空间粒子（{@code worldSpace=false}）。
      * 世界空间粒子由 the host world renderer 渲染。
      *
-     * @param cameraRotation 摄像机旋转矩阵（世界对齐空间 → 视图空间），保留备用。可为 null。
+     * @param cameraRotation 摄像机旋转矩阵（世界对齐空间 → 视图空间），冻结在提交当帧。
      */
     public static void renderBillboard(ParticleInstance particle, PoseStack poseStack,
                                         VertexConsumer consumer, int light,
                                         ParticleAppearanceBillboard.FaceCameraMode mode,
                                         Matrix4f emitterTransform,
                                         boolean localPos, boolean localRot,
-                                        float cameraPitch, float cameraRoll,
-                                        @Nullable Matrix4f cameraRotation) {
+                                        Matrix4f cameraRotation) {
         // 1.21.1 将视图变换拆在 ModelView 和 PoseStack 中；billboard 轴必须在完整视图空间计算。
         Matrix4f modelView = new Matrix4f(RenderSystem.getModelViewStack());
         Matrix4f pose = BillboardTransforms.viewPose(modelView, poseStack.last().pose());
@@ -81,7 +79,7 @@ public final class BillboardHelper {
         // 计算 billboard 的两个轴向量（视图空间中）
         Vector3f axisX = TEMP_AXIS_X.set(1, 0, 0);
         Vector3f axisY = TEMP_AXIS_Y.set(0, 1, 0);
-        applyBillboardAxes(axisX, axisY, mode, velX, velY, velZ, velPose, pose, cameraPitch, cameraRoll);
+        applyBillboardAxes(axisX, axisY, mode, velX, velY, velZ, velPose, pose, cameraRotation);
 
         // 应用粒子自旋旋转
         if (particle.rotation != 0) {
@@ -134,38 +132,26 @@ public final class BillboardHelper {
      * @param velX/velY/velZ 粒子速度（在粒子自身的坐标空间中）
      * @param velPose 用于将速度变换到视图空间的矩阵
      * @param viewPose 视图矩阵（poseStack 的 pose），用于将世界坐标轴变换到视图空间
-     * @param cameraPitch 摄像机 pitch（弧度）
-     * @param cameraRoll  摄像机 roll（弧度）
      */
     private static void applyBillboardAxes(Vector3f axisX, Vector3f axisY,
                                             ParticleAppearanceBillboard.FaceCameraMode mode,
                                             float velX, float velY, float velZ,
                                             Matrix4f velPose, Matrix4f viewPose,
-                                            float cameraPitch, float cameraRoll) {
+                                            Matrix4f cameraRotation) {
         switch (mode) {
             case ROTATE_XYZ, LOOKAT_XYZ -> {
                 axisX.set(1, 0, 0);
                 axisY.set(0, 1, 0);
             }
             case ROTATE_Y, LOOKAT_Y -> {
-                // 世界 Y 轴在视图空间中的投影（考虑 pitch 和 roll）
-                // 无 roll 时：axisX = (1, 0, 0), axisY = (0, cos(pitch), -sin(pitch))
-                // 有 roll 时需要额外绕 Z 轴旋转
-                float cosPitch = (float) Math.cos(cameraPitch);
-                float sinPitch = (float) Math.sin(cameraPitch);
-                float ax = 1, ay = 0;
-                float bx = 0, by = cosPitch, bz = -sinPitch;
-
-                if (cameraRoll != 0) {
-                    float cosRoll = (float) Math.cos(cameraRoll);
-                    float sinRoll = (float) Math.sin(cameraRoll);
-                    // 绕视图空间 Z 轴旋转 axisX 和 axisY
-                    axisX.set(ax * cosRoll + bx * sinRoll, ay * cosRoll + by * sinRoll, bz * sinRoll);
-                    axisY.set(-ax * sinRoll + bx * cosRoll, -ay * sinRoll + by * cosRoll, bz * cosRoll);
-                } else {
-                    axisX.set(ax, ay, 0);
-                    axisY.set(bx, by, bz);
-                }
+                // Upright in world space. Use the horizontal camera-right axis (yaw only) and
+                // world up, transformed to view coordinates; do not pitch the sprite toward the eye.
+                cameraRotation.transformDirection(axisY.set(0, 1, 0)).normalize();
+                // Roll tilts the view projection of world up. Derive right without the unstable
+                // look-at cross product at a vertical pitch.
+                float h = (float) Math.hypot(axisY.x, axisY.y);
+                if (h > 1e-5f) axisX.set(axisY.y / h, -axisY.x / h, 0);
+                else axisX.set(1, 0, 0);
             }
             case LOOKAT_DIRECTION -> {
                 transformDirection(TEMP_DIR, velPose, velX, velY, velZ);

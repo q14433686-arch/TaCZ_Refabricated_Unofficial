@@ -28,26 +28,42 @@ public record ServerMessageBulletHitBlock(Vec3 hit, Direction face, BlockPos blo
                 buf.writeEnum(p.face); buf.writeBlockPos(p.block); buf.writeUtf(p.ammo); buf.writeUtf(p.gun); buf.writeUtf(p.display); },
             buf -> new ServerMessageBulletHitBlock(new Vec3(buf.readDouble(),buf.readDouble(),buf.readDouble()),
                     buf.readEnum(Direction.class),buf.readBlockPos(),buf.readUtf(),buf.readUtf(),buf.readUtf()));
+    /** A separately negotiated channel encodes the one extra bit by its type. Old peers keep the legacy payload. */
+    public record Incendiary(ServerMessageBulletHitBlock hit) implements CustomPacketPayload {
+        public static final Type<Incendiary> TYPE = new Type<>(Identifier.parse("tacz:incendiary_hit_block"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Incendiary> CODEC = STREAM_CODEC.map(Incendiary::new, Incendiary::hit);
+        @Override public Type<Incendiary> type() { return TYPE; }
+    }
     @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     public static boolean shouldSend(int range, boolean shooter, double squaredDistance) {
         return shooter || range <= 0 || squaredDistance <= (double)range * range;
     }
     public void broadcast(ServerLevel level, @Nullable Entity shooter) {
+        broadcast(level, shooter, false);
+    }
+    public void broadcast(ServerLevel level, @Nullable Entity shooter, boolean incendiary) {
         int range = SyncConfig.BULLET_HIT_BLOCK_EFFECT_SEND_DISTANCE.get();
         for (var player : level.players()) {
-            if (shouldSend(range, player == shooter, player.distanceToSqr(hit)) && ServerPlayNetworking.canSend(player, TYPE))
+            if (!shouldSend(range, player == shooter, player.distanceToSqr(hit))) continue;
+            if (incendiary && ServerPlayNetworking.canSend(player, Incendiary.TYPE))
+                NetworkHandler.sendToClientPlayer(new Incendiary(this), player);
+            else if (ServerPlayNetworking.canSend(player, TYPE))
                 NetworkHandler.sendToClientPlayer(this, player);
         }
     }
     @Environment(EnvType.CLIENT)
     public static void handle(ServerMessageBulletHitBlock packet, ClientPlayNetworking.Context context) {
+        handle(packet, context, false);
+    }
+    @Environment(EnvType.CLIENT)
+    public static void handle(ServerMessageBulletHitBlock packet, ClientPlayNetworking.Context context, boolean incendiary) {
         context.client().execute(() -> {
             var mc = context.client();
             if (mc.level == null || !Double.isFinite(packet.hit.x) || !Double.isFinite(packet.hit.y) || !Double.isFinite(packet.hit.z)) return;
             // Provider already separates disabled decals from fragments and sound. Do not spawn
             // a second vanilla particle event or play a duplicate hit sound here.
-            mc.particleEngine.createParticle(new BulletHoleOption(packet.face,packet.block,packet.ammo,packet.gun,packet.display),
+            mc.particleEngine.createParticle(new BulletHoleOption(packet.face,packet.block,packet.ammo,packet.gun,packet.display,incendiary),
                     packet.hit.x,packet.hit.y,packet.hit.z,0,0,0);
         });
     }

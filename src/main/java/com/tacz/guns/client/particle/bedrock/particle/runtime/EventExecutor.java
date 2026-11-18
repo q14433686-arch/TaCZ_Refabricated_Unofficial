@@ -105,9 +105,11 @@ public final class EventExecutor {
             return;
         }
 
+        // Nested events run this expression in the firing environment, not the child's fresh one.
+        if (effect.compiledPreEffect() != null) effect.compiledPreEffect().evaluate(ctx.molang.getContext());
         WorldEmitterManager.getInstance().addEmitter(ctx.level,
                 new org.joml.Matrix4f().translation((float)ctx.position.x,(float)ctx.position.y,(float)ctx.position.z),
-                Vec3.ZERO,childDef,effect.preEffectExpression(),
+                Vec3.ZERO,childDef,null,
                 ctx.molang.getContext().getEntity() instanceof net.minecraft.world.entity.Entity entity?entity:null);
     }
 

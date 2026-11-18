@@ -79,6 +79,7 @@ public class NetworkHandler {
             if(!names.isEmpty() && ServerPlayNetworking.canSend(handler.player,ServerMessagePackWarnings.TYPE))
                 ServerPlayNetworking.send(handler.player,new ServerMessagePackWarnings(names));
         });
+        PayloadTypeRegistry.clientboundPlay().register(ServerMessageBulletHitBlock.Incendiary.TYPE, ServerMessageBulletHitBlock.Incendiary.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageBulletHitBlock.TYPE, ServerMessageBulletHitBlock.STREAM_CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunReload.TYPE, ServerMessageGunReload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunShoot.TYPE, ServerMessageGunShoot.CODEC);
@@ -122,6 +123,7 @@ public class NetworkHandler {
         ClientPlayNetworking.registerGlobalReceiver(AnimationParticleMessages.Delivery.TYPE,(message,context)->
                 context.client().execute(()->com.tacz.guns.client.particle.RemoteAnimationParticles.accept(message)));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessagePackWarnings.TYPE,ServerMessagePackWarnings::handle);
+        ClientPlayNetworking.registerGlobalReceiver(ServerMessageBulletHitBlock.Incendiary.TYPE, (p, ctx) -> ServerMessageBulletHitBlock.handle(p.hit(), ctx, true));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageBulletHitBlock.TYPE, ServerMessageBulletHitBlock::handle);
         ClientPlayNetworking.registerGlobalReceiver(IEntityAdditionalSpawnData.EXTRA_DATA_TYPE, (payload, context) -> {
             context.client().execute(() -> {

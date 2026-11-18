@@ -63,7 +63,7 @@ public final class WorldEmitterManager {
     public int particleCount(){return active.stream().mapToInt(e->e.emitter.getParticleCount()).sum();}
     public long spawned(){return spawned;}
     public long rendered(){return rendered;}
-    public void clear(){active.clear();pending.clear();eventBudget=0;level=null;com.tacz.guns.client.particle.RemoteAnimationParticles.clear();}
+    public void clear(){SnowstormMaterials.clearTextures();active.clear();pending.clear();eventBudget=0;level=null;com.tacz.guns.client.particle.RemoteAnimationParticles.clear();}
     public void register(){
         if(registered)return;registered=true;
         ClientTickEvents.END_CLIENT_TICK.register(mc->{
@@ -133,18 +133,10 @@ public final class WorldEmitterManager {
     }
     private void submitEmitter(SubmitNodeCollector collector,Active a,Vec3 camera,boolean hand,int inheritedLight){
             var emitter=a.emitter;var definition=emitter.getDefinition();var desc=definition.getDescription();
-            RenderType type=switch(desc.getMaterial()){
-                case PARTICLES_OPAQUE,PARTICLES_ALPHA -> RenderTypes.entityCutout(desc.getTexture());
-                case PARTICLES_ADD,ENERGY_SWIRL,PARTICLES_EMISSIVE -> RenderTypes.energySwirl(desc.getTexture(),0,0);
-                case PARTICLES_BLEND -> RenderTypes.entityTranslucent(desc.getTexture());
-            };
-            if(a.first && com.tacz.guns.client.render.scope.ScopeParticleClipping.ready(hand)) {
-                type=switch(desc.getMaterial()) {
-                    case PARTICLES_OPAQUE,PARTICLES_ALPHA -> com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.clipped(desc.getTexture());
-                    case PARTICLES_BLEND -> com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.flashTranslucent(desc.getTexture());
-                    case PARTICLES_ADD,ENERGY_SWIRL,PARTICLES_EMISSIVE -> com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.flashSwirlClipped(desc.getTexture());
-                };
-            }
+            boolean clipped=a.first && com.tacz.guns.client.render.scope.ScopeParticleClipping.ready(hand);
+            RenderType type=SnowstormMaterials.type(desc,clipped);
+            // Rotate the actual camera's world Y into view space; includes pitch and roll in all passes.
+            var viewRotation = new Matrix4f().rotation(new org.joml.Quaternionf(Minecraft.getInstance().gameRenderer.mainCamera().rotation()).conjugate());
             var billboard=definition.findComponent(ParticleAppearanceBillboard.class);
             var mode=billboard==null?ParticleAppearanceBillboard.FaceCameraMode.ROTATE_XYZ:billboard.faceCameraMode();
             Matrix4f transform=new Matrix4f(hand?emitter.getEmitterTransform():emitter.getWorldTransform());
@@ -169,7 +161,7 @@ public final class WorldEmitterManager {
                         level.getBrightness(net.minecraft.world.level.LightLayer.SKY,blockPos)):15728880;
                 collector.submitCustomGeometry(pose,type,(entry,consumer)->{
                     PoseStack frozen=new PoseStack();frozen.last().pose().set(entry.pose());frozen.last().normal().set(entry.normal());
-                    BillboardHelper.renderBillboard(p,frozen,consumer,light,mode,transform,!p.worldSpace,localRotation,0,0,null);
+                    BillboardHelper.renderBillboard(p,frozen,consumer,light,mode,transform,!p.worldSpace,localRotation,viewRotation);
                 });rendered++;
             }
     }

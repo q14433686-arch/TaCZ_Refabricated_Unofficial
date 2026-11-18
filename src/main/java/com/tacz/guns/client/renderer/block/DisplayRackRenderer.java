@@ -23,7 +23,7 @@ import java.util.List;
 /** Vanilla 26.3 item model extraction (including modded FIXED renderers) for both display blocks. */
 public class DisplayRackRenderer<T extends DisplayRackBlockEntity> implements BlockEntityRenderer<T, DisplayRackRenderer.State> {
     public DisplayRackRenderer(BlockEntityRendererProvider.Context context) {}
-    private record Slot(int index, Direction facing, int rotation, ItemStackRenderState item) {}
+    private record Slot(int index, Direction facing, int rotation, ItemStackRenderState item, boolean preview) {}
     public static class State extends BlockEntityRenderState {
         private final List<Slot> slots = new ArrayList<>();
         private boolean glowing;
@@ -36,14 +36,31 @@ public class DisplayRackRenderer<T extends DisplayRackBlockEntity> implements Bl
         state.glowing = rack.isGlowing();
         var level = rack.getLevel();
         if (level == null) return;
-        var resolver = Minecraft.getInstance().getItemModelResolver();
+        var mc = Minecraft.getInstance();
+        var resolver = mc.getItemModelResolver();
+        int preview = previewSlot(rack, mc.player, mc.hitResult);
         for (int i = 0; i < rack.slotCount(); ++i) {
             var stack = rack.getItem(i);
-            if (stack.isEmpty()) continue;
+            if (i == preview) stack = mc.player.getMainHandItem().copyWithCount(1);
+            else if (stack.isEmpty()) continue;
             var item = new ItemStackRenderState();
             resolver.updateForTopItem(item, stack, ItemDisplayContext.FIXED, level, null, i);
-            state.slots.add(new Slot(i % DisplayRackBlockEntity.SLOTS_PER_FACE, rack.getSlotFacing(rack.getBlockState(), i), rack.getRotation(i), item));
+            state.slots.add(new Slot(i % DisplayRackBlockEntity.SLOTS_PER_FACE, rack.getSlotFacing(rack.getBlockState(), i), rack.getRotation(i), item, i == preview));
         }
+    }
+
+    /** Use the same hit-to-cell and item eligibility rules as placement, without changing the BE or hand. */
+    public static int previewSlot(DisplayRackBlockEntity rack, net.minecraft.world.entity.player.Player player, net.minecraft.world.phys.HitResult target) {
+        if (player == null || player.isSpectator() || player.isShiftKeyDown()
+                || !(target instanceof net.minecraft.world.phys.BlockHitResult hit) || target.getType() != net.minecraft.world.phys.HitResult.Type.BLOCK
+                || !rack.getBlockPos().equals(hit.getBlockPos()) || !com.tacz.guns.config.util.GunPegboardItemConfigRead.canPlace(player.getMainHandItem())) return -1;
+        var state = rack.getBlockState();
+        int slot;
+        if (state.getBlock() instanceof com.tacz.guns.block.GunDisplayCaseBlock) {
+            if (state.getValue(com.tacz.guns.block.GunDisplayCaseBlock.LOCKED)) return -1;
+            slot = com.tacz.guns.block.GunDisplayCaseSlotHelper.getSlot(state, rack.getBlockPos(), hit.getLocation());
+        } else slot = com.tacz.guns.block.GunPegboardSlotHelper.getSlot(state, rack.getBlockPos(), hit.getLocation());
+        return slot >= 0 && rack.getItem(slot).isEmpty() ? slot : -1;
     }
 
     @Override public void submit(State state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
@@ -55,7 +72,7 @@ public class DisplayRackRenderer<T extends DisplayRackBlockEntity> implements Bl
             pose.translate((slot.index % 4 + 0.5) / 4 - 0.5, (slot.index / 4 + 0.5) / 4 - 0.5, 0.25);
             pose.rotate(Axis.ZP.rotationDegrees(slot.rotation * 45));
             pose.scale(0.5f, 0.5f, 0.5f);
-            slot.item.submit(pose, collector, light, OverlayTexture.NO_OVERLAY, 0);
+            slot.item.submit(pose, slot.preview ? new RackPreviewCollector(collector) : collector, light, OverlayTexture.NO_OVERLAY, 0);
             pose.popPose();
         }
     }

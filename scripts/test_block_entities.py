@@ -269,6 +269,7 @@ STUBS = {
             private BlockState defaultState;
             public Block() { this(new Properties()); }
             public Block(Properties props) { stateDefinition = new StateDefinition<>(this); defaultState = new BlockState(this); }
+            protected BlockState rotate(BlockState state, Rotation rotation) { return state; }
             protected void registerDefaultState(BlockState state) { defaultState = state; }
             public BlockState defaultBlockState() { return defaultState; }
             public static VoxelShape box(double x1, double y1, double z1, double x2, double y2, double z2) { return new VoxelShape(); }
@@ -843,6 +844,10 @@ STUBS.update({
         public class BaseEntityBlock extends Block { public BaseEntityBlock(Properties properties) { super(properties); } }
     """,
     "net.minecraft.world.level.block.Blocks": "public class Blocks { public static final Block AIR = new Block(); }",
+    "net.minecraft.world.level.block.Rotation": """
+        import net.minecraft.core.Direction;
+        public enum Rotation { NONE; public Direction rotate(Direction facing) { return facing; } }
+    """,
     "net.minecraft.world.level.block.RenderShape": "public enum RenderShape { MODEL, INVISIBLE }",
     "net.minecraft.world.level.block.entity.BlockEntityTicker": """
         import net.minecraft.core.BlockPos;

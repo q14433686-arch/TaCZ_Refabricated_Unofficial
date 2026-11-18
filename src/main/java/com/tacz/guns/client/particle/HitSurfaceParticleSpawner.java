@@ -49,12 +49,12 @@ public final class HitSurfaceParticleSpawner {
 
     /** Called from the existing impact particle provider; never generate a second network event. */
     static void spawn(ClientLevel level, Vec3 hitPos, Direction face, BlockState state,
-                      @Nullable ClientAmmoIndex ammo, @Nullable GunDisplayInstance gun) {
+                      @Nullable ClientAmmoIndex ammo, @Nullable GunDisplayInstance gun, boolean incendiary) {
         if (!RenderConfig.HIT_PARTICLE_ENABLE.get() || !isCloseEnough(hitPos)) return;
         var engine = Minecraft.getInstance().particleEngine;
         var random = level.getRandom();
         Vec3 normal = face.getUnitVec3();
-        spawnBlockParticles(engine, random, state, hitPos, normal, ammo == null ? null : ammo.getHitBlockParticleCount());
+        spawnBlockParticles(engine, random, state, hitPos, normal, incendiary, ammo == null ? null : ammo.getHitBlockParticleCount());
         if (!RenderConfig.HIT_EXTRA_PARTICLE_ENABLE.get()) return;
         var particles = gun == null ? null : gun.getHitSurfaceParticles();
         if (particles == null && ammo != null) particles = ammo.getHitSurfaceParticles();
@@ -76,12 +76,12 @@ public final class HitSurfaceParticleSpawner {
         return player != null && player.distanceToSqr(hitPos) <= maxDistanceSqr;
     }
 
-    private static void spawnBlockParticles(ParticleEngine particleEngine, RandomSource random, BlockState blockState, Vec3 hitPos, Vec3 normal, @Nullable Integer configuredCount) {
+    private static void spawnBlockParticles(ParticleEngine particleEngine, RandomSource random, BlockState blockState, Vec3 hitPos, Vec3 normal, boolean incendiary, @Nullable Integer configuredCount) {
         int count = configuredCount == null ? DEFAULT_BLOCK_PARTICLE_COUNT : Math.min(configuredCount, MAX_BLOCK_PARTICLE_COUNT);
         if (count <= 0) {
             return;
         }
-        ParticleOptions options = new BlockParticleOption(ParticleTypes.BLOCK, blockState);
+        ParticleOptions options = incendiary ? ParticleTypes.LAVA : new BlockParticleOption(ParticleTypes.BLOCK, blockState);
         for (int i = 0; i < count; i++) {
             Vec3 pos = randomPosition(random, hitPos, normal, DEFAULT_SURFACE_OFFSET, DEFAULT_RANDOM_OFFSET);
             Vec3 speed = randomVelocity(random,

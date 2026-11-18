@@ -520,7 +520,7 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
         // 弹孔与点燃特效
         if (this.level() instanceof ServerLevel serverLevel) {
             new com.tacz.guns.network.message.ServerMessageBulletHitBlock(hitVec, result.getDirection(), result.getBlockPos(),
-                    this.ammoId.toString(), this.gunId.toString(), this.gunDisplayId.toString()).broadcast(serverLevel, getOwner());
+                    this.ammoId.toString(), this.gunId.toString(), this.gunDisplayId.toString()).broadcast(serverLevel, getOwner(), this.igniteBlock);
             if (this.igniteBlock) {
                 serverLevel.sendParticles(ParticleTypes.LAVA, hitVec.x, hitVec.y, hitVec.z, 1, 0, 0, 0, 0);
             }

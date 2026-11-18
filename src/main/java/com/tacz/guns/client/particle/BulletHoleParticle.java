@@ -271,7 +271,7 @@ public class BulletHoleParticle extends SingleQuadParticle {
             var hit = new Vec3(x, y, z);
             // Keep the existing network codec and the server's separate incendiary particle. A
             // disabled decal must not suppress sound, fragments or a pack's custom impact effect.
-            HitSurfaceParticleSpawner.spawn(world, hit, option.getDirection(), state, style.ammo, style.gun);
+            HitSurfaceParticleSpawner.spawn(world, hit, option.getDirection(), state, style.ammo, style.gun, option.isIncendiary());
             playStep(world, state, hit);
             return style.decal() && RenderConfig.BULLET_HOLE_PARTICLE_LIFE.get() > 0
                     ? new BulletHoleParticle(world, x, y, z, option.getDirection(), pos, style) : null;
