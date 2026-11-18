@@ -1,5 +1,5 @@
-# Current diagnostic nominations: failed runs are evidence, NOT successful acceptance.
+# Diagnostic nominations: failed runs are evidence, NOT successful acceptance.
 # run ID	artifact kind	frame (basename without suffix)
-44399210018	smoke	tacz_lens_slime_hot
-44399210018	smoke	tacz_lens_motion_0
-44399210037	iris	tacz_lens_slime_hot
+44402791279	smoke	tacz_lens_slime_hot
+44402791201	iris	tacz_lens_pip_bare
+44402791201	iris	tacz_lens_pip_optical

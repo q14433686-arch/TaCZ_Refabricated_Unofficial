@@ -51,7 +51,7 @@ jobs:
           if [ -n "$JAR" ]; then
             javap -c -p -classpath "$JAR" net.minecraft.client.renderer.GameRenderer | sed -n '/void bobHurt(/,/^  [a-z]/p' >> build-reports/compile-java.log
             # Diagnose the non-Iris translucent thermal replay against the actual pinned API.
-            javap -p -classpath "$JAR" net.minecraft.client.renderer.feature.phase.TranslucentFeatureRenderPhase 'net.minecraft.client.renderer.feature.ModelFeatureRenderer$Submit' net.minecraft.client.renderer.rendertype.RenderType >> build-reports/compile-java.log
+            javap -p -classpath "$JAR" net.minecraft.client.renderer.feature.phase.TranslucentFeatureRenderPhase 'net.minecraft.client.renderer.feature.ModelFeatureRenderer$Submit' net.minecraft.client.renderer.rendertype.RenderType net.minecraft.client.renderer.rendertype.RenderSetup 'net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding' >> build-reports/compile-java.log
             javap -c -p -classpath "$JAR" net.minecraft.client.renderer.SubmitNodeCollection > /tmp/tacz-submit-bytecode.txt
             python3 - <<'PY' >> build-reports/compile-java.log
           from pathlib import Path
