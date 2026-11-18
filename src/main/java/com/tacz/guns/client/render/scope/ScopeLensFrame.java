@@ -21,7 +21,7 @@ final class ScopeLensFrame {
         expected = ScopeMaskRenderer.lensLastFrame;
         if (expected != null && (disabled || !RenderConfig.EXPERIMENTAL_SCOPE_LENS.get()
                 || !RenderConfig.SCOPE_MASK_ENABLE.get() || mc.player == null || mc.level == null
-                || mc.getCameraEntity() != mc.player || !mc.options.getCameraType().isFirstPerson() || mc.options.hideGui
+                || mc.getCameraEntity() != mc.player || !mc.options.getCameraType().isFirstPerson()
                 || IrisCompat.isUsingRenderPack() || IrisCompat.shouldDisableScopeMaskUnderShaderPack()
                 || IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(
                         mc.getDeltaTracker().getGameTimeDeltaPartialTick(false)) <= 0.001f)) expected = null;
