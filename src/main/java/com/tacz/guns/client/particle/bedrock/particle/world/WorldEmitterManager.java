@@ -89,6 +89,7 @@ public final class WorldEmitterManager {
             var billboard=definition.findComponent(ParticleAppearanceBillboard.class);
             var mode=billboard==null?ParticleAppearanceBillboard.FaceCameraMode.ROTATE_XYZ:billboard.faceCameraMode();
             Matrix4f transform=new Matrix4f(emitter.getWorldTransform());
+            boolean localRotation=emitter.isLocalRotation();
             boolean lit=definition.findComponent(ParticleAppearanceLighting.class)!=null;
             for(var particle:emitter.getParticles()){
                 // Resolve mutable simulation state during extraction, never in a delayed callback.
@@ -99,7 +100,7 @@ public final class WorldEmitterManager {
                 int light=lit?net.minecraft.client.renderer.LevelRenderer.getLightCoords(level,net.minecraft.core.BlockPos.containing(wp.x,wp.y,wp.z)):15728880;
                 collector.submitCustomGeometry(pose,type,(entry,consumer)->{
                     PoseStack frozen=new PoseStack();frozen.last().pose().set(entry.pose());frozen.last().normal().set(entry.normal());
-                    BillboardHelper.renderBillboard(p,frozen,consumer,light,mode,transform,!p.worldSpace,emitter.isLocalRotation(),0,0,null);
+                    BillboardHelper.renderBillboard(p,frozen,consumer,light,mode,transform,!p.worldSpace,localRotation,0,0,null);
                 });rendered++;
             }
         }

@@ -58,6 +58,7 @@ public class PackClientSmoke implements FabricClientGameTest {
                 MuzzleEffectsSmoke.run(context, world);
                 PlayerFeedbackSmoke.run(context, world);
                 CoreCompletionSmoke.run(context, world);
+                SnowstormSmoke.run(context, world);
                 ConfigPanelSmoke.run(context);
                 OpticInstallSmoke.run(context, world);
                 GunMod.LOGGER.info("PORT_IRIS: thermal and new-item regression passed");
@@ -100,6 +101,7 @@ public class PackClientSmoke implements FabricClientGameTest {
             ConfigPanelSmoke.run(context);
             OpticInstallSmoke.run(context, world);
             CoreCompletionSmoke.run(context, world);
+            SnowstormSmoke.run(context, world);
             world.getServer().runOnServer(server -> world.getConnection().getServerPlayer().setGameMode(GameType.CREATIVE));
             context.waitFor(client -> client.player.isCreative());
             var rack = checkRacks(context, world, id);
