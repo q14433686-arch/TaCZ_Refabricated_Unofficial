@@ -1,0 +1,61 @@
+package com.tacz.guns.test;
+
+import com.tacz.guns.GunMod;
+import com.tacz.guns.compat.cloth.MenuIntegration;
+import com.tacz.guns.config.ConfigPersist;
+import com.tacz.guns.config.client.RenderConfig;
+import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.network.chat.Component;
+import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
+import java.nio.file.Files;
+import java.util.*;
+
+/** Real Cloth construction/defaults/save consumers, plus FCAP disk save/read (not process restart). */
+final class ConfigPanelSmoke {
+    static void run(ClientGameTestContext ctx) {
+        ctx.runOnClient(mc -> {
+            var root=MenuIntegration.getConfigBuilder();
+            var category=root.getOrCreateCategory(Component.translatable("config.tacz.client.render"));
+            Map<String,Object> expected=Map.of(
+                "disable_third_person_offhand_and_hotbar_gun_render",false,
+                "gun_hurt_bob_multiplier",.1D,"muzzle_smoke",true);
+            int checked=0;
+            for(Object candidate:category.getEntries()) {
+                if(!(candidate instanceof AbstractConfigListEntry<?> entry))continue;
+                for(var e:expected.entrySet()) {
+                    var label=Component.translatable("config.tacz.client.render."+e.getKey());
+                    if(entry.getFieldName().equals(label)) {
+                        if(!entry.getDefaultValue().orElseThrow().equals(e.getValue()))throw new AssertionError("Incorrect Cloth default "+e.getKey());
+                        entry.save();checked++;
+                    }
+                }
+            }
+            if(checked!=3)throw new AssertionError("Missing or duplicate new render settings: "+checked);
+            root.build(); // build the actual menu, not just isolated entries
+            boolean hide=RenderConfig.DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER.get();
+            boolean smoke=RenderConfig.RENDER_MUZZLE_SMOKE.get();
+            double tilt=RenderConfig.GUN_HURT_BOB_MULTIPLIER.get();
+            try {
+                RenderConfig.DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER.set(!hide);
+                RenderConfig.RENDER_MUZZLE_SMOKE.set(!smoke);
+                RenderConfig.GUN_HURT_BOB_MULTIPLIER.set(.37D);
+                ConfigPersist.saveAll();
+                var path=FabricLoader.getInstance().getConfigDir().resolve("tacz-client.toml");
+                try(var file=com.electronwill.nightconfig.core.file.CommentedFileConfig.builder(path).build()) {
+                    file.load();
+                    if(!Objects.equals(file.get(RenderConfig.GUN_HURT_BOB_MULTIPLIER.getPath()),.37D)
+                        || !Objects.equals(file.get(RenderConfig.RENDER_MUZZLE_SMOKE.getPath()),!smoke)
+                        || !Objects.equals(file.get(RenderConfig.DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER.getPath()),!hide))
+                        throw new AssertionError("New client controls did not persist to TOML");
+                }
+            } finally {
+                RenderConfig.DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER.set(hide);
+                RenderConfig.RENDER_MUZZLE_SMOKE.set(smoke);
+                RenderConfig.GUN_HURT_BOB_MULTIPLIER.set(tilt);
+                ConfigPersist.saveAll();
+            }
+            GunMod.LOGGER.info("PORT_CONFIG: new Cloth render controls built with correct defaults, save consumers and FCAP TOML persistence passed");
+        });
+    }
+}

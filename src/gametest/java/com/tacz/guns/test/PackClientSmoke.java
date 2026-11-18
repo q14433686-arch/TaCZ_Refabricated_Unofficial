@@ -78,6 +78,7 @@ public class PackClientSmoke implements FabricClientGameTest {
             MovementRulesSmoke.run(context, world);
             MuzzleEffectsSmoke.run(context, world);
             PlayerFeedbackSmoke.run(context, world);
+            ConfigPanelSmoke.run(context);
             world.getServer().runOnServer(server -> world.getConnection().getServerPlayer().setGameMode(GameType.CREATIVE));
             context.waitFor(client -> client.player.isCreative());
             var rack = checkRacks(context, world, id);
@@ -130,7 +131,7 @@ public class PackClientSmoke implements FabricClientGameTest {
         return pos;
     }
 
-    private static void saveFrame(ClientGameTestContext context, String name) {
+    static void saveFrame(ClientGameTestContext context, String name) {
         var path = context.takeScreenshot(name);
         try {
             long bytes = java.nio.file.Files.size(path);

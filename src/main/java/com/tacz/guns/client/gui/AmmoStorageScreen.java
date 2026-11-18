@@ -125,9 +125,9 @@ public class AmmoStorageScreen extends AbstractContainerScreen<AmmoStorageMenu> 
     private void renderCapacity(GuiGraphicsExtractor graphics) {
         Component capacity = Component.translatable("gui.tacz.ammo_storage.capacity", menu.getUsedStacks(), menu.getCapacityStacks());
         Component types = Component.translatable("gui.tacz.ammo_storage.types", menu.getEntries().size(), AmmoStorageMenu.STORAGE_SLOT_COUNT);
-        graphics.text(font, capacity, leftPos + 8, topPos + 18, 0xFF404040, false);
-        graphics.text(font, types, leftPos + imageWidth - 8 - font.width(types), topPos + 18,
-                menu.getEntries().size() == AmmoStorageMenu.STORAGE_SLOT_COUNT ? 0xFFAA3030 : 0xFF404040, false);
+        renderStatusLabel(graphics, capacity, leftPos + 8, false, 0xFF404040);
+        renderStatusLabel(graphics, types, leftPos + imageWidth - 8, true,
+                menu.getEntries().size() == AmmoStorageMenu.STORAGE_SLOT_COUNT ? 0xFFAA3030 : 0xFF404040);
         int x = leftPos + 8;
         int y = topPos + 31;
         double fullness = menu.getCapacityStacks() <= 0 ? 0
@@ -136,6 +136,17 @@ public class AmmoStorageScreen extends AbstractContainerScreen<AmmoStorageMenu> 
         graphics.fill(x, y, x + 160, y + 6, 0xFF373737);
         graphics.fill(x + 1, y + 1, x + 159, y + 5, 0xFF777777);
         graphics.fill(x + 1, y + 1, x + 1 + (int) Math.round(158 * fullness), y + 5, color);
+    }
+
+    private void renderStatusLabel(GuiGraphicsExtractor graphics, Component text, int x, boolean right, int color) {
+        // Each status owns half the inner width, even with long translated labels or large counts.
+        int width = font.width(text);
+        float scale = Math.min(1F, 78F / Math.max(1, width));
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(x, topPos + 18);
+        graphics.pose().scale(scale, scale);
+        graphics.text(font, text, right ? -width : 0, 0, color, false);
+        graphics.pose().popMatrix();
     }
 
     private String formatCount(long count) {

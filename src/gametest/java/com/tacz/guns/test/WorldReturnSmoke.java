@@ -141,6 +141,8 @@ final class WorldReturnSmoke {
         });
         context.waitForScreen(AmmoStorageScreen.class);
         context.waitFor(mc -> mc.player.containerMenu instanceof AmmoStorageMenu menu && menu.getEntries().size() == 2);
+        context.waitTicks(3);
+        PackClientSmoke.saveFrame(context, "tacz_ammo_storage_frame");
         context.runOnClient(mc -> {
             var menu = (AmmoStorageMenu) mc.player.containerMenu;
             var entry = menu.getEntries().stream().filter(e -> MARK.equals(e.sample().get(DataComponents.CUSTOM_NAME))).findFirst().orElseThrow();
