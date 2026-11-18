@@ -4,6 +4,8 @@
 
 **最近通过整套门禁的源码：[`fa23a51`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/commit/fa23a51398780850666da99bc4e915c0966e4692)。** [编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44229658378) · [完整构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44229658444) · [测试 JAR](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44229658444/artifacts/14395031220) · [服务端/客户端日志与截图](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44229658444/artifacts/14395385015)。默认目录、动作隔离与创造栏重载都有游戏内证据；`renew` 粒子、镜片热成像/落点标记、实际查看器与独立多人客户端仍未过对应门禁。下文按提交顺序保留较早阶段的结果。
 
+**后续逐块推进及四树全量对照见 [全量对比与当前门禁](FABRIC_120_COMPARISON.md)**（含未变化与本地独有文件）。以下历史表不随新提交回写。
+
 ## 固定比较对象
 
 - 旧端：[Sh1roCu 1.21.1 `d290355`](https://github.com/Sh1roCu/TACZ-Refabricated/commit/d2903554da039d2355920953a81447784a3f2be2)，`0.7.0-forge1.1.8-hotfix`。这是 [上次同路径审计](UPSTREAM_PARITY_AND_TODO_AUDIT_2026_08_12.md)的参考树，不是说本仓逐字节等于它。
