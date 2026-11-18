@@ -31,7 +31,7 @@
 当前 HEAD（`fcaa2b8`，含 PR #82 的 PIP 修复与懒加载重构）上重写落地，
 每个 mixin 注入点、每个反射字段名都对照当前 HEAD 源码逐一核实过
 （`ClientAttachmentIndex` 在 #72 之后新增了 warmUp/懒加载路径，
-注入点 `checkTextureAndModel`/`checkLod` 仍是模型装载的唯一入口，语义未变）。
+26.3 的配件、LOD、变体及转接座现在共用 `ClientAttachmentIndex.getOrLoadAttachmentModel`，不再依赖反射替换）。
 
 ## 1. 本轮包含什么 / 不包含什么
 

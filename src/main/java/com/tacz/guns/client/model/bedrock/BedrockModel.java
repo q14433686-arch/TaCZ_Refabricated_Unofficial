@@ -72,6 +72,8 @@ public class BedrockModel {
         modelRenderer.setInitRotationAngle(x, y, z);
     }
 
+    protected float getExtraCubeInflate(BonesItem bone) { return 0; }
+
     protected void loadNewModel(BedrockModelPOJO pojo) {
         assert pojo.getGeometryModelNew() != null;
         pojo.getGeometryModelNew().deco();
@@ -140,13 +142,14 @@ public class BedrockModel {
             }
 
             // 塞入 Cube List
+            float extraInflate = getExtraCubeInflate(bones);
             for (CubesItem cube : bones.getCubes()) {
                 List<Float> uv = cube.getUv();
                 @Nullable FaceUVsItem faceUv = cube.getFaceUv();
                 List<Float> size = cube.getSize();
                 @Nullable List<Float> cubeRotation = cube.getRotation();
                 boolean mirror = cube.isMirror();
-                float inflate = cube.getInflate();
+                float inflate = cube.getInflate() + extraInflate;
 
                 // 当做普通 cube 存入
                 if (cubeRotation == null) {
@@ -251,11 +254,12 @@ public class BedrockModel {
             }
 
             // 塞入 Cube List
+            float extraInflate = getExtraCubeInflate(bones);
             for (CubesItem cube : bones.getCubes()) {
                 List<Float> uv = cube.getUv();
                 List<Float> size = cube.getSize();
                 boolean mirror = cube.isMirror();
-                float inflate = cube.getInflate();
+                float inflate = cube.getInflate() + extraInflate;
 
                 model.cubes.add(new BedrockCubeBox(uv.get(0), uv.get(1),
                         convertOrigin(bones, cube, 0), convertOrigin(bones, cube, 1), convertOrigin(bones, cube, 2),

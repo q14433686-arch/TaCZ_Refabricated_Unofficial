@@ -17,6 +17,8 @@ import com.tacz.guns.client.model.functional.TextShowRender;
 import com.tacz.guns.client.resource.pojo.display.gun.TextShow;
 import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
 import com.tacz.guns.client.resource.pojo.model.BedrockVersion;
+import com.tacz.guns.client.resource.pojo.model.BonesItem;
+import com.tacz.guns.config.ClientConfig;
 import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -40,6 +42,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     private static final String OCULAR_NODE = "ocular";
     private static final String OCULAR_SIGHT_NODE = "ocular_sight";
     private static final String OCULAR_SCOPE_NODE = "ocular_scope";
+    private static final Pattern OCULAR_PATTERN = Pattern.compile(
+                "^(" + OCULAR_NODE + "|" + OCULAR_SIGHT_NODE + "|" + OCULAR_SCOPE_NODE + ")(_(\\d+))?$");
     private static final String OCULAR_RING_NODE = "ocular_ring";
     private static final Pattern LASER_BEAM_PATTERN = Pattern.compile("^laser_beam(_(\\d+))?$");
 
@@ -141,6 +145,21 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     private boolean isScope = false;
     private boolean isSight = false;
 
+    @Override
+    protected float getExtraCubeInflate(BonesItem bone) {
+        if (!ClientConfig.isLoaded() || !RenderConfig.ENABLE_OCULAR_INFLATE.get()) return 0;
+        return ocularInflate(bone, indexBones, RenderConfig.OCULAR_INFLATE.get().floatValue());
+    }
+
+    static float ocularInflate(BonesItem bone, Map<String, BonesItem> index, float amount) {
+        if (!Float.isFinite(amount) || amount <= 0) return 0;
+        for (int i = 0; bone != null && i < index.size(); i++) {
+            if (bone.getName() != null && OCULAR_PATTERN.matcher(bone.getName()).matches()) return amount;
+            bone = bone.getParent() == null ? null : index.get(bone.getParent());
+        }
+        return 0;
+    }
+
     public BedrockAttachmentModel(BedrockModelPOJO pojo, BedrockVersion version) {
         super(pojo, version);
         scopeViewPaths = new ArrayList<>();
@@ -183,11 +202,9 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         // 因此正确做法不是修那条管线，而是让这条路径整个消失。
         //
         // 三种命名都要收：ocular / ocular_sight / ocular_scope（组合镜两组各一个）。
-        Pattern ocularPattern = Pattern.compile(
-                "^(" + OCULAR_NODE + "|" + OCULAR_SIGHT_NODE + "|" + OCULAR_SCOPE_NODE + ")(_(\\d+))?$");
         for (Map.Entry<String, ModelRendererWrapper> entry : modelMap.entrySet()) {
             String name = entry.getKey();
-            java.util.regex.Matcher ocularMatcher = name == null ? null : ocularPattern.matcher(name);
+            java.util.regex.Matcher ocularMatcher = name == null ? null : OCULAR_PATTERN.matcher(name);
             if (ocularMatcher != null && ocularMatcher.matches()) {
                 BedrockPart part = entry.getValue().getModelRenderer();
                 if (part != null) {

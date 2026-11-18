@@ -246,6 +246,12 @@ public class ClientAttachmentIndex {
         if (modelPOJO == null) {
             return null;
         }
+        if (cn.sh1rocu.tacz.compat.meshloader.core.PolyMeshSupport.hasGeoModel(modelLocation)) {
+            BedrockVersion version = BedrockVersion.isLegacyVersion(modelPOJO) ? BedrockVersion.LEGACY : BedrockVersion.NEW;
+            var mesh = new cn.sh1rocu.tacz.compat.meshloader.model.TaczPolyMeshAttachmentModel(modelPOJO, version);
+            mesh.loadPolyMesh(cn.sh1rocu.tacz.compat.meshloader.core.PolyMeshSupport.toGeoPath(modelLocation));
+            return mesh;
+        }
         return getAttachmentModel(modelPOJO);
     }
 
@@ -273,18 +279,10 @@ public class ClientAttachmentIndex {
             if (texture == null) {
                 return;
             }
-            BedrockModelPOJO modelPOJO = ClientAssetsManager.INSTANCE.getBedrockModelPOJO(gunLod.getModelLocation());
-            if (modelPOJO == null) {
-                return;
-            }
-            // 先判断是不是 1.10.0 版本基岩版模型文件
-            if (BedrockVersion.isLegacyVersion(modelPOJO) && modelPOJO.getGeometryModelLegacy() != null) {
-                BedrockAttachmentModel model = new BedrockAttachmentModel(modelPOJO, BedrockVersion.LEGACY);
-                index.lodModel = Pair.of(model, texture);
-            }
-            // 判定是不是 1.12.0 版本基岩版模型文件
-            if (BedrockVersion.isNewVersion(modelPOJO) && modelPOJO.getGeometryModelNew() != null) {
-                BedrockAttachmentModel model = new BedrockAttachmentModel(modelPOJO, BedrockVersion.NEW);
+            var model = getOrLoadAttachmentModel(gunLod.getModelLocation());
+            if (model != null) {
+                model.setIsScope(display.isScope());
+                model.setIsSight(display.isSight());
                 index.lodModel = Pair.of(model, texture);
             }
         }

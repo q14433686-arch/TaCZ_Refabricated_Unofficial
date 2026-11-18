@@ -14,6 +14,8 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue HEAD_SHOT_DEBUG_HITBOX;
     /** 瞄准镜镜内裁剪（目镜掩码）总开关。默认<b>开启</b>。 */
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_ENABLE;
+    public static ForgeConfigSpec.BooleanValue ENABLE_OCULAR_INFLATE;
+    public static ForgeConfigSpec.DoubleValue OCULAR_INFLATE;
     /** Iris 瞄具掩码注入策略。HAND_ONLY 只碰手部/枪械程序；ALL 旧行为（全注）；OFF 全关（光影下不裁剪，仅对照实验）。默认 HAND_ONLY。 */
     public enum IrisScopeMaskInjection {
         HAND_ONLY,
@@ -306,6 +308,10 @@ public class RenderConfig {
         // 特性与调试分离：
         // 早前两者共用 ScopeMaskDebug 一个开关，导致「关掉左上角预览」会连镜内裁剪
         // 一起关掉。现在拆开——功能默认开，预览默认关。
+        ENABLE_OCULAR_INFLATE = builder.comment("Expand only attachment ocular cubes when baking. Reload resources to apply.")
+                .define("EnableOcularInflate", true);
+        OCULAR_INFLATE = builder.comment("Additional inflate in Bedrock model units (not screen-space mask padding).")
+                .defineInRange("OcularInflate", 0.0005, 0.0, (double) Float.MAX_VALUE);
         SCOPE_MASK_ENABLE = builder
                 .comment("Whether to clip the scope body/reticle inside the ocular (see-through scope).")
                 .define("ScopeMaskEnable", true);
