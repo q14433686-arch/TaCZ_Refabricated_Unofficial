@@ -6,3 +6,13 @@
 创造栏应出现“验收用 inventory / magazine”；前者背包直读 7.62×39，后者是普通弹匣对照。
 持枪按绑定的“检视”键：0秒枪口 end_rod，0.2秒默认原生火光/烟，0.4秒 root 的 happy_villager。
 这是关键帧到实际渲染的探针，不是通用 Snowstorm/Molang 兼容性证明；绿色 INV 数字是枪模文字探针。
+
+
+## Snowstorm runtime probe (26.3 source port)
+
+The inspect variants additionally trigger `port_acceptance:runtime_probe` at 0.3 seconds.
+Its authored definition lives in `assets/port_acceptance/particle_definitions/`; the animation
+sets `variable.count = 3` with `pre_effect_script`. This must use the pack-defined runtime,
+not native smoke. Check first-person locator follow, F5 and a separate tracking client with
+matching packs. The cosmetic relay never transmits script text. See
+`docs/investigations/SNOWSTORM_RUNTIME_26_3.md` for implementation and validation boundaries.
