@@ -102,7 +102,7 @@ final class MuzzleEffectsSmoke {
         });
         try {
             world.getConnection().waitForClientboundEntityUpdates(EntityTypes.HUSK);
-            ctx.getInput().lookAt(mob.position().add(0,1,0));
+            ctx.getInput().lookAt(net.minecraft.core.BlockPos.containing(mob.position().add(0,1,0)));
             ctx.runOnClient(mc -> RenderConfig.RENDER_MUZZLE_SMOKE.set(true));
             long before = ctx.computeOnClient(mc -> NativeMuzzleEffects.diagnostics().thirdFlashSubmits());
             for (int i=0; i<6; i++) {
