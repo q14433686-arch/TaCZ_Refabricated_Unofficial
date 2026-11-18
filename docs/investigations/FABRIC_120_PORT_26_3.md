@@ -159,3 +159,13 @@ UH-1 的 `text_show` 经 26.3 第一人称 extraction 读取实际游戏方块�
 测试分为服务端 `BulletRulesSmoke` 和集成连接 `ShotConsequencesSmoke` / `MovementRulesSmoke`，客户端 runner 要求结果日志。前者调用真实击中处理但不是飞行子弹；射击测试调用默认物品服务端 shoot（包括 Lua），不伪造速度包/激怒回调，也不声称验证键鼠开火链。尚缺矩阵见[玩家清单顶部](FABRIC_120_PLAYER_CHECKLIST.md)。本轮尚未改 `renew` 运行时。
 
 执行记录：`f0161ea` 独立 compile-check 成功，完整 build 在依赖 `org.ow2:ow2:1.5.1` 解析失败，未运行游戏。`2482635` 完整 build 实际报出 `EnderDragonPart` 包名迁移错误，已在 `5f78983` 修正；[后续工作流](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44337530393)的 Full build 和专服 smoke 已通过（包括新增 `BulletRulesSmoke`）；客户端仍停留在安装软件 Vulkan 依赖阶段，未得到 `PORT_SHOT` / `PORT_MOVEMENT` 通过结果，不能拿此前热成像绿色结果代替本轮验收。未发布。
+
+
+### 射击结果通过与枪口参数层
+
+`5f78983` [完整 build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44337530393/job/134918173540)最终全部成功，Checks 注释实际记录 `PORT_SHOT` 全部对照通过；客户端 runner 的 `PORT_MOVEMENT` 门禁也通过。同次 XL50 2815/2529 热点、stripe 7 / 45:45 / 38:38 px、XM157 12 像素框通过。此前“等待安装 Vulkan”的状态已过期；这些结论只覆盖测试内的明确范围。
+
+`15ac0b7` / `cc80061` 继续第三批：按固定上游导入 renew 四层配置、闪光照明级别、烟雾方向/倍率和配件参数；`MuzzleEffectParameters` 在无渲染依赖的逐发解析中区分消音、闪光缩放和烟雾数量/尺寸哨兵，并统一方向坐标修正。新增 `MuzzleEffectConfigTest`。这仅是配置/参数层，尚未接入发射器，也没有改变 `GunDisplayInstance` 的旧加载逻辑或旧火光 renderer；**renew 可见行为仍缺失**。不把不存在的 SBM first-person/world 粒子运行时替换成 vanilla 烟粒子后称为上游一致。
+
+
+参数层 [cc80061 完整构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44343040047)的 Full build（含新增 JUnit）及专服 smoke 已通过；客户端回归仍在安装软件 Vulkan 依赖，尚无该提交的新画面结论。版本一致性 `--strict`、`git diff --check` 通过。
