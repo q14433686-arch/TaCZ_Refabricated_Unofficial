@@ -24,6 +24,11 @@ final class ConversionReloadSmoke {
         var scratch = Files.createTempDirectory(root, "converter-test-");
         var source = Files.createDirectory(scratch.resolve("source"));
         Files.writeString(source.resolve("gunpack.meta.json"), "{\"namespace\":\"reload_smoke\",\"dependencies\":{\"minecraft\":\"[1.20.1]\"}}");
+        // Reuse existing data/display so only a server index needs to change on this reload.
+        var guns = Files.createDirectories(source.resolve("data/reload_smoke/index/guns"));
+        Files.writeString(guns.resolve("creative_probe.json"), """
+                {"type":"rifle","data":"tacz:ak47_data","display":"tacz:ak47_display","name":"zzpackreload survey"}
+                """);
         var recipes = Files.createDirectories(source.resolve("data/reload_smoke/recipes"));
         String table = """
                 {"type":"tacz:gun_smith_table_crafting","materials":[{"item":{"item":"minecraft:stick"}}],

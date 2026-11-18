@@ -121,10 +121,12 @@ UH-1 的 `text_show` 经 26.3 第一人称 extraction 读取实际游戏方块�
 
 `955ebc4` 不再按示例枪分批复制：从同一 pin 解析 4,176 个有效路径，其中 229 个采用组件时代的 overlay 对应物，再转换成 26.3 会实际读取的布局与字段。每个成品路径的来源、blob、转换分类与 SHA-256 见 [`DEFAULT_PACK_120.tsv`](../../DEFAULT_PACK_120.tsv)。`python3 scripts/verify_120_resources.py` 可离线复核；`python3 scripts/port_default_pack_120.py /tmp/tacz-upstream.git` 另从固定 Git 对象验算，不加 `--write` 不落盘。[246 个上游缺口](DEFAULT_PACK_120_SOURCE_GAPS.tsv)保留了精确引用者；不能把可选 LOD、声音回退和真正缺失项混称为 246 个运行错误。
 
-[编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44226492723)和[全量工作流](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44226492728)的 Full build、专服 GameTest 和单份 MAE 检查已通过。专服断言覆盖 70 把枪、126 个配件、25 种弹药、5 个转接座、3 个块的索引，以及逻辑脚本引用、23 个进度、202 个工作台配方及其材料。客户端是另一道门禁：逐个打开主模型与状态机，并核对 M1897 的专用弹壳材质。渲染全部外观、逐动作脚本、`renew` 粒子、镜片/热成像或第三方包行为，均不能从以上计数推导。
+[编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44226492723)和[全量工作流](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44226492728)的 Full build、专服 GameTest 和单份 MAE 检查已通过。专服断言覆盖 70 把枪、126 个配件、25 种弹药、5 个转接座、3 个块的索引，以及逻辑脚本引用、23 个进度、202 个工作台配方及其材料。同一次客户端 GameTest 也通过（03:06:47 UTC）：逐个打开 70 把枪的主模型与状态机，并核对 M1897 的专用弹壳材质。工件：[JAR](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44226492728/artifacts/14394185834)、[日志/截图](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44226492728/artifacts/14393473145)。渲染全部外观、逐动作脚本、`renew` 粒子、镜片/热成像或第三方包行为，均不能从以上计数推导。
 
 ### 服务端脚本动作与旁观事件
 
 以一次 draw 为边界隔离 LuaJ 异常；错误清空换弹/拉栓/待执行近战与脚本临时值，但不重置射击冷却，不把部分已执行的脚本当成可回滚事务。延迟 Lua 回调和同一轮的后续 cycle 还必须属于原 draw、原主手物品实例；不改旧包的 `runLuaCycleTask` / `runShootCycle` 接点。先投票再提交本地开火效果；取消触发不再挪动弹药。`inventory_cooling_per_tick` 在服务端的未选中物品上生效，主手仍走原 `tick_heat`。
 
 新测试分别覆盖非法 Lua 返回值、嵌套即时回调失败、换枪后旧定时器、库存冷却，以及一个真实追踪客户端收到**其他实体**的成功事件。后者也在同一连接上撤销单项 Fabric 接收能力、等服务端协商生效再检查旧事件；不是使用历史客户端 JAR，也不是两个独立客户端。通过与否以包含这些测试的源码 SHA 对应工作流为准。
+
+创造栏：枪包索引重建时使 vanilla 的标签页缓存失效；下一次打开或已打开界面的下一 tick 由原版一同重建分类、名字与 tag 搜索树。集成测试在同一界面输入唯一查询，转换并挂载含新索引的 ZIP，等待同一查询出现新物品，再检查跨分类的包选择与「全部」。测试不向已注册分类写入筛选结果。

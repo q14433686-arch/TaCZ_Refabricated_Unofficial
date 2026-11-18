@@ -42,6 +42,7 @@ for frame in tacz_held_default_gun tacz_held_variant tacz_default_refit tacz_ran
 done
 grep -Fq 'PORT_CATALOG: client loaded 229 indexes' "$run/logs/latest.log"
 grep -Fq 'PORT_ACTION: tracking client observed settled fire/reload once' "$run/logs/latest.log"
+grep -Fq 'PORT_CREATIVE: open search refreshed' "$run/logs/latest.log"
 # These assertions concern timing and persisted/network state; a rendered frame cannot prove them.
 grep -Fq 'PORT_SMOKE_CLIENT: integrated pause/resume and both pack clocks passed' "$run/logs/latest.log"
 grep -Fq 'PORT_SMOKE_CLIENT: reopened same save; new snapshot, one action, saved displays and survival storage transfer passed' "$run/logs/latest.log"

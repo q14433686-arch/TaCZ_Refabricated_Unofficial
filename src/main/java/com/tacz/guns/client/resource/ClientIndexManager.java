@@ -23,6 +23,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Map;
@@ -72,6 +73,9 @@ public class ClientIndexManager {
             try { SLOT_ADAPTER_INDEX.put(entry.getKey(), new ClientSlotAdapterIndex(entry.getValue().getPojo())); }
             catch (IllegalArgumentException e) { GunMod.LOGGER.warn("Invalid slot adapter display for {}", entry.getKey(), e); }
         });
+        // The vanilla cache key only knows permissions, feature flags and registries, not gun packs.
+        // Invalidate on the game thread; the open (or next) creative screen rebuilds all tabs and both search trees.
+        CreativeModeTabs.CACHED_PARAMETERS = null;
         warmUpInventoryModels();
 
         LocalPlayer player = Minecraft.getInstance().player;

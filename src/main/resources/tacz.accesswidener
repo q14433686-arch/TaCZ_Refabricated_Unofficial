@@ -13,3 +13,5 @@ accessible method net/minecraft/client/Minecraft startUseItem ()V
 accessible method net/minecraft/world/entity/player/Player canCriticalAttack (Lnet/minecraft/world/entity/Entity;)Z
 # Per-display surface effect opacity (single-quad particle providers only).
 accessible method net/minecraft/client/particle/SingleQuadParticle setAlpha (F)V
+# Let vanilla rebuild search trees + category contents together when the pack indexes change.
+accessible field net/minecraft/world/item/CreativeModeTabs CACHED_PARAMETERS Lnet/minecraft/world/item/CreativeModeTab$ItemDisplayParameters;
