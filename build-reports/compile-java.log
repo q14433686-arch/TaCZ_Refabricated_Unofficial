@@ -1,4 +1,4 @@
-commit: 7d1b65923407a4a8d114ae08c5b2266a83f789e5
+commit: 54cd753836cd8403c5a4328362c18dc5590accd7
 Fetching distribution.
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
@@ -18,5 +18,8 @@ For more details see https://docs.gradle.org/9.5.1/release-notes.html
 
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
+
+> Configure project :
+Fabric Loom: 1.17.21
 
 == job status: cancelled ==
