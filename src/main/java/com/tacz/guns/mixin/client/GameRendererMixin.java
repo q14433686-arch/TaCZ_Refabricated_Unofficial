@@ -109,7 +109,7 @@ public abstract class GameRendererMixin {
     }
 
     // Keep the death roll and direction rotations vanilla. Only scale the hurt-tilt rotation.
-    @org.spongepowered.asm.mixin.injection.ModifyArg(method = "bobHurt", at = @At(value = "INVOKE", target = "Lcom/mojang/math/Axis;rotationDegrees(F)Lorg/joml/Quaternionf;", ordinal = 2), index = 0)
+    @org.spongepowered.asm.mixin.injection.ModifyArg(method = "bobHurt", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;rotateDegrees(Lcom/mojang/math/Axis;F)V", ordinal = 2), index = 1)
     private float tacz$heldGunHurtTilt(float angle) {
         if (minecraft.options.getCameraType().isFirstPerson()
                 && minecraft.getCameraEntity() instanceof LocalPlayer player && !player.isDeadOrDying()
