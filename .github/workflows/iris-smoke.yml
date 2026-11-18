@@ -32,7 +32,7 @@ jobs:
           MESA_GLSL_VERSION_OVERRIDE: '460'
           ALSOFT_DRIVERS: 'null'
           TACZ_SMOKE_IRIS: 'true'
-          SDL_VIDEO_X11_FORCE_EGL: '1'
+          SDL_VIDEO_FORCE_EGL: '1'
         run: xvfb-run -a -s '-screen 0 1280x1024x24 +extension GLX +render -noreset' bash -c 'glxinfo -B; bash scripts/run_client_smoke.sh'
       - name: Summarize failures
         if: failure()
