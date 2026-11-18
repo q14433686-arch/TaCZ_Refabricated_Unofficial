@@ -16,11 +16,11 @@ import com.tacz.guns.client.particle.bedrock.molang.runtime.value.NumberValue;
  */
 public class ParticleMolangEnvironment {
     private final MochaEngine<?> engine;
-    private final MolangContext<Object> context;
+    private final ParticleEvaluationContext context;
 
     /** 创建独立的 Molang 环境 */
     public ParticleMolangEnvironment() {
-        this.context = new MolangContext<>();
+        this.context = new ParticleEvaluationContext();
         this.engine = MolangEngineHelper.createEngine(context);
         registerVariables();
     }
@@ -45,7 +45,9 @@ public class ParticleMolangEnvironment {
     /**
      * 绑定发射器状态到 Molang 变量。在发射器相关表达式求值前调用。
      */
+    public void setDeltaTime(float dt) { context.dt=dt; }
     public void bindEmitter(float age, float lifetime, float r1, float r2, float r3, float r4) {
+        context.prepareEvaluation(age);
         MutableObjectBinding variableStorage = context.getVariableStorage();
         variableStorage.set("emitter_age", NumberValue.of(age));
         variableStorage.set("emitter_lifetime", NumberValue.of(lifetime));
@@ -59,6 +61,7 @@ public class ParticleMolangEnvironment {
      * 绑定粒子状态到 Molang 变量。在粒子相关表达式求值前调用。
      */
     public void bindParticle(float age, float lifetime, float r1, float r2, float r3, float r4) {
+        context.prepareEvaluation(age);
         MutableObjectBinding variableStorage = context.getVariableStorage();
         variableStorage.set("particle_age", NumberValue.of(age));
         variableStorage.set("particle_lifetime", NumberValue.of(lifetime));

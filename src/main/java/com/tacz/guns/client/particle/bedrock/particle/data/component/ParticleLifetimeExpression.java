@@ -29,6 +29,8 @@ public record ParticleLifetimeExpression(
     public void apply(ParticleInstance p) {
         if (p.emitter == null) return;
         p.maxLifetime = (float) maxLifetime.evaluate(p.emitter.getMolang().getContext());
+        p.emitter.getMolang().bindParticle(p.age,p.maxLifetime,p.random1,p.random2,p.random3,p.random4);
+        p.emitter.bindCurves();
     }
 
     @Override

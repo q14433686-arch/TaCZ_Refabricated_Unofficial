@@ -108,6 +108,8 @@ public class ParticleEmitterInstance {
     // ==================== 主循环 ====================
 
     public void tick(float dt) {
+        molang.setDeltaTime(dt);
+        this.currentDt=dt;
         if (removed) {
             updateParticles(dt);
             return;
@@ -153,15 +155,21 @@ public class ParticleEmitterInstance {
 
     private void bindEmitterContext() {
         molang.bindEmitter(emitterAge, emitterLifetime, emitterRandom1, emitterRandom2, emitterRandom3, emitterRandom4);
-        for (Map.Entry<String, ParticleCurve> entry : curves.entrySet()) {
-            float value = CurveEvaluator.evaluate(entry.getValue(), molang.getContext(), entry.getKey());
-            molang.getVariableStorage().set(entry.getKey(), NumberValue.of(value));
-        }
+        bindCurves();
         // 应用外部注入的每实例变量覆盖
         if (!variableOverrides.isEmpty()) {
             for (Map.Entry<String, Float> entry : variableOverrides.entrySet()) {
                 molang.getVariableStorage().set(entry.getKey(), NumberValue.of(entry.getValue()));
             }
+        }
+    }
+
+    public void bindCurves() {
+        for(var entry:curves.entrySet()) {
+            String key=entry.getKey();
+            if(key.startsWith("variable."))key=key.substring(9);
+            else if(key.startsWith("v."))key=key.substring(2);
+            molang.getVariableStorage().set(key,NumberValue.of(CurveEvaluator.evaluate(entry.getValue(),molang.getContext(),key)));
         }
     }
 
@@ -180,6 +188,7 @@ public class ParticleEmitterInstance {
 
         // 绑定粒子变量到 emitter 的共享 molang
         molang.bindParticle(0, 1, p.random1, p.random2, p.random3, p.random4);
+        bindCurves();
 
         // 发射器形状 → 粒子初始位置（emit 时采样一次）
         EmitterShape shape = definition.emitterPreset().find(EmitterShape.class);
@@ -242,6 +251,7 @@ public class ParticleEmitterInstance {
 
     public void updateSingleParticle(ParticleInstance p, float dt) {
         molang.bindParticle(p.age, p.maxLifetime, p.random1, p.random2, p.random3, p.random4);
+        bindCurves();
 
         for (IParticleComponent c : p.updateComponents) {
             c.update(p);
@@ -519,6 +529,7 @@ public class ParticleEmitterInstance {
         ParticleLifetimeEvents evts = definition.particlePreset().find(ParticleLifetimeEvents.class);
         if (evts == null || evts.expirationEvent().isEmpty()) return;
         molang.bindParticle(p.age, p.maxLifetime, p.random1, p.random2, p.random3, p.random4);
+        bindCurves();
         EventExecutor.fireEvents(evts.expirationEvent(), definition, eventContext);
     }
 
@@ -527,6 +538,7 @@ public class ParticleEmitterInstance {
         ParticleMotionCollision collision = definition.findComponent(ParticleMotionCollision.class);
         if (collision == null || collision.events().isEmpty()) return;
         molang.bindParticle(p.age, p.maxLifetime, p.random1, p.random2, p.random3, p.random4);
+        bindCurves();
         for (ParticleMotionCollision.CollisionEvent event : collision.events()) {
             if (speed >= event.minSpeed()) {
                 List<IEventNode> nodes = definition.getEvents().get(event.event());

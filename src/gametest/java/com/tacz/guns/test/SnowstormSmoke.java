@@ -30,6 +30,15 @@ final class SnowstormSmoke {
                 throw new AssertionError("External-pack particle definition was not loaded");
             var compiler=new ParticleMolangEnvironment();
             var def=new ParticleEffectDeserializer().parse(JsonParser.parseString(DEFINITION),compiler);
+            var curveJson=JsonParser.parseString(DEFINITION).getAsJsonObject();
+            curveJson.getAsJsonObject("particle_effect").add("curves",JsonParser.parseString("""
+              {"variable.test_curve":{"type":"linear","input":0.5,"horizontal_range":1,"nodes":[0,2]}}
+              """));
+            var curveDef=new ParticleEffectDeserializer().parse(curveJson,compiler);
+            var curveEnv=new ParticleMolangEnvironment();curveEnv.eval("variable.count = 1;");
+            var curveEmitter=new ParticleEmitterInstance(curveDef,curveEnv);curveEmitter.tick(.05f);
+            if(Math.abs(curveEnv.eval("variable.test_curve")-1)>1e-6)throw new AssertionError("Curve variable namespace mapping failed");
+            if(Math.abs(curveEnv.compile("query.delta_time").evaluate(curveEnv.getContext())-.05)>1e-6)throw new AssertionError("Particle query binding failed");
             var a=new ParticleMolangEnvironment();a.eval("variable.count = 3;");
             var b=new ParticleMolangEnvironment();b.eval("variable.count = 7;");
             var first=new ParticleEmitterInstance(def,a);var second=new ParticleEmitterInstance(def,b);

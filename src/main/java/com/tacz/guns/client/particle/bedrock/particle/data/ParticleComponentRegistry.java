@@ -95,8 +95,11 @@ public final class ParticleComponentRegistry {
 
     private ParticleComponentRegistry() {}
 
-    private static void register(String key, ComponentDeserializer deserializer) {
-        DESERIALIZERS.put(key, deserializer);
+    /** Register extension components before resource loading; accidental overrides are errors. */
+    public static synchronized void register(String key, ComponentDeserializer deserializer) {
+        java.util.Objects.requireNonNull(net.minecraft.resources.Identifier.parse(key));
+        if(DESERIALIZERS.putIfAbsent(key,java.util.Objects.requireNonNull(deserializer))!=null)
+            throw new IllegalArgumentException("Duplicate Snowstorm component: "+key);
     }
 
     @Nullable

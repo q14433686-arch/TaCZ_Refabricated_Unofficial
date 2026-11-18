@@ -11,13 +11,14 @@ import org.jetbrains.annotations.Nullable;
 import static com.tacz.guns.client.particle.bedrock.particle.data.ParticleJsonUtils.getMolang;
 
 public record ParticleInitialization(
+        @Nullable MolangExpression creationExpression,
         @Nullable MolangExpression perRenderExpression,
         @Nullable MolangExpression perUpdateExpression
 ) implements IParticleComponentDefinition, IParticleComponent {
 
     @Override
     public int order() {
-        return 360;
+        return -1000;
     }
 
     @Override
@@ -25,6 +26,9 @@ public record ParticleInitialization(
         return perRenderExpression != null || perUpdateExpression != null;
     }
 
+    @Override public void apply(ParticleInstance p) {
+        if(creationExpression!=null&&p.emitter!=null)creationExpression.evaluate(p.emitter.getMolang().getContext());
+    }
     @Override
     public void update(ParticleInstance p) {
         if (p.emitter == null) return;
@@ -43,6 +47,7 @@ public record ParticleInitialization(
             String expr = getMolang(obj, "per_update_expression", "");
             if (!expr.isEmpty()) perUpdate = molang.compile(expr);
         }
-        return new ParticleInitialization(perRender, perUpdate);
+        var creation=obj.has("creation_expression")?molang.compile(getMolang(obj,"creation_expression","0")):null;
+        return new ParticleInitialization(creation,perRender, perUpdate);
     }
 }

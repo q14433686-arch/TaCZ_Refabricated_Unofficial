@@ -143,6 +143,7 @@ public final class WorldEmitterManager {
                 if(init!=null&&init.perRenderExpression()!=null){
                     emitter.bindContextAndCurves();
                     emitter.getMolang().bindParticle(particle.age,particle.maxLifetime,particle.random1,particle.random2,particle.random3,particle.random4);
+                    emitter.bindCurves();
                     init.perRenderExpression().evaluate(emitter.getMolang().getContext());
                 }
                 // Resolve mutable simulation state during extraction, never in a delayed callback.

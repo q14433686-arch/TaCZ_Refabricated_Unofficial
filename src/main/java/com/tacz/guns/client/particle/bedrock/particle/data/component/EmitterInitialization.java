@@ -17,7 +17,7 @@ public record EmitterInitialization(
 
     @Override
     public int order() {
-        return 505;
+        return -1000;
     }
 
     @Override
