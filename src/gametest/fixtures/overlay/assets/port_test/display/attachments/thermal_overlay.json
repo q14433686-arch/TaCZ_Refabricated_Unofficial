@@ -10,7 +10,7 @@
   "text_show": {
     "rangefinder_text_show_pos": {
       "text": "COLOR",
-      "color": "#FF2200",
+      "color": "#FF00FF",
       "light": 15,
       "scale": 0.45,
       "align": "right"

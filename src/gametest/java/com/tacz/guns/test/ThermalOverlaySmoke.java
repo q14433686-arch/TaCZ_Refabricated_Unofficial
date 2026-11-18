@@ -28,11 +28,11 @@ final class ThermalOverlaySmoke {
             for(int i=0;i<2;i++){
                 final boolean enabled=i==1;ctx.runOnClient(mc->RenderConfig.SCOPE_THERMAL_ENABLE.set(enabled));ctx.waitTicks(15);
                 try{BufferedImage image=ImageIO.read(ctx.takeScreenshot("tacz_overlay_"+enabled).toFile());int w=image.getWidth(),h=image.getHeight();
-                    for(int y=h/4;y<3*h/4;y++)for(int x=w/3;x<2*w/3;x++){int c=image.getRGB(x,y),r=(c>>16)&255,g=(c>>8)&255,b=c&255;if(r>100&&r>g*2&&r>b*2)counts[i]++;}
+                    for(int y=h/4;y<3*h/4;y++)for(int x=w/3;x<2*w/3;x++){int c=image.getRGB(x,y),r=(c>>16)&255,g=(c>>8)&255,b=c&255;if(r>100&&b>100&&r>g*3&&Math.abs(r-b)<60)counts[i]++;}
                 }catch(java.io.IOException e){throw new java.io.UncheckedIOException(e);}
             }
             if(counts[0]<8||counts[1]<counts[0]*.85)throw new AssertionError("Thermal converted display color: "+counts[0]+" -> "+counts[1]);
-            GunMod.LOGGER.info("PORT_THERMAL_OVERLAY: red glyph pixels {} optical / {} thermal",counts[0],counts[1]);
+            GunMod.LOGGER.info("PORT_THERMAL_OVERLAY: magenta glyph pixels {} optical / {} thermal",counts[0],counts[1]);
         }finally{ctx.getInput().releaseKey(AimKey.AIM_KEY);ctx.runOnClient(mc->{RenderConfig.SCOPE_THERMAL_ENABLE.set(heat);RenderConfig.EXPERIMENTAL_SCOPE_LENS.set(prior[0]);RenderConfig.SCOPE_PIP_ENABLE.set(prior[1]);RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.set(prior[2]);});}
     }
 }
