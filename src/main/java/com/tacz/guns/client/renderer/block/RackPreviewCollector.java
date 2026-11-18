@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.*;
 import com.tacz.guns.mixin.client.*;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.renderer.*;
-import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.*;
 import net.minecraft.client.renderer.texture.UvMapping;
@@ -43,10 +42,9 @@ public final class RackPreviewCollector extends SubmitNodeStorage {
             });
         }
     }
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    @Override public void submitModel(Model model, Object state, PoseStack pose, RenderType type, int light, int overlay,
-                                      int color, UvMapping mapping, int outline, ModelFeatureRenderer.CrumblingOverlay crumbling) {
-        output.submitModel(model, state, pose, material(type), light, overlay, alpha(color), mapping, outline, crumbling);
+    @Override public <S> void submitModel(Model<? super S> model, S state, PoseStack pose, RenderType type, int light, int overlay,
+                                      int color, UvMapping mapping, int outline) {
+        output.submitModel(model, state, pose, material(type), light, overlay, alpha(color), mapping, outline);
     }
 
     private record PreviewVertices(VertexConsumer out) implements VertexConsumer {
@@ -55,6 +53,7 @@ public final class RackPreviewCollector extends SubmitNodeStorage {
         public VertexConsumer setColor(int color) { out.setColor(alpha(color)); return this; }
         public VertexConsumer setUv(float u,float v) { out.setUv(u,v); return this; }
         public VertexConsumer setUv1(int u,int v) { out.setUv1(u,v); return this; }
+        public VertexConsumer setUv3(float u,float v) { out.setUv3(u,v); return this; }
         public VertexConsumer setUv2(int u,int v) { out.setUv2(u,v); return this; }
         public VertexConsumer setNormal(float x,float y,float z) { out.setNormal(x,y,z); return this; }
         public VertexConsumer setLineWidth(float width) { out.setLineWidth(width); return this; }

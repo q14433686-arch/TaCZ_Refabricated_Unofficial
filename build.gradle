@@ -264,6 +264,13 @@ dependencies {
 // Test-mod adapters compile against the same optional APIs as the port, but a normal game
 // (including the baseline client smoke) must not acquire a viewer. Never nest these jars.
 configurations.gametestCompileOnly.extendsFrom(configurations.compileOnly)
+if (project.hasProperty('taczControllerSmoke')) {
+    loom.runs.clientGameTest.property 'tacz.test.controller', 'true'
+    dependencies {
+        gametestRuntimeOnly 'mrcrayfish.release:controllable-fabric:0.26.2+26.3'
+        gametestRuntimeOnly 'mrcrayfish.release:framework-fabric:0.13.27+26.3'
+    }
+}
 if (project.hasProperty('taczViewerSmoke')) {
     if (!project.hasProperty('taczClientSmoke')) throw new GradleException('Viewer smoke needs -PtaczClientSmoke')
     def viewer = project.property('taczViewerSmoke')

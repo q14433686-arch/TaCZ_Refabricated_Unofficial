@@ -39,6 +39,7 @@ final class CreativeReloadSmoke {
             ConversionReloadSmoke.run(context, world);
             context.waitFor(mc -> screen.getMenu().items.size() == 1 && hasId(screen.getMenu().items.getFirst(), PROBE), 600);
             context.runOnClient(mc -> {
+                DefaultClientCatalogSmoke.checkPortIndexes();
                 if (mc.gui.screen() != screen) throw new AssertionError("Creative screen was replaced during reload");
                 tabs.setSelectedTab(rifle);
                 assertFiltered(screen, "port_test");

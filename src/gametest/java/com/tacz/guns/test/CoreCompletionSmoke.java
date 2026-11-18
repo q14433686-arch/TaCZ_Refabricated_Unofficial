@@ -25,6 +25,7 @@ final class CoreCompletionSmoke {
             var items=new ArrayList<ItemStack>();for(int i=0;i<inv.getContainerSize();i++)items.add(inv.getItem(i).copy());return items;});
         var camera=ctx.computeOnClient(mc->mc.options.getCameraType());
         boolean hidden=ctx.computeOnClient(mc->OtherConfig.HIDE_GUN_PACK_COMPATIBILITY_WARNING.get());
+        var inspectBinding=ctx.computeOnClient(mc->net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper.getBoundKeyOf(InspectKey.INSPECT_KEY));
         try{
             world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer();var inv=p.getInventory();
                 for(int i=0;i<inv.getContainerSize();i++)inv.setItem(i,ItemStack.EMPTY);
@@ -40,6 +41,7 @@ final class CoreCompletionSmoke {
             ctx.waitTicks(30); // complete draw animation before the real inspect input
             long before=ctx.computeOnClient(mc->AnimationParticleDispatcher.submitted());
             long customBefore=ctx.computeOnClient(mc->com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance().spawned());
+            ctx.runOnClient(mc -> { InspectKey.INSPECT_KEY.setKey(com.mojang.blaze3d.platform.InputConstants.Type.MOUSE.getOrCreate(4)); net.minecraft.client.KeyMapping.resetMapping(); });
             ctx.getInput().holdKey(InspectKey.INSPECT_KEY);ctx.waitTicks(1);ctx.getInput().releaseKey(InspectKey.INSPECT_KEY);
             ctx.waitFor(mc->AnimationParticleDispatcher.submitted()>=before+5);
             ctx.waitFor(mc->com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance().spawned()>customBefore);
@@ -55,6 +57,7 @@ final class CoreCompletionSmoke {
             GunMod.LOGGER.info("PORT_CORE: inventory/model counts 17/26/9, magazine 3, inspect particle render dispatch and warning packet/client dismissal passed");
         }finally{
             ctx.getInput().releaseKey(InspectKey.INSPECT_KEY);
+            ctx.runOnClient(mc -> { InspectKey.INSPECT_KEY.setKey(inspectBinding); net.minecraft.client.KeyMapping.resetMapping(); });
             ctx.runOnClient(mc->{mc.options.setCameraType(camera);OtherConfig.HIDE_GUN_PACK_COMPATIBILITY_WARNING.set(hidden);com.tacz.guns.config.ConfigPersist.saveAll();});
             world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer();for(int i=0;i<saved.size();i++)p.getInventory().setItem(i,saved.get(i));p.inventoryMenu.broadcastChanges();});
         }

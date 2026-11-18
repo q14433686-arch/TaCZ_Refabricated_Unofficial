@@ -43,6 +43,8 @@ public class PackClientSmoke implements FabricClientGameTest {
             world.getConnection().waitForChunksRender();
             context.waitTicks(30);
             saveFrame(context, "tacz_held_default_gun");
+            if (Boolean.getBoolean("tacz.test.controller")) { ControllerSmoke.run(context, world); return; }
+            PortInputSmoke.run(context, world);
             ScopeUserRegressionSmoke.run(context, world);
             if (Boolean.getBoolean("tacz.test.iris")) {
                 context.runOnClient(mc -> {
@@ -156,6 +158,7 @@ public class PackClientSmoke implements FabricClientGameTest {
         world.getConnection().waitForChunksRender();
         context.waitTicks(20);
         saveFrame(context, "tacz_display_wall");
+        RackPreviewSmoke.run(context, world, pos, gunId);
         return pos;
     }
 

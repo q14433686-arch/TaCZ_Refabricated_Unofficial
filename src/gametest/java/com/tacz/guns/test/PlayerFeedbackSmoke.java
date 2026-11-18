@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * real connection, not a simulated second player or actual long-distance projectile trajectory. */
 public final class PlayerFeedbackSmoke {
     public static final AtomicInteger impactPackets = new AtomicInteger();
+    public static final AtomicInteger incendiaryPackets = new AtomicInteger();
     private static int offhand,hotbar,tilts;
     private static boolean observing;
     public static void backSubmit(int salt) { if(observing) { if(salt==100)offhand++; else hotbar++; } }
@@ -65,17 +66,18 @@ public final class PlayerFeedbackSmoke {
         world.getServer().waitFor(s->ServerPlayNetworking.canSend(world.getConnection().getServerPlayer(),ServerMessageBulletHitBlock.TYPE));
         int saved=world.getServer().computeOnServer(s->SyncConfig.BULLET_HIT_BLOCK_EFFECT_SEND_DISTANCE.get());
         try {
-            for(int scenario=0;scenario<4;scenario++) {
+            for(int scenario=0;scenario<5;scenario++) {
                 int mode=scenario;
-                int before=impactPackets.get();
+                int before=impactPackets.get(), hot=incendiaryPackets.get();
                 world.getServer().runOnServer(s->{
                     var p=world.getConnection().getServerPlayer();
                     SyncConfig.BULLET_HIT_BLOCK_EFFECT_SEND_DISTANCE.set(mode==3?0:8);
-                    var hit=p.position().add(mode==2?4:20,0,0);
-                    new ServerMessageBulletHitBlock(hit,Direction.UP,BlockPos.containing(hit),"tacz:762x39","tacz:ak47","tacz:ak47").broadcast(p.level(),mode==0?p:null);
+                    var hit=p.position().add(mode==2 || mode==4?4:20,0,0);
+                    new ServerMessageBulletHitBlock(hit,Direction.UP,BlockPos.containing(hit),"tacz:762x39","tacz:ak47","tacz:ak47").broadcast(p.level(),mode==0?p:null,mode==4);
                 });
                 if(mode!=1)ctx.waitFor(mc->impactPackets.get()>before);
                 ctx.waitTicks(3);
+                if(incendiaryPackets.get()!=hot+(mode==4?1:0))throw new AssertionError("Wrong fragment flag for "+mode);
                 if(impactPackets.get()!=before+(mode==1?0:1))throw new AssertionError("Impact range control "+mode+" received wrong count");
             }
         } finally { world.getServer().runOnServer(s->SyncConfig.BULLET_HIT_BLOCK_EFFECT_SEND_DISTANCE.set(saved)); }

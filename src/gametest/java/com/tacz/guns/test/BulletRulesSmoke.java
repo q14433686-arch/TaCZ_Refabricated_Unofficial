@@ -72,4 +72,21 @@ public class BulletRulesSmoke extends EntityUtil {
         }
         h.succeed();
     }
+    @GameTest
+    public void onlyMigrateExactLegacyGlassDefaults(GameTestHelper helper) {
+        var field = com.tacz.guns.config.common.AmmoConfig.DESTROY_BLOCKS;
+        var saved = field.get();
+        try {
+            var legacy = java.util.List.of("#forge:glass", "#forge:glass_panes");
+            var fresh = com.tacz.guns.config.common.AmmoConfig.DEFAULT_DESTROY_BLOCKS;
+            for (var input : java.util.List.of(legacy, fresh, java.util.List.of("minecraft:glass"), legacy.reversed())) {
+                field.set(input);
+                com.tacz.guns.config.util.AmmoBlockConfigRead.init();
+                helper.assertTrue(field.get().equals(input.equals(legacy) ? fresh : input), "Unexpected migration of " + input);
+            }
+        } finally {
+            field.set(saved); field.save(); com.tacz.guns.config.util.AmmoBlockConfigRead.init();
+        }
+        helper.succeed();
+    }
 }

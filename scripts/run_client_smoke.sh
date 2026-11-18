@@ -37,6 +37,7 @@ probe & probe_pid=$!
 trap 'kill "$probe_pid" 2>/dev/null || true' EXIT
 # Leave time for Gradle/SDL teardown and evidence upload before the enclosing job-step timeout.
 args=(-PtaczClientSmoke)
+if [[ ${TACZ_SMOKE_CONTROLLER:-} == true ]]; then args+=(-PtaczControllerSmoke); fi
 if [[ ${TACZ_SMOKE_IRIS:-} == true ]]; then args+=(-PtaczIrisSmoke); fi
 case ${TACZ_SMOKE_VIEWER:-} in
     jei|rei) args+=("-PtaczViewerSmoke=$TACZ_SMOKE_VIEWER");;
@@ -50,6 +51,10 @@ if [[ ${TACZ_SMOKE_IRIS:-} == true ]]; then
     grep -Fq 'PORT_CORE:' "$run/logs/latest.log"
     grep -Fq 'PORT_IRIS: thermal and new-item regression passed' "$run/logs/latest.log"
     grep -E 'PORT_IRIS:|PORT_LENS:|PORT_CORE:' "$run/logs/latest.log" | sed 's/^/::notice::/'
+    exit
+fi
+if [[ ${TACZ_SMOKE_CONTROLLER:-} == true ]]; then
+    grep -F 'PORT_CONTROLLER:' "$run/logs/latest.log"
     exit
 fi
 if [[ -n ${TACZ_SMOKE_VIEWER:-} ]]; then

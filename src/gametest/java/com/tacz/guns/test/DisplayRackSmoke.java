@@ -77,6 +77,19 @@ public class DisplayRackSmoke {
     }
 
     @GameTest
+    public void structureFacingRotatesWithoutChangingOtherProperties(GameTestHelper helper) {
+        var facing = net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING;
+        for (var block : List.of(ModBlocks.TARGET, ModBlocks.STATUE, ModBlocks.WORKBENCH_211, ModBlocks.WORKBENCH_121, ModBlocks.WORKBENCH_111)) {
+            for (var state : block.getStateDefinition().getPossibleStates()) {
+                for (var rot : net.minecraft.world.level.block.Rotation.values()) {
+                    helper.assertTrue(state.rotate(rot) == state.setValue(facing, rot.rotate(state.getValue(facing))), "Incorrect rotated part: " + state);
+                }
+            }
+        }
+        helper.succeed();
+    }
+
+    @GameTest
     public void dyeLootAndCornerMirror(GameTestHelper helper) {
         var level = helper.getLevel();
         for (var item : List.of(ModItems.GUN_PEGBOARD, ModItems.GLOW_GUN_PEGBOARD)) {

@@ -28,6 +28,8 @@ final class MovementRulesSmoke {
                 player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
                 SyncConfig.ENABLE_CRAWL.set(true);
                 SyncConfig.ENABLE_CRAWL_WITHOUT_GUN.set(true);
+                // Server authority may still report airborne for a tick after client-side landing.
+                player.setOnGround(true);
                 operator.crawl(true);
                 require(pose.tacz$getForcedPose() == Pose.SWIMMING, "Empty-hand crawl rejected");
                 SyncConfig.ENABLE_CRAWL.set(false);
