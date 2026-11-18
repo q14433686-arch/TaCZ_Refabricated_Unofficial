@@ -19,7 +19,7 @@ jobs:
       - name: Summarize original same-branch test logs
         env:
           GH_TOKEN: ${{ github.token }}
-          RUN: ${{ inputs.run || '44374086310' }}
+          RUN: ${{ inputs.run || '44385896469' }}
         run: |
           python3 - <<'PY'
           import json,os,pathlib,re,subprocess,tempfile
@@ -31,7 +31,7 @@ jobs:
             for p in pathlib.Path(tmp).rglob('latest.log'):
               lines=p.read_text(errors='replace').splitlines()
               for i,s in enumerate(lines):
-                if re.search(r'com[.]tacz[.]guns[.]test[.]|PORT_|Heat capture|Pack lens|Shader compilation|GLSL|ShaderCompile|shader.*failed',s,re.I):
+                if re.search(r'com[.]tacz[.]guns[.]test[.]|PORT_|Heat capture|Pack lens|Shader compilation|GLSL|ShaderCompile|shader.*failed|AssertionError|Exception|timed out|Timeout|FATAL|ERROR',s,re.I):
                   print('::notice::'+' '.join(lines[max(0,i-1):i+3])[:2000].replace('%','%25'))
               print('::notice::LAST LOG LINES: '+' '.join(lines[-18:])[:3000].replace('%','%25'))
           PY
