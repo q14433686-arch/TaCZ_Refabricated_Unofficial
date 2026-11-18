@@ -1,6 +1,8 @@
 # 1.21.1 Fabric 1.2.0-hotfix → 26.3 Fabric：全树对照与验收台账
 
-这里跟踪**剩余工作**。先看本页判断功能，再查 [逐路径 TSV](FABRIC_120_ALL_PATHS.tsv) 定位代码或资源，运行记录见[按提交排列的账本](FABRIC_120_PORT_26_3.md)。**路径已覆盖不等于功能已完成**。本页不是发行说明。
+**按游戏里的变化查：[玩家可感变化清单](FABRIC_120_PLAYER_CHECKLIST.md)**。直达：[霰弹枪的后坐力推动射手](FABRIC_120_PLAYER_CHECKLIST.md#射手位移) · [第一/第三人称枪口火光和烟雾](FABRIC_120_PLAYER_CHECKLIST.md#枪口火光和烟雾) · [AI 寻枪声](FABRIC_120_PLAYER_CHECKLIST.md#枪声与生物仇恨) · [其他玩法和界面变化](FABRIC_120_PLAYER_CHECKLIST.md#其他可感差异)。每项区分默认触发条件、已有实现、实际测到什么和剩余验收。
+
+本页按工程子系统跟踪**剩余工作**。[逐路径 TSV](FABRIC_120_ALL_PATHS.tsv) 定位代码或资源，运行记录见[按提交排列的账本](FABRIC_120_PORT_26_3.md)。**路径已覆盖不等于功能已完成**。本页不是发行说明。
 
 ## 比了哪些文件？
 
@@ -40,14 +42,16 @@ python3 scripts/verify_120_resources.py
 | 内置包资源、语言、进度、配方 → 来源账本 + 原生 26.3 schema | 229 indexes、70 个第一人称模型/状态机、202 配方、23 进度；完整性检查 | 不是 70 把枪全动作录像；原包 246 条例外单列 |
 | 脚本、OEM/variant/slot adapter、refit → 虚拟件与真实库存分离 | `GunActionSmoke` / `ScriptGuardSmoke` / QR-24 实际改装请求；坏 Lua 隔离 | 不下发服务端 Lua；不代表每个外包 hook |
 | 装填/主动退出瞄准/卸弹/动作后事件 → 原生弹药源、库存与客户端定时 | 六组实际脚本 × 六种供弹路径；旁观追踪实体与取消/结算、时钟暂停/重进 | 追踪牛实体的一个客户端不是两个独立玩家；不证明换弹动画每帧 |
-| modifier、AI 对声音反应、声音对象、ADS 预设/双 FOV | 声音/预设/时钟单测和专服动作；集成客户端实际瞄准 | 未听辨所有采样；不等于所有相机曲线目测 |
+| [射手被后坐力推动](FABRIC_120_PLAYER_CHECKLIST.md#射手位移) → 服务端速度与射手同步包 | `AttachmentDataTest` 测姿态/弹丸数计算；未测玩家位置 | 短双管单发拆/装超压反冲弹，地面/空中客户端与服务端位置对照；不是镜头后坐或目标击退 |
+| [枪声吸引敌对、激怒中立生物](FABRIC_120_PLAYER_CHECKLIST.md#枪声与生物仇恨) → `GunSoundAngerEvent` 在成功击发后处理 | `GunSoundAngerTest` 只测半径，不测活体 | 生存玩家、两类生物、消音/距离/已有目标负对照；不是走到声源坐标 |
+| 配件属性、声音对象、ADS 预设/双 FOV | 声音与预设单测；集成客户端实际瞄准 | 未听辨所有采样；不等于所有相机曲线目测 |
 | 弹药库、升级、展示柜/板 → Fabric Transfer、组件/BE、collector | 事务回滚、升级带库存、染色/掉落/搬移顺序；重开后读回、客户端转移具名弹药 | Carry On 已装时的操作、密集展示性能与硬件矩阵 |
 | 创造栏、包筛选与开放搜索 → vanilla/Fabric 分页 + `CreativePackFilters` | 真实点击/输入；原屏幕刷新新枪，检查 DMR 和 All | 非全部语言与分辨率 |
 | JEI/REI 查询与工作台跳转 → 独立适配 + 共享正反向关系 | `44f0733` 两端重载前后注册表、截图前后页面和对照像素均通过（旧 JEI 截图不成立，见下） | 独立服务器无查看器的联机组合、实际工作台 transfer 点击 |
 | 单数目录/物品组件/DFU/条件 → `UniversalPackConverter` | 真实旧夹具不改源包 → 导出 ZIP → 游戏 /reload 同步结果；拒绝不支持项 | 独立作者/布局的有权使用的包；不静默丢数据 |
 | 外显/LOD/第三人称、mesh → `GunRigBaker` / `DisplayBake` / TML / 原生 collector；不加载旧 SBM | 三套独立 rig 与材质、真实 FIXED 提交/重载释放；PAL/YSM 有独立接入 | 带 mod、远近/多实体/不同视角的像素矩阵；非旧 VBO 性能承诺 |
 | 命中表面、弹壳、FP tracer → 原粒子协议/客户端工厂 | 实际 display 控制弹孔开关，弹壳 override 加载、六面朝向检查 | 发射轨迹、声音及光影不由 provider 返回值证明 |
-| `renew` 烟雾/动画粒子通道 → 基线**只有**旧 flash 回退 | 68 个 display、2 定义文件、默认动画 0 个 `particle_effects` keyframe | 绑定/脱离、第一/三人称、按定义取样与重载、第三方关键帧运行时 |
+| [新版枪口火光与烟雾](FABRIC_120_PLAYER_CHECKLIST.md#枪口火光和烟雾) → **`renew` 运行时未移植** | 68 个 `renew` display 中 67 个有旧贴图可回退，Glock 17 无旧贴图；2 个定义文件不是出帧证据 | 分开验收第一人称枪焰/脱离的烟、F5/旁人视角、枪口配件与重载；默认动画 0 个 `particle_effects`，动画触发另需夹具 |
 | `text_show`、落点 → `RangefinderReadout` + snapshot 字形 | 真 UH-1 显示两个方块距离；`64ae477` 的 XM157 原图在准星中心恢复一个 4×4 的空心黄框（12 像素），解除瞄准、墙后不提交 | 非默认色和比例目前是单测；其它 rig、PIP/Iris/独显仍需实测 |
 | ocular / `scope_lens` / vision → 按实际目镜选择 display；与原生 PIP 共用一次合成 | [XL50 配置、倍率和热源对照](#原生镜片与热成像) | 混合目镜、透明/自定义实体、其它色盘与独显；Iris 光影下保留原路径 |
 | MAE、依赖和开发工具 → 1 份 nested MAE；26.3 无混淆，非上游旧 jar 环境 | CI 验 jar 内容和无额外可选模组的游戏加载 | EMI、Sable、Simulated、AR 等无经验证等价集成；不靠空方法/换包名打勾 |
@@ -95,4 +99,6 @@ python3 scripts/verify_120_resources.py
 
 ### 仍待移植
 
+- **玩法规则**：空手趴下与趴姿视角配置、可选空中腰射散布、同队穿透/实体免疫列表、可破坏方块标签与硬度阈值，不能从旧版持枪趴下、普通玻璃可碎等现象推断已经移植。见[默认条件和对照方法](FABRIC_120_PLAYER_CHECKLIST.md#移动与射击反馈)。
+- **玩家界面**：枪模弹数与背包直读 HUD 同源、第三人称背挂显示开关、工作台手持筛选零结果时的提示和旧包登录指引仍有缺口。查[玩家清单](FABRIC_120_PLAYER_CHECKLIST.md)，不要把「对应类/翻译已经存在」当成验收。
 - **`renew` 不等于旧四边形火光**。上游 [`MuzzleFlash`](https://github.com/Sh1roCu/TACZ-Refabricated/blob/356bdf9d48f2225bac6ceb56adc5576a418517a8/src/main/java/com/tacz/guns/client/resource/pojo/display/gun/MuzzleFlash.java) 分第一/三人称粒子定义；本端 `GunDisplayInstance.checkMuzzleFlash` 仍会丢弃无旧贴图的定义。验收要能单独观察两个视角、绑定/脱离和资源重载；默认包没有动画粒子关键帧，这项需要自制或有权使用的夹具。

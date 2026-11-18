@@ -4,7 +4,7 @@
 
 **最近通过整套门禁的源码：[`e92a998`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/commit/e92a998a576fe909ac68c34b78a8c46bc1ac8d95)。** [编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608818) · [完整构建 / 专服 / Mesa 客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608846/job/134600441865) · [测试 JAR](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608846/artifacts/14401960049) · [日志和原始截图](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608846/artifacts/14401181401)。本次新增 XL50 的镜内偏色、白热实体、遮挡和重投影倍率对照；不是所有瞄具、光影、独显或独立多人的验收。下文按提交顺序保留较早阶段结果。
 
-**后续逐块推进及四树全量对照见 [全量对比与当前门禁](FABRIC_120_COMPARISON.md)**（含未变化与本地独有文件）。以下历史表不随新提交回写。
+**按玩家操作查状态**：[玩家可感变化清单](FABRIC_120_PLAYER_CHECKLIST.md)（射手位移、枪口火烟、枪声引怪、移动、命中、改装和界面）。**按工程路径查**：[全量对比与当前门禁](FABRIC_120_COMPARISON.md)（含未变化与本地独有文件）。以下历史表不随新提交回写。
 
 ## 固定比较对象
 
