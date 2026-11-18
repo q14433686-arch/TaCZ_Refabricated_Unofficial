@@ -1,0 +1,52 @@
+name: Selected game frames for review
+# Only explicitly nominated frames. Keep full logs/PNGs in expiring Actions artifacts.
+on:
+  push:
+    branches: ['arena/**']
+    paths: ['docs/investigations/review-frames.tsv']
+permissions:
+  actions: read
+  contents: write
+jobs:
+  previews:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Make small previews of named successful same-branch test runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json, os, re, subprocess, tempfile
+          from PIL import Image
+          dest = Path('build-reports/visual'); dest.mkdir(parents=True, exist_ok=True)
+          entries = [s.split('\t') for s in Path('docs/investigations/review-frames.tsv').read_text().splitlines() if s and not s.startswith('#')]
+          assert len(entries) <= 12
+          with tempfile.TemporaryDirectory() as tmp:
+              for run, kind, frame in entries:
+                  assert re.fullmatch(r'[0-9]+',run) and kind in ('smoke','viewer-jei','viewer-rei') and re.fullmatch(r'tacz_[a-z0-9_]+',frame)
+                  output = dest / f'{run}-{frame}.jpg'
+                  if output.exists(): continue
+                  meta = json.loads(subprocess.check_output(['gh','api',f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{run}']))
+                  assert meta['event']=='push' and meta['head_branch']==os.environ['GITHUB_REF_NAME'] and meta['conclusion']=='success'
+                  assert meta['path']=='.github/workflows/'+('build.yml' if kind=='smoke' else 'viewer-smoke.yml')
+                  artifact = kind+'-'+meta['head_sha']; root = Path(tmp)/artifact
+                  if not root.exists(): subprocess.run(['gh','run','download',run,'-n',artifact,'-D',str(root)],check=True)
+                  source, = root.rglob('*'+frame+'.png')
+                  with Image.open(source) as image:
+                      image.thumbnail((800,600)); image.convert('RGB').save(output,quality=88,optimize=True)
+                  assert output.stat().st_size <= 256*1024
+          PY
+      - name: Save only the nominated review frames on this branch
+        run: |
+          git add -- build-reports/visual/
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'ci-log: selected in-game review thumbnails'
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "$GITHUB_REF_NAME"

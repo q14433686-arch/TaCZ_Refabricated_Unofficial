@@ -60,3 +60,5 @@ python3 scripts/verify_120_resources.py
 
    `86c8cb6` [两条运行时作业均成功](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44231476610)：[JEI 31.8.0.48 日志/PNG](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44231476610/artifacts/14394469160)、[REI 26.3.823 日志/PNG](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44231476610/artifacts/14394899280)。通过条件包含正确 screen 和非空帧，不只是进程退出 0。本次下载工件在存储端点 EOF，**不记作看过这两张图**。
 3. **XM157 落点标记实现已接入，运行结果待核实**。文字和标记按配置共享限频的 client-world 命中样本，只在第一人称 ADS、有效实体在首个方块之前时提交。干燥环境的游戏 tick 预览读取枪包数据；不执行服务端 Lua，不预测散布/入水/脚本。定位读取实际手部投影及动画父链（默认 XM157 的 locator 在被主 pass 隐藏的 `division` 下）。`ImpactMarkerSmoke` 单独开关顶点回调取得正常/空白对照/恢复三帧，比较中心区的黄色像素，再用石墙遮挡并断言不画；单测覆盖无穷/零速度和过期。不以 UH-1 文字测试充当标记测试。
+
+   `e01537c` [生产源码编译成功](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44232108232)，[完整构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44232108241) 在 Gradle 依赖解析遇 Maven Central HTTP 429，没进测试，不是像素验收结果。
