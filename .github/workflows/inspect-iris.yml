@@ -19,7 +19,7 @@ jobs:
       - name: Summarize original same-branch test logs
         env:
           GH_TOKEN: ${{ github.token }}
-          RUN: ${{ inputs.run || '44385896469' }}
+          RUN: ${{ inputs.run || '44387359385' }}
         run: |
           python3 - <<'PY'
           import json,os,pathlib,re,subprocess,tempfile
