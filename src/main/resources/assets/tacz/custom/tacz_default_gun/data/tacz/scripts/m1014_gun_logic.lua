@@ -72,9 +72,11 @@ function M.tick_reload(api)
     if (reloaded_count == 0) then
         if (not cache.is_tactical) then
             if (reload_time > intro_empty_feed) then
-                api:consumeAmmoFromPlayer(1)
-                api:setAmmoInBarrel(true)
-                reloaded_count = reloaded_count + 1
+                if (api:loadChamberFromReserve()) then
+                    reloaded_count = 1
+                else
+                    interrupted_time = reload_time
+                end
             end
         else
             reloaded_count = reloaded_count + 1
@@ -102,31 +104,14 @@ function M.tick_reload(api)
             base_time = base_time + intro
         end
         -- 换弹时间达到了下一次 feed 时
-        while (base_time < reload_time) do
-            -- 如果换弹需求已满足则退出循环
-            if (reloaded_count > cache.needed_count) then
-                break
-            end
-            -- 如果需求量大于等于 2 ，则双发装填
-            if (cache.needed_count - reloaded_count >= 1) then
-                reloaded_count = reloaded_count + 2
-                base_time = base_time + loop_2
-                -- 判断玩家所处的游戏模式
-                if (api:isReloadingNeedConsumeAmmo()) then
-                    api:putAmmoInMagazine(api:consumeAmmoFromPlayer(2))
-                else
-                    api:putAmmoInMagazine(2)
-                end
-            -- 如果需求量等于 1 ，则单发装填
-            elseif (cache.needed_count - reloaded_count < 1) then
-                reloaded_count = reloaded_count + 1
-                base_time = base_time + loop
-                -- 判断玩家所处的游戏模式
-                if (api:isReloadingNeedConsumeAmmo()) then
-                    api:putAmmoInMagazine(api:consumeAmmoFromPlayer(1))
-                else
-                    api:putAmmoInMagazine(1)
-                end
+        while (interrupted_time == -1 and reloaded_count <= cache.needed_count and base_time < reload_time) do
+            local pair = cache.needed_count - reloaded_count >= 1
+            local requested = pair and 2 or 1
+            local loaded = api:loadMagazineFromReserve(requested)
+            reloaded_count = reloaded_count + loaded
+            base_time = base_time + (pair and loop_2 or loop)
+            if (loaded < requested) then
+                interrupted_time = reload_time
             end
         end
     end

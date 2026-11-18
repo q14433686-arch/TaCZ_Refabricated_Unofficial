@@ -111,15 +111,19 @@ function M.tick_reload(api)
         if (not cache.is_tactical) then
             if (api:getFireMode() == BURST) then
                 if (reload_time > intro_empty_feed_semi) then
-                    api:consumeAmmoFromPlayer(1)
-                    api:setAmmoInBarrel(true)
-                    reloaded_count = reloaded_count + 1
+                    if (api:loadChamberFromReserve()) then
+                        reloaded_count = 1
+                    else
+                        interrupted_time = reload_time
+                    end
                 end
             else
                 if (reload_time > intro_empty_feed) then
-                    api:consumeAmmoFromPlayer(1)
-                    api:setAmmoInBarrel(true)
-                    reloaded_count = reloaded_count + 1
+                    if (api:loadChamberFromReserve()) then
+                        reloaded_count = 1
+                    else
+                        interrupted_time = reload_time
+                    end
                 end
             end
         else
@@ -138,14 +142,14 @@ function M.tick_reload(api)
         else
             base_time = base_time + intro
         end
-        while (base_time < reload_time) do
-            if (reloaded_count > cache.needed_count) then
+        while (interrupted_time == -1 and reloaded_count <= cache.needed_count and base_time < reload_time) do
+            local loaded = api:loadMagazineFromReserve(1)
+            if (loaded == 0) then
+                interrupted_time = reload_time
                 break
             end
-            reloaded_count = reloaded_count + 1
+            reloaded_count = reloaded_count + loaded
             base_time = base_time + loop
-            api:consumeAmmoFromPlayer(1)
-            api:putAmmoInMagazine(1)
         end
     end
     -- Write back cache

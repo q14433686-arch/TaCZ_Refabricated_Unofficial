@@ -1,0 +1,231 @@
+diff --git a/data/tacz/scripts/hk_mk23_logic.lua b/data/tacz/scripts/hk_mk23_logic.lua
+index 1e3087c..631ca61 100644
+--- a/data/tacz/scripts/hk_mk23_logic.lua
++++ b/data/tacz/scripts/hk_mk23_logic.lua
+@@ -77,30 +77,23 @@ function M.tick_reload(api)
+
+     if (reload_time < feed) then
+         return EMPTY_RELOAD_FEEDING, feed - reload_time
+-    elseif (reload_time >= feed and reload_time < cooldown) then
+-        if (not cache.loaded) then
+-            if (api:isReloadingNeedConsumeAmmo()) then
+-                if (cache.load_flag == "EMPTY") then
+-                    api:putAmmoInMagazine(api:consumeAmmoFromPlayer(api:getNeededAmmoAmount())-1)
+-                    api:setAmmoInBarrel(true)
+-                elseif (cache.load_flag == "TACTICAL") then
+-                    api:putAmmoInMagazine(api:consumeAmmoFromPlayer(api:getNeededAmmoAmount()))
+-                end
+-            else
+-                if (cache.load_flag == "EMPTY") then
+-                    api:putAmmoInMagazine(api:getNeededAmmoAmount()-1)
+-                    api:setAmmoInBarrel(true)
+-                elseif (cache.load_flag == "TACTICAL") then
+-                    api:putAmmoInMagazine(api:getNeededAmmoAmount())
+-                end
++    end
++    if (not cache.loaded) then
++        local needed = api:getNeededAmmoAmount()
++        if (cache.load_flag == "EMPTY") then
++            if (api:loadChamberFromReserve()) then
++                api:loadMagazineFromReserve(needed - 1)
+             end
+-            cache.loaded = true
+-            api:cacheScriptData(cache)
++        elseif (cache.load_flag == "TACTICAL") then
++            api:loadMagazineFromReserve(needed)
+         end
++        cache.loaded = true
++        api:cacheScriptData(cache)
++    end
++    if (reload_time < cooldown) then
+         return EMPTY_RELOAD_FINISHING, cooldown - reload_time
+-    elseif (reload_time >= cooldown) then
+-        return NOT_RELOADING, -1
+     end
++    return NOT_RELOADING, -1
+ end
+
+ return M
+\ No newline at end of file
+diff --git a/data/tacz/scripts/kar98_gun_logic.lua b/data/tacz/scripts/kar98_gun_logic.lua
+index 13ebd3d..7c47ee8 100644
+--- a/data/tacz/scripts/kar98_gun_logic.lua
++++ b/data/tacz/scripts/kar98_gun_logic.lua
+@@ -84,16 +84,16 @@ function M.tick_reload(api)
+     if (not cache.is_tactical and api:getAttachment("SCOPE") == "tacz:empty") then
+         if (reload_time < clip_load_feed) then
+             return EMPTY_RELOAD_FEEDING, clip_load_feed - reload_time
+-        elseif (reload_time >= clip_load_feed and reload_time < clip_load) then
+-            if (cache.reloaded_count == 0) then
+-                api:setAmmoInBarrel(api:consumeAmmoFromPlayer(1))
+-                api:putAmmoInMagazine(api:isReloadingNeedConsumeAmmo() and api:consumeAmmoFromPlayer(cache.needed_count) or cache.needed_count)
+-                cache.reloaded_count = 5
+-            end
++        end
++        if (not cache.clip_fed) then
++            local chamber = api:loadChamberFromReserve() and 1 or 0
++            cache.reloaded_count = chamber + api:loadMagazineFromReserve(cache.needed_count)
++            cache.clip_fed = true
++        end
++        if (reload_time < clip_load) then
+             return EMPTY_RELOAD_FINISHING, clip_load - reload_time
+-        else
+-            return NOT_RELOADING, -1
+         end
++        return NOT_RELOADING, -1
+     end
+
+     -- Handle interrupting reload
+@@ -130,14 +130,14 @@ function M.tick_reload(api)
+         else
+             base_time = base_time + intro
+         end
+-        while (base_time < reload_time) do
+-            if (reloaded_count > cache.needed_count) then
++        while (interrupted_time == -1 and reloaded_count < cache.needed_count and base_time < reload_time) do
++            local loaded = api:loadMagazineFromReserve(1)
++            if (loaded == 0) then
++                interrupted_time = reload_time
+                 break
+             end
+-            reloaded_count = reloaded_count + 1
++            reloaded_count = reloaded_count + loaded
+             base_time = base_time + loop
+-            api:consumeAmmoFromPlayer(1)
+-            api:putAmmoInMagazine(1)
+             if (not api:hasAmmoInBarrel()) then
+                 if (api:removeAmmoFromMagazine(1) ~= 0) then
+                     api:setAmmoInBarrel(true);
+diff --git a/data/tacz/scripts/m1014_gun_logic.lua b/data/tacz/scripts/m1014_gun_logic.lua
+index ca4cae1..1bf0ccd 100644
+--- a/data/tacz/scripts/m1014_gun_logic.lua
++++ b/data/tacz/scripts/m1014_gun_logic.lua
+@@ -72,9 +72,11 @@ function M.tick_reload(api)
+     if (reloaded_count == 0) then
+         if (not cache.is_tactical) then
+             if (reload_time > intro_empty_feed) then
+-                api:consumeAmmoFromPlayer(1)
+-                api:setAmmoInBarrel(true)
+-                reloaded_count = reloaded_count + 1
++                if (api:loadChamberFromReserve()) then
++                    reloaded_count = 1
++                else
++                    interrupted_time = reload_time
++                end
+             end
+         else
+             reloaded_count = reloaded_count + 1
+@@ -102,31 +104,14 @@ function M.tick_reload(api)
+             base_time = base_time + intro
+         end
+         -- 换弹时间达到了下一次 feed 时
+-        while (base_time < reload_time) do
+-            -- 如果换弹需求已满足则退出循环
+-            if (reloaded_count > cache.needed_count) then
+-                break
+-            end
+-            -- 如果需求量大于等于 2 ，则双发装填
+-            if (cache.needed_count - reloaded_count >= 1) then
+-                reloaded_count = reloaded_count + 2
+-                base_time = base_time + loop_2
+-                -- 判断玩家所处的游戏模式
+-                if (api:isReloadingNeedConsumeAmmo()) then
+-                    api:putAmmoInMagazine(api:consumeAmmoFromPlayer(2))
+-                else
+-                    api:putAmmoInMagazine(2)
+-                end
+-            -- 如果需求量等于 1 ，则单发装填
+-            elseif (cache.needed_count - reloaded_count < 1) then
+-                reloaded_count = reloaded_count + 1
+-                base_time = base_time + loop
+-                -- 判断玩家所处的游戏模式
+-                if (api:isReloadingNeedConsumeAmmo()) then
+-                    api:putAmmoInMagazine(api:consumeAmmoFromPlayer(1))
+-                else
+-                    api:putAmmoInMagazine(1)
+-                end
++        while (interrupted_time == -1 and reloaded_count <= cache.needed_count and base_time < reload_time) do
++            local pair = cache.needed_count - reloaded_count >= 1
++            local requested = pair and 2 or 1
++            local loaded = api:loadMagazineFromReserve(requested)
++            reloaded_count = reloaded_count + loaded
++            base_time = base_time + (pair and loop_2 or loop)
++            if (loaded < requested) then
++                interrupted_time = reload_time
+             end
+         end
+     end
+diff --git a/data/tacz/scripts/m1866_gun_logic.lua b/data/tacz/scripts/m1866_gun_logic.lua
+index ff08b48..5bb333c 100644
+--- a/data/tacz/scripts/m1866_gun_logic.lua
++++ b/data/tacz/scripts/m1866_gun_logic.lua
+@@ -123,14 +123,14 @@ function M.tick_reload(api)
+     -- Loop phase: all rounds go into the magazine
+     -- The first round is NOT chambered here — that happens during reload_end_empty
+     local base_time = reloaded_count * loop + loop_feed + intro_duration
+-    while (base_time < reload_time) do
+-        if (reloaded_count > cache.needed_count) then
++    while (interrupted_time == -1 and reloaded_count < cache.needed_count and base_time < reload_time) do
++        local loaded = api:loadMagazineFromReserve(1)
++        if (loaded == 0) then
++            interrupted_time = reload_time
+             break
+         end
+-        reloaded_count = reloaded_count + 1
++        reloaded_count = reloaded_count + loaded
+         base_time = base_time + loop
+-        api:consumeAmmoFromPlayer(1)
+-        api:putAmmoInMagazine(1)
+     end
+
+     if (reloaded_count >= cache.needed_count) then
+diff --git a/data/tacz/scripts/spas_12_gun_logic.lua b/data/tacz/scripts/spas_12_gun_logic.lua
+index 09b3aef..de94518 100644
+--- a/data/tacz/scripts/spas_12_gun_logic.lua
++++ b/data/tacz/scripts/spas_12_gun_logic.lua
+@@ -111,15 +111,19 @@ function M.tick_reload(api)
+         if (not cache.is_tactical) then
+             if (api:getFireMode() == BURST) then
+                 if (reload_time > intro_empty_feed_semi) then
+-                    api:consumeAmmoFromPlayer(1)
+-                    api:setAmmoInBarrel(true)
+-                    reloaded_count = reloaded_count + 1
++                    if (api:loadChamberFromReserve()) then
++                        reloaded_count = 1
++                    else
++                        interrupted_time = reload_time
++                    end
+                 end
+             else
+                 if (reload_time > intro_empty_feed) then
+-                    api:consumeAmmoFromPlayer(1)
+-                    api:setAmmoInBarrel(true)
+-                    reloaded_count = reloaded_count + 1
++                    if (api:loadChamberFromReserve()) then
++                        reloaded_count = 1
++                    else
++                        interrupted_time = reload_time
++                    end
+                 end
+             end
+         else
+@@ -138,14 +142,14 @@ function M.tick_reload(api)
+         else
+             base_time = base_time + intro
+         end
+-        while (base_time < reload_time) do
+-            if (reloaded_count > cache.needed_count) then
++        while (interrupted_time == -1 and reloaded_count <= cache.needed_count and base_time < reload_time) do
++            local loaded = api:loadMagazineFromReserve(1)
++            if (loaded == 0) then
++                interrupted_time = reload_time
+                 break
+             end
+-            reloaded_count = reloaded_count + 1
++            reloaded_count = reloaded_count + loaded
+             base_time = base_time + loop
+-            api:consumeAmmoFromPlayer(1)
+-            api:putAmmoInMagazine(1)
+         end
+     end
+     -- Write back cache

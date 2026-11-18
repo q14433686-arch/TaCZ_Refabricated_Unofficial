@@ -77,30 +77,23 @@ function M.tick_reload(api)
 
     if (reload_time < feed) then
         return EMPTY_RELOAD_FEEDING, feed - reload_time
-    elseif (reload_time >= feed and reload_time < cooldown) then
-        if (not cache.loaded) then
-            if (api:isReloadingNeedConsumeAmmo()) then
-                if (cache.load_flag == "EMPTY") then
-                    api:putAmmoInMagazine(api:consumeAmmoFromPlayer(api:getNeededAmmoAmount())-1)
-                    api:setAmmoInBarrel(true)
-                elseif (cache.load_flag == "TACTICAL") then
-                    api:putAmmoInMagazine(api:consumeAmmoFromPlayer(api:getNeededAmmoAmount()))
-                end
-            else
-                if (cache.load_flag == "EMPTY") then
-                    api:putAmmoInMagazine(api:getNeededAmmoAmount()-1)
-                    api:setAmmoInBarrel(true)
-                elseif (cache.load_flag == "TACTICAL") then
-                    api:putAmmoInMagazine(api:getNeededAmmoAmount())
-                end
-            end
-            cache.loaded = true
-            api:cacheScriptData(cache)
-        end
-        return EMPTY_RELOAD_FINISHING, cooldown - reload_time
-    elseif (reload_time >= cooldown) then
-        return NOT_RELOADING, -1
     end
+    if (not cache.loaded) then
+        local needed = api:getNeededAmmoAmount()
+        if (cache.load_flag == "EMPTY") then
+            if (api:loadChamberFromReserve()) then
+                api:loadMagazineFromReserve(needed - 1)
+            end
+        elseif (cache.load_flag == "TACTICAL") then
+            api:loadMagazineFromReserve(needed)
+        end
+        cache.loaded = true
+        api:cacheScriptData(cache)
+    end
+    if (reload_time < cooldown) then
+        return EMPTY_RELOAD_FINISHING, cooldown - reload_time
+    end
+    return NOT_RELOADING, -1
 end
 
 return M

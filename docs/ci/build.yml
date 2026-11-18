@@ -108,6 +108,7 @@ jobs:
       - name: Verify server smoke and nested MAE
         run: |
           grep -F 'PORT_CATALOG: server loaded 229 indexes' build/run/gameTest/logs/latest.log
+          grep -F 'PORT_ACTION: six default Lua reloads conserved' build/run/gameTest/logs/latest.log
           grep -F 'PORT_ACTION: malformed and nested Lua errors isolated' build/run/gameTest/logs/latest.log
           grep -F 'PORT_SMOKE_SERVER: 26.3 overlay and tacz:ak47 loaded' build/run/gameTest/logs/latest.log
           python3 - <<'PY'

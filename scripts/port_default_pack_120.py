@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 REL = Path('src/main/resources/assets/tacz/custom/tacz_default_gun')
@@ -129,8 +130,24 @@ tacz/tacz_default_gun and restart the game.\n''', '26.3-readme'
     return data, 'source'
 
 
+def adapted_reload_scripts(repo, effective):
+    """Apply the reviewed Lua diff to the five original blobs, never to a player's installed files."""
+    patch = ROOT / 'scripts/patches/default-pack-120-reloads.patch'
+    paths = [f'data/tacz/scripts/{name}.lua' for name in
+             ('hk_mk23_logic', 'kar98_gun_logic', 'm1014_gun_logic', 'm1866_gun_logic', 'spas_12_gun_logic')]
+    with tempfile.TemporaryDirectory() as tmp:
+        base = Path(tmp)
+        for name in paths:
+            dst = base / name
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            dst.write_bytes(subprocess.check_output(['git', '-C', repo, 'cat-file', 'blob', effective[name][1]]))
+        subprocess.run(['git', 'apply', str(patch)], cwd=base, check=True)
+        return {p: (base / p).read_bytes() for p in paths}
+
+
 def run(repo, write):
     effective = effective_paths(repo)
+    scripts = adapted_reload_scripts(repo, effective)
     rows = ['# Sh1roCu/TACZ-Refabricated ' + PIN,
             '# destination relative to built-in pack\tSHA-256\tupstream git blob\tadaptation (source = verbatim)\tsource path (= if unchanged)']
     kinds = Counter()
@@ -142,7 +159,7 @@ def run(repo, write):
             _, kind, size = git.stdout.readline().split()
             assert kind == b'blob'
             data = git.stdout.read(int(size)); assert git.stdout.read(1) == b'\n'
-            converted, rule = adapt(dest, data)
+            converted, rule = (scripts[dest], 'native-reload-accounting') if dest in scripts else adapt(dest, data)
             kinds[rule] += 1
             rows.append('\t'.join((dest, hashlib.sha256(converted).hexdigest(), blob, rule, '=' if dest == src else src)))
             path = PACK / dest

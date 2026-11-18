@@ -614,6 +614,7 @@ public class ModernKineticGunScriptAPI {
      * @return 实际消耗的弹药数量
      */
     public int consumeAmmoFromPlayer(int neededAmount) {
+        if (neededAmount <= 0) return 0;
         // 如果处于背包直读并且创造模式不消耗的情况
         if (useInventoryAmmo() && !isReloadingNeedConsumeAmmo()) {
             return neededAmount;
@@ -625,13 +626,37 @@ public class ModernKineticGunScriptAPI {
     }
 
     /**
+     * Reload-only transfer. Returns the number actually inserted (unlike putAmmoInMagazine,
+     * which returns overflow). Never debit a reserve for space the current magazine doesn't have.
+     */
+    public int loadMagazineFromReserve(int requested) {
+        if (requested <= 0 || useInventoryAmmo()) return 0;
+        int wanted = Math.min(requested, getNeededAmmoAmount());
+        if (wanted <= 0) return 0;
+        int funded = reloadDebitsReserve() ? consumeAmmoFromPlayer(wanted) : wanted;
+        return funded > 0 ? funded - putAmmoInMagazine(funded) : 0;
+    }
+
+    /** A script's empty feed must not set the chamber when a partial/custom source supplies zero. */
+    public boolean loadChamberFromReserve() {
+        if (useInventoryAmmo() || gunIndex.getGunData().getBolt() == Bolt.OPEN_BOLT || hasAmmoInBarrel()) return false;
+        if (reloadDebitsReserve() && consumeAmmoFromPlayer(1) != 1) return false;
+        setAmmoInBarrel(true);
+        return true;
+    }
+
+    private boolean reloadDebitsReserve() {
+        return isReloadingNeedConsumeAmmo() && !gunIndex.getGunData().getReloadData().isInfinite();
+    }
+
+    /**
      * 检查玩家身上（或者虚拟备弹）是否有弹药可以消耗，通常用于循环换弹的打断。
      * 创造模式的玩家会直接返回 true
      *
      * @return 玩家身上（或者虚拟备弹）是否有弹药可以消耗
      */
     public boolean hasAmmoToConsume() {
-        if (!isReloadingNeedConsumeAmmo()) {
+        if (!reloadDebitsReserve()) {
             return true;
         }
         if (abstractGunItem.useDummyAmmo(itemStack)) {

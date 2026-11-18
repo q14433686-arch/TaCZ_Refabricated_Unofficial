@@ -130,3 +130,9 @@ UH-1 的 `text_show` 经 26.3 第一人称 extraction 读取实际游戏方块�
 新测试分别覆盖非法 Lua 返回值、嵌套即时回调失败、换枪后旧定时器、库存冷却，以及一个真实追踪客户端收到**其他实体**的成功事件。后者也在同一连接上撤销单项 Fabric 接收能力、等服务端协商生效再检查旧事件；不是使用历史客户端 JAR，也不是两个独立客户端。通过与否以包含这些测试的源码 SHA 对应工作流为准。
 
 创造栏：枪包索引重建时使 vanilla 的标签页缓存失效；下一次打开或已打开界面的下一 tick 由原版一同重建分类、名字与 tag 搜索树。集成测试在同一界面输入唯一查询，转换并挂载含新索引的 ZIP，等待同一查询出现新物品，再检查跨分类的包选择与「全部」。测试不向已注册分类写入筛选结果。
+
+上述动作与创造栏的 [3755f96 编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44228548893)、[服务端与客户端 GameTest](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44228548923)已全部通过；客户端门禁同时检查 `PORT_ACTION`、`PORT_CREATIVE` 和 `PORT_CATALOG`，证据工件 `14394965034`。追踪的是另一个实体；撤销的是这条连接的一项接收能力，不是历史版本握手测试。
+
+### 默认 Lua 装填的库存守恒
+
+对实际引用的五个逻辑脚本（M1866、SPAS-12、M1014、Kar98、Mk23）增加 `native-reload-accounting` 来源分类。它们的装填时序沿用包配置，但不再假设「请求几件，弹药源一定供应几件」。`loadMagazineFromReserve(n)` 按剩余容量向原生弹药源或虚拟备弹取用，返回**实装数**；`loadChamberFromReserve()` 只在能装入时返回 true。保留旧 Lua 方法（`putAmmoInMagazine` 仍返回**溢出数**），不把第三方脚本重新解释成这种新语义。空仓 Mk23 与不带镜的 Kar98 在一次 tick 跨过装填与结束两个时间点时，也只结算一次。可审查的 Lua 差异见 [`default-pack-120-reloads.patch`](../../scripts/patches/default-pack-120-reloads.patch)。

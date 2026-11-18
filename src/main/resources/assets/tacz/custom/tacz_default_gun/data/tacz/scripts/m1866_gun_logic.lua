@@ -123,14 +123,14 @@ function M.tick_reload(api)
     -- Loop phase: all rounds go into the magazine
     -- The first round is NOT chambered here — that happens during reload_end_empty
     local base_time = reloaded_count * loop + loop_feed + intro_duration
-    while (base_time < reload_time) do
-        if (reloaded_count > cache.needed_count) then
+    while (interrupted_time == -1 and reloaded_count < cache.needed_count and base_time < reload_time) do
+        local loaded = api:loadMagazineFromReserve(1)
+        if (loaded == 0) then
+            interrupted_time = reload_time
             break
         end
-        reloaded_count = reloaded_count + 1
+        reloaded_count = reloaded_count + loaded
         base_time = base_time + loop
-        api:consumeAmmoFromPlayer(1)
-        api:putAmmoInMagazine(1)
     end
 
     if (reloaded_count >= cache.needed_count) then
