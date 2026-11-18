@@ -1,4 +1,9 @@
 {
+  "config.tacz.client.render.creative_pack_sidebar": "创造模式内容包侧栏",
+  "config.tacz.client.render.creative_pack_sidebar.desc": "是否显示 TACZ 创造模式物品栏的内容包侧栏。关闭后同时清除内容包筛选，显示当前分类的全部物品。",
+  "gui.tacz.creative_pack_filter.all": "全部",
+  "gui.tacz.creative_pack_filter.previous": "前面的内容包",
+  "gui.tacz.creative_pack_filter.next": "后面的内容包",
   "jei.tacz.gun_attachment_query.title": "枪械配件查询",
   "jei.tacz.gun_attachment_query.group": "%s（%s）",
   "jei.tacz.gun_attachment_query.page": "第 %s/%s 页",

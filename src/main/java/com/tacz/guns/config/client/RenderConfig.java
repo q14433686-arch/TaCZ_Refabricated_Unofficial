@@ -108,6 +108,7 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.BooleanValue IRIS_HAND_PHASE_SPLIT_FIX;
     public static ForgeConfigSpec.BooleanValue DISABLE_INTERACT_HUD_TEXT;
+    public static ForgeConfigSpec.BooleanValue RENDER_CREATIVE_PACK_SIDEBAR;
     public static ForgeConfigSpec.BooleanValue AUTO_SELECT_GUN_SMITH_TABLE_FILTER;
     public static ForgeConfigSpec.IntValue DAMAGE_COUNTER_RESET_TIME;
     public static ForgeConfigSpec.BooleanValue DISABLE_MOVEMENT_ATTRIBUTE_FOV;
@@ -522,6 +523,9 @@ public class RenderConfig {
 
         builder.comment("Whether or not to automatically select the gun smith table's held item filter when opening it with a gun, attachment or ammo in main hand");
         AUTO_SELECT_GUN_SMITH_TABLE_FILTER = builder.define("AutoSelectGunSmithTableFilter", true);
+
+        RENDER_CREATIVE_PACK_SIDEBAR = builder.comment("Display a pack sidebar in TaCZ creative tabs. Disabling restores the full current tab.")
+                .define("RenderCreativePackSidebar", true);
 
         SCOPE_PIP_ENABLE = builder
                 .comment("Magnify only INSIDE the scope lens instead of zooming the whole screen",

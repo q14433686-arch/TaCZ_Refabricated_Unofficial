@@ -10,6 +10,9 @@ import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.resource.network.CommonNetworkCache;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
+import net.fabricmc.fabric.api.client.creativetab.v1.FabricCreativeModeInventoryScreen;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.world.level.GameType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 
@@ -52,7 +55,33 @@ public class PackClientSmoke implements FabricClientGameTest {
             });
             context.waitTicks(30);
             saveFrame(context, "tacz_held_variant");
+            world.getServer().runOnServer(server -> world.getConnection().getServerPlayer().setGameMode(GameType.CREATIVE));
+            context.waitFor(client -> client.player.isCreative());
+            checkCreativePackSidebar(context);
         }
+    }
+
+    private static void checkCreativePackSidebar(ClientGameTestContext context) {
+        var screen = context.computeOnClient(client -> new CreativeModeInventoryScreen(client.player, client.player.connection.enabledFeatures(), true));
+        context.setScreen(() -> screen);
+        context.waitForScreen(CreativeModeInventoryScreen.class);
+        var tabs = (FabricCreativeModeInventoryScreen) screen;
+        var rifle = com.tacz.guns.init.ModCreativeTabs.GUN_RIFLE_TAB;
+        context.runOnClient(client -> tabs.setSelectedTab(rifle));
+        context.clickScreenButton("port_test"); // the fixture has no gunpack_info/logo: falls back to namespace + first item
+        context.runOnClient(client -> {
+            if (screen.getMenu().items.isEmpty() || screen.getMenu().items.stream().anyMatch(s ->
+                    !(s.getItem() instanceof IGun g) || !g.getGunId(s).getNamespace().equals("port_test")))
+                throw new AssertionError("Creative sidebar did not isolate the content namespace");
+            if (rifle.getDisplayItems().size() <= screen.getMenu().items.size())
+                throw new AssertionError("Creative filter mutated the registered tab");
+        });
+        context.clickScreenButton("gui.tacz.creative_pack_filter.all");
+        context.runOnClient(client -> {
+            if (rifle.getDisplayItems().size() != screen.getMenu().items.size()) throw new AssertionError("All did not restore the creative tab");
+        });
+        context.setScreen(() -> null);
+        GunMod.LOGGER.info("PORT_SMOKE_CLIENT: creative pack selection and reset passed");
     }
 
     private static void saveFrame(ClientGameTestContext context, String name) {

@@ -13,6 +13,7 @@
   "client": [
     "client.AbstractButtonMixin",
     "client.CameraMixin",
+    "client.CreativeModeInventoryScreenMixin",
     "client.FeatureRenderDispatcherMixin",
     "client.GameRendererMixin",
     "client.LevelExtractorScopePassMixin",

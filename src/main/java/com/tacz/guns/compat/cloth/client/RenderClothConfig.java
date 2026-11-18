@@ -88,6 +88,10 @@ public class RenderClothConfig {
                 .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.disable_interact_hud_text.desc"))
                 .setSaveConsumer(RenderConfig.DISABLE_INTERACT_HUD_TEXT::set).build());
 
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.creative_pack_sidebar"), RenderConfig.RENDER_CREATIVE_PACK_SIDEBAR.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.creative_pack_sidebar.desc"))
+                .setSaveConsumer(RenderConfig.RENDER_CREATIVE_PACK_SIDEBAR::set).build());
+
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.auto_select_gun_smith_table_filter"), RenderConfig.AUTO_SELECT_GUN_SMITH_TABLE_FILTER.get())
                 .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.auto_select_gun_smith_table_filter.desc"))
                 .setSaveConsumer(RenderConfig.AUTO_SELECT_GUN_SMITH_TABLE_FILTER::set).build());
