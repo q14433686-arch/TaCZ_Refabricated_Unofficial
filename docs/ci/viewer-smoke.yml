@@ -1,0 +1,72 @@
+name: recipe viewer runtimes
+on:
+  push:
+    branches: ['arena/**', '26.3']
+    paths: &viewer-paths
+      - 'src/**/compat/jei/**'
+      - 'src/**/compat/rei/**'
+      - 'src/**/compat/recipeviewer/**'
+      - 'src/**/RecipeViewerReloadBridge.java'
+      - 'src/**/mixin/client/compat/jei/**'
+      - 'src/**/network/message/ServerMessageSyncGunPack*.java'
+      - 'src/**/fabric.mod.json'
+      - 'src/gametest/**/*ViewerSmoke.java'
+      - 'src/gametest/**/ConversionReloadSmoke.java'
+      - 'scripts/run_client_smoke.sh'
+      - '.github/workflows/viewer-smoke.yml'
+      - 'gradle.properties'
+      - 'build.gradle'
+  pull_request:
+    paths: *viewer-paths
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: viewer-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  viewer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        viewer: [jei, rei]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: bash scripts/install_client_smoke_deps.sh
+      - name: Open a freshly synced recipe in the installed viewer
+        env:
+          SDL_VIDEO_DRIVER: x11
+          LIBGL_ALWAYS_SOFTWARE: 'true'
+          ALSOFT_DRIVERS: 'null'
+          TACZ_SMOKE_VIEWER: ${{ matrix.viewer }}
+        run: xvfb-run -a bash scripts/run_client_smoke.sh
+      - name: Summarize failures
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import os, re
+          from pathlib import Path
+          for path in [Path(os.environ['RUNNER_TEMP'])/'tacz-client.log', Path('build/run/clientGameTest/logs/latest.log')]:
+              if not path.exists(): continue
+              lines = path.read_text(errors='replace').splitlines()
+              for i in [i for i,s in enumerate(lines) if re.search('Caused by:|error:|AssertionError|Could not|requires |What went wrong:|unexpected exception|Failed to',s)][-12:]:
+                  msg = ' '.join(lines[i:i+3])[:1700].replace('%','%25')
+                  print('::notice::' + msg)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: viewer-${{ matrix.viewer }}-${{ github.sha }}
+          retention-days: 7
+          path: |
+            build/run/clientGameTest/logs/latest.log
+            build/run/clientGameTest/screenshots/**/*.png
+            build/run/clientGameTest/crash-reports/*.txt
+            ${{ runner.temp }}/tacz-client.log

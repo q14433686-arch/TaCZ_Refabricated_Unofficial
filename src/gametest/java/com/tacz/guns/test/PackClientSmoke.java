@@ -24,6 +24,11 @@ import net.minecraft.world.InteractionHand;
 /** A real join, cache sync and held-item render; the screenshot is evidence, not a pixel oracle. */
 public class PackClientSmoke implements FabricClientGameTest {
     @Override public void runTest(ClientGameTestContext context) {
+        String viewer = System.getProperty("tacz.test.viewer");
+        if (viewer != null) {
+            ViewerSmoke.run(context, viewer);
+            return;
+        }
         var id = Identifier.parse("tacz:ak47");
         GunMod.LOGGER.info("PORT_SMOKE_CLIENT: creating world");
         WorldReturnSmoke.Saved saved;

@@ -245,6 +245,23 @@ dependencies {
     // implementation "maven.modrinth:accrelatedrendering-refabricated:1.0.8-1.20.1-alpha-fabric.1"
 }
 
+// Test-mod adapters compile against the same optional APIs as the port, but a normal game
+// (including the baseline client smoke) must not acquire a viewer. Never nest these jars.
+configurations.gametestCompileOnly.extendsFrom(configurations.compileOnly)
+if (project.hasProperty('taczViewerSmoke')) {
+    if (!project.hasProperty('taczClientSmoke')) throw new GradleException('Viewer smoke needs -PtaczClientSmoke')
+    def viewer = project.property('taczViewerSmoke')
+    loom.runs.clientGameTest.property 'tacz.test.viewer', viewer
+    dependencies {
+        if (viewer == 'jei') {
+            gametestRuntimeOnly "maven.modrinth:jei:${jei_version}"
+        } else if (viewer == 'rei') {
+            gametestRuntimeOnly("me.shedaniel:RoughlyEnoughItems-fabric:${rei_version}") { transitive = false }
+            gametestRuntimeOnly("dev.architectury:architectury-fabric:${architectury_version}") { transitive = false }
+        } else throw new GradleException("Unknown test viewer: $viewer")
+    }
+}
+
 // Install the fixture as an external ZIP (not a mod resource or part of the release jar).
 def smokePack = tasks.register('zipSmokePack', Zip) {
     from 'src/gametest/fixtures/overlay'

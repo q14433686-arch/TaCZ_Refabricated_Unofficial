@@ -5,6 +5,7 @@
   "name": "TaCZ port smoke tests (development only)",
   "mixins": [{ "config": "tacz-port-test.mixins.json", "environment": "client" }],
   "entrypoints": {
+    "jei_mod_plugin": ["com.tacz.guns.test.JeiViewerSmoke"],
     "fabric-gametest": ["com.tacz.guns.test.PackServerSmoke", "com.tacz.guns.test.GunActionSmoke", "com.tacz.guns.test.ScriptGuardSmoke", "com.tacz.guns.test.DefaultReloadSmoke", "com.tacz.guns.test.AmmoStorageSmoke", "com.tacz.guns.test.DisplayRackSmoke", "com.tacz.guns.test.PackConversionSmoke"],
     "fabric-client-gametest": ["com.tacz.guns.test.PackClientSmoke"]
   },

@@ -36,7 +36,18 @@ probe() {
 probe & probe_pid=$!
 trap 'kill "$probe_pid" 2>/dev/null || true' EXIT
 # Leave time for Gradle/SDL teardown and evidence upload before the enclosing job-step timeout.
-timeout -k 20s 10m ./gradlew -PtaczClientSmoke runClientGameTest --console=plain --stacktrace 2>&1 | tee "$RUNNER_TEMP/tacz-client.log"
+args=(-PtaczClientSmoke)
+case ${TACZ_SMOKE_VIEWER:-} in
+    jei|rei) args+=("-PtaczViewerSmoke=$TACZ_SMOKE_VIEWER");;
+    '') ;;
+    *) echo 'Expected jei or rei' >&2; exit 2;;
+esac
+timeout -k 20s 10m ./gradlew "${args[@]}" runClientGameTest --console=plain --stacktrace 2>&1 | tee "$RUNNER_TEMP/tacz-client.log"
+if [[ -n ${TACZ_SMOKE_VIEWER:-} ]]; then
+    grep -Fq "PORT_VIEWER: $TACZ_SMOKE_VIEWER showed the reloaded gun; both query directions changed" "$run/logs/latest.log"
+    test -s "$(find "$run/screenshots" -name "*tacz_viewer_$TACZ_SMOKE_VIEWER.png" -print -quit)"
+    exit
+fi
 for frame in tacz_held_default_gun tacz_held_variant tacz_default_refit tacz_range_readout tacz_display_wall; do
     test -s "$(find "$run/screenshots" -name "*${frame}.png" -print -quit)"
 done
