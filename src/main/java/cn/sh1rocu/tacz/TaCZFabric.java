@@ -165,6 +165,7 @@ public class TaCZFabric implements ModInitializer {
     private void subscribeEvents() {
         CapabilityRegistry.init();
 
+        net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.register(AmmoStorageInteractionEvent::onRightClickBlock);
         // After real settlement (not the cancellable pre-event), and only on the logical server.
         com.tacz.guns.api.event.common.GunFirePostEvent.EVENT.register(GunSoundAngerEvent::onGunFire);
         AddReloadListenerEvent.CALLBACK.register(CommonAssetsManager::onReload);

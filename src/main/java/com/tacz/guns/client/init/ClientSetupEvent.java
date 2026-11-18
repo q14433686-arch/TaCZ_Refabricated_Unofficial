@@ -1,5 +1,7 @@
 package com.tacz.guns.client.init;
 
+import com.tacz.guns.client.tooltip.ClientAmmoStorageTooltip;
+import com.tacz.guns.inventory.tooltip.AmmoStorageTooltip;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.client.other.ThirdPersonManager;
 import com.tacz.guns.client.gui.overlay.GunHudOverlay;
@@ -65,6 +67,9 @@ public class ClientSetupEvent {
         ClientTooltipComponentCallback.EVENT.register(tooltip -> {
             if (tooltip instanceof GunTooltip gunTooltip) {
                 return new ClientGunTooltip(gunTooltip);
+            }
+            if (tooltip instanceof AmmoStorageTooltip storageTooltip) {
+                return new ClientAmmoStorageTooltip(storageTooltip);
             }
             if (tooltip instanceof AmmoBoxTooltip ammoBoxTooltip) {
                 return new ClientAmmoBoxTooltip(ammoBoxTooltip);

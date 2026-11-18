@@ -1,5 +1,8 @@
 package com.tacz.guns.client.input;
 
+import com.tacz.guns.block.AmmoStorageBlock;
+import com.tacz.guns.network.message.ClientMessageAmmoStorageInteract;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import cn.sh1rocu.tacz.api.event.InputEvent;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.tacz.guns.api.item.IGun;
@@ -88,6 +91,11 @@ public class InteractKey {
     private static void interactBlock(BlockHitResult blockHitResult, LocalPlayer player, Minecraft mc) {
         BlockPos blockPos = blockHitResult.getBlockPos();
         BlockState block = player.level().getBlockState(blockPos);
+        if (block.getBlock() instanceof AmmoStorageBlock) {
+            if (ClientPlayNetworking.canSend(ClientMessageAmmoStorageInteract.TYPE))
+                ClientPlayNetworking.send(new ClientMessageAmmoStorageInteract(blockPos));
+            return;
+        }
         if (InteractKeyConfigRead.canInteractBlock(block)) {
             mc.startUseItem();
         }

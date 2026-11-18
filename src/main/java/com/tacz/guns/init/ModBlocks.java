@@ -1,5 +1,6 @@
 package com.tacz.guns.init;
 
+import com.tacz.guns.block.entity.AmmoStorageBlockEntity;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.block.*;
 import com.tacz.guns.block.entity.GunSmithTableBlockEntity;
@@ -32,6 +33,16 @@ public class ModBlocks {
     public static Block TARGET = registerBlock("target", new TargetBlock(woodProps("target")));
     // 26.3: PushReaction.DESTROY 更名为 POPPED（语义不变：被活塞推动时破坏掉落）。
     public static Block STATUE = registerBlock("statue", new StatueBlock(BlockBehaviour.Properties.of().setId(blockKey("statue")).sound(SoundType.STONE).strength(2.0F, 3.0F).noOcclusion().pushReaction(PushReaction.POPPED)));
+
+    public static final Block AMMO_STORAGE = storage("ammo_storage", AmmoStorageBlock.IRON_CAPACITY_STACKS);
+    public static final Block AMMO_STORAGE_GOLD = storage("ammo_storage_gold", AmmoStorageBlock.GOLD_CAPACITY_STACKS);
+    public static final Block AMMO_STORAGE_DIAMOND = storage("ammo_storage_diamond", AmmoStorageBlock.DIAMOND_CAPACITY_STACKS);
+    public static final BlockEntityType<AmmoStorageBlockEntity> AMMO_STORAGE_BE = registerBlockEntity("ammo_storage", AmmoStorageBlockEntity.TYPE);
+
+    private static Block storage(String name, int capacity) {
+        return registerBlock(name, new AmmoStorageBlock(capacity, BlockBehaviour.Properties.of().setId(blockKey(name)).sound(SoundType.METAL)
+                .strength(2f).pushReaction(PushReaction.POPPED)));
+    }
 
     public static BlockEntityType<GunSmithTableBlockEntity> GUN_SMITH_TABLE_BE = registerBlockEntity("gun_smith_table", GunSmithTableBlockEntity.TYPE);
     public static BlockEntityType<TargetBlockEntity> TARGET_BE = registerBlockEntity("target", TargetBlockEntity.TYPE);

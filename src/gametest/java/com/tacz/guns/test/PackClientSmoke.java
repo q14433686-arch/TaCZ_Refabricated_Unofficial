@@ -1,5 +1,6 @@
 package com.tacz.guns.test;
 
+import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
@@ -16,15 +17,18 @@ import net.minecraft.world.InteractionHand;
 public class PackClientSmoke implements FabricClientGameTest {
     @Override public void runTest(ClientGameTestContext context) {
         var id = Identifier.parse("tacz:ak47");
+        GunMod.LOGGER.info("PORT_SMOKE_CLIENT: creating world");
         try (var world = context.worldBuilder().create()) {
             context.waitFor(client -> CommonNetworkCache.INSTANCE.getGunIndex(id) != null
                     && TimelessAPI.getClientGunIndex(id).isPresent());
+            GunMod.LOGGER.info("PORT_SMOKE_CLIENT: default client index and sync installed");
             world.getServer().runOnServer(server -> world.getConnection().getServerPlayer().setItemInHand(
                     InteractionHand.MAIN_HAND, GunItemBuilder.create().setId(id).setAmmoCount(3).build()));
             context.waitFor(client -> client.player.getMainHandItem().getItem() instanceof IGun);
             world.getConnection().waitForChunksRender();
             context.waitTicks(30);
             context.takeScreenshot("tacz_held_default_gun");
+            GunMod.LOGGER.info("PORT_SMOKE_CLIENT: saved default frame");
             // Remote clients get the derived capability, never the server's logic file.
             context.waitFor(client -> {
                 var index = CommonNetworkCache.INSTANCE.getGunIndex(Identifier.parse("port_test:scripted"));
@@ -34,6 +38,7 @@ public class PackClientSmoke implements FabricClientGameTest {
             var variant = Identifier.parse("port_test:optic");
             context.waitFor(client -> CommonNetworkCache.INSTANCE.getAttachmentVariantIndex(variant) != null
                     && TimelessAPI.getClientAttachmentVariantIndex(variant).isPresent());
+            GunMod.LOGGER.info("PORT_SMOKE_CLIENT: variant and script capability synced");
             world.getServer().runOnServer(server -> {
                 var gun = GunItemBuilder.create().setId(oem).putAllVirtualAttachment(DefaultGunAttachments.defaults(oem)).build();
                 if (!new ClientMessageSelectRefitOption(0, AttachmentType.SCOPE, ClientMessageSelectRefitOption.Kind.VARIANT, variant).apply(gun))
@@ -48,6 +53,7 @@ public class PackClientSmoke implements FabricClientGameTest {
             });
             context.waitTicks(30);
             context.takeScreenshot("tacz_held_variant");
+            GunMod.LOGGER.info("PORT_SMOKE_CLIENT: saved variant frame");
         }
     }
 }

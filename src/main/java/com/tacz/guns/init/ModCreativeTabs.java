@@ -31,6 +31,9 @@ public class ModCreativeTabs {
                 output.acceptAll(GunSmithTableItem.fillItemCategory());
                 output.accept(ModItems.TARGET);
                 output.accept(ModItems.STATUE);
+                output.accept(ModItems.AMMO_STORAGE);
+                output.accept(ModItems.AMMO_STORAGE_GOLD);
+                output.accept(ModItems.AMMO_STORAGE_DIAMOND);
                 output.accept(ModItems.TARGET_MINECART);
                 AmmoBoxItem.fillItemCategory(output);
             }).build());

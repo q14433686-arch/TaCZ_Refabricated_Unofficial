@@ -32,6 +32,9 @@ public class ModItems {
     public static Item TARGET = register("target", new BlockItem(ModBlocks.TARGET, blockItemProps("target")));
     public static Item STATUE = register("statue", new BlockItem(ModBlocks.STATUE, blockItemProps("statue")));
     public static Item AMMO_BOX = register("ammo_box", new AmmoBoxItem(itemProps("ammo_box")));
+    public static final Item AMMO_STORAGE = register("ammo_storage", new AmmoStorageBlockItem(ModBlocks.AMMO_STORAGE, blockItemProps("ammo_storage").stacksTo(1)));
+    public static final Item AMMO_STORAGE_GOLD = register("ammo_storage_gold", new AmmoStorageBlockItem(ModBlocks.AMMO_STORAGE_GOLD, blockItemProps("ammo_storage_gold").stacksTo(1)));
+    public static final Item AMMO_STORAGE_DIAMOND = register("ammo_storage_diamond", new AmmoStorageBlockItem(ModBlocks.AMMO_STORAGE_DIAMOND, blockItemProps("ammo_storage_diamond").stacksTo(1)));
     public static Item TARGET_MINECART = register("target_minecart", new TargetMinecartItem(itemProps("target_minecart")));
 
     private static ResourceKey<Item> itemKey(String name) {
