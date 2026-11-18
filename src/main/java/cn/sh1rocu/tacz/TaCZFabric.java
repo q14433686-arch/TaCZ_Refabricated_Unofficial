@@ -165,6 +165,8 @@ public class TaCZFabric implements ModInitializer {
     private void subscribeEvents() {
         CapabilityRegistry.init();
 
+        // After real settlement (not the cancellable pre-event), and only on the logical server.
+        com.tacz.guns.api.event.common.GunFirePostEvent.EVENT.register(GunSoundAngerEvent::onGunFire);
         AddReloadListenerEvent.CALLBACK.register(CommonAssetsManager::onReload);
         CommonLifecycleEvents.TAGS_LOADED.register(CommonAssetsManager::onReload);
         ServerLifecycleEvents.SERVER_STOPPED.register(CommonAssetsManager::onServerStopped);
