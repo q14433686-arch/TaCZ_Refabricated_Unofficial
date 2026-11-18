@@ -1,4 +1,7 @@
 {
+  "message.tacz.unload.cannot": "当前不能卸载",
+  "message.tacz.unload.unsupported": "该武器不支持快速卸载弹药",
+  "message.tacz.unload.no_ammo": "没有可卸载的弹药",
   "block.tacz.statue": "石像",
   "block.tacz.target": "人形标靶",
   "block.tacz.gun_smith_table": "枪械工作台",

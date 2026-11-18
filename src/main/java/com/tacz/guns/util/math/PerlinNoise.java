@@ -1,6 +1,6 @@
 package com.tacz.guns.util.math;
 
-import java.util.Date;
+import com.tacz.guns.util.time.GunTime;
 import java.util.Random;
 
 public class PerlinNoise {
@@ -10,7 +10,7 @@ public class PerlinNoise {
     private final long periodMs;
     private float prevNum;
     private float num;
-    private long prevTime = new Date().getTime();
+    private long prevTime = GunTime.nowMillis();
     private boolean reverse = false;
 
     public PerlinNoise(float rangeDown, float rangeUp, long periodMs) {
@@ -33,7 +33,7 @@ public class PerlinNoise {
     }
 
     public float getValue() {
-        long periodTime = new Date().getTime() - prevTime;
+        long periodTime = GunTime.nowMillis() - prevTime;
         long repeat = periodTime / periodMs;
         long partialTime = periodTime % periodMs;
         prevTime += repeat * periodMs;

@@ -1,5 +1,6 @@
 package com.tacz.guns.item;
 
+import com.tacz.guns.util.time.GunTime;
 import com.google.common.base.Suppliers;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.DefaultAssets;
@@ -169,6 +170,26 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
 
 
     @Override
+    public void unloadAmmo(ShooterDataHolder dataHolder, ItemStack gunItem, LivingEntity shooter) {
+        if (shooter.level().isClientSide() || useInventoryAmmo(gunItem)) {
+            return;
+        }
+        ModernKineticGunScriptAPI api = new ModernKineticGunScriptAPI();
+        api.setItemStack(gunItem);
+        api.setShooter(shooter);
+        api.setDataHolder(dataHolder);
+
+        CommonGunIndex gunIndex = api.getGunIndex();
+        if (gunIndex == null || !gunIndex.canUnloadAmmo()) {
+            return;
+        }
+        resolveScriptFunction(gunIndex, "unload_ammo")
+                .ifPresentOrElse(
+                        func -> func.call(CoerceJavaToLua.coerce(api)),
+                        () -> super.unloadAmmo(dataHolder, gunItem, shooter));
+    }
+
+    @Override
     public void melee(ShooterDataHolder dataHolder, LivingEntity user, ItemStack gunItem) {
         Identifier gunId = this.getGunId(gunItem);
         TimelessAPI.getCommonGunIndex(gunId).ifPresent(gunIndex -> {
@@ -238,9 +259,9 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
     }
 
     public void tickLocked(IGun iGun, ItemStack gunStack, GunHeatData heatData, long heatTimestamp) {
-        if (System.currentTimeMillis() - heatTimestamp >= heatData.getOverHeatTime()) {
+        if (GunTime.nowMillis() - heatTimestamp >= heatData.getOverHeatTime()) {
             float heatAmount = iGun.getHeatAmount(gunStack)
-                    - ((float) (System.currentTimeMillis() - heatTimestamp) / 10000f)
+                    - ((float) (GunTime.nowMillis() - heatTimestamp) / 10000f)
                     * heatData.getCoolingMultiplier();
 
             iGun.setHeatAmount(gunStack, heatAmount);
@@ -251,9 +272,9 @@ public class ModernKineticGunItem extends AbstractGunItem implements GunItemData
     }
 
     public void tickNormal(IGun iGun, ItemStack gunStack, GunHeatData heatData, long heatTimestamp) {
-        if (System.currentTimeMillis() - heatTimestamp >= heatData.getCoolingDelay()) {
+        if (GunTime.nowMillis() - heatTimestamp >= heatData.getCoolingDelay()) {
             float heatAmount = iGun.getHeatAmount(gunStack)
-                    - ((float) (System.currentTimeMillis() - heatTimestamp) / 10000f)
+                    - ((float) (GunTime.nowMillis() - heatTimestamp) / 10000f)
                     * heatData.getCoolingMultiplier();
 
             iGun.setHeatAmount(gunStack, heatAmount);

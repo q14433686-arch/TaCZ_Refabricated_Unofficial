@@ -210,6 +210,12 @@ public class SoundPlayManager {
         playClientSound(entity, display.getSoundData(SoundManager.MELEE_STOCK), 1.0f, 0.9f + entity.getRandom().nextFloat() * 0.125f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
     }
 
+    public static void playUnloadSound(LivingEntity entity, Identifier gunId, Identifier displayId) {
+        var sound = TimelessAPI.getGunDisplay(displayId, gunId).map(display -> display.getSoundData(SoundManager.UNLOAD_SOUND))
+                .orElseGet(() -> SoundData.of(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "attachments/attachment_general_uninstall")));
+        playClientSound(entity, sound, 1f, 1f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
+    }
+
     public static void playHeadHitSound(LivingEntity entity, GunDisplayInstance display) {
         boolean relative = isLocalPlayer(entity);
         playClientSound(entity, display.getSoundData(SoundManager.HEAD_HIT_SOUND), 1.0f, 1.0f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get(), false, SoundConfig.HIT_SOUND_CONCURRENCY_LIMIT.get(), !relative, relative);

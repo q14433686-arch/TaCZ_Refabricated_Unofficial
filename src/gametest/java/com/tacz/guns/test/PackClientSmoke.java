@@ -25,6 +25,11 @@ public class PackClientSmoke implements FabricClientGameTest {
             world.getConnection().waitForChunksRender();
             context.waitTicks(30);
             context.takeScreenshot("tacz_held_default_gun");
+            // Remote clients get the derived capability, never the server's logic file.
+            context.waitFor(client -> {
+                var index = CommonNetworkCache.INSTANCE.getGunIndex(Identifier.parse("port_test:scripted"));
+                return index != null && index.hasUnloadAmmoScript() && index.getScript() == null;
+            });
             var oem = Identifier.parse("port_test:oem");
             var variant = Identifier.parse("port_test:optic");
             context.waitFor(client -> CommonNetworkCache.INSTANCE.getAttachmentVariantIndex(variant) != null

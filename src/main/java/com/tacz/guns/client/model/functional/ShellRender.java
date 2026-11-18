@@ -1,5 +1,6 @@
 package com.tacz.guns.client.model.functional;
 
+import com.tacz.guns.util.time.GunTime;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -55,7 +56,7 @@ public class ShellRender implements IFunctionalSubmitter {
         double yRandom = Math.random() * randomVelocity.y();
         double zRandom = Math.random() * randomVelocity.z();
         Vector3f vector3f = new Vector3f((float) xRandom, (float) yRandom, (float) zRandom);
-        SHELL_QUEUE.offerLast(new Data(System.currentTimeMillis(), vector3f));
+        SHELL_QUEUE.offerLast(new Data(GunTime.nowMillis(), vector3f));
     }
 
     private void renderShell(GunDisplayInstance display, GunData gunData, PoseStack poseStack, BedrockGunModel gunModel) {
@@ -113,7 +114,7 @@ public class ShellRender implements IFunctionalSubmitter {
         poseStack2.last().pose().mul(data.pose);
 
         // 获取存留时间和各种参数
-        long remindTime = System.currentTimeMillis() - data.timeStamp;
+        long remindTime = GunTime.nowMillis() - data.timeStamp;
         double time = remindTime / 1000.0;
         Vector3f randomOffset = data.randomOffset;
 
@@ -148,7 +149,7 @@ public class ShellRender implements IFunctionalSubmitter {
     private void checkShellQueue(long lifeTime) {
         if (!SHELL_QUEUE.isEmpty()) {
             Data data = SHELL_QUEUE.peekFirst();
-            if ((System.currentTimeMillis() - data.timeStamp) > lifeTime) {
+            if ((GunTime.nowMillis() - data.timeStamp) > lifeTime) {
                 SHELL_QUEUE.pollFirst();
                 checkShellQueue(lifeTime);
             }
@@ -211,7 +212,7 @@ public class ShellRender implements IFunctionalSubmitter {
                 debugShell(gunId, "capture", displayContext, data, origin, 0, 0, 0,
                         initialVelocity, acceleration, angularVelocity, texture, debug);
             }
-            long ageMs = System.currentTimeMillis() - data.timeStamp;
+            long ageMs = GunTime.nowMillis() - data.timeStamp;
             double time = ageMs / 1000.0;
             Vector3f randomOffset = data.randomOffset;
 
@@ -285,7 +286,7 @@ public class ShellRender implements IFunctionalSubmitter {
         if (!enabled) {
             return;
         }
-        long now = System.currentTimeMillis();
+        long now = GunTime.nowMillis();
         int interval = shellDebugIntervalMs();
         if (now - lastDebugLogTime < interval) {
             return;

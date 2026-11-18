@@ -110,7 +110,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
         register.accept(scriptManager);
 
         ammoIndex = register(new CommonDataManager<>(DataType.AMMO_INDEX, CommonAmmoIndex.class, GSON, "index/ammo", "AmmoIndexLoader"));
-        gunIndex = register(new CommonDataManager<>(DataType.GUN_INDEX, CommonGunIndex.class, GSON, "index/guns", "GunIndexLoader"));
+        gunIndex = register(new GunIndexManager());
         attachmentIndex = register(new CommonDataManager<>(DataType.ATTACHMENT_INDEX, CommonAttachmentIndex.class, GSON, "index/attachments", "AttachmentIndexLoader"));
         attachmentVariantIndex = register(new CommonDataManager<>(DataType.ATTACHMENT_VARIANT_INDEX, CommonAttachmentVariantIndex.class, GSON, "index/attachment_variants", "AttachmentVariantIndexLoader") {
             @Override protected CommonAttachmentVariantIndex parseJson(com.google.gson.JsonElement element) {
@@ -434,6 +434,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     }
 
     public static void onServerStopped(MinecraftServer server) {
+        com.tacz.guns.util.CycleTaskHelper.clear();
         clearInstance();
     }
 

@@ -1,5 +1,7 @@
 package com.tacz.guns.client.animation.statemachine;
 
+import com.tacz.guns.util.time.GunTime;
+import com.tacz.guns.client.gameplay.ClientAmmoCount;
 import cn.sh1rocu.tacz.api.extension.IMoveDistTracker;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
@@ -130,7 +132,7 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
      * @return 当前系统时间
      */
     public long getCurrentTimestamp() {
-        return System.currentTimeMillis();
+        return GunTime.nowMillis();
     }
 
     /**
@@ -152,7 +154,12 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
      * @return 返回弹匣中的备弹数，不计算已在枪管中的弹药。
      */
     public int getAmmoCount() {
-        return processGunData((iGun, gunIndex) -> iGun.getCurrentAmmoCount(currentGunItem)).orElse(0);
+        return processGunData((iGun, index) -> {
+            var player = Minecraft.getInstance().player;
+            if (iGun.useInventoryAmmo(currentGunItem) && player != null && player.getMainHandItem() == currentGunItem)
+                return ClientAmmoCount.getCached(player, currentGunItem, iGun);
+            return iGun.getCurrentAmmoCount(currentGunItem);
+        }).orElse(0);
     }
 
     /**

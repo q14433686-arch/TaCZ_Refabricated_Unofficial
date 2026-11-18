@@ -84,6 +84,10 @@ public class GunData {
     @SerializedName("fire_sound")
     private FireSound fireSound = new FireSound();
 
+    @SerializedName("allow_ammo_unload")
+    private boolean allowAmmoUnload;
+    public boolean isAllowAmmoUnload() { return allowAmmoUnload; }
+
     @SerializedName("reload")
     private GunReloadData reloadData = new GunReloadData();
 

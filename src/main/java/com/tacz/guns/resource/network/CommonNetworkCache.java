@@ -214,7 +214,7 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
             try {
                 switch (type) {
                     case GUN_DATA -> gunData.put(entry.getKey(), GunDataManager.parseData(JsonParser.parseString(entry.getValue())));
-                    case GUN_INDEX -> gunIndex.put(entry.getKey(), parse(entry.getValue(), CommonGunIndex.class));
+                    case GUN_INDEX -> gunIndex.put(entry.getKey(), CommonGunIndex.getInstance(parse(entry.getValue(), com.tacz.guns.resource.pojo.GunIndexPOJO.class), this));
                     case AMMO_INDEX -> ammoIndex.put(entry.getKey(), parse(entry.getValue(), CommonAmmoIndex.class));
                     case ATTACHMENT_DATA -> attachmentData.put(entry.getKey(), AttachmentDataManager.parseData(JsonParser.parseString(entry.getValue()), CommonAssetsManager.GSON));
                     case ATTACHMENT_VARIANT_DATA -> attachmentVariantData.put(entry.getKey(), parse(entry.getValue(), VariantData.class));

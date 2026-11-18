@@ -1,4 +1,7 @@
 {
+  "message.tacz.unload.cannot": "Cannot unload right now",
+  "message.tacz.unload.unsupported": "This weapon does not support quick ammo unloading",
+  "message.tacz.unload.no_ammo": "No ammo to unload",
   "toast.tacz.level_up": "Level Up!",
   "toast.tacz.sub.level_up": "This weapon works better",
   "toast.tacz.sub.damage_up": "Weapons become more deadly",

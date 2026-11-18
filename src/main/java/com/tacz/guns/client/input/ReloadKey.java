@@ -31,6 +31,11 @@ public class ReloadKey {
                 return;
             }
             if (player.getMainHandItem().getItem() instanceof IGun iGun) {
+                // Native 26.3 key mapping lacks the old mod's modifier binding: Alt + the bound reload key.
+                if (InputConstants.isKeyDown(InputConstants.KEY_LALT) || InputConstants.isKeyDown(InputConstants.KEY_RALT)) {
+                    IClientPlayerGunOperator.fromLocalPlayer(player).unloadAmmo();
+                    return;
+                }
                 // 如果使用背包直读，且没有换弹冷却机制，则在输入时就屏蔽换弹
                 if (iGun.useInventoryAmmo(player.getMainHandItem())) {
                     return;
@@ -67,6 +72,7 @@ public class ReloadKey {
         if (player == null || player.isSpectator() || player.tickCount % 5 != 0) {
             return;
         }
+        if (IClientPlayerGunOperator.fromLocalPlayer(player).getDataHolder().autoReloadSuppressed) return;
         ItemStack currentGunItem = player.getMainHandItem();
         if (player.getMainHandItem().getItem() instanceof IGun iGun) {
             // 如果使用背包直读，且没有换弹冷却机制，则在输入时就屏蔽换弹

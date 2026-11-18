@@ -1,5 +1,6 @@
 package com.tacz.guns.client.event;
 
+import com.tacz.guns.util.time.GunTime;
 import cn.sh1rocu.simplebedrockmodel.api.event.ViewportEvent;
 import cn.sh1rocu.tacz.api.event.ComputeFovModifierEvent;
 import com.tacz.guns.GunMod;
@@ -219,7 +220,7 @@ public class CameraSetupEvent {
             float yawMod = (float) attachmentRecoilModifier.right().eval(aimingRecoilModifier);
             pitchSplineFunction = gunData.getRecoil().genPitchSplineFunction(pitchMod);
             yawSplineFunction = gunData.getRecoil().genYawSplineFunction(yawMod);
-            shootTimeStamp = System.currentTimeMillis();
+            shootTimeStamp = GunTime.nowMillis();
             xRotO = 0;
             yRotO = 0;
             if (RenderConfig.RECOIL_DEBUG.get()) {
@@ -233,7 +234,7 @@ public class CameraSetupEvent {
         if (player == null) {
             return;
         }
-        long timeTotal = System.currentTimeMillis() - shootTimeStamp;
+        long timeTotal = GunTime.nowMillis() - shootTimeStamp;
         double dPitch = 0;
         double dYaw = 0;
         if (pitchSplineFunction != null && pitchSplineFunction.isValidPoint(timeTotal)) {
@@ -315,5 +316,13 @@ public class CameraSetupEvent {
             }
             event.setNewFovModifier(player.isSprinting() ? 1.15f * f : f);
         }
+    }
+
+    public static void resetTimestamp() {
+        shootTimeStamp = -1;
+        pitchSplineFunction = null;
+        yawSplineFunction = null;
+        xRotO = 0;
+        yRotO = 0;
     }
 }

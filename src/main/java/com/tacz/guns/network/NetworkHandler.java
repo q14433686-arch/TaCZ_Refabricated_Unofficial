@@ -33,6 +33,7 @@ public class NetworkHandler {
     public static void registerPayloads() {
         // C2S (serverbound play)
         PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerShoot.TYPE, ClientMessagePlayerShoot.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerUnloadGun.TYPE, ClientMessagePlayerUnloadGun.STREAM_CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerReloadGun.TYPE, ClientMessagePlayerReloadGun.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerCancelReload.TYPE, ClientMessagePlayerCancelReload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerFireSelect.TYPE, ClientMessagePlayerFireSelect.CODEC);
@@ -66,6 +67,7 @@ public class NetworkHandler {
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunFireSelect.TYPE, ServerMessageGunFireSelect.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunMelee.TYPE, ServerMessageGunMelee.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunActionPost.TYPE, ServerMessageGunActionPost.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunUnload.TYPE, ServerMessageGunUnload.STREAM_CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunReload.TYPE, ServerMessageGunReload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunShoot.TYPE, ServerMessageGunShoot.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageSyncBaseTimestamp.TYPE, ServerMessageSyncBaseTimestamp.CODEC);
@@ -77,6 +79,7 @@ public class NetworkHandler {
         registerPayloads();
 
         ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerShoot.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
+        ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerUnloadGun.TYPE, ClientMessagePlayerUnloadGun::handle);
         ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerReloadGun.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerCancelReload.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerFireSelect.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
@@ -127,6 +130,7 @@ public class NetworkHandler {
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunFireSelect.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunMelee.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunActionPost.TYPE, (msg, ctx) -> msg.handle(ctx.player()));
+        ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunUnload.TYPE, ServerMessageGunUnload::handle);
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunReload.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunShoot.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageSyncBaseTimestamp.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));

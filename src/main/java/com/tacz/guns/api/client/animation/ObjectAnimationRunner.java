@@ -1,5 +1,6 @@
 package com.tacz.guns.api.client.animation;
 
+import com.tacz.guns.util.time.GunTime;
 import com.tacz.guns.util.math.MathUtil;
 import net.minecraft.client.Minecraft;
 
@@ -90,7 +91,7 @@ public class ObjectAnimationRunner {
     public void run() {
         if (!running) {
             running = true;
-            lastUpdateNs = System.nanoTime();
+            lastUpdateNs = GunTime.nowNanos();
         }
         pausing = false;
     }
@@ -281,7 +282,7 @@ public class ObjectAnimationRunner {
 
     public void update(boolean blend) {
         long fromTimeNs = progressNs;
-        long currentNs = System.nanoTime();
+        long currentNs = GunTime.nowNanos();
         long alphaProgress = currentNs - lastUpdateNs;
         updateProgress(alphaProgress);
         lastUpdateNs = currentNs;
@@ -304,7 +305,7 @@ public class ObjectAnimationRunner {
 
     public void updateSoundOnly() {
         long fromTimeNs = progressNs;
-        long currentNs = System.nanoTime();
+        long currentNs = GunTime.nowNanos();
         updateProgress(currentNs - lastUpdateNs);
         lastUpdateNs = currentNs;
         ObjectAnimationSoundChannel soundChannel = animation.getSoundChannel();

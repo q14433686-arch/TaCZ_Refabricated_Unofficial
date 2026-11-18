@@ -1,5 +1,6 @@
 package com.tacz.guns.client.gameplay;
 
+import com.tacz.guns.util.time.GunTime;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.IGun;
@@ -57,7 +58,7 @@ public class LocalPlayerAim {
             return;
         }
         // 如果正在收枪，则不能瞄准
-        if (System.currentTimeMillis() - data.clientDrawTimestamp < 0) {
+        if (GunTime.nowMillis() - data.clientDrawTimestamp < 0) {
             data.clientIsAiming = false;
         }
         Identifier gunId = iGun.getGunId(mainHandItem);
@@ -73,7 +74,7 @@ public class LocalPlayerAim {
 
     private boolean shouldBlockAim(GunData gun) {
         IGunOperator operator = IGunOperator.fromLivingEntity(player);
-        return gun.blocksAim(data.clientReloadStarting || operator.getSynReloadState().getStateType().isReloading(),
+        return data.isTimedStateLocked() || gun.blocksAim(data.clientReloadStarting || operator.getSynReloadState().getStateType().isReloading(),
                 data.isBolting || operator.getSynIsBolting());
     }
 
@@ -92,7 +93,7 @@ public class LocalPlayerAim {
                 data.clientAimingProgress = 0;
             }
         }
-        data.clientAimingTimestamp = System.currentTimeMillis();
+        data.clientAimingTimestamp = GunTime.nowMillis();
     }
 
     private float getAlphaProgress(GunData gunData) {
@@ -102,6 +103,6 @@ public class LocalPlayerAim {
             aimTime = operator.getCacheProperty().<Float>getCache(AdsModifier.ID);
         }
         aimTime = Math.max(0, aimTime);
-        return (System.currentTimeMillis() - data.clientAimingTimestamp + 1) / (aimTime * 1000);
+        return (GunTime.nowMillis() - data.clientAimingTimestamp + 1) / (aimTime * 1000);
     }
 }

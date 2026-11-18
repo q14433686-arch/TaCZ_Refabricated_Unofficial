@@ -1,5 +1,6 @@
 package com.tacz.guns.entity.shooter;
 
+import com.tacz.guns.util.time.GunTime;
 import cn.sh1rocu.tacz.api.LogicalSide;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
@@ -86,7 +87,7 @@ public class LivingEntityReload {
             // 初始化战术换弹的 tick 的状态
             data.reloadStateType = ReloadState.StateType.TACTICAL_RELOAD_FEEDING;
         }
-        data.reloadTimestamp = System.currentTimeMillis();
+        data.reloadTimestamp = GunTime.nowMillis();
         // 调用枪械逻辑
         if (!gunItem.startReload(data, currentGunItem, shooter)) {
             data.reloadStateType = ReloadState.StateType.NOT_RELOADING;

@@ -1,5 +1,6 @@
 package com.tacz.guns.client.event;
 
+import com.tacz.guns.util.time.GunTime;
 import cn.sh1rocu.simplebedrockmodel.api.event.RenderTickEvent;
 import com.mojang.blaze3d.platform.Window;
 import com.tacz.guns.GunMod;
@@ -123,9 +124,9 @@ public class RenderCrosshairEvent {
     }
 
     private static void renderHitMarker(GuiGraphicsExtractor graphics, Window window) {
-        long remainHitTime = System.currentTimeMillis() - hitTimestamp;
-        long remainKillTime = System.currentTimeMillis() - killTimestamp;
-        long remainHeadShotTime = System.currentTimeMillis() - headShotTimestamp;
+        long remainHitTime = GunTime.nowMillis() - hitTimestamp;
+        long remainKillTime = GunTime.nowMillis() - killTimestamp;
+        long remainHeadShotTime = GunTime.nowMillis() - headShotTimestamp;
         float offset = RenderConfig.HIT_MARKET_START_POSITION.get().floatValue();
         float fadeTime;
 
@@ -161,14 +162,20 @@ public class RenderCrosshairEvent {
     }
 
     public static void markHitTimestamp() {
-        RenderCrosshairEvent.hitTimestamp = System.currentTimeMillis();
+        RenderCrosshairEvent.hitTimestamp = GunTime.nowMillis();
     }
 
     public static void markKillTimestamp() {
-        RenderCrosshairEvent.killTimestamp = System.currentTimeMillis();
+        RenderCrosshairEvent.killTimestamp = GunTime.nowMillis();
     }
 
     public static void markHeadShotTimestamp() {
-        RenderCrosshairEvent.headShotTimestamp = System.currentTimeMillis();
+        RenderCrosshairEvent.headShotTimestamp = GunTime.nowMillis();
+    }
+
+    public static void resetTimestamps() {
+        hitTimestamp = -1L;
+        killTimestamp = -1L;
+        headShotTimestamp = -1L;
     }
 }

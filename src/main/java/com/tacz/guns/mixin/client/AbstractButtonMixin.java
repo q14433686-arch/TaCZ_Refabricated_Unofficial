@@ -1,5 +1,6 @@
 package com.tacz.guns.mixin.client;
 
+import com.tacz.guns.util.time.GunTime;
 import com.tacz.guns.client.gameplay.LocalPlayerDataHolder;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -15,6 +16,6 @@ public class AbstractButtonMixin {
      */
     @Inject(method = "onClick(Lnet/minecraft/client/input/MouseButtonEvent;Z)V", at = @At("HEAD"))
     public void onClickHead(MouseButtonEvent event, boolean doubleClick, CallbackInfo ci) {
-        LocalPlayerDataHolder.clientClickButtonTimestamp = System.currentTimeMillis();
+        LocalPlayerDataHolder.clientClickButtonTimestamp = GunTime.nowMillis();
     }
 }

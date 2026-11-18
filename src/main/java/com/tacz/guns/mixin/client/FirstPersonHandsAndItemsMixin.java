@@ -1,5 +1,6 @@
 package com.tacz.guns.mixin.client;
 
+import com.tacz.guns.util.time.GunTime;
 import com.tacz.guns.api.client.other.KeepingItemRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.FirstPersonHandsAndItems;
@@ -49,6 +50,8 @@ public class FirstPersonHandsAndItemsMixin implements KeepingItemRenderer {
     private long tacz$KeepTimeMs;
     @Unique
     private long tacz$KeepTimestamp;
+    @Unique
+    private long tacz$keepEpoch = -1;
 
     /**
      * <b>刻意留空</b> —— 与上游 1.21.1 完全一致。
@@ -107,14 +110,15 @@ public class FirstPersonHandsAndItemsMixin implements KeepingItemRenderer {
         // 「接管不会用一个静止视模顶掉正在播放的动画」由调用点保证：
         // LocalPlayerDraw#doPutAway 只在 AnimateGeoItemRenderer#hasInitializedStateMachine
         // 成立（旧枪确实一直在被渲染、INPUT_PUT_AWAY 确实已触发）时才调 keep。
-        long now = System.currentTimeMillis();
+        long now = GunTime.nowMillis();
         boolean sameKeptItem = tacz$KeepItem != null
                 && ItemStack.isSameItemSameComponents(tacz$KeepItem, itemStack);
-        if (sameKeptItem && now + timeMs <= tacz$KeepTimestamp + tacz$KeepTimeMs) {
+        if (tacz$keepEpoch == GunTime.epoch() && sameKeptItem && now + timeMs <= tacz$KeepTimestamp + tacz$KeepTimeMs) {
             return;
         }
         this.tacz$KeepTimeMs = timeMs;
         this.tacz$KeepTimestamp = now;
+        this.tacz$keepEpoch = GunTime.epoch();
         this.tacz$KeepItem = itemStack;
         this.mainHandItem = itemStack;
     }
@@ -125,8 +129,8 @@ public class FirstPersonHandsAndItemsMixin implements KeepingItemRenderer {
             return mainHandItem;
         }
         if (tacz$KeepItem != null) {
-            long time = System.currentTimeMillis() - tacz$KeepTimestamp;
-            if (time < tacz$KeepTimeMs) {
+            long time = GunTime.nowMillis() - tacz$KeepTimestamp;
+            if (tacz$keepEpoch == GunTime.epoch() && time < tacz$KeepTimeMs) {
                 return tacz$KeepItem;
             } else {
                 tacz$KeepItem = null;

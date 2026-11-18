@@ -82,6 +82,17 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
      */
     public abstract void interruptReload(ShooterDataHolder dataHolder, ItemStack gunItem, LivingEntity shooter);
 
+    public void unloadAmmo(ShooterDataHolder dataHolder, ItemStack gunItem, LivingEntity shooter) {
+        unloadAmmo(gunItem, shooter, true, -1);
+    }
+
+    /** Settlement only; Lua calls this overload without recursively invoking unload_ammo. */
+    public int unloadAmmo(ItemStack gunItem, LivingEntity shooter, boolean chamber, int amount) {
+        return TimelessAPI.getCommonGunIndex(getGunId(gunItem))
+                .map(index -> com.tacz.guns.util.GunAmmoUnloadHelper.unloadAmmo(shooter, gunItem, this, index, chamber, amount))
+                .orElse(0);
+    }
+
     /**
      * 切换开火模式时调用
      */

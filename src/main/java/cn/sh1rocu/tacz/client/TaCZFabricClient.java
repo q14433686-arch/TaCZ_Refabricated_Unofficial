@@ -127,6 +127,8 @@ public class TaCZFabricClient implements ClientModInitializer {
 
         InputEvent.InteractionKeyMappingTriggered.EVENT.register(ClientPreventGunClick::onClickInput);
 
+        ClientTickEvents.START_CLIENT_TICK.register(ClientGunTimeLifecycle::tick);
+        ClientPlayConnectionEvents.DISCONNECT.register(ClientGunTimeLifecycle::disconnect);
         ClientPlayConnectionEvents.DISCONNECT.register(CommonNetworkCacheEvent::onDisconnect);
 
         // 26.2: 第一人称入口不再走 SimpleBedrockModel 的 RenderHandEvent。

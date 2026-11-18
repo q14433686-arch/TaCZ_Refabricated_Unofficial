@@ -1,5 +1,6 @@
 package com.tacz.guns.mixin.common;
 
+import com.tacz.guns.util.time.GunTime;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.KnockBackModifier;
 import com.tacz.guns.api.entity.ReloadState;
@@ -35,6 +36,7 @@ public abstract class LivingEntityMixin extends Entity implements IGunOperator, 
     private final @Unique LivingEntityMelee tacz$melee = new LivingEntityMelee(tacz$shooter, this.tacz$data, this.tacz$draw);
     private final @Unique LivingEntityShoot tacz$shoot = new LivingEntityShoot(tacz$shooter, this.tacz$data, this.tacz$draw);
     private final @Unique LivingEntityBolt tacz$bolt = new LivingEntityBolt(this.tacz$data, this.tacz$shooter, this.tacz$draw, this.tacz$shoot);
+    private final @Unique LivingEntityUnload tacz$unload = new LivingEntityUnload(tacz$shooter, tacz$data, tacz$draw, tacz$shoot, tacz$melee);
     private final @Unique LivingEntityReload tacz$reload = new LivingEntityReload(tacz$shooter, this.tacz$data, this.tacz$draw, this.tacz$shoot);
     private final @Unique LivingEntitySpeedModifier tacz$speed = new LivingEntitySpeedModifier(tacz$shooter, tacz$data);
     private final @Unique LivingEntitySprint tacz$sprint = new LivingEntitySprint(tacz$shooter, this.tacz$data);
@@ -123,6 +125,10 @@ public abstract class LivingEntityMixin extends Entity implements IGunOperator, 
 
     @Unique
     @Override
+    public void unloadAmmo() { tacz$unload.unloadAmmo(); }
+
+    @Unique
+    @Override
     public void cancelReload() {
         this.tacz$reload.cancelReload();
     }
@@ -135,7 +141,7 @@ public abstract class LivingEntityMixin extends Entity implements IGunOperator, 
     @Unique
     @Override
     public ShootResult shoot(Supplier<Float> pitch, Supplier<Float> yaw) {
-        return this.shoot(pitch, yaw, System.currentTimeMillis() - tacz$data.baseTimestamp);
+        return this.shoot(pitch, yaw, GunTime.nowMillis() - tacz$data.baseTimestamp);
     }
 
     @Unique

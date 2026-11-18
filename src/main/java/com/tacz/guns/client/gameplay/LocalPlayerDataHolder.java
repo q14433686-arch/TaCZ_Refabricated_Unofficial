@@ -1,5 +1,6 @@
 package com.tacz.guns.client.gameplay;
 
+import com.tacz.guns.util.time.GunTime;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ReloadState;
 import com.tacz.guns.util.TaczThreads;
@@ -15,7 +16,7 @@ public class LocalPlayerDataHolder {
     /**
      * 枪械操作的定时任务池（拔枪音效延时、连发节拍）。
      *
-     * <p><b>必须是 daemon 池</b>：这里面跑的是 {@code scheduleAtFixedRate} 的连发任务，
+     * <p><b>必须是 daemon 池</b>：这里面跑的是 {@code scheduleWithFixedDelay} 的连发任务，
      * 而且全仓没有任何 {@code shutdown()} 调用。原先用的是无参重载，
      * 也就是 {@code Executors.defaultThreadFactory()} —— 它<b>无条件</b>
      * {@code setDaemon(false)}，于是这两个线程会一直卡住 JVM 退出，
@@ -56,6 +57,33 @@ public class LocalPlayerDataHolder {
     public boolean isBolting = false;
     // Bridge the interval between local reload acceptance and the server's synced state.
     public boolean clientReloadStarting;
+    public boolean autoReloadSuppressed;
+    private net.minecraft.world.item.ItemStack cachedAmmoGun;
+    private long cachedAmmoAt = -1;
+    private int cachedAmmo;
+
+    int getCachedAmmoCount(net.minecraft.world.item.ItemStack stack, com.tacz.guns.api.item.IGun gun) {
+        if (stack != cachedAmmoGun || !GunTime.isWithin(cachedAmmoAt, 50)) {
+            cachedAmmo = ClientAmmoCount.get(player, stack, gun);
+            cachedAmmoGun = stack;
+            cachedAmmoAt = GunTime.nowMillis();
+        }
+        return cachedAmmo;
+    }
+    final ClientActionTasks shots = new ClientActionTasks();
+    final ClientActionTasks draws = new ClientActionTasks();
+    public boolean hasPendingShoot() { return shots.pending(); }
+    public void cancelPendingActions() {
+        cachedAmmoGun = null;
+        shots.cancelAll();
+        draws.cancelAll();
+        drawFuture = null;
+        isShootRecorded = true;
+    }
+    private static final Predicate<IGunOperator> TIMED_LOCK = operator -> false;
+
+    public void lockState() { lockState(TIMED_LOCK); }
+    public boolean isTimedStateLocked() { return clientStateLock && lockedCondition == TIMED_LOCK; }
     /**
      * 瞄准的进度，范围 0 ~ 1
      */
@@ -94,7 +122,7 @@ public class LocalPlayerDataHolder {
      */
     public void lockState(@Nullable Predicate<IGunOperator> lockedCondition) {
         clientStateLock = true;
-        lockTimestamp = System.currentTimeMillis();
+        lockTimestamp = GunTime.nowMillis();
         this.lockedCondition = lockedCondition;
     }
 
@@ -107,7 +135,7 @@ public class LocalPlayerDataHolder {
         // 如果还没完成上锁，则不能释放状态锁
         // 上锁允许的最大响应时间，毫秒
         long maxLockTime = 250;
-        long lockTime = System.currentTimeMillis() - lockTimestamp;
+        long lockTime = GunTime.nowMillis() - lockTimestamp;
         if (lockTime < maxLockTime && lockedCondition != null && !lockedCondition.test(gunOperator)) {
             return;
         }
@@ -137,6 +165,9 @@ public class LocalPlayerDataHolder {
      * 重生后各种参数的重置
      */
     public void reset() {
+        cancelPendingActions();
+        autoReloadSuppressed = false;
+        lockedCondition = null;
         // 重置客户端的 shoot 时间戳
         isShootRecorded = true;
         clientShootTimestamp = -1;

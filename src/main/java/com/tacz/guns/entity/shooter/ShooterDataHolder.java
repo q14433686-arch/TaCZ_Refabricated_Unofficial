@@ -1,5 +1,6 @@
 package com.tacz.guns.entity.shooter;
 
+import com.tacz.guns.util.time.GunTime;
 import com.tacz.guns.api.entity.ReloadState;
 import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
 import net.minecraft.world.item.ItemStack;
@@ -13,7 +14,7 @@ public class ShooterDataHolder {
     /**
      * 基时间戳，用于一些需要精密计算时间的场景。目前只有 shoot 使用。
      */
-    public long baseTimestamp = System.currentTimeMillis();
+    public long baseTimestamp = GunTime.nowMillis();
     /**
      * 射击时间戳，射击成功时更新，单位 ms。
      * 用于计算射击的冷却时间。

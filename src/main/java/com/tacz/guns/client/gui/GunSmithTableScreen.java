@@ -1,5 +1,6 @@
 package com.tacz.guns.client.gui;
 
+import com.tacz.guns.util.time.GunTime;
 import cn.sh1rocu.tacz.mixin.accessor.ScreenAccessor;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -680,7 +681,7 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
                 ItemStack[] items = ingredient == null
                         ? new ItemStack[0]
                         : ingredient.display().resolveForStacks(SlotDisplayContext.fromLevel(Minecraft.getInstance().level)).toArray(ItemStack[]::new);
-                int itemIndex = ((int) (System.currentTimeMillis() / 1_000)) % Math.max(1, items.length);
+                int itemIndex = ((int) (GunTime.nowMillis() / 1_000)) % Math.max(1, items.length);
                 ItemStack item = items.length > 0 ? items[itemIndex] : ItemStack.EMPTY;
 
                 gui.fakeItem(item, offsetX, offsetY);
@@ -761,7 +762,7 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
         int width = 128;
         int height = 99;
 
-        float yaw = (System.currentTimeMillis() % (long) rotationPeriodMs) * (360f / rotationPeriodMs);
+        float yaw = (GunTime.nowMillis() % (long) rotationPeriodMs) * (360f / rotationPeriodMs);
 
         ItemStackRenderState renderState = new ItemStackRenderState();
         resolver.updateForTopItem(renderState, result, ItemDisplayContext.FIXED, mc.level, mc.player, 0);

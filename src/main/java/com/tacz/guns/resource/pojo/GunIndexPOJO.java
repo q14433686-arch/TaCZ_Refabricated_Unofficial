@@ -25,6 +25,11 @@ public class GunIndexPOJO {
     @SerializedName("item_type")
     private String itemType = "modern_kinetic";
 
+    // Read by remote clients. A local loader always derives this bit from the actual script.
+    @SerializedName("has_unload_ammo_script")
+    private boolean hasUnloadAmmoScript;
+    public boolean hasUnloadAmmoScript() { return hasUnloadAmmoScript; }
+
     @SerializedName("sort")
     private int sort;
 

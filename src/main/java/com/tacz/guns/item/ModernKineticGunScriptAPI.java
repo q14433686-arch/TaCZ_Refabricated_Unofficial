@@ -1,5 +1,6 @@
 package com.tacz.guns.item;
 
+import com.tacz.guns.util.time.GunTime;
 import cn.sh1rocu.tacz.api.LogicalSide;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.GunProperties;
@@ -371,7 +372,7 @@ public class ModernKineticGunScriptAPI {
         if (dataHolder.reloadTimestamp == -1) {
             return 0;
         }
-        return System.currentTimeMillis() - dataHolder.reloadTimestamp;
+        return GunTime.nowMillis() - dataHolder.reloadTimestamp;
     }
 
     /**
@@ -383,7 +384,7 @@ public class ModernKineticGunScriptAPI {
         if (!dataHolder.isBolting) {
             return 0;
         }
-        return System.currentTimeMillis() - dataHolder.boltTimestamp;
+        return GunTime.nowMillis() - dataHolder.boltTimestamp;
     }
 
     /**
@@ -686,6 +687,12 @@ public class ModernKineticGunScriptAPI {
         return abstractGunItem.getCurrentAmmoCount(itemStack);
     }
 
+    /** Lua: barrel 0/1, magazine amount >= 0 or -1 for all. Returns rounds actually unloaded. */
+    public int unloadAmmo(int barrel, int amount) {
+        if ((barrel != 0 && barrel != 1) || amount < -1) return 0;
+        return abstractGunItem.unloadAmmo(itemStack, shooter, barrel == 1, amount);
+    }
+
     /**
      * 获取枪膛内是否有子弹。
      *
@@ -757,7 +764,7 @@ public class ModernKineticGunScriptAPI {
      * @return 当前系统时间
      */
     public long getCurrentTimestamp() {
-        return System.currentTimeMillis();
+        return GunTime.nowMillis();
     }
 
     /**
@@ -893,7 +900,7 @@ public class ModernKineticGunScriptAPI {
     public float calcHeatReduction(long heatTimestamp) {
         GunHeatData heatData = gunIndex.getGunData().getHeatData();
         if (heatData != null) {
-            return ((float) (System.currentTimeMillis() - heatTimestamp) / 10000f)
+            return ((float) (GunTime.nowMillis() - heatTimestamp) / 10000f)
                     * heatData.getCoolingMultiplier();
         }
         return 0f;

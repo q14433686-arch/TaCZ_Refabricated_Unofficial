@@ -1,5 +1,6 @@
 package com.tacz.guns.client.gameplay;
 
+import com.tacz.guns.util.time.GunTime;
 import cn.sh1rocu.tacz.api.LogicalSide;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
@@ -82,7 +83,7 @@ public class LocalPlayerReload {
         if (data.clientStateLock) {
             return;
         }
-        if (System.currentTimeMillis() - data.clientShootTimestamp < 100) {
+        if (GunTime.nowMillis() - data.clientShootTimestamp < 100) {
             return;
         }
         // 弹药简单检查
@@ -129,7 +130,7 @@ public class LocalPlayerReload {
                     && com.tacz.guns.config.client.RenderConfig.RECOIL_DEBUG.get()) {
                 com.tacz.guns.GunMod.LOGGER.info(
                         "[TACZ Case08] RELOAD_START ms={} facing=({},{})",
-                        System.currentTimeMillis(),
+                        GunTime.nowMillis(),
                         String.format(java.util.Locale.ROOT, "%.4f", player.getXRot()),
                         String.format(java.util.Locale.ROOT, "%.4f", net.minecraft.util.Mth.wrapDegrees(player.getYRot())));
             }
