@@ -115,6 +115,25 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
         dst.set(handBasePoseEntry);
     }
 
+    /** Convert an extracted hand locator to a detached world emitter, normalizing the hand
+     * pass base once. Do not use global ModelView, whose contract differs under Iris. */
+    public static Matrix4f muzzleWorldPose(Matrix4f locator) {
+        var mc = Minecraft.getInstance();
+        var camera = mc.gameRenderer.mainCamera();
+        Matrix4f local = new Matrix4f(handBasePoseEntry).invert().mul(locator);
+        double ratio = Math.tan(Math.toRadians(CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get()) / 2)
+                / Math.tan(Math.toRadians(CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2);
+        if (Double.isFinite(ratio) && ratio > 0) local.m32((float)(local.m32()*ratio));
+        var pos = camera.position();
+        return new Matrix4f().translation((float)pos.x,(float)pos.y,(float)pos.z).rotate(camera.rotation()).mul(local);
+    }
+
+    public static float muzzleWorldScale() {
+        double ratio = Math.tan(Math.toRadians(CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2)
+                / Math.tan(Math.toRadians(CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get()) / 2);
+        return Double.isFinite(ratio) && ratio > 0 ? (float)ratio : 1f;
+    }
+
     public GunItemRendererWrapper() {
         super();
     }
@@ -383,7 +402,7 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             // 若 viewRoot 不偏而 viewMuzzle 偏，则来自骨骼动画层（枪口骨骼路径）。
             debugRecoilGunRoot(poseStack.last().pose());
             gunModel.submit(poseStack, stack, ctx, collector, renderType,
-                    display.getModelTexture(), light, OverlayTexture.NO_OVERLAY);
+                    display.getModelTexture(), com.tacz.guns.client.particle.NativeMuzzleEffects.flashLight(stack, light), OverlayTexture.NO_OVERLAY);
             // 缓存枪口位置，为第一人称曳光弹渲染作准备
             cacheMuzzlePosition(poseStack, gunModel);
             // 【RecoilDebug 探针】第 27.5 轮：机瞄骨骼链视图坐标逐帧取证。

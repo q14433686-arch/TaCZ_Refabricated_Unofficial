@@ -550,7 +550,7 @@ public class GunDisplayInstance {
 
     private void checkMuzzleFlash(GunDisplay display) {
         muzzleFlash = display.getMuzzleFlash();
-        if (muzzleFlash != null && muzzleFlash.getTexture() == null) {
+        if (muzzleFlash != null && !muzzleFlash.isRenew() && muzzleFlash.getTexture() == null) {
             muzzleFlash = null;
         }
     }

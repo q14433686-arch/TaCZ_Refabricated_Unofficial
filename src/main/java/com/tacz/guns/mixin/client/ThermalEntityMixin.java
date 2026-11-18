@@ -19,13 +19,15 @@ abstract class ThermalEntityMixin {
     @Inject(method = "extractEntity", at = @At("RETURN"))
     private void tacz$readHeatTags(Entity entity, float partialTick, CallbackInfoReturnable<EntityRenderState> cir) {
         ScopeThermalCapture.extracted(entity, cir.getReturnValue());
+        com.tacz.guns.client.particle.NativeMuzzleEffects.extracted(entity, cir.getReturnValue());
     }
 
     @WrapMethod(method = "submit")
     private void tacz$scopeThermalBody(EntityRenderState state, CameraRenderState camera, double x, double y, double z,
                                        PoseStack pose, SubmitNodeCollector out, Operation<Void> original) {
+        int muzzleOwner = com.tacz.guns.client.particle.NativeMuzzleEffects.beginEntity(state);
         boolean previous = ScopeThermalCapture.beginEntity(state);
         try { original.call(state, camera, x, y, z, pose, out); }
-        finally { ScopeThermalCapture.endEntity(previous); }
+        finally { ScopeThermalCapture.endEntity(previous); com.tacz.guns.client.particle.NativeMuzzleEffects.endEntity(muzzleOwner); }
     }
 }

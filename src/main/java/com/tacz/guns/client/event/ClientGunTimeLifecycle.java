@@ -28,6 +28,7 @@ public final class ClientGunTimeLifecycle {
         FirstPersonRenderGunEvent.resetTimestamps();
         CameraSetupEvent.resetTimestamp();
         MuzzleFlashRender.resetTimestamps();
+        com.tacz.guns.client.particle.NativeMuzzleEffects.clear();
         GunHurtBobTweak.resetTimestamp();
     }
 }

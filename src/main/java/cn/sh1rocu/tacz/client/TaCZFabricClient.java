@@ -139,6 +139,7 @@ public class TaCZFabricClient implements ClientModInitializer {
 
         RenderItemInHandBobEvent.VIEW.register(FirstPersonRenderGunEvent::cancelItemInHandViewBobbing);
         GunFirePostEvent.EVENT.register(FirstPersonRenderGunEvent::onGunFirePost);
+        com.tacz.guns.client.particle.NativeMuzzleEffects.register();
 
         ClientTickEvents.START_CLIENT_TICK.register(client -> InventoryEvent.onPlayerChangeSelect(client, false));
         ClientTickEvents.END_CLIENT_TICK.register(client -> InventoryEvent.onPlayerChangeSelect(client, true));

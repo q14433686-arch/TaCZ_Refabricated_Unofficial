@@ -5,6 +5,7 @@ import net.minecraftforge.common.ForgeConfigSpec;
 
 public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue ENABLE_LASER_FADE_OUT;
+    public static ForgeConfigSpec.BooleanValue RENDER_MUZZLE_SMOKE;
     public static ForgeConfigSpec.BooleanValue ILLUMINATED_REAL_SKY;
     public static ForgeConfigSpec.IntValue GUN_LOD_RENDER_DISTANCE;
     public static ForgeConfigSpec.BooleanValue HIT_PARTICLE_ENABLE;
@@ -277,6 +278,7 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue SCOPE_PIP_DEBUG_GPU_MEM;
 
     public static void init(ForgeConfigSpec.Builder builder) {
+        RENDER_MUZZLE_SMOKE = builder.comment("Render detached renew muzzle smoke independently of flash").define("RenderMuzzleSmoke", true);
         builder.push("render");
 
         builder.comment("Whether or not apply fadeout effect on the laser beam. Close this may improve laser performance under some shaders.");

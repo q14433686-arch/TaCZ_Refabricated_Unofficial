@@ -87,6 +87,7 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
                 && com.tacz.guns.config.client.RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) {
             return;
         }
+        if (!IrisCompat.isRenderShadow() && com.tacz.guns.client.particle.NativeMuzzleEffects.extract(bedrockGunModel.getCurrentGunItem(), context)) return;
         if (IrisCompat.isRenderShadow() || !isSelf) {
             return;
         }
