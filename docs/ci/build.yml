@@ -147,6 +147,10 @@ jobs:
               lines = p.read_text(errors='replace').splitlines()
               for line in list(dict.fromkeys(s for s in lines if re.search(r'BackendCreationException|Caused by:|error:|FAILED|AssertionError', s)))[-8:]: message(p.name + ': ' + line)
               note(str(p.name) + ' tail:\n' + '\n'.join(lines[-14:]))
+          for p in Path('build/run/gameTest').glob('logs/latest.log'):
+              lines = p.read_text(errors='replace').splitlines()
+              for i in [i for i, line in enumerate(lines) if re.search(r'Test .* failed|Failed to run test|required tests? failed|GameTestAssert|Exception:|AssertionError:|Failed to parse recipe', line, re.I)][-10:]:
+                  note('server: ' + '\n'.join(lines[i:i+6]))
           for p in sorted(client.glob('crash-reports/crash-*.txt'))[-1:]:
               lines = p.read_text(errors='replace').splitlines()
               start = next((i for i, line in enumerate(lines) if line.startswith('Description:')), 0)

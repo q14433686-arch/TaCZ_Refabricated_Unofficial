@@ -80,7 +80,7 @@ public class DisplayRackSmoke {
     public void dyeLootAndCornerMirror(GameTestHelper helper) {
         var level = helper.getLevel();
         for (var item : List.of(ModItems.GUN_PEGBOARD, ModItems.GLOW_GUN_PEGBOARD)) {
-            var input = CraftingInput.of(2, 1, List.of(new ItemStack(item), new ItemStack(Items.BLUE_DYE)));
+            var input = CraftingInput.of(2, 1, List.of(new ItemStack(item), new ItemStack(Items.DYE.blue())));
             var recipe = level.getServer().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level).orElseThrow();
             var dyed = recipe.value().assemble(input);
             helper.assertTrue(dyed.is(item) && dyed.getCount() == 1 && GunPegboardItem.hasCustomColor(dyed), "Native dye recipe returned the wrong board");
