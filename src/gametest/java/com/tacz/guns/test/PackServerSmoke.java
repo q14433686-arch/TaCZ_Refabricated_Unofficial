@@ -40,6 +40,12 @@ public class PackServerSmoke {
         ammoRecipe.getResult().init();
         var ammo = ammoRecipe.getResult().getResult();
         helper.assertTrue(ammo.getCount() == 45 && ammo.getItem() instanceof com.tacz.guns.api.item.IAmmo a && a.getAmmoId(ammo).equals(addedAmmo), "Wrong new default ammo recipe");
+        var newHost = Identifier.parse("tacz:qr_24");
+        var hostIndex = TimelessAPI.getCommonGunIndex(newHost).orElseThrow();
+        var recipe = TimelessAPI.getRecipe(Identifier.parse("tacz:gun/qr_24")).orElseThrow().getResult().getResult();
+        helper.assertTrue(recipe.getItem() instanceof IGun g && newHost.equals(g.getGunId(recipe))
+                && Identifier.parse("tacz:545x39").equals(hostIndex.getGunData().getAmmoId())
+                && SlotAdapterHelper.getAvailableSlotAdapters(recipe, AttachmentType.SCOPE).size() == 5, "New default refit chain missing");
         var table = assets.getTableRecipe(Identifier.parse("port_test:condition_true"));
         helper.assertTrue(table != null && assets.getTableRecipe(Identifier.parse("port_test:condition_false")) == null, "Workbenches resurrected a disabled recipe");
         table.getResult().init();

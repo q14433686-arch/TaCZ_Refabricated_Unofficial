@@ -96,3 +96,9 @@ python3 scripts/audit_upstream_120.py /tmp/tacz-upstream.git --local cc990c3
 ### 默认弹药 / 命中表现
 
 `b1e1474` 的 [编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44216061928) 和 [build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44216061927) 通过。115 份资源保留上游字节，1 份 `.300 BLK` 工作台配方用 26.3 原生材料格式；`verify_120_resources.py` 查了累计 203 个哈希、25 份弹药索引的引用。专服断言新增配方结果，集成客户端解析弹壳/烟尘 display，真实调用两种 display 的 impact provider（弹孔开/关）。保留原粒子包协议和六面朝向，额外粒子与声音独立于贴花；不是人工听感、燃烧特效逐帧比对或完整默认包迁移。
+
+### 外显骨架的 26.3 实现
+
+`464b13a` 的 [编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44216851071) 和 [build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44216851054) 通过。`GunRigBaker` 统一原生与 TML 模型工厂，外显高模与手持动画的可变节点不共享，远距使用独立 LOD。`DisplayBake` 在提交时不等待后台任务，未就绪用已加载的另一档或图标；重建索引后不再取旧结果。`ExternalRigSmoke` 用含三角网格的测试包核对三套骨架、两档材质和柜上实际 FIXED 提交，数据重载之后旧 display 不再返回模型。这验证的是软件 Vulkan 和本线 collector/TML，不是 SBM、Iris 硬件矩阵或性能测量。
+
+下一份默认内容为 QR-24、AFG/Troy 握把和 5 个转接座；仅同步 16 份原列表除新增 adapter 标签外不变的旧枪 allowlist，其余旧枪随各自的附件/标签一起迁移。新增 transfer/schema 走法：**带 `index/slot_adapters` 的默认包需要支持扩展快照的客户端**；不能把新枚举发送给旧客户端。没有扩展字段的小包仍保留旧同步路径。该切片不把 `muzzle_flash.type: renew` 的旧四边形回退冒充 Snowstorm 粒子实现。
