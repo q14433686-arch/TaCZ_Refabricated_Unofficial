@@ -23,9 +23,7 @@ public class AmmoStorageScreen extends AbstractContainerScreen<AmmoStorageMenu> 
     private int virtualClickButton = -1;
 
     public AmmoStorageScreen(AmmoStorageMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title);
-        imageWidth = 176;
-        imageHeight = 114 + CONTAINER_ROWS * 18 + AmmoStorageMenu.STATUS_HEIGHT;
+        super(menu, inventory, title, 176, 114 + CONTAINER_ROWS * 18 + AmmoStorageMenu.STATUS_HEIGHT);
         inventoryLabelY = imageHeight - 94;
     }
 
@@ -61,7 +59,7 @@ public class AmmoStorageScreen extends AbstractContainerScreen<AmmoStorageMenu> 
             graphics.setTooltipForNextFrame(font, List.of(
                     Component.translatable("gui.tacz.ammo_storage.capacity_detail", menu.getUsedStacks(), menu.getCapacityStacks()),
                     Component.translatable("gui.tacz.ammo_storage.free_capacity", Math.max(0, menu.getCapacityStacks() - menu.getUsedStacks()))
-            ), mouseX, mouseY);
+            ), java.util.Optional.empty(), mouseX, mouseY);
             return;
         }
         int cell = getVirtualCell(mouseX, mouseY);

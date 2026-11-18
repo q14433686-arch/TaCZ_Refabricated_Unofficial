@@ -4,7 +4,7 @@ import net.minecraft.core.component.DataComponents;
 import com.mojang.serialization.Codec;
 import com.tacz.guns.init.ModItems;
 import com.tacz.guns.init.ModRecipe;
-import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -64,6 +64,6 @@ public class AmmoStorageUpgradeRecipe extends CustomRecipe {
 
     public static RecipeSerializer<AmmoStorageUpgradeRecipe> serializer() {
         return new RecipeSerializer<>(Codec.BOOL.optionalFieldOf("diamond", false).xmap(AmmoStorageUpgradeRecipe::new, r -> r.diamond),
-                ByteBufCodecs.BOOL.map(AmmoStorageUpgradeRecipe::new, r -> r.diamond));
+                StreamCodec.of((buf, recipe) -> buf.writeBoolean(recipe.diamond), buf -> new AmmoStorageUpgradeRecipe(buf.readBoolean())));
     }
 }

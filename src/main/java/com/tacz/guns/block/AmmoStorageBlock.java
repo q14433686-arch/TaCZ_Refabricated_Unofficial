@@ -5,9 +5,6 @@ import com.tacz.guns.util.ItemNbtUtils;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.storage.TagValueInput;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.item.IAmmoBox;
 import com.tacz.guns.block.entity.AmmoStorageBlockEntity;
@@ -27,6 +24,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -39,10 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class AmmoStorageBlock extends BaseEntityBlock {
-    public static final MapCodec<AmmoStorageBlock> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Codec.INT.fieldOf("capacityStacks").forGetter((AmmoStorageBlock block) -> block.capacityStacks),
-            propertiesCodec()).apply(instance, AmmoStorageBlock::new));
-
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final int IRON_CAPACITY_STACKS = 216;
     public static final int GOLD_CAPACITY_STACKS = 432;
@@ -58,11 +52,6 @@ public class AmmoStorageBlock extends BaseEntityBlock {
 
     public int getCapacityStacks() {
         return capacityStacks;
-    }
-
-    @Override
-    protected MapCodec<? extends BaseEntityBlock> codec() {
-        return CODEC;
     }
 
     @Override
