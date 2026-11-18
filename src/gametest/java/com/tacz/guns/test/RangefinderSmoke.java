@@ -19,6 +19,7 @@ import java.util.Locale;
 /** The test-mod observer sees the text resolved during extraction, not a second call to the distance helper. */
 public final class RangefinderSmoke {
     private static String observed;
+    static String lastReading() { return observed; }
     public static void observe(String text) { observed = text; }
 
     static void run(ClientGameTestContext context, TestSingleplayerContext world) {

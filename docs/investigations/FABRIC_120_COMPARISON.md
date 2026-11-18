@@ -62,3 +62,4 @@ python3 scripts/verify_120_resources.py
 3. **XM157 落点标记实现已接入，运行结果待核实**。文字和标记按配置共享限频的 client-world 命中样本，只在第一人称 ADS、有效实体在首个方块之前时提交。干燥环境的游戏 tick 预览读取枪包数据；不执行服务端 Lua，不预测散布/入水/脚本。定位读取实际手部投影及动画父链（默认 XM157 的 locator 在被主 pass 隐藏的 `division` 下）。`ImpactMarkerSmoke` 单独开关顶点回调取得正常/空白对照/恢复三帧，比较中心区的黄色像素，再用石墙遮挡并断言不画；单测覆盖无穷/零速度和过期。不以 UH-1 文字测试充当标记测试。
 
    `e01537c` [生产源码编译成功](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44232108232)，[完整构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44232108241) 在 Gradle 依赖解析遇 Maven Central HTTP 429，没进测试，不是像素验收结果。
+   在 `77073ca` 的[完整客户端运行](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44232349588)中，专服及 UH-1 通过，XM157 已装备且 ADS 达标，但等不到 `drawBox`，**未过**。测试增加确定的空中视线以及区分测距/定位/投影的失败诊断，不放宽像素断言。

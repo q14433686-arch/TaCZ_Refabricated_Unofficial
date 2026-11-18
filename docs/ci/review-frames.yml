@@ -3,7 +3,7 @@ name: Selected game frames for review
 on:
   push:
     branches: ['arena/**']
-    paths: ['docs/investigations/review-frames.tsv']
+    paths: ['docs/investigations/review-frames.tsv', '.github/workflows/review-frames.yml']
 permissions:
   actions: read
   contents: write
@@ -19,10 +19,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python3 - <<'PY'
+          set -o pipefail
+          # Preinstalled ImageMagick on ubuntu-24.04; don't depend on a hosted Python's PIL.
+          python3 - <<'PY' 2>&1 | tee "$RUNNER_TEMP/review.log"
           from pathlib import Path
           import json, os, re, subprocess, tempfile
-          from PIL import Image
           dest = Path('build-reports/visual'); dest.mkdir(parents=True, exist_ok=True)
           entries = [s.split('\t') for s in Path('docs/investigations/review-frames.tsv').read_text().splitlines() if s and not s.startswith('#')]
           assert len(entries) <= 12
@@ -36,10 +37,20 @@ jobs:
                   assert meta['path']=='.github/workflows/'+('build.yml' if kind=='smoke' else 'viewer-smoke.yml')
                   artifact = kind+'-'+meta['head_sha']; root = Path(tmp)/artifact
                   if not root.exists(): subprocess.run(['gh','run','download',run,'-n',artifact,'-D',str(root)],check=True)
-                  source, = root.rglob('*'+frame+'.png')
-                  with Image.open(source) as image:
-                      image.thumbnail((800,600)); image.convert('RGB').save(output,quality=88,optimize=True)
+                  pictures = list(root.rglob('*.png'))
+                  matches = [p for p in pictures if p.name.endswith(frame+'.png')]
+                  if len(matches)!=1: raise ValueError(f'{frame}: expected 1 file, found {len(matches)}; available: {[p.name for p in pictures][:20]}')
+                  source, = matches
+                  subprocess.run(['convert', str(source), '-thumbnail', '800x600>', '-strip', '-quality', '88', str(output)],check=True)
                   assert output.stat().st_size <= 256*1024
+          PY
+      - name: Report thumbnail diagnostics
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import os, pathlib
+          p = pathlib.Path(os.environ['RUNNER_TEMP'])/'review.log'
+          if p.exists(): print('::error::' + ' '.join(p.read_text(errors='replace').splitlines()[-5:])[:1800].replace('%','%25'))
           PY
       - name: Save only the nominated review frames on this branch
         run: |

@@ -27,6 +27,24 @@ public final class ImpactMarkerSmoke {
     private static int draws;
     private static boolean hide;
 
+    private static String diagnostic = "no marker submission";
+    private static boolean trace;
+    public static void observe(com.tacz.guns.client.model.functional.ImpactMarkerRender marker, net.minecraft.world.item.ItemStack held,
+                               com.mojang.blaze3d.vertex.PoseStack root) {
+        if (!trace) return;
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        root.pushPose();
+        try {
+            for (var part : marker.path()) part.translateAndRotateAndScale(root);
+            var hud = new org.joml.Matrix4f();
+            ((com.tacz.guns.mixin.client.GameRendererProjectionAccessor)(Object)mc.gameRenderer).tacz$getHudProjection().getMatrix(hud);
+            hud.mul(root.last().pose());
+            diagnostic = "slope=" + com.tacz.guns.client.model.papi.RangefinderReadout.impactSlope(held, marker.settings())
+                    + ", clip=" + hud.m30() + "," + hud.m31() + "," + hud.m33() + ", up=" + hud.m11()
+                    + ", camera=" + mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.initialized;
+        } finally { root.popPose(); }
+    }
+
     public static boolean atDraw() { draws++; return hide; }
 
     static void run(ClientGameTestContext ctx, TestSingleplayerContext world) {
@@ -38,7 +56,13 @@ public final class ImpactMarkerSmoke {
             var cow = new Cow(EntityTypes.COW, player.level());
             cow.setNoAi(true);
             cow.setNoGravity(true);
-            cow.snapTo(player.position().add(0, 12, 24));
+            BlockPos targetPos = player.blockPosition().above(12).south(24);
+            cow.snapTo(Vec3.atBottomCenterOf(targetPos));
+            // A random spawn can be on a hillside or beside a tree. Explicitly clear the sight line.
+            for (int i = 1; i <= 30; i++) {
+                var center = BlockPos.containing(player.getEyePosition().lerp(Vec3.atCenterOf(targetPos.above()), i / 30.0));
+                for (int y = -1; y <= 1; y++) player.level().removeBlock(center.above(y), false);
+            }
             player.level().addFreshEntity(cow);
             return cow.getUUID();
         });
@@ -49,8 +73,12 @@ public final class ImpactMarkerSmoke {
             ctx.getInput().lookAt(look);
             ctx.getInput().holdKey(AimKey.AIM_KEY);
             ctx.waitFor(mc -> IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(1) >= .99f);
-            ctx.runOnClient(mc -> draws = 0);
-            ctx.waitFor(mc -> draws > 0);
+            ctx.runOnClient(mc -> { draws = 0; trace = true; });
+            try { ctx.waitFor(mc -> draws > 0); }
+            catch (AssertionError e) {
+                ctx.takeScreenshot("tacz_xm157_missing");
+                throw new AssertionError(ctx.computeOnClient(mc -> "No XM157 vertices: " + diagnostic + "; readout=" + RangefinderSmoke.lastReading()), e);
+            }
             ctx.waitTicks(12);
             Path on = ctx.takeScreenshot("tacz_xm157_entity");
             ctx.runOnClient(mc -> hide = true);
@@ -75,7 +103,7 @@ public final class ImpactMarkerSmoke {
             GunMod.LOGGER.info("PORT_OPTIC: XM157 showed {} restored yellow pixels on entity, zero draws behind wall", pixels);
         } finally {
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
-            ctx.runOnClient(mc -> hide = false);
+            ctx.runOnClient(mc -> { hide = false; trace = false; });
             world.getServer().runOnServer(s -> {
                 var cow = world.getConnection().getServerPlayer().level().getEntity(target);
                 if (cow != null) cow.discard();
