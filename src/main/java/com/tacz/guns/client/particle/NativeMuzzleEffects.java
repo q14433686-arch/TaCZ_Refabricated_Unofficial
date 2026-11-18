@@ -254,7 +254,7 @@ public final class NativeMuzzleEffects {
     public static int flashLight(ItemStack stack, int light) {
         var mc = Minecraft.getInstance();
         Shot shot = mc.player == null ? null : SHOTS.get(mc.player.getId());
-        if (shot == null || !shot.firstPerson || GunTime.nowMillis()-shot.born > 50 || shot.effect.flashScale() <= 0 || shot.effect.firstFlash() == null) return light;
+        if (shot == null || !shot.firstPerson || GunTime.nowMillis()-shot.born > 50 || shot.effect.flashScale() <= 0 || !FLASH.equals(shot.effect.firstFlash()) || RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) return light;
         var gun = IGun.getIGunOrNull(stack);
         if (gun == null || !shot.gun.equals(gun.getGunId(stack))) return light;
         return light & ~0xf0 | Math.max(light & 0xf0, shot.effect.flashLight()<<4);

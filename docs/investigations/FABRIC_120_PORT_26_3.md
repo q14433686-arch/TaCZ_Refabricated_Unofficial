@@ -181,3 +181,6 @@ UH-1 的 `text_show` 经 26.3 第一人称 extraction 读取实际游戏方块�
 
 
 上述 `944e138` 客户端实际**未启动**：系统依赖安装步骤达到 10 分钟上限，非游戏断言失败。`install_client_smoke_deps.sh` 增加整次安装的 180 秒限时、临时官方 Ubuntu archive 回退，以及修复 dpkg/刷新/重试的 40/60/240 秒预算；不修改 runner 全局源，不绕过 Vulkan 设备探针或任何客户端门禁。随后的源码也清除保存的旧 level 引用，并使默认烟雾颜色按原定义 0/.3/.6/.9 梯度插值。仍需新 CI 实际验证。
+
+
+`f5df369` 的[组合完整运行](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44350306969/job/134963801958)已成功：官方源回退确实被触发，安装成功后客户端实跑 `PORT_MUZZLE`，AK47/RC1/Glock 第一人称、F5、追踪 Husk、关烟保留火光和清空提交门禁通过。并非独立双客户端/逐像素验收。相同运行同时通过 `PORT_SHOT`，XL50 stripe 7 / 45:45 / 38:38 px，恢复热像素 2676/2528、墙和 tag veto，以及 XM157 12 像素框。完整 smoke 工件 `14447918090`（直接下载在沙箱 EOF）；已提名 6 张原始截图经既有 review-frames 流程回传本分支供检查。随后只对“未知 flash ID / debug 禁用时不应抬高枪模亮度”增加保护，需其源码提交自己的 CI 结果。

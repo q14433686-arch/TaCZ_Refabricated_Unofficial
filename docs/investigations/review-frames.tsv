@@ -1,14 +1,8 @@
 # Current nominations only. Earlier original frames remain linked from FABRIC_120_COMPARISON.md.
 # run ID	artifact kind	frame (basename without suffix)
-44244608846	smoke	tacz_lens_classic_bare
-44244608846	smoke	tacz_lens_classic_optical
-44244608846	smoke	tacz_lens_classic_hot
-44244608846	smoke	tacz_lens_classic_wall
-44244608846	smoke	tacz_lens_classic_restored
-44244608846	smoke	tacz_lens_pip_1x
-44244608846	smoke	tacz_lens_pip_bare
-44244608846	smoke	tacz_lens_pip_optical
-44244608846	smoke	tacz_lens_pip_hot
-44244608846	smoke	tacz_lens_pip_wall
-44244608846	smoke	tacz_lens_pip_restored
-44244608846	smoke	tacz_lens_pip_tagged
+44350306969	smoke	tacz_muzzle_first
+44350306969	smoke	tacz_muzzle_rc1
+44350306969	smoke	tacz_muzzle_glock
+44350306969	smoke	tacz_muzzle_f5
+44350306969	smoke	tacz_muzzle_smoke_off
+44350306969	smoke	tacz_muzzle_tracked
