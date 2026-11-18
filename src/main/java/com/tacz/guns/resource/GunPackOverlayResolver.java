@@ -19,10 +19,10 @@ import java.util.Map;
 import java.util.zip.ZipFile;
 
 /** TaCZ overlays are selected by Minecraft *version*, not vanilla pack format numbers. */
-final class GunPackOverlayResolver {
+public final class GunPackOverlayResolver {
     private GunPackOverlayResolver() {}
 
-    static List<String> resolve(PackMeta meta, Version minecraft) throws VersionParsingException {
+    public static List<String> resolve(PackMeta meta, Version minecraft) throws VersionParsingException {
         if (meta.getOverlays() == null) return List.of();
         var entries = meta.getOverlays().entries();
         if (entries == null) throw new IllegalArgumentException("overlays.entries must be an array");
@@ -91,7 +91,7 @@ final class GunPackOverlayResolver {
         }
     }
 
-    static void validateEntryPath(String name) throws IOException {
+    public static void validateEntryPath(String name) throws IOException {
         String relative = name.endsWith("/") ? name.substring(0, name.length() - 1) : name;
         if (name.contains("\\") || name.contains(":")) throw new IOException("Invalid pack path: " + name);
         for (String segment : relative.split("/", -1)) {

@@ -33,6 +33,11 @@ public class PackServerSmoke {
         com.tacz.guns.GunMod.LOGGER.info("PORT_SMOKE_SERVER: 26.3 overlay and tacz:ak47 loaded");
         helper.assertTrue(helper.getLevel().getServer().getAdvancements().get(Identifier.parse("port_test:criteria")) != null,
                 "Advancement criteria did not register/decode from the pack");
+        var assets = com.tacz.guns.resource.CommonAssetsManager.getInstance();
+        var table = assets.getTableRecipe(Identifier.parse("port_test:condition_true"));
+        helper.assertTrue(table != null && assets.getTableRecipe(Identifier.parse("port_test:condition_false")) == null, "Workbenches resurrected a disabled recipe");
+        table.getResult().init();
+        helper.assertTrue(ItemNbtUtils.getTag(table.getResult().getResult()).getByteOr("fixture", (byte) 0) == 1, "Workbench discarded result components");
         helper.succeed();
     }
 

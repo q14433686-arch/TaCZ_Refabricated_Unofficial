@@ -66,6 +66,10 @@ public class GunSmithTableResultSerializer implements JsonDeserializer<GunSmithT
                     return new GunSmithTableResult(ItemStack.EMPTY, TabConfig.TAB_EMPTY);
                 }
             }
+            if (jsonObject.has("components")) {
+                if (jsonObject.has("nbt")) throw new JsonParseException("Recipe result cannot have both nbt and components");
+                result.setComponents(GsonHelper.getAsJsonObject(jsonObject, "components"));
+            }
             return result;
         }
         return new GunSmithTableResult(ItemStack.EMPTY, TabConfig.TAB_EMPTY);

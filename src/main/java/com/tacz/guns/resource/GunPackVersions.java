@@ -10,13 +10,13 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /** Native Fabric predicates for existing packs, plus the Maven intervals used in universal packs. */
-final class GunPackVersions {
+public final class GunPackVersions {
     private static final Pattern UNION = Pattern.compile("(?<=[\\])]),\\s*(?=[\\[(])");
     private static final Pattern INTERVAL = Pattern.compile("([\\[(])\\s*([^,\\[\\]()\\s]*)\\s*(?:,\\s*([^,\\[\\]()\\s]*)\\s*)?([\\])])");
 
     private GunPackVersions() {}
 
-    static boolean matches(String spec, Version version) throws VersionParsingException {
+    public static boolean matches(String spec, Version version) throws VersionParsingException {
         if (spec == null || spec.isBlank()) throw new IllegalArgumentException("Missing version range");
         String range = spec.trim();
         if (!range.startsWith("[") && !range.startsWith("(")) {

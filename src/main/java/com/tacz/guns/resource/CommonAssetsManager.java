@@ -96,7 +96,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     List<LuaLibrary> libList = List.of(new LuaGunLogicConstant());
     private final ScriptManager scriptManager = new ScriptManager(new FileToIdConverter("scripts", ".lua"), libList);
 
-    public void reloadAndRegister(Consumer<PreparableReloadListener> register) {
+    public void reloadAndRegister(Consumer<PreparableReloadListener> register, RegistryAccess registries) {
         // 这里会顺序重载，所以需要把index这种依赖data的放在后面
         gunData = register(new GunDataManager());
         attachmentData = register(new AttachmentDataManager());
@@ -129,7 +129,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
         // 必须用 TableRecipeManager 而非裸的 CommonDataManager：该目录里混着原版
         // 与其他模组的配方（实测原版 1585 条），不按 "type" 过滤会全部灌进
         // TableRecipe 的解析器刷屏，并被原样打进同步包。详见该类的注释。
-        tableRecipe = register(new TableRecipeManager());
+        tableRecipe = register(new TableRecipeManager(registries.lookupOrThrow(net.minecraft.core.registries.Registries.RECIPE)::containsKey));
 
         listeners.forEach(register);
         register.accept((sharedState, backgroundExecutor, barrier, gameExecutor) -> {
@@ -305,7 +305,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
 
     public static void onReload(AddReloadListenerEvent event) {
         var commonAssetsManager = new CommonAssetsManager();
-        commonAssetsManager.reloadAndRegister(event::addListener);
+        commonAssetsManager.reloadAndRegister(event::addListener, event.getRegistryAccess());
         INSTANCE = commonAssetsManager;
         INSTANCE.recipeManager = event.getServerResources().getRecipeManager();
     }
