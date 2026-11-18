@@ -2,6 +2,8 @@
 
 **不是 release notes。** 目标是同等玩法/内容包语义，不是把 1.21.1 的 jar、mixin 或资源目录直接覆盖上来。阶段门禁未全部通过前，保留本线 1.1.8 SemVer 核心；不要放宽 `dependencies.tacz` 冒充 1.2.0。
 
+**最近通过整套门禁的源码：[`fa23a51`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/commit/fa23a51398780850666da99bc4e915c0966e4692)。** [编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44229658378) · [完整构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44229658444) · [测试 JAR](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44229658444/artifacts/14395031220) · [服务端/客户端日志与截图](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44229658444/artifacts/14395385015)。默认目录、动作隔离与创造栏重载都有游戏内证据；`renew` 粒子、镜片热成像/落点标记、实际查看器与独立多人客户端仍未过对应门禁。下文按提交顺序保留较早阶段的结果。
+
 ## 固定比较对象
 
 - 旧端：[Sh1roCu 1.21.1 `d290355`](https://github.com/Sh1roCu/TACZ-Refabricated/commit/d2903554da039d2355920953a81447784a3f2be2)，`0.7.0-forge1.1.8-hotfix`。这是 [上次同路径审计](UPSTREAM_PARITY_AND_TODO_AUDIT_2026_08_12.md)的参考树，不是说本仓逐字节等于它。
@@ -136,3 +138,5 @@ UH-1 的 `text_show` 经 26.3 第一人称 extraction 读取实际游戏方块�
 ### 默认 Lua 装填的库存守恒
 
 对实际引用的五个逻辑脚本（M1866、SPAS-12、M1014、Kar98、Mk23）增加 `native-reload-accounting` 来源分类。它们的装填时序沿用包配置，但不再假设「请求几件，弹药源一定供应几件」。`loadMagazineFromReserve(n)` 按剩余容量向原生弹药源或虚拟备弹取用，返回**实装数**；`loadChamberFromReserve()` 只在能装入时返回 true。保留旧 Lua 方法（`putAmmoInMagazine` 仍返回**溢出数**），不把第三方脚本重新解释成这种新语义。空仓 Mk23 与不带镜的 Kar98 在一次 tick 跨过装填与结束两个时间点时，也只结算一次。可审查的 Lua 差异见 [`default-pack-120-reloads.patch`](../../scripts/patches/default-pack-120-reloads.patch)。
+
+`fa23a51` 的专服 `DefaultReloadSmoke` 通过：五份上述逻辑加一份未改写的 HCAR xmag 逻辑，每份各跑 6 个装填场景（生存空仓与战术的零/部分供给、虚拟备弹、创造）。测试用实际 LuaJ 和物品组件，跨过多个供弹时间点，检查已装总数、来源扣量与结束后再次 tick；不是逐帧动画比对。当前 4,176 个内置包文件中，3,929 个与固定 blob 逐字节一致，另外 5 个脚本单列 `native-reload-accounting`，其余适配分类见清单。
