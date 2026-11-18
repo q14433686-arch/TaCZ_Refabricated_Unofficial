@@ -67,7 +67,11 @@ public record ImpactMarkerRender(List<BedrockPart> path, Rangefinder settings) {
         float line = Math.min(half, Math.max(px, half / 3));
         int color = settings.getImpactColor();
         var type = clipped ? ScopeBodyRenderTypes.reticleEmissive(BeamRenderer.LASER_BEAM_TEXTURE) : ScopeBodyRenderTypes.emissive(BeamRenderer.LASER_BEAM_TEXTURE);
-        collector.submitCustomGeometry(pose, type, (frozen, vertices) -> drawBox(frozen, vertices, y, half, line, color, overlay));
+        if(clipped && ScopePipRenderer.wantsIrisComposite()) {
+            com.tacz.guns.client.render.scope.ScopeFinalOverlayState.queueText(out -> out.submitCustomGeometry(pose,
+                    ScopeBodyRenderTypes.finalReticle(BeamRenderer.LASER_BEAM_TEXTURE,true),
+                    (frozen,vertices)->drawBox(frozen,vertices,y,half,line,color,overlay)));
+        } else collector.submitCustomGeometry(pose, type, (frozen, vertices) -> drawBox(frozen, vertices, y, half, line, color, overlay));
     }
 
     private static void drawBox(PoseStack.Pose pose, VertexConsumer out, float y, float h, float line, int color, int overlay) {
