@@ -107,3 +107,12 @@ PORT_OPTIC_INSTALL: 39 default scopes found hosts and installed through C2S with
 ### 不能合并进“已完成”的部分
 
 通用 Snowstorm/Molang 引擎仍是源代码移植工作，非只缺依赖。现通道跳过过渡混合期间事件，只支持本地持枪上下文；自定义效果、脚本、远端第三人称生命周期尚未完成。Sable/Simulated/EMI/Accelerated Rendering 的26.3依赖和实际运行环境尚未核实；核对到的公开源码/发布目标仍是1.21.1，不能据此断言所有平台不存在新版。具体来源与下一步见清单E节。
+
+
+## 光影热成像反馈修复与全新增项再验
+
+用户的latest-2.log确认Iris1.11.6、Sodium0.9.2、ComplementaryUnbound/Euphoria、AMD7800XT。根因是本端 `ScopeLensFrame` 主动排除shader pack，同时Iris后置合成永远传null镜片。不是用户开关错误，也不是日志中其他第三方包错误导致。已移除这条排除，并接通经典/PIP镜片、热源重放隔离及异常可见告警。
+
+源码c68ca72：[Iris实际运行44375655879](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44375655879) **success**，XL50经典2859/PIP2102热源像素，遮挡/tag冷，光影关闭/重新启用后2312热源像素。同提交[完整build44375655862](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44375655862)及compile-check44375655842均success；无光影热源2950/2540，39镜、9配置/TOML、真实受伤反馈及新库存/粒子/提示门禁均保留。
+
+完整范围/逐组有效性与尚缺项统一见[FEATURE_VALIDITY_26_3.md](FEATURE_VALIDITY_26_3.md)。明确回答：**未覆盖26.X全部应移植功能；只针对26.3和固定上游基线。** 通用粒子、可选集成与未测环境仍不能打勾。此轮Iris最小shader pack通过不等于用户Complementary/Euphoria/DH多包组合全部通过；真二次渲染分支亦未纳入本次自动热像像素矩阵。

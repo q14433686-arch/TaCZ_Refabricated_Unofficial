@@ -58,3 +58,27 @@
 4. 用户环境：AMD + ComplementaryUnbound/Euphoria + Distant Horizons与个人包，不能由第3项外推为全部通过。需用户环境复验，不能隐瞒。
 
 人工验收准备/动作/预期/证据详见 [PLAYER_ACCEPTANCE_120_REMAINDER.md](PLAYER_ACCEPTANCE_120_REMAINDER.md)。
+
+
+## 本轮验证结果
+
+**测试源码 c68ca72；生产修复6a93ea6、4a0fdc3。**
+
+| 门禁 | 运行 | 结果 |
+|---|---|---|
+| compile-check | [44375655842](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44375655842) | success |
+| 完整build / JUnit / 专服 / 无光影真实客户端 | [44375655862](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44375655862)，job135054230686 | success |
+| Iris/Sodium + active shader pack，OpenGL/EGL | [44375655879](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44375655879)，job135054042332 | success |
+| JEI/REI独立运行（本轮较早源码，后续未改viewer实现） | [44371849362](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44371849362) | success |
+
+Iris实际像素断言：XL50经典2859 / PIP重投影2102热源像素；墙后冷、live tag否决冷；真实Iris开关入口关闭/重新启用后2312热源像素；stripe倍率7/45:45/40:40，镜外保持不变。还执行测距、XM157、射手位移/激怒、趴下、枪口、反馈、库存PAPI、检视粒子、提示消息、配置和39镜安装；该run的总门禁成功。不是仅安装Iris后保持光影关闭。
+
+无光影同提交：XL50经典2950/PIP2540；XM157恢复6黄色像素、墙后零；39镜实际C2S安装、配置TOML、库存PAPI17/26/9、普通3等均通过。没有为光影测试放宽原有像素阈值。PIP测试显式开启本来就需玩家选择的 `ScopePipAllowShaderPacks`；经典热成像不依赖开启该PIP选项。
+
+本地只读资源复核4,176文件/229索引通过，246原上游引用例外保留；弹孔六面离线回归6/6、viewer静态检查5/5、版本严格检查6通过0失败1分支名警告；这些不冒充光影运行证据。
+
+**未验证项仍保留**：真二次渲染热像分支已接线但这次自动像素用例测的是重投影，不把它填成已通过；用户Complementary/Euphoria/DH组合、硬件、多客户端及上表各项人工矩阵不在本轮全通过声明内。
+
+调试运行如实保留：44371849790是依赖名称匹配准备失败；44371969829/44373432466是headless GLX窗口创建失败，未执行效果断言；改用SDL3正确的EGL hint后44374086310跑到PIP选项未开启，44374981563跑到错误的测试开关调用（reload重新读取旧配置）；修正测试准备/使用Iris真实按键入口后44375655879整组通过。未通过关闭真实shader pack、伪造API状态或删除热源/遮挡断言来取绿。
+
+完整原始日志/PNG在 `iris-c68ca7294c65896c78a91f0c1873d729fde88d2c` artifact（14460153537）。选取经典热像/遮墙/光影恢复帧供目视复核，不将完整日志写入Git。

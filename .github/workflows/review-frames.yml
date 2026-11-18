@@ -28,12 +28,12 @@ jobs:
           assert len(entries) <= 12
           with tempfile.TemporaryDirectory() as tmp:
               for run, kind, frame in entries:
-                  assert re.fullmatch(r'[0-9]+',run) and kind in ('smoke','viewer-jei','viewer-rei') and re.fullmatch(r'tacz_[a-z0-9_]+',frame)
+                  assert re.fullmatch(r'[0-9]+',run) and kind in ('smoke','viewer-jei','viewer-rei','iris') and re.fullmatch(r'tacz_[a-z0-9_]+',frame)
                   output = dest / f'{run}-{frame}.png'
                   if output.exists(): continue
                   meta = json.loads(subprocess.check_output(['gh','api',f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{run}']))
                   assert meta['event']=='push' and meta['head_branch']==os.environ['GITHUB_REF_NAME'] and meta['conclusion']=='success'
-                  assert meta['path']=='.github/workflows/'+('build.yml' if kind=='smoke' else 'viewer-smoke.yml')
+                  assert meta['path']=='.github/workflows/'+('build.yml' if kind=='smoke' else 'iris-smoke.yml' if kind=='iris' else 'viewer-smoke.yml')
                   artifact = kind+'-'+meta['head_sha']; root = Path(tmp)/artifact
                   if not root.exists(): subprocess.run(['gh','run','download',run,'-n',artifact,'-D',str(root)],check=True)
                   pictures = list(root.rglob('*.png'))
