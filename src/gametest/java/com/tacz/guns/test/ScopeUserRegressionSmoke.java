@@ -59,6 +59,9 @@ final class ScopeUserRegressionSmoke {
 
     private static void checkOwnedParticle(ClientGameTestContext ctx,int zoom) {
         var runtime=com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance();
+        final java.awt.image.BufferedImage baseline;
+        try { baseline=javax.imageio.ImageIO.read(ctx.takeScreenshot("tacz_amg10_particle_baseline_"+zoom).toFile()); }
+        catch(java.io.IOException e) { throw new java.io.UncheckedIOException(e); }
         ctx.runOnClient(mc->{
             var env=new com.tacz.guns.client.particle.bedrock.particle.runtime.ParticleMolangEnvironment();
             var def=new com.tacz.guns.client.particle.bedrock.particle.data.ParticleEffectDeserializer().parse(
@@ -83,8 +86,12 @@ final class ScopeUserRegressionSmoke {
             var image=javax.imageio.ImageIO.read(ctx.takeScreenshot("tacz_amg10_particle_"+zoom).toFile());
             int magenta=0,r=image.getHeight()/16;
             for(int y=image.getHeight()/2-r;y<image.getHeight()/2+r;y++)for(int x=image.getWidth()/2-r;x<image.getWidth()/2+r;x++) {
-                int c=image.getRGB(x,y),red=c>>>16&255,green=c>>>8&255,blue=c&255;
-                if(red>100&&blue>100&&red>green*1.5&&blue>green*1.5)magenta++;
+                int c=image.getRGB(x,y),b=baseline.getRGB(x,y);
+                int dr=(c>>>16&255)-(b>>>16&255),dg=(c>>>8&255)-(b>>>8&255),db=(c&255)-(b&255);
+                // Additive magenta over blue sky is pale pink, not saturated magenta.
+                // Measure the injected red/blue energy against the same ADS frame;
+                // sky brightness alone must never satisfy the positive control.
+                if(dr>30 && db>=0 && dr+db-2*dg>40)magenta++;
             }
             if(zoom<2?magenta>0:magenta<8)throw new AssertionError("Owned particle aperture policy zoom="+zoom+" magenta="+magenta);
             GunMod.LOGGER.info("PORT_SCOPE_PARTICLE: AMG10 zoom={} central magenta={}",zoom,magenta);
