@@ -19,6 +19,9 @@ import java.util.*;
 
 public class ParticleEmitterInstance {
     public static final int MAX_PARTICLES = 16384;
+    private int particleBudget=MAX_PARTICLES;
+    public void setParticleBudget(int budget){particleBudget=Math.clamp(budget,0,MAX_PARTICLES);}
+    public int getParticleBudget(){return particleBudget;}
     public static final int POOL_SIZE = 16384 / 4;
     private static final Random RANDOM = new Random();
 
@@ -176,7 +179,7 @@ public class ParticleEmitterInstance {
     // ==================== 粒子管理 ====================
 
     private void spawnParticleInternal() {
-        if (particles.size() >= MAX_PARTICLES) return;
+        if (particles.size() >= particleBudget) return;
         ParticleInstance p = obtainParticle();
         p.reset();
         p.random1 = RANDOM.nextFloat();
@@ -218,7 +221,7 @@ public class ParticleEmitterInstance {
 
     /** 公共入口，供 Runtime 组件调用 */
     public void spawnParticle() {
-        if (particles.size() < MAX_PARTICLES) spawnParticleInternal();
+        if (particles.size() < particleBudget) spawnParticleInternal();
     }
 
     public int emitManual(int count) {
@@ -227,7 +230,7 @@ public class ParticleEmitterInstance {
 
         bindEmitterContext();
         int maxParticles = (int) manual.maxParticles().evaluate(molang.getContext());
-        int effectiveMax = Math.min(maxParticles, MAX_PARTICLES);
+        int effectiveMax = Math.min(maxParticles, particleBudget);
         int available = Math.max(0, effectiveMax - particles.size());
         int spawnCount = Math.min(count, available);
         for (int i = 0; i < spawnCount; i++) {
@@ -298,6 +301,15 @@ public class ParticleEmitterInstance {
             else { p.vx *= localScale; p.vy *= localScale; p.vz *= localScale; }
         } else {
             p.spawnScale = localScale;
+        }
+        if ((fpMode?fpLocalVelocity:localVelocity) && molang.getContext().getEntity() instanceof net.minecraft.world.entity.Entity owner) {
+            var movement=owner.getDeltaMovement().scale(20);
+            var inherited=new org.joml.Vector3f((float)movement.x,(float)movement.y,(float)movement.z);
+            if(!p.worldSpace){
+                new Matrix4f(worldTransform).invert().transformDirection(inherited);
+                if(p.fpDetached)emitterTransform.transformDirection(inherited);
+            }
+            p.vx+=inherited.x;p.vy+=inherited.y;p.vz+=inherited.z;
         }
     }
 

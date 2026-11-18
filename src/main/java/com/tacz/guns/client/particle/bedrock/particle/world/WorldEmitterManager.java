@@ -77,10 +77,14 @@ public final class WorldEmitterManager {
         return addEmitter(world,new Matrix4f().translation((float)pos.x,(float)pos.y,(float)pos.z),velocity,definition,"");
     }
     public ParticleEmitterInstance addEmitter(ClientLevel world,Matrix4f transform,Vec3 velocity,ParticleEffectDefinition definition,String script){
+        return addEmitter(world,transform,velocity,definition,script,null);
+    }
+    public ParticleEmitterInstance addEmitter(ClientLevel world,Matrix4f transform,Vec3 velocity,ParticleEffectDefinition definition,String script,net.minecraft.world.entity.Entity owner){
         if(world==null||definition==null)return null;
         if(world!=level){clear();level=world;}
         if(emitterCount()>=MAX_EMITTERS||particleCount()>=MAX_TOTAL_PARTICLES||eventBudget++>=256)return null;
         var env=new ParticleMolangEnvironment();
+        env.bindEntity(owner);
         // Pre-effect variables must exist when initialization/lifetime components are applied.
         final ParticleEmitterInstance emitter;
         try {
@@ -100,7 +104,7 @@ public final class WorldEmitterManager {
     public void tick(){
         eventBudget=0;
         active.addAll(pending);pending.clear();
-        int remaining=MAX_TOTAL_PARTICLES;
+        int capacity=Math.max(0,MAX_TOTAL_PARTICLES-particleCount());
         for(var a:List.copyOf(active)){
             var emitter=a.emitter;
             if(a.owner>=0){
@@ -111,13 +115,14 @@ public final class WorldEmitterManager {
                 }
             }
             try{
-                if(remaining<=0){emitter.discard();continue;}
+                int before=emitter.getParticleCount();
+                emitter.setParticleBudget(before+capacity);
                 var transform=new Matrix4f(emitter.getWorldTransform()).translateLocal((float)a.velocity.x/20,(float)a.velocity.y/20,(float)a.velocity.z/20);
                 emitter.setEmitterTransform(a.first?emitter.getEmitterTransform():transform,transform);
                 var pos=transform.getTranslation(new Vector3f());
                 emitter.setEventContext(new EventExecutor.EventContext(emitter,emitter.getMolang(),level,new Vec3(pos.x,pos.y,pos.z)));
                 emitter.tick(.05f);
-                remaining-=emitter.getParticleCount();
+                capacity+=before-emitter.getParticleCount();
             }catch(RuntimeException ex){emitter.discard();GunMod.LOGGER.error("Snowstorm emitter failed: {}",emitter.getDefinition().getIdentifier(),ex);}
         }
         active.removeIf(a->a.emitter.isFinished());

@@ -53,7 +53,7 @@ public record EmitterRateSteady(MolangExpression spawnRate, MolangExpression max
         public void update(ParticleEmitterInstance emitter) {
             if (!emitter.isActive()) return;
             MolangContext<?> ctx = emitter.getMolang().getContext();
-            int maxP = Math.clamp((int) maxParticles.evaluate(ctx),0,ParticleEmitterInstance.MAX_PARTICLES);
+            int maxP = Math.clamp((int) maxParticles.evaluate(ctx),0,emitter.getParticleBudget());
             float rate = Math.clamp((float) spawnRate.evaluate(ctx),0,ParticleEmitterInstance.MAX_PARTICLES * 20f);
             spawnAccumulator += rate * emitter.getDt();
             while (spawnAccumulator >= 1f

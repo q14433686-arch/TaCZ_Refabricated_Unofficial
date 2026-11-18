@@ -53,7 +53,7 @@ public final class AnimationParticleDispatcher {
             var definition=com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader.getInstance().getDefinition(event.effect());
             if(definition!=null){
                 var emitter=com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance()
-                        .addEmitter(mc.level,world,net.minecraft.world.phys.Vec3.ZERO,definition,event.preEffectScript());
+                        .addEmitter(mc.level,world,net.minecraft.world.phys.Vec3.ZERO,definition,event.preEffectScript(),mc.level.getEntity(owner));
                 if(emitter!=null){
                     runtime.bindAnimated(emitter,owner,gun.getGunId(stack),locator,first,new Matrix4f(pose.last().pose()),world);
                     submitted++;

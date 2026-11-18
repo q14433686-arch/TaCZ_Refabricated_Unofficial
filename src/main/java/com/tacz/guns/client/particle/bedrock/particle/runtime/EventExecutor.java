@@ -107,7 +107,8 @@ public final class EventExecutor {
 
         WorldEmitterManager.getInstance().addEmitter(ctx.level,
                 new org.joml.Matrix4f().translation((float)ctx.position.x,(float)ctx.position.y,(float)ctx.position.z),
-                Vec3.ZERO,childDef,effect.preEffectExpression());
+                Vec3.ZERO,childDef,effect.preEffectExpression(),
+                ctx.molang.getContext().getEntity() instanceof net.minecraft.world.entity.Entity entity?entity:null);
     }
 
     private static void executeSoundEffect(SoundEffectEvent sound, EventContext ctx) {

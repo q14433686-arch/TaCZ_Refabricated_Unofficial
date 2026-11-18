@@ -227,7 +227,7 @@ public final class NativeMuzzleEffects {
                 :new Matrix4f(hand).translateLocal((float)mc.gameRenderer.mainCamera().position().x,
                         (float)mc.gameRenderer.mainCamera().position().y,(float)mc.gameRenderer.mainCamera().position().z);
         var runtime=com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance();
-        var emitter=runtime.addEmitter(mc.level,world,Vec3.ZERO,definition,"");
+        var emitter=runtime.addEmitter(mc.level,world,Vec3.ZERO,definition,"",mc.level.getEntity(owner));
         if(emitter!=null)runtime.bindAnimated(emitter,owner,shot.gun,
                 com.tacz.guns.client.model.GunModelConstant.MUZZLE_FLASH_ORIGIN_NODE,first,hand,world);
         return true;
