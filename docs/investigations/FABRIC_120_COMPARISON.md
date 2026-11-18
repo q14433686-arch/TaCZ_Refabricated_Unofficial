@@ -43,7 +43,7 @@ python3 scripts/verify_120_resources.py
 | modifier、AI 对声音反应、声音对象、ADS 预设/双 FOV | 声音/预设/时钟单测和专服动作；集成客户端实际瞄准 | 未听辨所有采样；不等于所有相机曲线目测 |
 | 弹药库、升级、展示柜/板 → Fabric Transfer、组件/BE、collector | 事务回滚、升级带库存、染色/掉落/搬移顺序；重开后读回、客户端转移具名弹药 | Carry On 已装时的操作、密集展示性能与硬件矩阵 |
 | 创造栏、包筛选与开放搜索 → vanilla/Fabric 分页 + `CreativePackFilters` | 真实点击/输入；原屏幕刷新新枪，检查 DMR 和 All | 非全部语言与分辨率 |
-| JEI/REI 查询与工作台跳转 → 独立适配 + 共享正反向关系 | 基线有 API 编译、分页、菜单选择、刷新接线；**不**包含查看器运行时 | 两种实际插件分别加载、同步前后注册、打开页面、真实 transfer |
+| JEI/REI 查询与工作台跳转 → 独立适配 + 共享正反向关系 | `86c8cb6` 两个独立 CI 作业均实际加载查看器、查询重载前后并打开新页面（见下） | 独立服务器无查看器的联机组合、实际工作台 transfer 点击 |
 | 单数目录/物品组件/DFU/条件 → `UniversalPackConverter` | 真实旧夹具不改源包 → 导出 ZIP → 游戏 /reload 同步结果；拒绝不支持项 | 独立作者/布局的有权使用的包；不静默丢数据 |
 | 外显/LOD/第三人称、mesh → `GunRigBaker` / `DisplayBake` / TML / 原生 collector；不加载旧 SBM | 三套独立 rig 与材质、真实 FIXED 提交/重载释放；PAL/YSM 有独立接入 | 带 mod、远近/多实体/不同视角的像素矩阵；非旧 VBO 性能承诺 |
 | 命中表面、弹壳、FP tracer → 原粒子协议/客户端工厂 | 实际 display 控制弹孔开关，弹壳 override 加载、六面朝向检查 | 发射轨迹、声音及光影不由 provider 返回值证明 |
@@ -56,4 +56,6 @@ python3 scripts/verify_120_resources.py
 ## 本轮分块记录
 
 1. **全树基线已复核**：按上面的两种口径分别生成；`--paths` 行数与 TSV 中非空 delta 一致。默认包生成器只读核对及离线引用检查通过。后续块在此登记实现、实跑 SHA、失败/未测条件，不勾选未完成的大项。
-2. **查看器运行时门禁已接入，结果待跑**：基线仍不装查看器；独立 `recipe viewer runtimes` 工作流按 `jei` / `rei` 分别加载固定完整客户端 jar。在新世界先核对 AK 的正反向条目且不存在探针，执行真实旧包转换与重载，再从各自的 runtime registry 找探针并打开它的 gun→ammo 页，保存 `tacz_viewer_*.png`。测试 mod 才注册 JEI 生命周期观察器；不把依赖嵌入发布 JAR。API 对照：[JEI 31.8 源码](https://github.com/mezz/JustEnoughItems/tree/d438dc15f13b102ae7e7e36832543514380bd718)、[REI 26.3 源码](https://github.com/shedaniel/RoughlyEnoughItems/tree/b3bc5013d33f12bbea5737bba5fb76652e2b07d8)。此门禁不代替两个独立客户端或工作台上的 transfer 点击。
+2. **查看器双向查询及开页已过游戏门禁**：基线仍不装查看器；独立 `recipe viewer runtimes` 工作流按 `jei` / `rei` 分别加载固定完整客户端 jar。在新世界先核对 AK 的正反向条目且不存在探针，执行真实旧包转换与重载，再从各自的 runtime registry 找探针并打开它的 gun→ammo 页，保存 `tacz_viewer_*.png`。测试 mod 才注册 JEI 生命周期观察器；不把依赖嵌入发布 JAR。API 对照：[JEI 31.8 源码](https://github.com/mezz/JustEnoughItems/tree/d438dc15f13b102ae7e7e36832543514380bd718)、[REI 26.3 源码](https://github.com/shedaniel/RoughlyEnoughItems/tree/b3bc5013d33f12bbea5737bba5fb76652e2b07d8)。此门禁不代替两个独立客户端或工作台上的 transfer 点击。
+
+   `86c8cb6` [两条运行时作业均成功](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44231476610)：[JEI 31.8.0.48 日志/PNG](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44231476610/artifacts/14394469160)、[REI 26.3.823 日志/PNG](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44231476610/artifacts/14394899280)。通过条件包含正确 screen 和非空帧，不只是进程退出 0。本次下载工件在存储端点 EOF，**不记作看过这两张图**。
