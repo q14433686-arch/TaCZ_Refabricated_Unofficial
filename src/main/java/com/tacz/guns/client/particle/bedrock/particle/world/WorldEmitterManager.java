@@ -13,7 +13,8 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.*;
 import net.minecraft.world.phys.Vec3;
-import org.joml.*;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import java.util.*;
 
 /** Fabric 26.3 lifecycle and immutable SubmitNode geometry adapter. No vanilla smoke substitution. */
