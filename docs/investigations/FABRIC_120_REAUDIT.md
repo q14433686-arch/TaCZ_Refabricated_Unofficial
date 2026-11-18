@@ -64,3 +64,20 @@ PORT_FEEDBACK: back-mounted toggle, actual ordinary-hurt render hook and same-le
 同次 XM157 恢复12黄色像素、遮墙零提交；XL50 热源经典2814 / PIP2529像素，倍率 stripe 7 / 45:45 / 38:38；枪口与射击结果门禁通过。第一次新增安装压力测试放在固定场景像素测试之前，`44362203041` 的 XM157 无标记对照中心出现黄色而失败；随后将安装压力测试放到原固定场景测试之后，并明确恢复其库存，没有放宽原像素判定，以上运行全部通过。尚未独立归因该次像素干扰。
 
 本地六面弹孔离线回归6/6；严格版本一致性6通过、0失败、1警告。没有版本号/发布声明变更。弹药库实际菜单截图已提名回收，人工像素复核见后续补记。
+
+### 弹药库画面复核
+
+[实际菜单原始帧](../../build-reports/visual/44363012970-tacz_ammo_storage_frame.png)由 `44364529417` 回收，已人工查看：854×480、英文、2种弹药/容量432场景中，状态区左右轮廓与下方箱体连续，不再有整宽灰色填充突出侧框；容量/种类分列，进度条、存储格和玩家背包没有相互覆盖。该截图来自真实打开并收到同步内容的菜单，后续移出弹药及服务端库存守恒仍通过。不是用户的 REI+中文+大 GUI 比例组合截图；长翻译布局通过半宽约束处理，但本轮不冒充该组合已人工复现。
+
+JEI/REI 独立运行 [44361736056](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44361736056) 也成功；这是查询/工作台/重载的旧矩阵回归，不是 REI 与弹药库同屏的像素门禁。
+
+### 最终公共/客户端配置复验
+
+最新测试源码 `4097ef3`：[完整构建 44364631276](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44364631276)，job `135014960807` **success**。在前一轮基础上额外修改 COMMON 的布尔（同队穿透）、数值（硬度 .75）、列表（方块 ID 与 #tag）后调用正式 FCAP 保存，再从独立 TOML 读取对象核对，最后恢复原值并保存；不是只检查 ConfigValue 内存。CLIENT 三项设置也重复写盘/重读。日志为：
+
+```text
+PORT_CONFIG: 9 Cloth render/ammo controls built with correct defaults and save consumers; client/common FCAP TOML persistence passed
+PORT_OPTIC_INSTALL: 39 default scopes found hosts and installed through C2S with inventory settlement
+```
+
+同次完整构建、服务端烟测、全部客户端门禁再次通过；XM157为12像素，XL50经典2706/PIP2508，stripe为7/45:45/38:38。未据此宣称独立进程重启、独立双客户端、用户14枪包或 Iris 矩阵完成。
