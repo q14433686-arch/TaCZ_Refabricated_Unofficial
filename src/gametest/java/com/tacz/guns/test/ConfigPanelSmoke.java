@@ -54,11 +54,26 @@ final class ConfigPanelSmoke {
             boolean hide=RenderConfig.DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER.get();
             boolean smoke=RenderConfig.RENDER_MUZZLE_SMOKE.get();
             double tilt=RenderConfig.GUN_HURT_BOB_MULTIPLIER.get();
+            var common=com.tacz.guns.config.common.AmmoConfig.IGNORE_TEAM_FRIENDLY_FIRE;
+            boolean team=common.get();
+            var hardness=com.tacz.guns.config.common.AmmoConfig.DESTROY_BLOCK_HARDNESS_THRESHOLD;
+            double threshold=hardness.get();
+            var blockList=com.tacz.guns.config.common.AmmoConfig.DESTROY_BLOCKS;
+            var blocks=List.copyOf(blockList.get());
             try {
                 RenderConfig.DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER.set(!hide);
                 RenderConfig.RENDER_MUZZLE_SMOKE.set(!smoke);
                 RenderConfig.GUN_HURT_BOB_MULTIPLIER.set(.37D);
+                common.set(!team);hardness.set(.75D);blockList.set(List.of("minecraft:glass","#minecraft:planks"));
                 ConfigPersist.saveAll();
+                var commonPath=FabricLoader.getInstance().getConfigDir().resolve("tacz-common.toml");
+                try(var file=com.electronwill.nightconfig.core.file.CommentedFileConfig.builder(commonPath).build()) {
+                    file.load();
+                    if(!Objects.equals(file.get(common.getPath()),!team)
+                            || !Objects.equals(file.get(hardness.getPath()),.75D)
+                            || !Objects.equals(file.get(blockList.getPath()),List.of("minecraft:glass","#minecraft:planks")))
+                        throw new AssertionError("Common ammo rules did not persist to TOML");
+                }
                 var path=FabricLoader.getInstance().getConfigDir().resolve("tacz-client.toml");
                 try(var file=com.electronwill.nightconfig.core.file.CommentedFileConfig.builder(path).build()) {
                     file.load();
@@ -71,9 +86,10 @@ final class ConfigPanelSmoke {
                 RenderConfig.DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER.set(hide);
                 RenderConfig.RENDER_MUZZLE_SMOKE.set(smoke);
                 RenderConfig.GUN_HURT_BOB_MULTIPLIER.set(tilt);
+                common.set(team);hardness.set(threshold);blockList.set(blocks);
                 ConfigPersist.saveAll();
             }
-            GunMod.LOGGER.info("PORT_CONFIG: 9 Cloth render/ammo controls built with correct defaults and save consumers; client FCAP TOML persistence passed");
+            GunMod.LOGGER.info("PORT_CONFIG: 9 Cloth render/ammo controls built with correct defaults and save consumers; client/common FCAP TOML persistence passed");
         });
     }
 }
