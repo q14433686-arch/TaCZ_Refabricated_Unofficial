@@ -256,8 +256,8 @@ public abstract class GameRendererMixin {
     @Inject(method = "extract", at = @At("HEAD"))
     private void tacz$beginScopeFrame(DeltaTracker deltaTracker, boolean renderLevel, CallbackInfo ci) {
         IrisCompat.beginFrame();
-        ScopePipRenderer.beginFrame();
         ScopeMaskRenderer.beginFrame();
+        ScopePipRenderer.beginFrame();
         // poly_mesh GPU 绘制表：与掩码同点归零，一帧内单调累积、手部 pass 消费。
         PolyMeshGpuRenderer.beginFrame();
         // 光影后置目镜框队列：帧首清空，残留快照绝不许画到下一帧

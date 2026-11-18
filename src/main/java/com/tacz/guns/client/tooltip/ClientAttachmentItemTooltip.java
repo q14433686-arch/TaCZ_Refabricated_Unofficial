@@ -189,6 +189,8 @@ public class ClientAttachmentItemTooltip implements ClientTooltipComponent {
             }
 
             if (type == AttachmentType.SCOPE) {
+                String sensor = index.getScopeLens().getVisionMode().tooltip();
+                if (sensor != null) components.add(Component.translatable(sensor).withStyle(net.minecraft.ChatFormatting.AQUA));
                 float[] zoom = index.getZoom();
                 if (zoom != null) {
                     String[] zoomText = new String[zoom.length];

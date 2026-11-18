@@ -1,5 +1,6 @@
 package com.tacz.guns.client.resource.index;
 
+import com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.tacz.guns.client.resource.pojo.display.SoundData;
@@ -162,6 +163,7 @@ public class ClientAttachmentIndex {
         index.attachmentModel = getOrLoadAttachmentModel(display.getModel());
         if (index.attachmentModel != null) {
             index.attachmentModel.setIsScope(display.isScope());
+            index.attachmentModel.setScopeLens(display.getScopeLens());
             index.attachmentModel.setIsSight(display.isSight());
         }
         index.modelTexture = display.getTexture();
@@ -354,6 +356,8 @@ public class ClientAttachmentIndex {
     public ClientAttachmentSkinIndex getSkinIndex(@Nullable Identifier skinName) {
         return null;
     }
+
+    public ScopeLensConfig getScopeLens() { return display.getScopeLens(); }
 
     public boolean isScope() {
         return isScope;

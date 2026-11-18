@@ -128,6 +128,7 @@ public class TaCZFabricClient implements ClientModInitializer {
         InputEvent.InteractionKeyMappingTriggered.EVENT.register(ClientPreventGunClick::onClickInput);
 
         ClientTickEvents.START_CLIENT_TICK.register(ClientGunTimeLifecycle::tick);
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> com.tacz.guns.client.render.scope.ScopeThermalCapture.close());
         ClientPlayConnectionEvents.DISCONNECT.register(ClientGunTimeLifecycle::disconnect);
         ClientPlayConnectionEvents.DISCONNECT.register(CommonNetworkCacheEvent::onDisconnect);
 

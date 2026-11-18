@@ -15,6 +15,7 @@ import com.mojang.renderpearl.api.commands.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.renderpearl.api.textures.FilterMode;
 import com.mojang.renderpearl.api.textures.GpuTexture;
+import com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
@@ -193,32 +194,34 @@ public final class ScopePipRenderer {
     @Nullable
     private static RenderPipeline compositePipeline;
 
-    private static RenderPipeline compositePipeline() {
-        if (compositePipeline == null) {
-            // 26.3: withSampler(name) 并入 withUniform(name, COMBINED_IMAGE_SAMPLER)。
-            BindGroupLayout maskLayout = BindGroupLayout.builder()
-                    .withUniform(MASK_SAMPLER, UniformType.COMBINED_IMAGE_SAMPLER).build();
-            compositePipeline = RenderPipeline.builder(RenderPipelines.POST_PROCESSING_SNIPPET)
-                    .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_pip_composite"))
-                    .withVertexShader("core/screenquad")
-                    .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_pip"))
-                    .withBindGroupLayout(BindGroupLayouts.IN_SAMPLER)
-                    .withBindGroupLayout(maskLayout)
-                    .withBindGroupLayout(BindGroupLayouts.DYNAMIC_TRANSFORMS)
-                    .withColorTargetState(new ColorTargetState(
-                            Optional.empty(), GpuFormat.RGBA8_UNORM, ColorTargetState.WRITE_COLOR))
-                    .build();
-        }
-        return compositePipeline;
+    private static RenderPipeline lensPipeline;
+
+    private static RenderPipeline compositePipeline(boolean lens) {
+        RenderPipeline cached = lens ? lensPipeline : compositePipeline;
+        if (cached != null) return cached;
+        var samplers = BindGroupLayout.builder().withUniform(MASK_SAMPLER, UniformType.COMBINED_IMAGE_SAMPLER);
+        if (lens) samplers.withUniform("HeatSampler", UniformType.COMBINED_IMAGE_SAMPLER);
+        var builder = RenderPipeline.builder(RenderPipelines.POST_PROCESSING_SNIPPET)
+                .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID,
+                        lens ? "pipeline/scope_lens_composite" : "pipeline/scope_pip_composite"))
+                .withVertexShader("core/screenquad")
+                .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_pip"))
+                .withBindGroupLayout(BindGroupLayouts.IN_SAMPLER)
+                .withBindGroupLayout(samplers.build())
+                .withBindGroupLayout(BindGroupLayouts.DYNAMIC_TRANSFORMS)
+                .withColorTargetState(new ColorTargetState(Optional.empty(), GpuFormat.RGBA8_UNORM, ColorTargetState.WRITE_COLOR));
+        if (lens) return lensPipeline = builder.withShaderDefine("TACZ_SCOPE_LENS").build();
+        return compositePipeline = builder.build();
     }
 
     /** 场景纹理里是否有一张可用的本帧镜内画面。 */
     private static boolean sceneCaptured = false;
+    private static boolean narrowScene;
 
     /** PIP 合成管线预热（同 {@code ScopeBodyRenderTypes#prewarmCompiledPipelines}）。 */
     public static void prewarmCompiledPipelines() {
         try {
-            ScopePipelinePrewarm.touch(compositePipeline());
+            ScopePipelinePrewarm.touch(compositePipeline(false));
         } catch (Throwable ignored) {
             // compositePipeline 是刻意懒构建的（类注释 188 行一带）：构建失败交给
             // 原 catch 路径自我停用，预热本身也必须哑巴。
@@ -699,6 +702,8 @@ public final class ScopePipRenderer {
 
     /** 每帧清一次帧内记忆值。挂在 {@code GameRenderer#extract} 的 HEAD。 */
     public static void beginFrame() {
+        ScopeLensFrame.beginFrame(Minecraft.getInstance());
+        sceneCaptured = narrowScene = false;
         magnificationThisFrame = Float.NaN;
         frameIndex++;
     }
@@ -919,18 +924,18 @@ public final class ScopePipRenderer {
      * 所以镜内看不到那圈描边。属可接受的观感差异，不影响正确性。
      */
     public static void captureScene(Minecraft mc) {
-        if (failed || rerenderMode()) {
-            // 二次渲染模式下镜内画面由 renderScopeView 产出，不走拷贝。
+        boolean lens = ScopeLensFrame.expected != null;
+        if (failed || narrowScene || (rerenderMode() && !lens)) {
+            // A successful narrow pass already owns the scene; don't overwrite it. With
+            // classic FOV (PIP off/below cutoff), the lens still needs the wide scene copy.
             return;
         }
         // 光影下这个注入点的含义不同：Iris 把手部渲染搬进了 LevelRenderer#render 内部，
         // 于是「LevelRenderer#render 之后」= 整条 Iris 管线（延迟光照、composite、
         // 色调映射、手部）<b>全部跑完</b>之后 —— 抓到的正是最终画面。
         // 合成随后由 compositeAfterLevelUnderShaders() 在同一处完成。
-        if (!isEnabledForHeldGun() || currentAimingProgress() <= minAimingProgress()) {
-            sceneCaptured = false;
-            return;
-        }
+        boolean pip = !rerenderMode() && isEnabledForHeldGun() && currentAimingProgress() > minAimingProgress();
+        if (!pip && !lens) return;
         try {
             RenderTarget main = mc.gameRenderer.mainRenderTarget();
             if (main == null) {
@@ -960,8 +965,9 @@ public final class ScopePipRenderer {
             //   (src, dst, mipLevel, dstX, dstY, srcX, srcY, width, height)
             CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
             encoder.copyTextureToTexture(source, copy.getColorTexture(), 0, 0, 0, 0, 0, w, h);
+            if (ScopeLensFrame.needsHeat()) ScopeThermalCapture.finish(main, mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState);
             sceneCaptured = true;
-            if (!loggedFirstCapture) {
+            if (pip && !loggedFirstCapture) {
                 loggedFirstCapture = true;
                 GunMod.LOGGER.info("[TACZ Scope] Scope PIP active: reprojecting a {}x{} scene copy at {}x magnification.",
                         w, h, scopeMagnification());
@@ -1069,12 +1075,13 @@ public final class ScopePipRenderer {
         // lastScopePassFrame >= 0 挡首帧：初始哨兵是 Long.MIN_VALUE，
         // frameIndex - MIN_VALUE 会【上溢成负数】、误判成「帧差 < N」——
         // 代数守卫（-1 != 首次分配后的 >=1）虽恰好也能挡住，但不能靠巧合。
-        int interval = rerenderInterval();
+        // Never pair a reused image of an entity with newer geometry/depth after it went behind a block.
+        int interval = ScopeLensFrame.needsHeat() ? 1 : rerenderInterval();
         if (interval > 1
                 && lastScopePassFrame >= 0
                 && lastScopePassGeneration == ScopePipTarget.generation()
                 && frameIndex - lastScopePassFrame < interval) {
-            sceneCaptured = true;
+            sceneCaptured = narrowScene = true;
             ScopePipTrace.mark("SCOPE-PASS SKIPPED (ScopePipRerenderInterval reuse)");
             return;
         }
@@ -1168,6 +1175,7 @@ public final class ScopePipRenderer {
                         camera.fogData.color,
                         renderSky,
                         false);
+                if (!iris && ScopeLensFrame.needsHeat()) ScopeThermalCapture.finish(pip, camera);
             } finally {
                 // 必须最先清：从这里往后（主画面那一遍）各 phase 要恢复
                 // 「取完就清空」的原样，否则节点会一直堆到下一帧去。
@@ -1202,7 +1210,7 @@ public final class ScopePipRenderer {
                         shaded, pip.getColorTexture(), 0, 0, 0, 0, 0,
                         Math.min(main.width, pip.width), Math.min(main.height, pip.height));
             }
-            sceneCaptured = true;
+            sceneCaptured = narrowScene = true;
             scopePassCount++;
             // 隔帧渲染的书签：本帧真跑了、成品在这一代 target 里。
             lastScopePassFrame = frameIndex;
@@ -1324,17 +1332,15 @@ public final class ScopePipRenderer {
         //（掩码刚在上一句 renderAtPhaseBoundary 里画完），而在
         // suppressesWorldFovZoom / captureScene 那两个调用点读到的是上一帧的 ——
         // 同一个字段、不同时刻，这正是设计里说的那一帧延迟。
-        if (!isEnabledForHeldGun()) {
-            return;
-        }
-        // 二次渲染模式下离屏纹理【已经】是窄 FOV 画出来的，屏幕坐标与主画面一一对应，
-        // 再做一次重投影就等于放大两遍。倍率传 1 = 直接逐像素取用。
-        //
-        // 重投影模式要除掉世界已经放大的那一份：世界放大 W 之后，主画面里的物体本来就大了
-        // W 倍，镜内只需再补 Z/W 就够。不除的话总倍率会变成 W×Z（镜内外对不上）。
-        runComposite(rerenderMode()
-                ? 1.0f
-                : Math.max(1.0f, scopeMagnification()) / worldZoomAtProgress(currentAimingProgress()));
+        if (!ScopeMaskRenderer.hasMaskThisFrame()) return;
+        boolean pip = isEnabledForHeldGun() && currentAimingProgress() > minAimingProgress();
+        ScopeLensConfig lens = ScopeLensFrame.current();
+        if (!pip && lens == null) return;
+        // Classic FOV and true rerender have already magnified the source. Only reproject
+        // when this is a wide PIP copy, and apply the lens in this SAME composite.
+        float magnification = pip && !narrowScene && !rerenderMode()
+                ? Math.max(1.0f, scopeMagnification()) / worldZoomAtProgress(currentAimingProgress()) : 1f;
+        runComposite(magnification, lens, pip);
     }
 
     /**
@@ -1390,18 +1396,18 @@ public final class ScopePipRenderer {
         if (rerenderMode()) {
             // 二次渲染：离屏纹理里已经是用窄 FOV【真画出来】的原生分辨率画面，
             // 屏幕坐标与主画面一一对应。倍率传 1 = 逐像素取用，再放大就是放大两遍。
-            runComposite(1.0f);
+            runComposite(1.0f, null, true);
             return;
         }
         float progress = currentAimingProgress();
         float zoom = Math.max(1.0f, scopeMagnification());
         // 总倍率按进度插值，再除掉世界这一帧已经放大的那一份，剩下的才归镜内。
         // 两者相乘恒等于 1+(Z-1)·progress，所以镜内外任何时刻都是同一个总倍率。
-        runComposite((1.0f + (zoom - 1.0f) * progress) / worldZoomAtProgress(progress));
+        runComposite((1.0f + (zoom - 1.0f) * progress) / worldZoomAtProgress(progress), null, true);
     }
 
     /** 合成本体：读离屏拷贝、按倍率重投影、只写进目镜孔径。两个调用点共用。 */
-    private static void runComposite(float magnification) {
+    private static void runComposite(float magnification, @Nullable ScopeLensConfig lens, boolean pip) {
         TextureTarget scene = ScopePipTarget.current();
         RenderTarget mask = ScopeMaskTarget.current();
         if (scene == null || mask == null) {
@@ -1425,7 +1431,7 @@ public final class ScopePipRenderer {
                     main.getColorTextureView(),
                     Optional.empty())) {
                 // 26.3: setPipeline 收 CompiledRenderPipeline。
-                pass.setPipeline(RenderSystem.getCompiledPipeline(compositePipeline()));
+                pass.setPipeline(RenderSystem.getCompiledPipeline(compositePipeline(lens != null)));
                 // 【硬件剪裁 —— 越界的最后一道闸】
                 //
                 // 着色器里的「掩码为假就 discard」是【软】约束：掩码纹理一旦有任何问题
@@ -1441,10 +1447,15 @@ public final class ScopePipRenderer {
                 // 倍率与锐化强度经 ColorModulator 的 r/g 送进着色器。
                 // bindDefaultUniforms 不管 DynamicTransforms 这个块，
                 // 得自己写 —— 与 ScopeMaskRenderer 同一套路。
+                var heat = ScopeThermalCapture.current();
+                if (lens != null) {
+                    pass.setUniform("HeatSampler", heat != null ? heat.getColorTextureView() : mask.getColorTextureView(),
+                            RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+                }
                 pass.setUniform("DynamicTransforms",
                         RenderSystem.getDynamicUniforms().writeTransform(
-                                new Matrix4f(),
-                                new Vector4f(magnification, sharpness(), paintLensFlag(), 1.0f)));
+                                lens == null ? new Matrix4f() : ScopeLensFrame.uniforms(lens, heat != null),
+                                new Vector4f(magnification, sharpness(), pip ? paintLensFlag() : 1f, 1.0f)));
                 // 场景拷贝：LINEAR。着色器里的 Catmull-Rom 重建正是用一组
                 // 硬件双线性抽头拼出来的，所以这里必须是 LINEAR 而非 NEAREST。
                 pass.setUniform("InSampler", scene.getColorTextureView(),
@@ -1458,6 +1469,12 @@ public final class ScopePipRenderer {
                 pass.draw(3, 1, 0, 0);
             }
         } catch (Exception e) {
+            if (lens != null) {
+                ScopeLensFrame.disabled = true;
+                GunMod.LOGGER.warn("[TACZ Scope] Pack lens failed; preserving plain PIP/classic FOV.", e);
+                if (pip) runComposite(magnification, null, true);
+                return;
+            }
             failed = true;
             GunMod.LOGGER.error("[TACZ Scope] Scope PIP composite failed; PIP disabled, "
                     + "falling back to whole-screen FOV zoom.", e);

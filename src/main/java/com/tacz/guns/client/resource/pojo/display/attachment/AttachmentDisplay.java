@@ -53,6 +53,11 @@ public class AttachmentDisplay implements IDisplay {
     @SerializedName("scope")
     private boolean isScope = false;
 
+    @SerializedName("scope_lens")
+    private ScopeLensConfig scopeLens = new ScopeLensConfig();
+
+    public ScopeLensConfig getScopeLens() { return scopeLens; }
+
     @SerializedName("sight")
     private boolean isSight = false;
 
@@ -157,6 +162,8 @@ public class AttachmentDisplay implements IDisplay {
 
     @Override
     public void init() {
+        if (scopeLens == null) scopeLens = new ScopeLensConfig();
+        scopeLens.init();
         if (slotTextureLocation != null) {
             slotTextureLocation = converter.idToFile(slotTextureLocation);
         }

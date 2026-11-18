@@ -81,6 +81,10 @@ vec3 sampleCatmullRom(sampler2D tex, vec2 uv, vec2 texSize) {
     return max(result, vec3(0.0));
 }
 
+#ifdef TACZ_SCOPE_LENS
+#include <tacz:scope_lens.glsl>
+#endif
+
 void main() {
     // texCoord 与掩码/场景拷贝同为左下原点、同一尺寸比例，
     // 三者可以直接共用一套归一化坐标，不需要任何翻转或纵横比换算。
@@ -150,6 +154,17 @@ void main() {
     vec2 center = vec2(0.5);
     vec2 sceneUv = center + (texCoord - center) / magnification;
 
+#ifdef TACZ_SCOPE_LENS
+    vec2 relative = (texCoord - Aperture.xy) / magnification;
+    float ramp = 0.0, edge = 0.0;
+    float reach = 0.465 * max(Optics.z, Sensor.x);
+    if (reach > 0.0) {
+        float distance = edgeDistance(texCoord, reach);
+        if (Optics.z > 0.0) ramp = 1.0 - smoothstep(0.0, min(0.465 * Optics.z, 1.0), distance);
+        if (Sensor.x > 0.0) { float f = distance / (0.155 * Sensor.x); edge = exp(-f*f) * Optics.w; }
+        sceneUv -= relative * Optics.x * ramp;
+    }
+#endif
     // 重建：双三次而不是双线性，基于 InSampler 真实尺寸进行采样
     vec2 inTexSize = vec2(textureSize(InSampler, 0));
     vec3 color = sampleCatmullRom(InSampler, sceneUv, inTexSize);
@@ -178,5 +193,13 @@ void main() {
 
     // alpha 固定 1.0：管线的写掩码是 WRITE_COLOR，alpha 通道压根不会被写入，
     // 这里给什么都不影响结果；写 1.0 只是让「这是一块不透明的实心画面」在源码里读得出来。
+#ifdef TACZ_SCOPE_LENS
+    if (TintMode.w == 0.0 && Optics.y * ramp > 0.0) {
+        vec2 split = relative * Optics.y * ramp;
+        color.r = texture(InSampler, sceneUv - split).r;
+        color.b = texture(InSampler, sceneUv + split).b;
+    }
+    color = lensColor(color, sceneUv, edge);
+#endif
     fragColor = vec4(color, 1.0);
 }

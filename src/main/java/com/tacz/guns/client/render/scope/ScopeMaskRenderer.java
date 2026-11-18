@@ -1,5 +1,6 @@
 package com.tacz.guns.client.render.scope;
 
+import com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import com.mojang.renderpearl.api.GpuFormat;
 import com.mojang.renderpearl.api.pipeline.ColorTargetState;
@@ -310,7 +311,11 @@ public final class ScopeMaskRenderer {
      * <p>刻意<b>不</b>放在手部 pass 里：Iris 一帧有两次手部 pass，
      * 放那儿会被第二次抹掉，见 {@link #maskDrawnThisFrame} 的注释。</p>
      */
+    static ScopeLensConfig lensThisFrame, lensLastFrame;
+
     public static void beginFrame() {
+        lensLastFrame = lensThisFrame;
+        lensThisFrame = null;
         maskDrawnLastFrame = maskDrawnThisFrame;
         maskDrawnThisFrame = false;
         compositedThisFrame = false;
@@ -493,6 +498,7 @@ public final class ScopeMaskRenderer {
                 // 走到这里 pass 已经关闭、绘制已提交 —— 掩码 target 里确实有东西了。
                 // 镜内画中画的合成阶段就等这一位。
                 maskDrawnThisFrame = true;
+                lensThisFrame = ScopeMaskGeometry.lens();
                 // 【必须在 renderAtPhaseBoundary 的 finally 清空几何之前记下】
                 // 这一位是 executeSolid 之后那些绘制期判据的唯一事实来源，
                 // 见 viewmodelClipMaskThisFrame 的类内说明。

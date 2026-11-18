@@ -1,5 +1,7 @@
 package com.tacz.guns.client.render.scope;
 
+import com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig;
+import org.jetbrains.annotations.Nullable;
 import com.tacz.guns.client.model.bedrock.BedrockCube;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -101,7 +103,20 @@ public final class ScopeMaskGeometry {
         return viewmodelClipEnabled;
     }
 
+    // The mask may contain several render submissions. Never apply one display's sensor
+    // to a different ocular (including a sight-only group in an overlay).
+    private static @Nullable ScopeLensConfig lens;
+
+    public static void finishOcular(int firstEntry, @Nullable ScopeLensConfig profile) {
+        if (firstEntry == ENTRIES.size()) return;
+        if (firstEntry == 0) lens = profile;
+        else if (profile != lens) lens = null;
+    }
+
+    static @Nullable ScopeLensConfig lens() { return lens; }
+
     public static void clear() {
+        lens = null;
         ENTRIES.clear();
         viewmodelClipEnabled = false;
     }

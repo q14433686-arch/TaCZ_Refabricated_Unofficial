@@ -1,5 +1,6 @@
 package com.tacz.guns.client.model;
 
+import com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
@@ -442,6 +443,10 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         return scopeViewPaths.get(viewSwitchCount);
     }
 
+    private ScopeLensConfig scopeLens;
+
+    public void setScopeLens(ScopeLensConfig scopeLens) { this.scopeLens = scopeLens; }
+
     public void setIsScope(boolean isScope) {
         this.isScope = isScope;
     }
@@ -636,7 +641,9 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             bodyMaskable = false;
         }
         if (reticleMaskable) {
+            int start = ScopeMaskGeometry.entries().size();
             registerOcularMaskGeometry(poseStack);
+            ScopeMaskGeometry.finishOcular(start, isScope && activeGroupIsScope() ? scopeLens : null);
             if (bodyMaskable) {
                 // 其余视模组件（枪身 / 非瞄具配件 / 枪口火光）是【另外】查这个开关的，
                 // 与「本帧有没有几何」分开 —— 否则低倍那张 reticle-only 掩码会把

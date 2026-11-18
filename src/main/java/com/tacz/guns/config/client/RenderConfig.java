@@ -17,6 +17,8 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue HEAD_SHOT_DEBUG_HITBOX;
     /** 瞄准镜镜内裁剪（目镜掩码）总开关。默认<b>开启</b>。 */
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_ENABLE;
+    public static ForgeConfigSpec.BooleanValue EXPERIMENTAL_SCOPE_LENS;
+    public static ForgeConfigSpec.BooleanValue SCOPE_THERMAL_ENABLE;
     public static ForgeConfigSpec.BooleanValue ENABLE_OCULAR_INFLATE;
     public static ForgeConfigSpec.DoubleValue OCULAR_INFLATE;
     /** Iris 瞄具掩码注入策略。HAND_ONLY 只碰手部/枪械程序；ALL 旧行为（全注）；OFF 全关（光影下不裁剪，仅对照实验）。默认 HAND_ONLY。 */
@@ -323,6 +325,10 @@ public class RenderConfig {
         SCOPE_MASK_ENABLE = builder
                 .comment("Whether to clip the scope body/reticle inside the ocular (see-through scope).")
                 .define("ScopeMaskEnable", true);
+        EXPERIMENTAL_SCOPE_LENS = builder.comment("Apply the active display's lens to its masked aperture (native renderer).")
+                .define("EnableExperimentalScopeLens", true);
+        SCOPE_THERMAL_ENABLE = builder.comment("Capture visible heat sources for thermal lenses; otherwise use their optics.")
+                .define("EnableScopeThermal", true);
         IRIS_SCOPE_MASK_INJECTION = builder
                 .comment("Which Iris shader programs receive the TACZ scope-mask clip branch.",
                         "HAND_ONLY (default): only gbuffers_hand programs; world programs stay byte-identical to stock Iris.",

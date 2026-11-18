@@ -30,6 +30,7 @@ public abstract class RefitOptionModel {
                 var result = ClientAttachmentIndex.getOrLoadAttachmentModel(display.getModel());
                 if (result != null) {
                     result.setIsScope(display.isScope());
+                    result.setScopeLens(display.getScopeLens());
                     result.setIsSight(display.isSight());
                 }
                 return result;
