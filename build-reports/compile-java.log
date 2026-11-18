@@ -1,4 +1,4 @@
-commit: c4e5e1b442d1ba18d800e811b5037efb46521409
+commit: e2e223327a2970d7a5e32196073809711c5bc87e
 Fetching distribution.
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
@@ -22,4 +22,113 @@ Daemon will be stopped at the end of the build
 > Configure project :
 Fabric Loom: 1.17.21
 
-== job status: cancelled ==
+> Task :compileJava
+warning: unknown enum constant Level.FULL
+  reason: class file for com.google.j2objc.annotations.ReflectionSupport$Level not found
+warning: unknown enum constant Level.FULL
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+2 warnings
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795031211445.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 1m 13s
+1 actionable task: 1 executed
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
+  private void bobHurt(net.minecraft.client.renderer.state.level.CameraRenderState, com.mojang.blaze3d.vertex.PoseStack);
+    Code:
+         0: aload_1
+         1: getfield      #693                // Field net/minecraft/client/renderer/state/level/CameraRenderState.entityRenderState:Lnet/minecraft/client/renderer/state/level/CameraEntityRenderState;
+         4: getfield      #698                // Field net/minecraft/client/renderer/state/level/CameraEntityRenderState.isLiving:Z
+         7: ifeq          156
+        10: aload_1
+        11: getfield      #693                // Field net/minecraft/client/renderer/state/level/CameraRenderState.entityRenderState:Lnet/minecraft/client/renderer/state/level/CameraEntityRenderState;
+        14: getfield      #701                // Field net/minecraft/client/renderer/state/level/CameraEntityRenderState.hurtTime:F
+        17: fstore_3
+        18: aload_1
+        19: getfield      #693                // Field net/minecraft/client/renderer/state/level/CameraRenderState.entityRenderState:Lnet/minecraft/client/renderer/state/level/CameraEntityRenderState;
+        22: getfield      #704                // Field net/minecraft/client/renderer/state/level/CameraEntityRenderState.isDeadOrDying:Z
+        25: ifeq          64
+        28: aload_1
+        29: getfield      #693                // Field net/minecraft/client/renderer/state/level/CameraRenderState.entityRenderState:Lnet/minecraft/client/renderer/state/level/CameraEntityRenderState;
+        32: getfield      #707                // Field net/minecraft/client/renderer/state/level/CameraEntityRenderState.deathTime:F
+        35: ldc_w         #708                // float 20.0f
+        38: invokestatic  #714                // Method java/lang/Math.min:(FF)F
+        41: fstore        4
+        43: aload_2
+        44: getstatic     #720                // Field com/mojang/math/Axis.ZP:Lcom/mojang/math/Axis;
+        47: ldc_w         #721                // float 40.0f
+        50: ldc_w         #722                // float 8000.0f
+        53: fload         4
+        55: ldc_w         #723                // float 200.0f
+        58: fadd
+        59: fdiv
+        60: fsub
+        61: invokevirtual #727                // Method com/mojang/blaze3d/vertex/PoseStack.rotateDegrees:(Lcom/mojang/math/Axis;F)V
+        64: fload_3
+        65: fconst_0
+        66: fcmpg
+        67: ifge          71
+        70: return
+        71: fload_3
+        72: aload_1
+        73: getfield      #693                // Field net/minecraft/client/renderer/state/level/CameraRenderState.entityRenderState:Lnet/minecraft/client/renderer/state/level/CameraEntityRenderState;
+        76: getfield      #730                // Field net/minecraft/client/renderer/state/level/CameraEntityRenderState.hurtDuration:I
+        79: i2f
+        80: fdiv
+        81: fstore_3
+        82: fload_3
+        83: fload_3
+        84: fmul
+        85: fload_3
+        86: fmul
+        87: fload_3
+        88: fmul
+        89: ldc_w         #731                // float 3.1415927f
+        92: fmul
+        93: f2d
+        94: invokestatic  #737                // Method net/minecraft/util/Mth.sin:(D)F
+        97: fstore_3
+        98: aload_1
+        99: getfield      #693                // Field net/minecraft/client/renderer/state/level/CameraRenderState.entityRenderState:Lnet/minecraft/client/renderer/state/level/CameraEntityRenderState;
+       102: getfield      #740                // Field net/minecraft/client/renderer/state/level/CameraEntityRenderState.hurtDir:F
+       105: fstore        4
+       107: aload_2
+       108: getstatic     #743                // Field com/mojang/math/Axis.YP:Lcom/mojang/math/Axis;
+       111: fload         4
+       113: fneg
+       114: invokevirtual #727                // Method com/mojang/blaze3d/vertex/PoseStack.rotateDegrees:(Lcom/mojang/math/Axis;F)V
+       117: fload_3
+       118: fneg
+       119: f2d
+       120: ldc2_w        #744                // double 14.0d
+       123: dmul
+       124: aload_0
+       125: getfield      #147                // Field gameRenderState:Lnet/minecraft/client/renderer/state/GameRenderState;
+       128: getfield      #749                // Field net/minecraft/client/renderer/state/GameRenderState.optionsRenderState:Lnet/minecraft/client/renderer/state/OptionsRenderState;
+       131: getfield      #755                // Field net/minecraft/client/renderer/state/OptionsRenderState.damageTiltStrength:D
+       134: dmul
+       135: d2f
+       136: fstore        5
+       138: aload_2
+       139: getstatic     #720                // Field com/mojang/math/Axis.ZP:Lcom/mojang/math/Axis;
+       142: fload         5
+       144: invokevirtual #727                // Method com/mojang/blaze3d/vertex/PoseStack.rotateDegrees:(Lcom/mojang/math/Axis;F)V
+       147: aload_2
+       148: getstatic     #743                // Field com/mojang/math/Axis.YP:Lcom/mojang/math/Axis;
+       151: fload         4
+       153: invokevirtual #727                // Method com/mojang/blaze3d/vertex/PoseStack.rotateDegrees:(Lcom/mojang/math/Axis;F)V
+       156: return
+
+  private void bobView(net.minecraft.client.renderer.state.level.CameraRenderState, com.mojang.blaze3d.vertex.PoseStack);
+
+== job status: success ==
