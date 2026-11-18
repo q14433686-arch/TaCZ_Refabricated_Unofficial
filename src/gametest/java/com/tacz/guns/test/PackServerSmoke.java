@@ -34,6 +34,12 @@ public class PackServerSmoke {
         helper.assertTrue(helper.getLevel().getServer().getAdvancements().get(Identifier.parse("port_test:criteria")) != null,
                 "Advancement criteria did not register/decode from the pack");
         var assets = com.tacz.guns.resource.CommonAssetsManager.getInstance();
+        var addedAmmo = Identifier.parse("tacz:300blk");
+        helper.assertTrue(TimelessAPI.getCommonAmmoIndex(addedAmmo).orElseThrow().getStackSize() == 50, "Missing new default ammo");
+        var ammoRecipe = assets.getTableRecipe(Identifier.parse("tacz:ammo/300blk"));
+        ammoRecipe.getResult().init();
+        var ammo = ammoRecipe.getResult().getResult();
+        helper.assertTrue(ammo.getCount() == 45 && ammo.getItem() instanceof com.tacz.guns.api.item.IAmmo a && a.getAmmoId(ammo).equals(addedAmmo), "Wrong new default ammo recipe");
         var table = assets.getTableRecipe(Identifier.parse("port_test:condition_true"));
         helper.assertTrue(table != null && assets.getTableRecipe(Identifier.parse("port_test:condition_false")) == null, "Workbenches resurrected a disabled recipe");
         table.getResult().init();

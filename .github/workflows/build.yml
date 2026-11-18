@@ -75,6 +75,9 @@ jobs:
           sys.exit(1 if bad else 0)
           EOF
 
+      - name: Verify pinned 1.2.0 resource imports and ammo references
+        run: python3 scripts/verify_120_resources.py
+
       - name: Block drop wiring (26.3 loot schema)
         run: python3 scripts/verify_block_drops.py --strict
 

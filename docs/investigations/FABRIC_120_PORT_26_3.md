@@ -90,3 +90,5 @@ python3 scripts/audit_upstream_120.py /tmp/tacz-upstream.git --local cc990c3
 ### 转换器首轮
 
 `83d99a3` 的 [compile-check](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44214829649) 和 [build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44214829949) 通过。专服 `PackConversionSmoke` 实际执行 DFU、用该服 registry 校验、保留 1.21.1 overlay、写入 26.3 overlay 并读回 ZIP；检查 typed 结果的 AmmoId、自定义 byte、嵌套配件、部分谓词、缺失 ID 和禁用标记、重复导出不覆盖。另有真实加载的 Fabric true/false 工作台配方。该 SHA 的集成客户端仍是先前的持物/展示墙门禁，**没有安装导出的 ZIP 再重载**。命令与输出边界：[转换说明](../GUNPACK_CONVERSION_26_3.md)。
+
+`da48051` 增加原生旧 `conditions`、顶层石切 `count` 及无等价标签空值测试的保护。可复跑的 `ConversionReloadSmoke` 在活跃集成世界内生成旧包 → 导出 ZIP → 放进测试实例的 `tacz/` → 重新发现包并执行实际 `server.reloadResources`；等待客户端收到新快照，核对原版 registry 只留下两份所需配方、工作台 typed/custom 结果的 ID/数量/byte 与禁用配方不回退。[build 44215505004](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44215505004) 与 [compile-check](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44215504991) 通过。测试的是合成夹具，不是所有第三方包或物理双端。

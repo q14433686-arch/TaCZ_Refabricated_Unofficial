@@ -35,6 +35,18 @@ public class RenderClothConfig {
                 .setMin(0).setMax(Integer.MAX_VALUE).setDefaultValue(0).setTooltip(Component.translatable("config.tacz.client.render.gun_lod_render_distance.desc"))
                 .setSaveConsumer(RenderConfig.GUN_LOD_RENDER_DISTANCE::set).build());
 
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.hit_particle_enable"), RenderConfig.HIT_PARTICLE_ENABLE.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.hit_particle_enable.desc"))
+                .setSaveConsumer(RenderConfig.HIT_PARTICLE_ENABLE::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.hit_extra_particle_enable"), RenderConfig.HIT_EXTRA_PARTICLE_ENABLE.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.hit_extra_particle_enable.desc"))
+                .setSaveConsumer(RenderConfig.HIT_EXTRA_PARTICLE_ENABLE::set).build());
+
+        render.addEntry(entryBuilder.startIntField(Component.translatable("config.tacz.client.render.hit_particle_max_distance"), RenderConfig.HIT_PARTICLE_MAX_DISTANCE.get())
+                .setMin(0).setMax(Integer.MAX_VALUE).setDefaultValue(64).setTooltip(Component.translatable("config.tacz.client.render.hit_particle_max_distance.desc"))
+                .setSaveConsumer(RenderConfig.HIT_PARTICLE_MAX_DISTANCE::set).build());
+
         render.addEntry(entryBuilder.startIntField(Component.translatable("config.tacz.client.render.bullet_hole_particle_life"), RenderConfig.BULLET_HOLE_PARTICLE_LIFE.get())
                 .setMin(0).setMax(Integer.MAX_VALUE).setDefaultValue(400).setTooltip(Component.translatable("config.tacz.client.render.bullet_hole_particle_life.desc"))
                 .setSaveConsumer(RenderConfig.BULLET_HOLE_PARTICLE_LIFE::set).build());

@@ -20,6 +20,7 @@ import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.resource.pojo.animation.bedrock.BedrockAnimationFile;
 import com.tacz.guns.client.resource.pojo.display.LaserConfig;
 import com.tacz.guns.client.resource.pojo.display.ammo.AmmoParticle;
+import com.tacz.guns.client.resource.pojo.display.ammo.HitSurfaceParticle;
 import com.tacz.guns.client.resource.pojo.display.gun.*;
 import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
 import com.tacz.guns.client.resource.pojo.model.BedrockVersion;
@@ -740,6 +741,14 @@ public class GunDisplayInstance {
     @Nullable
     public ShellEjection getShellEjection() {
         return shellEjection;
+    }
+
+    @Nullable public List<HitSurfaceParticle> getHitSurfaceParticles() {
+        return display.getGunAmmo() == null ? null : display.getGunAmmo().getHitSurfaceParticles();
+    }
+
+    @Nullable public Boolean getBulletHoleEnabled() {
+        return display.getGunAmmo() == null ? null : display.getGunAmmo().getBulletHoleEnabled();
     }
 
     public float @Nullable [] getTracerColor() {

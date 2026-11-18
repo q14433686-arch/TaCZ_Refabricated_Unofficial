@@ -2,6 +2,11 @@ package com.tacz.guns.client.particle;
 
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.config.client.RenderConfig;
+import com.tacz.guns.client.resource.GunDisplayInstance;
+import com.tacz.guns.client.resource.index.ClientAmmoIndex;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import javax.annotation.Nullable;
 import com.tacz.guns.init.ModBlocks;
 import com.tacz.guns.particles.BulletHoleOption;
 import net.fabricmc.api.EnvType;
@@ -39,6 +44,10 @@ public class BulletHoleParticle extends SingleQuadParticle {
     private float textureDensity;
 
     public BulletHoleParticle(ClientLevel world, double x, double y, double z, Direction direction, BlockPos pos, String ammoId, String gunId, String gunDisplayId) {
+        this(world, x, y, z, direction, pos, ImpactStyle.resolve(ammoId, gunId, gunDisplayId));
+    }
+
+    private BulletHoleParticle(ClientLevel world, double x, double y, double z, Direction direction, BlockPos pos, ImpactStyle style) {
         super(world, x, y, z, getSpriteForPos(pos));
         this.direction = direction;
         this.pos = pos;
@@ -46,27 +55,25 @@ public class BulletHoleParticle extends SingleQuadParticle {
         this.hasPhysics = false;
         this.gravity = 0.0F;
         this.quadSize = 0.05F;
-
-        BlockState state = world.getBlockState(pos);
-        if (state.is(ModBlocks.TARGET) || shouldRemove()) {
-            this.remove();
-        }
-        TimelessAPI.getGunDisplay(Identifier.parse(gunDisplayId), Identifier.parse(gunId)).ifPresent(gunIndex -> {
-            float[] gunTracerColor = gunIndex.getTracerColor();
-            if (gunTracerColor != null) {
-                this.rCol = gunTracerColor[0];
-                this.gCol = gunTracerColor[1];
-                this.bCol = gunTracerColor[2];
-            } else {
-                TimelessAPI.getClientAmmoIndex(Identifier.parse(ammoId)).ifPresent(ammoIndex -> {
-                    float[] ammoTracerColor = ammoIndex.getTracerColor();
-                    this.rCol = ammoTracerColor[0];
-                    this.gCol = ammoTracerColor[1];
-                    this.bCol = ammoTracerColor[2];
-                });
-            }
-        });
+        if (!style.decal() || world.getBlockState(pos).is(ModBlocks.TARGET) || shouldRemove()) remove();
+        float[] color = style.gun == null ? null : style.gun.getTracerColor();
+        if (color == null && style.ammo != null) color = style.ammo.getTracerColor();
+        if (color != null) setColor(color[0], color[1], color[2]);
         this.alpha = 0.9F;
+    }
+
+    private record ImpactStyle(@Nullable ClientAmmoIndex ammo, @Nullable GunDisplayInstance gun) {
+        static ImpactStyle resolve(String ammo, String gun, String display) {
+            var a = Identifier.tryParse(ammo);
+            var g = Identifier.tryParse(gun);
+            return new ImpactStyle(a == null ? null : TimelessAPI.getClientAmmoIndex(a).orElse(null),
+                    g == null ? null : TimelessAPI.getGunDisplay(Identifier.tryParse(display), g).orElse(null));
+        }
+
+        boolean decal() {
+            Boolean override = gun == null ? null : gun.getBulletHoleEnabled();
+            return override != null ? override : ammo == null || ammo.isBulletHoleEnabled();
+        }
     }
 
     private static TextureAtlasSprite getSpriteForPos(BlockPos pos) {
@@ -212,32 +219,60 @@ public class BulletHoleParticle extends SingleQuadParticle {
     }
 
     private boolean shouldRemove() {
-        final BlockState blockState = this.level.getBlockState(this.pos);
+        return !attached(level, pos, x, y, z);
+    }
+
+    private static boolean attached(ClientLevel level, BlockPos pos, double x, double y, double z) {
+        final BlockState blockState = level.getBlockState(pos);
         if (blockState.isAir()) {
-            return true;
+            return false;
         } else {
             // 阻止弹孔在与方块不构成有效附着时继续渲染
-            VoxelShape shape = blockState.getCollisionShape(this.level, this.pos);
+            VoxelShape shape = blockState.getCollisionShape(level, pos);
             if (shape.isEmpty()) {
-                return true;
+                return false;
             }
             AABB baseBlockBoundingBox = shape.bounds();
-            AABB blockBoundingBox = baseBlockBoundingBox.move(this.pos);
+            AABB blockBoundingBox = baseBlockBoundingBox.move(pos);
             boolean intersects = blockBoundingBox.intersects(
-                    this.x - 0.1, this.y - 0.1, this.z - 0.1,
-                    this.x + 0.1, this.y + 0.1, this.z + 0.1);
-            return !intersects;
+                    x - 0.1, y - 0.1, z - 0.1,
+                    x + 0.1, y + 0.1, z + 0.1);
+            return intersects;
         }
     }
 
     @Environment(EnvType.CLIENT)
     public static class Provider implements ParticleProvider<BulletHoleOption> {
-        public Provider() {
+        private final java.util.Set<SoundEvent> soundsThisTick = new java.util.HashSet<>();
+        private long lastTick = Long.MIN_VALUE;
+        private java.lang.ref.WeakReference<ClientLevel> lastLevel = new java.lang.ref.WeakReference<>(null);
+
+        private void playStep(ClientLevel level, BlockState state, Vec3 at) {
+            var player = Minecraft.getInstance().player;
+            if (player == null || player.distanceToSqr(at) > 64 * 64) return;
+            if (level != lastLevel.get() || level.getGameTime() != lastTick) {
+                lastTick = level.getGameTime();
+                lastLevel = new java.lang.ref.WeakReference<>(level);
+                soundsThisTick.clear();
+            }
+            var sound = state.getSoundType();
+            if (soundsThisTick.add(sound.getStepSound())) level.playLocalSound(at.x, at.y, at.z, sound.getStepSound(), SoundSource.BLOCKS,
+                    sound.getVolume() * 0.6F, sound.getPitch() * (0.9F + level.getRandom().nextFloat() * 0.2F), false);
         }
 
         @Override
         public BulletHoleParticle createParticle(@NotNull BulletHoleOption option, @NotNull ClientLevel world, double x, double y, double z, double pXSpeed, double pYSpeed, double pZSpeed, RandomSource random) {
-            return new BulletHoleParticle(world, x, y, z, option.getDirection(), option.getPos(), option.getAmmoId(), option.getGunId(), option.getGunDisplayId());
+            var pos = option.getPos();
+            var state = world.getBlockState(pos);
+            if (state.is(ModBlocks.TARGET) || !attached(world, pos, x, y, z)) return null;
+            var style = ImpactStyle.resolve(option.getAmmoId(), option.getGunId(), option.getGunDisplayId());
+            var hit = new Vec3(x, y, z);
+            // Keep the existing network codec and the server's separate incendiary particle. A
+            // disabled decal must not suppress sound, fragments or a pack's custom impact effect.
+            HitSurfaceParticleSpawner.spawn(world, hit, option.getDirection(), state, style.ammo, style.gun);
+            playStep(world, state, hit);
+            return style.decal() && RenderConfig.BULLET_HOLE_PARTICLE_LIFE.get() > 0
+                    ? new BulletHoleParticle(world, x, y, z, option.getDirection(), pos, style) : null;
         }
     }
 }

@@ -7,6 +7,9 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue ENABLE_LASER_FADE_OUT;
     public static ForgeConfigSpec.BooleanValue ILLUMINATED_REAL_SKY;
     public static ForgeConfigSpec.IntValue GUN_LOD_RENDER_DISTANCE;
+    public static ForgeConfigSpec.BooleanValue HIT_PARTICLE_ENABLE;
+    public static ForgeConfigSpec.BooleanValue HIT_EXTRA_PARTICLE_ENABLE;
+    public static ForgeConfigSpec.IntValue HIT_PARTICLE_MAX_DISTANCE;
     public static ForgeConfigSpec.IntValue BULLET_HOLE_PARTICLE_LIFE;
     public static ForgeConfigSpec.DoubleValue BULLET_HOLE_PARTICLE_FADE_THRESHOLD;
     public static ForgeConfigSpec.EnumValue<CrosshairType> CROSSHAIR_TYPE;
@@ -291,6 +294,10 @@ public class RenderConfig {
 
         builder.comment("How far to display the lod model, 0 means always display");
         GUN_LOD_RENDER_DISTANCE = builder.defineInRange("GunLodRenderDistance", 0, 0, Integer.MAX_VALUE);
+
+        HIT_PARTICLE_ENABLE = builder.comment("Show block impact particles").define("HitParticleEnable", true);
+        HIT_EXTRA_PARTICLE_ENABLE = builder.comment("Show gun pack hit_surface_particles in addition to block fragments").define("HitExtraParticleEnable", true);
+        HIT_PARTICLE_MAX_DISTANCE = builder.comment("Maximum impact-particle distance (0: unlimited)").defineInRange("HitParticleMaxDistance", 64, 0, Integer.MAX_VALUE);
 
         builder.comment("The existence time of bullet hole particles, in tick");
         BULLET_HOLE_PARTICLE_LIFE = builder.defineInRange("BulletHoleParticleLife", 400, 0, Integer.MAX_VALUE);

@@ -1,4 +1,10 @@
 {
+  "config.tacz.client.render.hit_particle_enable": "Hit Particles Enable",
+  "config.tacz.client.render.hit_particle_enable.desc": "Whether or not to spawn extra hit particles when bullets leave bullet holes",
+  "config.tacz.client.render.hit_extra_particle_enable": "Gun Extra Hit Effects",
+  "config.tacz.client.render.hit_extra_particle_enable.desc": "Whether or not to spawn gun/ammo display-configured extra hit effects. Disable this to keep only the basic block hit particles",
+  "config.tacz.client.render.hit_particle_max_distance": "Hit Particle Max Distance",
+  "config.tacz.client.render.hit_particle_max_distance.desc": "The farthest distance to spawn extra hit particles, 0 means always spawn",
   "message.tacz.converter.universal.busy": "Some selected packs are being processed, or the queue is full. Please try again later.",
   "message.tacz.converter.universal.batch_empty": "No content packs found in tacz/ (ZIP files or folders containing gunpack.meta.json).",
   "message.tacz.converter.universal.batch_queued": "Checking %s content packs in the background and preparing reports...",

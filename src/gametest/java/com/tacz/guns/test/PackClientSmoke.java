@@ -87,6 +87,19 @@ public class PackClientSmoke implements FabricClientGameTest {
         context.waitFor(mc -> mc.level.getBlockEntity(pos) instanceof GunPegboardBlockEntity board && board.getRenderData() == 0x4088bb
                 && board.getRotation(6) == 1 && board.getItem(6).getItem() instanceof IGun g && g.getGunId(board.getItem(6)).equals(gunId)
                 && mc.level.getBlockEntity(pos.east()) instanceof GunDisplayCaseBlockEntity cabinet && !cabinet.getItem(9).isEmpty());
+        context.runOnClient(mc -> {
+            var ammo = TimelessAPI.getClientAmmoIndex(Identifier.parse("tacz:300blk")).orElseThrow();
+            if (ammo.getShellModel() == null || ammo.getHitSurfaceParticles() == null || ammo.getHitSurfaceParticles().getFirst().getCountMax() != 3)
+                throw new AssertionError("Default ammo shell/display did not resolve");
+            // The top face of the cabinet has a stable collision surface, independent of terrain.
+            var cabinet = pos.east();
+            var provider = new com.tacz.guns.client.particle.BulletHoleParticle.Provider();
+            for (String display : java.util.List.of("tacz:ak47_display", "port_test:quiet_impact")) {
+                var option = new com.tacz.guns.particles.BulletHoleOption(net.minecraft.core.Direction.UP, cabinet, "tacz:300blk", "tacz:ak47", display);
+                var decal = provider.createParticle(option, mc.level, cabinet.getX() + 0.5, cabinet.getY() + 1, cabinet.getZ() + 0.5, 0, 0, 0, mc.level.getRandom());
+                if ((decal != null) != display.startsWith("tacz:")) throw new AssertionError("Wrong decal for " + display);
+            }
+        });
         context.getInput().lookAt(pos);
         world.getConnection().waitForChunksRender();
         context.waitTicks(20);
