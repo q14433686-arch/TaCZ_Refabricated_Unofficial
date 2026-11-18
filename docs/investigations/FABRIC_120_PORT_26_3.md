@@ -150,3 +150,12 @@ UH-1 的 `text_show` 经 26.3 第一人称 extraction 读取实际游戏方块�
 ### XL50：测倍率、偏色和可见热源，而不是看截图是否灰了
 
 从 `f8020ae` 起，镜片绑定到实际提交的目镜。`e92a998` 的[完整运行](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608846/job/134600441865)检查默认包允许的 M700 + XL50、固定相机的 13 张游戏截图和旧存档重开。1× 对照红条宽 **7 px**；在 6× 档，经典变焦的原色/光学都是 **45/45 px**，重投影 PIP 是 **38/38 px**（阈值化的条宽，不是两种采样逐像素相同）。移墙后分别有 **2,559 / 2,499** 个与第一次可见时重合的白热点；放墙或同时把牛加入黑白名单后，这些位置通过冷像素门禁。镜外色样及原始帧见[像素对照和边界](FABRIC_120_COMPARISON.md#原生镜片与热成像)。完整 run 也要求重进后收枪期限失效、新快照、恰好一次动作与库存守恒；没有在测试里重设时钟。`aac6223` 的 [JEI / REI 独立运行](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44243966031)亦通过。未升级版本、未发布。
+
+
+### 批量玩法移植：先记录实现，不预报游戏通过
+
+本轮 `f0161ea` 添加真实生存连接的 `ShotConsequencesSmoke` 和枪声激怒的 Cloth 入口；`f56820d`/`2482635` 接入空手趴下、姿态所有权、可配置趴姿角度、可选空中腰射散布，以及命中前的同队/实体列表过滤、爆炸免伤、可破坏和可穿透方块 ID/tag、硬度上限。配置重载重建方块缓存，tag 键保留动态匹配。默认空中腰射、同队穿透、实体免疫列表均关闭。
+
+测试分为服务端 `BulletRulesSmoke` 和集成连接 `ShotConsequencesSmoke` / `MovementRulesSmoke`，客户端 runner 要求结果日志。前者调用真实击中处理但不是飞行子弹；射击测试调用默认物品服务端 shoot（包括 Lua），不伪造速度包/激怒回调，也不声称验证键鼠开火链。尚缺矩阵见[玩家清单顶部](FABRIC_120_PLAYER_CHECKLIST.md)。本轮尚未改 `renew` 运行时。
+
+执行记录：`f0161ea` 独立 compile-check 成功，完整 build 在依赖 `org.ow2:ow2:1.5.1` 解析失败，未运行游戏。`2482635` 完整 build 实际报出 `EnderDragonPart` 包名迁移错误，已在 `5f78983` 修正；[后续工作流](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44337530393)正在验证，不能拿此前热成像绿色结果代替本轮验收。未发布。

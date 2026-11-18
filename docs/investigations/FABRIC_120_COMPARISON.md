@@ -102,3 +102,8 @@ python3 scripts/verify_120_resources.py
 - **玩法规则**：空手趴下与趴姿视角配置、可选空中腰射散布、同队穿透/实体免疫列表、可破坏方块标签与硬度阈值，不能从旧版持枪趴下、普通玻璃可碎等现象推断已经移植。见[默认条件和对照方法](FABRIC_120_PLAYER_CHECKLIST.md#移动与射击反馈)。
 - **玩家界面**：枪模弹数与背包直读 HUD 同源、第三人称背挂显示开关、工作台手持筛选零结果时的提示和旧包登录指引仍有缺口。查[玩家清单](FABRIC_120_PLAYER_CHECKLIST.md)，不要把「对应类/翻译已经存在」当成验收。
 - **`renew` 不等于旧四边形火光**。上游 [`MuzzleFlash`](https://github.com/Sh1roCu/TACZ-Refabricated/blob/356bdf9d48f2225bac6ceb56adc5576a418517a8/src/main/java/com/tacz/guns/client/resource/pojo/display/gun/MuzzleFlash.java) 分第一/三人称粒子定义；本端 `GunDisplayInstance.checkMuzzleFlash` 仍会丢弃无旧贴图的定义。验收要能单独观察两个视角、绑定/脱离和资源重载；默认包没有动画粒子关键帧，这项需要自制或有权使用的夹具。
+
+
+### 批量玩法实现跟进
+
+原审计中的空手趴下、趴姿角度、空中散布、同队/实体免伤、方块标签和硬度缺口已提交实现及新增游戏测试，但目前**未获得本轮游戏通过结论**。射手位移和枪声激怒也新增真实生存连接测试，尚不能改写旧的证据等级。具体执行记录和未测项见[玩家清单顶部](FABRIC_120_PLAYER_CHECKLIST.md)及[移植流水](FABRIC_120_PORT_26_3.md)。枪口 `renew` 运行时仍未移植。
