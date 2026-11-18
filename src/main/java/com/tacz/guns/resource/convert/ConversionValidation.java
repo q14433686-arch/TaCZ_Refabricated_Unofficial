@@ -84,7 +84,7 @@ public final class ConversionValidation {
             return array;
         }
         var copy = json.getAsJsonObject().deepCopy();
-        for (String field : java.util.List.of("ingredients", "base", "subtracted"))
+        for (String field : java.util.List.of("ingredients", "base", "subtracted", "items"))
             if (copy.has(field)) copy.add(field, ingredientCopy(copy.get(field), report, path + "." + field));
         return copy;
     }

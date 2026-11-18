@@ -86,3 +86,7 @@ python3 scripts/audit_upstream_120.py /tmp/tacz-upstream.git --local cc990c3
 ### 展示柜 / 挂板
 
 `d94bd3e` 的生产源码通过了编译，但测试用了不存在的 `Items.BLUE_DYE`，未运行 GameTest。`2f4c627` 改为 `Items.DYE.blue()`；[完整 build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44214227400) 与 [compile-check](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44214227379) 均通过。专服真实方块、物品组件、原版染色配方/掉落、联锁、存取、镜像、普通拆除与“保存 BE → 先移除 BE → 移除方块 → 回填”的不重复掉落验证通过。集成客户端验证挂板 RGB/格/角度和柜内物品同步，朝向陈列墙并取得非空 `tacz_display_wall.png`。工件 `smoke-2f4c627baa68a68e9d8868dfb75add7e236311d8`。搬运顺序来自 [Carry On 26.3](https://github.com/Tschipp/CarryOn/tree/26.3)，不是带该 mod 的实机矩阵。未作人工画面比对或声称移植了旧 GL VBO 加速器。
+
+### 转换器首轮
+
+`83d99a3` 的 [compile-check](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44214829649) 和 [build](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44214829949) 通过。专服 `PackConversionSmoke` 实际执行 DFU、用该服 registry 校验、保留 1.21.1 overlay、写入 26.3 overlay 并读回 ZIP；检查 typed 结果的 AmmoId、自定义 byte、嵌套配件、部分谓词、缺失 ID 和禁用标记、重复导出不覆盖。另有真实加载的 Fabric true/false 工作台配方。该 SHA 的集成客户端仍是先前的持物/展示墙门禁，**没有安装导出的 ZIP 再重载**。命令与输出边界：[转换说明](../GUNPACK_CONVERSION_26_3.md)。

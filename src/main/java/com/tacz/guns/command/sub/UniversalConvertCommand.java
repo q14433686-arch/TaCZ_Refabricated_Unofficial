@@ -83,7 +83,7 @@ public final class UniversalConvertCommand {
         var versions = new HashMap<String, String>();
         FabricLoader.getInstance().getAllMods().forEach(mod -> versions.put(mod.getMetadata().getId(), mod.getMetadata().getVersion().getFriendlyString()));
         versions.putIfAbsent("lrtactical", "0.3.0"); // bundled port, not a separate mod container
-        var registries = source.registryAccess();
+        var registries = source.getServer().reloadableRegistries().lookup();
         try {
             WORKER.execute(() -> {
                 try {

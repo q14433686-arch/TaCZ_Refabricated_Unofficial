@@ -65,6 +65,8 @@ public class PackClientSmoke implements FabricClientGameTest {
             context.waitFor(client -> client.player.isCreative());
             checkCreativePackSidebar(context);
             checkRacks(context, world, id);
+            try { ConversionReloadSmoke.run(context, world); }
+            catch (java.io.IOException e) { throw new java.io.UncheckedIOException(e); }
         }
     }
 

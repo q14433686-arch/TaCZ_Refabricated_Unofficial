@@ -13,3 +13,5 @@
 - 原始资源与已有 `compat_1_21_1` 层按原字节保留；导出 ZIP 的根元数据增加匹配 **26.3** 的 `compat_26_3`。不会拿本线 codec 冒充 1.21.1 验证器；不会把 `dependencies.tacz` 改成能通过检查的值。目标层已存在则跳过，来源层需要先展开或有同名新旧文件则报告冲突。
 - 完整物品栈从 1.20.1 DataVersion **3465** 用当前游戏 DFU 升级到运行时 DataVersion（不是 1.21.1 的 3955）。嵌入配件栈按栈处理，部分 NBT **谓词**只变换它实际限定的字段，不加一整套栈默认值。`data/tacz/gunpack_conversion_rules.json` 是内置标签映射，`config/tacz/gunpack-conversion-rules.json` 可用同一 schema 扩充/覆盖。脚本保留而不执行，不把脚本保留当成 API 已验证。
 - 报告区分 `failed`、`skipped`、`partial`、`complete`。无法证明等价的配方不转换，26.3 层写禁用标记以防加载器回退到旧 `recipes/`。缺少的可选物品 ID 记入 `missingItemIds`，不会在产物中被替换成石头。安装前仍要确认对应模组、标签、实际配方、脚本和渲染；`targetFormatValidated` 是格式检查，**`gameValidated` 始终是 false**。
+
+`forge:tag_empty` 不会被偷换成 `not fabric:tags_populated`：26.3 后者检查标签**是否定义**，不是成员数。在确认等价适配之前将这类配方标成需人工处理。旧石切配方的顶层 `count` 移入结果栈。

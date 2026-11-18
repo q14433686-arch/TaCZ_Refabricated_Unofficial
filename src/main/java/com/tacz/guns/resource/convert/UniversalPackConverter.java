@@ -15,7 +15,6 @@ import net.minecraft.advancements.Advancement;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunctions;
@@ -295,7 +294,13 @@ public final class UniversalPackConverter {
                 converted = LootSchema26.modifiers(wrapper.getAsJsonArray("functions"));
                 ConversionValidation.validate(LootItemFunctions.CODEC, items.ops(), converted, plan, "$");
             }
-            if (converted.isJsonObject()) convertConditions(converted.getAsJsonObject(), "$", plan);
+            if (converted.isJsonObject()) {
+                var obj = converted.getAsJsonObject();
+                if ((segments[2].equals("tacz_loot_injectors") || local.startsWith("data/blocks/"))
+                        && (SOURCE_KEYS.stream().anyMatch(obj::has) || obj.has(FABRIC_KEY)))
+                    throw fail("$", "LOADER_CONDITION", "TaCZ's loader cannot evaluate resource conditions for this file");
+                convertConditions(obj, "$", plan);
+            }
             rejectUnconvertedForge(converted, "$");
         } else {
             // No current client POJO declares ItemStack fields. Do not rewrite unrelated objects by shape.
@@ -311,6 +316,12 @@ public final class UniversalPackConverter {
     private void convertRecipe(JsonObject recipe, PackConversionPlan plan) {
         if (!recipe.has("type")) throw fail("$.type", "RECIPE_TYPE", "Recipe is missing its type");
         String type = recipe.get("type").getAsString();
+        // 1.20.1 Forge recipes also use the unprefixed conditions key. A vanilla recipe
+        // codec ignores that key, silently enabling the recipe unless it is translated here.
+        if (recipe.has("conditions")) {
+            if (SOURCE_KEYS.stream().anyMatch(recipe::has)) throw fail("$.conditions", "CONDITIONS", "Conflicting condition sets");
+            recipe.add("forge:conditions", recipe.remove("conditions"));
+        }
         convertConditions(recipe, "$", plan);
         if (type.equals("tacz:gun_smith_table_crafting")) {
             JsonArray materials = recipe.getAsJsonArray("materials");
@@ -362,6 +373,10 @@ public final class UniversalPackConverter {
                 JsonElement result = recipe.get("result");
                 JsonObject oldItem = result.isJsonObject() ? result.getAsJsonObject() : new JsonObject();
                 if (result.isJsonPrimitive()) oldItem.addProperty("item", result.getAsString());
+                if (type.equals("minecraft:stonecutting") && recipe.has("count")) {
+                    if (oldItem.has("count")) throw fail("$.count", "COUNT_CONFLICT", "Two stonecutting result counts");
+                    oldItem.add("count", recipe.remove("count"));
+                }
                 recipe.add("result", items.upgrade(oldItem, plan, "$.result"));
                 plan.converted("$.result", "upgrade_item_stack");
             }
@@ -411,13 +426,27 @@ public final class UniversalPackConverter {
                     for (String field : List.of("base", "subtracted")) result.add(field, ingredient(obj.get(field), path + "." + field, plan));
                     out = result;
                 }
-                case "forge:partial_nbt" -> {
-                    only(obj, path, "type", "nbt", obj.has("item") ? "item" : "items");
+                case "forge:partial_nbt", "tacz:nbt" -> {
+                    boolean tacz = type.equals("tacz:nbt");
+                    String itemField = obj.has("item") ? "item" : "items";
+                    if (tacz) only(obj, path, "type", "nbt", "partial", itemField);
+                    else only(obj, path, "type", "nbt", itemField);
+                    // Forge's strict share tag has no verified cross-version equivalent. For upgraded
+                    // TaCZ packs the registered tacz:nbt type does define strict CUSTOM_DATA equality.
+                    boolean partial = !tacz || obj.has("partial") && obj.get("partial").getAsBoolean();
                     var result = new JsonObject();
                     var nbt = upgradeCustomPredicate(LegacyItemStackUpgrader.readNbt(obj.get("nbt")), path, 0);
                     if (nbt.isEmpty()) throw fail(path, "NBT_PREDICATE", "Empty presence predicate requires review");
-                    result.addProperty("fabric:type", "fabric:custom_data");
-                    result.add("base", obj.has("item") ? obj.get("item") : obj.getAsJsonArray("items"));
+                    var base = obj.get(itemField);
+                    if (base == null) throw fail(path, "INGREDIENT_ITEMS", "Missing item/items");
+                    if (partial) {
+                        result.addProperty("fabric:type", "fabric:custom_data");
+                        result.add("base", base);
+                    } else {
+                        result.addProperty("fabric:type", "tacz:nbt");
+                        result.add("items", base.isJsonArray() ? base : array(base.getAsString()));
+                        result.addProperty("partial", false);
+                    }
                     result.addProperty("nbt", nbt.toString());
                     out = result;
                 }
@@ -516,7 +545,10 @@ public final class UniversalPackConverter {
     private void convertConditions(JsonObject object, String path, PackConversionPlan plan) {
         // 找出存在的来源键
         List<String> present = SOURCE_KEYS.stream().filter(object::has).toList();
-        if (present.isEmpty()) return;
+        if (present.isEmpty()) {
+            if (object.has(FABRIC_KEY)) ConversionValidation.validate(ResourceCondition.CONDITION_CODEC, items.ops(), object.get(FABRIC_KEY), plan, path + "." + FABRIC_KEY);
+            return;
+        }
         if (object.has(FABRIC_KEY))
             throw fail(path, "CONDITIONS", "Source conditions and Fabric conditions are both present");
 
@@ -561,23 +593,9 @@ public final class UniversalPackConverter {
                 condition.addProperty("registry", "minecraft:item");
                 condition.add("values", array(item));
             }
-            case "tag_empty" -> {
-                String id = condition.get("tag").getAsString();
-                PackConversionRules.Rule rule = rule(id, path + ".tag", plan);
-                JsonObject inner = new JsonObject();
-                if (rule != null && rule.tag() == null) {
-                    inner.addProperty("condition", "fabric:registry_contains");
-                    inner.addProperty("registry", "minecraft:item");
-                    inner.add("values", array(fallbackItem(rule, id, path + ".tag", plan)));
-                } else {
-                    inner.addProperty("condition", "fabric:tags_populated");
-                    inner.addProperty("registry", "minecraft:item");
-                    inner.add("values", array(rule != null ? rule.tag() : id));
-                }
-                new ArrayList<>(condition.keySet()).forEach(condition::remove);
-                condition.addProperty("condition", "fabric:not");
-                condition.add("value", inner);
-            }
+            // Fabric 26.3 tags_populated only checks whether a tag EXISTS, not whether it has
+            // members. The dynamic registry cannot inspect pending tag contents at this stage.
+            case "tag_empty" -> throw fail(path, "TAG_EMPTY", "Cannot preserve empty vs defined-but-empty tag tests during registry load");
             case "not" -> {
                 condition.addProperty("condition", "fabric:not");
                 if (condition.has("value"))
@@ -593,12 +611,7 @@ public final class UniversalPackConverter {
                         convertCondition(child.getAsJsonObject(), path + ".values", plan);
             }
             case "true" -> condition.addProperty("condition", "fabric:true");
-            case "false" -> {
-                JsonObject t = new JsonObject();
-                t.addProperty("condition", "fabric:true");
-                condition.addProperty("condition", "fabric:not");
-                condition.add("value", t);
-            }
+            case "false" -> condition.addProperty("condition", "fabric:false");
         }
     }
 
@@ -807,6 +820,7 @@ public final class UniversalPackConverter {
         Path temporary = Files.createTempFile(output.getParent(), ".universal-", ".zip.tmp");
         try {
             try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(temporary))) {
+                long remaining = GunPackInput.MAX_BYTES;
                 for (var entry : input.files.entrySet()) {
                     ZipEntry file = new ZipEntry(entry.getKey());
                     file.setTime(0);
@@ -814,7 +828,11 @@ public final class UniversalPackConverter {
                     if (entry.getKey().equals("gunpack.meta.json"))
                         zip.write(GSON.toJson(meta).getBytes(StandardCharsets.UTF_8));
                     else try (InputStream stream = entry.getValue().open()) {
-                        stream.transferTo(zip);
+                        byte[] buf = new byte[32 * 1024];
+                        for (int n; (n = stream.read(buf)) != -1;) {
+                            if ((remaining -= n) < 0) throw new IOException("Base files exceed the conversion byte limit while copying");
+                            zip.write(buf, 0, n);
+                        }
                     }
                     zip.closeEntry();
                 }

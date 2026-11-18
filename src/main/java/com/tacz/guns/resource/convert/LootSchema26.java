@@ -13,6 +13,8 @@ final class LootSchema26 {
         container(table);
         if (table.has("pools")) for (var pool : table.getAsJsonArray("pools")) {
             var json = pool.getAsJsonObject();
+            uniform(json, "rolls");
+            uniform(json, "bonus_rolls");
             container(json);
             for (var entry : json.getAsJsonArray("entries")) entry(entry.getAsJsonObject());
         }
@@ -37,6 +39,11 @@ final class LootSchema26 {
             var fn = el.getAsJsonObject();
             rename(fn, "function", "type");
             conditions(fn);
+            switch (fn.get("type").getAsString()) {
+                case "minecraft:set_count" -> uniform(fn, "count");
+                case "minecraft:set_damage" -> uniform(fn, "damage");
+                case "minecraft:enchant_with_levels" -> uniform(fn, "levels");
+            }
             if (fn.get("type").getAsString().equals("minecraft:reference")) {
                 if (fn.size() != 2) throw new IllegalArgumentException("Conditional modifier reference requires review");
                 out.add(fn.get("name").getAsString());
@@ -44,6 +51,13 @@ final class LootSchema26 {
             else out.add(fn);
         }
         return out.size() == 1 ? out.get(0) : out;
+    }
+
+    private static void uniform(JsonObject obj, String field) {
+        if (obj.has(field) && obj.get(field).isJsonObject()) {
+            var range = obj.getAsJsonObject(field);
+            if (!range.has("type") && range.has("min") && range.has("max")) range.addProperty("type", "minecraft:uniform");
+        }
     }
 
     private static void conditions(JsonObject obj) {
