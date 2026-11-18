@@ -24,7 +24,7 @@ public final class PlayerFeedbackSmoke {
     private static boolean observing;
     public static void backSubmit(int salt) { if(observing) { if(salt==100)offhand++; else hotbar++; } }
     public static void tilt(float angle,float direction,double multiplier,float result) {
-        if (!observing) return;
+        if (!observing || Math.abs(angle) < .0001f) return;
         float expected=angle*(float)multiplier*(1-.5f*Math.abs((float)Math.sin(Math.toRadians(direction))));
         if(Math.abs(expected-result)>.0001f)throw new AssertionError("Held-gun tilt differs from configured directional rule");
         tilts++;
@@ -47,9 +47,13 @@ public final class PlayerFeedbackSmoke {
             ctx.runOnClient(mc->{RenderConfig.DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER.set(true);offhand=hotbar=0;});
             ctx.waitTicks(5);
             ctx.runOnClient(mc->{if(offhand!=0||hotbar!=0)throw new AssertionError("Hidden back-mounted gun still submitted");mc.options.setCameraType(CameraType.FIRST_PERSON);});
-            ctx.waitTicks(3);
-            world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer();p.hurtServer(p.level(),p.damageSources().generic(),1);});
-            ctx.waitFor(mc->tilts>0);
+            for(double configured : new double[]{0D,.37D,1D}) {
+                ctx.waitTicks(21); // ordinary damage immunity window, no private timer edits
+                ctx.runOnClient(mc->{RenderConfig.GUN_HURT_BOB_MULTIPLIER.set(configured);tilts=0;});
+                world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer();
+                    if(!p.hurtServer(p.level(),p.damageSources().generic(),1))throw new AssertionError("Ordinary damage fixture was not accepted");});
+                ctx.waitFor(mc->tilts>0); // observer ignores zero-angle frames; must see real hurt
+            }
             checkImpactPackets(ctx,world);
             GunMod.LOGGER.info("PORT_FEEDBACK: back-mounted toggle, actual ordinary-hurt render hook and same-level impact delivery controls passed");
         } finally {
