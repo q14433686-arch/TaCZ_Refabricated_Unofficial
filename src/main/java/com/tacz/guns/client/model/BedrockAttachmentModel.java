@@ -497,7 +497,9 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      * 既不加门禁也不开裁剪（clipToScopeMask=false）——
      * 枪身上的文字（如弹匣计数）本就该常显、也不在镜筒上。</p>
      */
+    private Map<String, TextShow> scopeTextShows = java.util.Map.of();
     public void setTextShowList(Map<String, TextShow> textShowList) {
+        scopeTextShows = java.util.Map.copyOf(textShowList);
         impactMarker = ImpactMarkerRender.of(getPath(modelMap.get(ImpactMarkerRender.NODE)), textShowList);
         textShowList.forEach((name, textShow) -> this.setFunctionalRenderer(name,
                 bedrockPart -> {
@@ -745,6 +747,27 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 reticle.submitReticle(new IReticleRenderer.Context(
                         poseStack, collector, transformType, reticleType, illuminatedReticleType,
                         light, overlay, currentAimingProgress(), maskActive, texture), active);
+            }
+        }
+
+        // Division roots are intentionally hidden from the main snapshot. A text locator
+        // under such a root is a functional node, not reticle triangles, and needs its own
+        // extraction (the illuminated reticle strategy only visits the luminous subtree).
+        if (transformType != null && transformType.firstPerson() && currentAimingProgress() > TEXT_SHOW_AIM_START) {
+            for (var entry : scopeTextShows.entrySet()) {
+                var path = getPath(modelMap.get(entry.getKey()));
+                if (path == null || path.stream().noneMatch(p -> !p.visible)) continue;
+                Integer view = isScope && isSight && activeViewGroup != 0 ? activeOcularIndex() : null;
+                if (view != null && divisionByIndex.containsKey(view)
+                        && divisionByIndex.values().stream().anyMatch(path::contains)
+                        && !path.contains(divisionByIndex.get(view))) continue;
+                poseStack.pushPose();
+                try {
+                    for (var part : path) part.translateAndRotateAndScale(poseStack);
+                    new TextShowRender(this, entry.getValue(), currentGunItem, true).extract(
+                            new com.tacz.guns.client.model.IFunctionalSubmitter.ExtractionContext(
+                                    poseStack, transformType, light, overlay, task -> task.submit(collector)));
+                } finally { poseStack.popPose(); }
             }
         }
 
