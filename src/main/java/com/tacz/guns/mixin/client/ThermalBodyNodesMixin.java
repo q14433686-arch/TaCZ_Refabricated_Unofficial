@@ -13,7 +13,9 @@ abstract class ThermalBodyNodesMixin {
     @ModifyReceiver(method = {"submitModel", "submitItem", "submitBlockModel", "submitMovingBlock"},
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/feature/phase/SimpleFeatureRenderPhase;submit(Lnet/minecraft/client/renderer/feature/submit/SubmitNode;)V"))
     private SimpleFeatureRenderPhase tacz$copySolidBody(SimpleFeatureRenderPhase phase, SubmitNode node) {
-        if (phase == ((SubmitNodeCollection)(Object)this).solid) ScopeThermalCapture.recordSolid(node);
+        // Eligible living bodies may use a translucent phase (notably slimes).
+        // recordSolid still rejects no-depth/see-through model materials.
+        ScopeThermalCapture.recordSolid(node);
         return phase;
     }
 }

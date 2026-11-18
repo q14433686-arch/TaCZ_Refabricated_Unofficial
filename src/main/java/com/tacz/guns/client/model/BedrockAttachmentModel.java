@@ -744,7 +744,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 boolean maskActive = reticleType != renderType;
                 reticle.submitReticle(new IReticleRenderer.Context(
                         poseStack, collector, transformType, reticleType, illuminatedReticleType,
-                        light, overlay, currentAimingProgress(), maskActive), active);
+                        light, overlay, currentAimingProgress(), maskActive, texture), active);
             }
         }
 

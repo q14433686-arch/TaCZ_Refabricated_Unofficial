@@ -67,5 +67,6 @@ public abstract class IrisGlCommandEncoderMixin {
     @Inject(method = "setupDraw", at = @At("RETURN"), require = 0)
     private void tacz$onScopeRenderPassSetup(@Coerce Object glRenderPass, CallbackInfo ci) {
         IrisScopeMaskState.applyToGlRenderPass(glRenderPass);
+        com.tacz.guns.compat.iris.IrisThermalDepthBias.apply();
     }
 }

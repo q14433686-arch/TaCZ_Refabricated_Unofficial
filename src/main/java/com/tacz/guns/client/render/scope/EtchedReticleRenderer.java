@@ -129,9 +129,7 @@ public final class EtchedReticleRenderer implements IReticleRenderer {
         if (!snapshot.isEmpty()) {
             // 快照矩阵已含完整入参 pose，必须从单位矩阵提交，否则根变换叠加两次。
             PoseStack identity = new PoseStack();
-            ctx.collector().submitCustomGeometry(
-                    identity, ctx.baseRenderType(),
-                    (entryPose, consumer) -> snapshot.write(consumer));
+            ctx.submit(snapshot, false);
         }
     }
 }

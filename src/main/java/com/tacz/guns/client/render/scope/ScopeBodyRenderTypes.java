@@ -116,6 +116,8 @@ public final class ScopeBodyRenderTypes {
         ScopePipelinePrewarm.touch(FLASH_TRANSLUCENT_CLIPPED_PIPELINE);
         ScopePipelinePrewarm.touch(FLASH_SWIRL_CLIPPED_PIPELINE);
         ScopePipelinePrewarm.touch(FINAL_OCULAR_RING_PIPELINE);
+        ScopePipelinePrewarm.touch(FINAL_RETICLE);
+        ScopePipelinePrewarm.touch(FINAL_RETICLE_EMISSIVE);
     }
 
     /** 掩码采样器在 bind group 里的名字，供外部 pass 手动绑定时对齐。 */
@@ -285,6 +287,30 @@ public final class ScopeBodyRenderTypes {
      * 里的其他管线）：绘制发生在 isRenderingWorld=false 之后，注册了反而被塞回
      * 光影管线，既失去无雾语义又会被后置 pass 再盖一次。</p>
      */
+
+    private static RenderPipeline finalReticlePipeline(boolean emissive) {
+        var b = RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
+                .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_reticle_final_" + emissive))
+                .withVertexShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_body"))
+                .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_ring_final"))
+                .withShaderDefine("ALPHA_CUTOUT", 0.1F).withShaderDefine("SCOPE_MASK")
+                .withBindGroupLayout(BindGroupLayouts.SAMPLER1).withBindGroupLayout(MASK_SAMPLER_LAYOUT)
+                .withCull(false).withDepthStencilState(new DepthStencilState(
+                        com.mojang.renderpearl.api.pipeline.CompareOp.ALWAYS_PASS, false))
+                .withColorTargetState(ColorTargetState.DEFAULT);
+        if (emissive) b.withShaderDefine("EMISSIVE").withShaderDefine("NO_CARDINAL_LIGHTING");
+        else b.withShaderDefine("PER_FACE_LIGHTING");
+        return b.build();
+    }
+    private static final RenderPipeline FINAL_RETICLE = finalReticlePipeline(false), FINAL_RETICLE_EMISSIVE = finalReticlePipeline(true);
+    private static final Map<String, RenderType> FINAL_RETICLES = new HashMap<>();
+    public static RenderType finalReticle(Identifier texture, boolean emissive) {
+        return FINAL_RETICLES.computeIfAbsent(texture + ":" + emissive, key -> RenderType.create("tacz_final_reticle",
+                RenderSetup.builder(emissive ? FINAL_RETICLE_EMISSIVE : FINAL_RETICLE)
+                        .withTexture("Sampler0", texture).withTexture(MASK_SAMPLER, ScopeMaskTextureHandle.ID)
+                        .useLightmap().useOverlay().createRenderSetup()));
+    }
+
     private static final RenderPipeline FINAL_OCULAR_RING_PIPELINE =
             RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
                     .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_final_ocular_ring"))

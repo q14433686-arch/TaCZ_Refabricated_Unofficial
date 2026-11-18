@@ -116,6 +116,24 @@ public final class ScopeTextRenderTypes {
                     .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
                     .build();
 
+    private static final RenderPipeline FINAL_TEXT_PIPELINE =
+            RenderPipeline.builder(RenderPipelines.WORLD_TEXT_SNIPPET)
+                    .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_text_final"))
+                    .withVertexShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_text"))
+                    .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_text"))
+                    .withShaderDefine("SCOPE_MASK").withShaderDefine("SCOPE_FINAL")
+                    .withDepthStencilState(new com.mojang.renderpearl.api.pipeline.DepthStencilState(com.mojang.renderpearl.api.pipeline.CompareOp.ALWAYS_PASS, false))
+                    .withBindGroupLayout(MASK_SAMPLER_LAYOUT)
+                    // 文字与准星同侧（mode 2）：标记采样器供光影下按 draw 判别。
+                    .withBindGroupLayout(MODE2_SAMPLER_LAYOUT)
+                    // 26.3 必须显式声明 color target，否则 setPipeline 抛
+                    // "color attachment count must match ... target state count"。
+                    // 母本 vanilla TEXT 用的是 TRANSLUCENT 混合
+                    // （RenderPipelines:818），文字要靠 alpha 混合才不会带黑底，
+                    // 这里必须跟着用 TRANSLUCENT，不能用 DEFAULT。
+                    .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+                    .build();
+
     private static boolean irisAssignmentAttempted = false;
 
     /**
@@ -152,8 +170,16 @@ public final class ScopeTextRenderTypes {
     /** 裁剪文字管线预热（同 {@code ScopeBodyRenderTypes#prewarmCompiledPipelines}）。 */
     public static void prewarmCompiledPipelines() {
         ScopePipelinePrewarm.touch(CLIPPED_TEXT_PIPELINE);
+        ScopePipelinePrewarm.touch(FINAL_TEXT_PIPELINE);
     }
 
+    private static final Map<Identifier, RenderType> FINAL_PAGE_CACHE = new HashMap<>();
+    public static RenderType finalText(Identifier pageId) {
+        return FINAL_PAGE_CACHE.computeIfAbsent(pageId, id -> RenderType.create("tacz_scope_text_final",
+                RenderSetup.builder(FINAL_TEXT_PIPELINE).withTexture("Sampler0", id)
+                        .withTexture(MASK_SAMPLER, ScopeMaskTextureHandle.ID).withTexture(MODE2_SAMPLER, ScopeMaskTextureHandle.ID)
+                        .useLightmap().createRenderSetup()));
+    }
     public static RenderType clippedText(Identifier pageId) {
         ensureIrisCompatibility();
         return PAGE_CACHE.computeIfAbsent(pageId,

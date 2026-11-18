@@ -78,7 +78,8 @@ public final class ScopeThermalCapture {
         // depth-tested bodies; never turn a see-through material into a heat source.
         if (node instanceof ModelFeatureRenderer.Submit model) {
             DepthStencilState depth = model.renderType().pipeline().getDepthStencilState();
-            if (!DepthStencilState.DEFAULT.equals(depth)) return;
+            if (depth == null || depth.equals(new DepthStencilState(com.mojang.renderpearl.api.pipeline.CompareOp.ALWAYS_PASS, false))
+                    || depth.equals(new DepthStencilState(com.mojang.renderpearl.api.pipeline.CompareOp.ALWAYS_PASS, true))) return;
         }
         bodies.order(0).solid.submit(node);
     }
@@ -91,7 +92,7 @@ public final class ScopeThermalCapture {
         // Replay vanilla cutout coverage into a private target, never a pack's gbuffer
         // program (which may have different outputs, alpha semantics and attachments).
         boolean bypass = ScopePipelinePrewarm.enterIrisBypass();
-        try {
+        try (var bias = com.tacz.guns.compat.iris.IrisThermalDepthBias.begin()) {
             var depth = scene.getDepthTexture();
             if (mask == null || mask.width != scene.width || mask.height != scene.height
                     || mask.getDepthTexture().getFormat() != depth.getFormat()) {

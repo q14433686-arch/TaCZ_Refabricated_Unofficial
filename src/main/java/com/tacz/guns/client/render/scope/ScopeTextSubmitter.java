@@ -160,9 +160,11 @@ public final class ScopeTextSubmitter {
             Identifier page = pageId(entry.getKey());
             List<TextRenderable> renderables = entry.getValue();
             PoseStack identity = new PoseStack();
-            collector.submitCustomGeometry(identity, ScopeTextRenderTypes.clippedText(page),
-                    (entryPose, consumer) ->
-                            renderables.forEach(r -> r.render(pose, consumer, packedLight, false)));
+            if (ScopePipRenderer.wantsIrisComposite()) {
+                ScopeFinalOverlayState.queueText(out -> out.submitCustomGeometry(identity, ScopeTextRenderTypes.finalText(page),
+                        (entryPose, consumer) -> renderables.forEach(r -> r.render(pose, consumer, packedLight, false))));
+            } else collector.submitCustomGeometry(identity, ScopeTextRenderTypes.clippedText(page),
+                    (entryPose, consumer) -> renderables.forEach(r -> r.render(pose, consumer, packedLight, false)));
         }
         return true;
     }
