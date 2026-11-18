@@ -107,11 +107,9 @@ public class LocalPlayerDraw {
             renderer.tryExit(lastItem, putAwayTime);
         }
         TimelessAPI.getGunDisplay(lastItem).ifPresent(display -> {
-            ((BlockableEventLoopAccessor) Minecraft.getInstance()).tacz$submitAsync(() -> {
-                // 播放收枪音效
-                SoundPlayManager.stopPlayGunSound();
-                SoundPlayManager.playPutAwaySound(player, display);
-            });
+            // draw() already runs on the client thread. Do not queue stale audio across a switch/disconnect.
+            SoundPlayManager.stopPlayGunSound();
+            SoundPlayManager.playPutAwaySound(player, display);
         });
     }
 

@@ -2,8 +2,8 @@ package com.tacz.guns.advancement;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.advancements.predicates.ContextAwarePredicate;
-import net.minecraft.advancements.predicates.entity.EntityPredicate;
+import net.minecraft.core.Holder;
+import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraft.advancements.predicates.MinMaxBounds;
 import net.minecraft.advancements.triggers.SimpleCriterionTrigger;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,10 +22,10 @@ public class TargetHitTrigger extends SimpleCriterionTrigger<TargetHitTrigger.Tr
         this.trigger(player, instance -> instance.distance().matches(distance));
     }
 
-    public record TriggerInstance(Optional<ContextAwarePredicate> player,
+    public record TriggerInstance(Optional<Holder<LootItemCondition>> player,
                                   MinMaxBounds.Doubles distance) implements SimpleCriterionTrigger.SimpleInstance {
         public static final Codec<TriggerInstance> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                EntityPredicate.ADVANCEMENT_CODEC.optionalFieldOf("player").forGetter(TriggerInstance::player),
+                LootItemCondition.CODEC.optionalFieldOf("player").forGetter(TriggerInstance::player),
                 MinMaxBounds.Doubles.CODEC.optionalFieldOf("distance", MinMaxBounds.Doubles.ANY).forGetter(TriggerInstance::distance)).apply(instance, TriggerInstance::new));
     }
 }
