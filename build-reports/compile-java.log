@@ -1,4 +1,4 @@
-commit: cfdcc2cf6d9243eea4fa03de37edb689862dd5e6
+commit: aadafaa65490cc5bbd7a057f6b44b8002020f2ab
 Fetching distribution.
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
@@ -28,3 +28,7 @@ warning: unknown enum constant Level.FULL
 warning: unknown enum constant Level.FULL
 
 == job status: cancelled ==
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/particle/bedrock/particle/world/WorldEmitterManager.java:107: error: reference to Math is ambiguous
+        int capacity=Math.max(0,MAX_TOTAL_PARTICLES-particleCount());
+                     ^
+  both class org.joml.Math in org.joml and class java.lang.Math in java.lang match
