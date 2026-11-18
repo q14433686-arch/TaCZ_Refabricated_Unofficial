@@ -1,4 +1,5 @@
 {
+  "jei.tacz.gun_smith_table.recipe_unavailable": "This recipe is not available at this workbench",
   "block.tacz.ammo_storage": "Iron Ammo Storage",
   "block.tacz.ammo_storage_gold": "Gold Ammo Storage",
   "block.tacz.ammo_storage_diamond": "Diamond Ammo Storage",

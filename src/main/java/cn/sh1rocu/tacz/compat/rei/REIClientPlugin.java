@@ -13,6 +13,7 @@ import com.tacz.guns.api.item.builder.BlockItemBuilder;
 import com.tacz.guns.compat.recipeviewer.AmmoQueryEntry;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
+import me.shedaniel.rei.api.client.registry.transfer.TransferHandlerRegistry;
 import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.util.EntryStacks;
@@ -49,6 +50,11 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
         }
         registry.add(new AttachmentQueryCategory());
         registry.add(new AmmoQueryCategory());
+    }
+
+    @Override
+    public void registerTransferHandlers(TransferHandlerRegistry registry) {
+        registry.register(new GunSmithTableTransferHandler());
     }
 
     @Override

@@ -34,6 +34,19 @@ public class PackServerSmoke {
     }
 
     @GameTest
+    public void viewerSelectionHonorsTheOpenTable(GameTestHelper helper) {
+        var inv = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL).getInventory();
+        var gunId = Identifier.parse("tacz:gun/ak47");
+        var menu = new com.tacz.guns.inventory.GunSmithTableMenu(1, inv, com.tacz.guns.api.DefaultAssets.DEFAULT_BLOCK_ID);
+        helper.assertTrue(menu.selectFromViewer(gunId, false) && menu.consumeRecipeSelection() == null, "Preview changed the menu");
+        helper.assertTrue(menu.selectFromViewer(gunId, true) && gunId.equals(menu.consumeRecipeSelection()) && menu.consumeRecipeSelection() == null,
+                "Viewer selection must belong to this menu and be consumed once");
+        var ammoTable = new com.tacz.guns.inventory.GunSmithTableMenu(2, inv, Identifier.parse("tacz:ammo_workbench"));
+        helper.assertTrue(!ammoTable.selectFromViewer(gunId, true) && ammoTable.consumeRecipeSelection() == null, "Viewer bypassed the table filter");
+        helper.succeed();
+    }
+
+    @GameTest
     public void oemIsNotAnInventoryItem(GameTestHelper helper) {
         var id = Identifier.parse("port_test:oem");
         var scope = Identifier.parse("tacz:scope_acog_ta31");

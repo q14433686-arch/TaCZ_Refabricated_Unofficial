@@ -1,4 +1,5 @@
 {
+  "jei.tacz.gun_smith_table.recipe_unavailable": "这张工作台不能制造该配方",
   "block.tacz.ammo_storage": "铁弹药库",
   "block.tacz.ammo_storage_gold": "金弹药库",
   "block.tacz.ammo_storage_diamond": "钻石弹药库",

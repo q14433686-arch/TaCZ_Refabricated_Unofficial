@@ -269,6 +269,29 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
         this.getPlayerIngredientCount(this.selectedRecipe);
     }
 
+    private void applyRequestedRecipeSelection() {
+        var id = menu.consumeRecipeSelection();
+        if (id == null || !menu.selectFromViewer(id, false)) return;
+        var recipe = getSelectedRecipe(id);
+        if (recipe == null) return;
+        var type = recipe.getTab();
+        var list = recipes.getOrDefault(type, List.of());
+        if (!list.contains(id)) {
+            // Hand, search and namespace are presentation filters. Table restrictions remain active.
+            filterList.clearFilters();
+            classifyRecipes();
+            list = recipes.getOrDefault(type, List.of());
+        }
+        int index = list.indexOf(id);
+        if (index < 0) return;
+        selectedType = type;
+        selectedRecipe = recipe;
+        selectedRecipeList = list;
+        typePage = new ArrayList<>(recipeKeys.keySet()).indexOf(type) / 7;
+        indexPage = index / 6;
+        filterEnabled = false;
+    }
+
     public void setIndexPage(int indexPage) {
         this.indexPage = indexPage;
     }
@@ -333,6 +356,7 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
         this.filterList.setPosition(leftPos, topPos);
 
         this.classifyRecipes();
+        this.applyRequestedRecipeSelection();
         this.updateSelectedRecipeAfterFiltering();
         this.clearWidgets();
 
