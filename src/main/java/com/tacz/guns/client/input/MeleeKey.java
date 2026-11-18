@@ -1,6 +1,5 @@
 package com.tacz.guns.client.input;
 
-import cn.sh1rocu.tacz.api.event.InputEvent;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import net.fabricmc.api.EnvType;
@@ -18,18 +17,6 @@ public class MeleeKey {
             InputConstants.KEY_V,
             TaCZKeyCategory.TACZ);
 
-    public static void onMeleeKeyPress(InputEvent.Key event) {
-        if (isInGame() && event.getAction() == InputConstants.PRESS && MELEE_KEY.matches(InputConstants.Type.KEYBOARD.getOrCreate(event.getKey()))) {
-            doMeleeLogic();
-        }
-    }
-
-    public static void onMeleeMousePress(InputEvent.MouseButton.Post event) {
-        if (isInGame() && event.getAction() == InputConstants.PRESS && MELEE_KEY.matches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
-            doMeleeLogic();
-        }
-    }
-
     public static boolean onMeleeControllerPress(boolean isPress) {
         if (isInGame() && isPress) {
             LocalPlayer player = Minecraft.getInstance().player;
@@ -45,7 +32,7 @@ public class MeleeKey {
         return false;
     }
 
-    private static void doMeleeLogic() {
+    static void doMeleeLogic() {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null || player.isSpectator()) {
             return;

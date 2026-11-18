@@ -3,7 +3,6 @@ package com.tacz.guns.client.input;
 import com.tacz.guns.block.AmmoStorageBlock;
 import com.tacz.guns.network.message.ClientMessageAmmoStorageInteract;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import cn.sh1rocu.tacz.api.event.InputEvent;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.config.util.InteractKeyConfigRead;
@@ -28,18 +27,6 @@ public class InteractKey {
             InputConstants.KEY_O,
             TaCZKeyCategory.TACZ);
 
-    public static void onInteractKeyPress(InputEvent.Key event) {
-        if (isInGame() && event.getAction() == InputConstants.PRESS && INTERACT_KEY.matches(InputConstants.Type.KEYBOARD.getOrCreate(event.getKey()))) {
-            doInteractLogic(false);
-        }
-    }
-
-    public static void onInteractMousePress(InputEvent.MouseButton.Post event) {
-        if (isInGame() && event.getAction() == InputConstants.PRESS && INTERACT_KEY.matches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
-            doInteractLogic(false);
-        }
-    }
-
     public static boolean onInteractControllerPress(boolean isPress) {
         return isPress && isInGame() && doInteractLogic(true);
     }
@@ -48,7 +35,7 @@ public class InteractKey {
         return !use.isUnbound() && KeyMappingHelper.getBoundKeyOf(INTERACT_KEY).equals(KeyMappingHelper.getBoundKeyOf(use));
     }
 
-    private static boolean doInteractLogic(boolean controller) {
+    static boolean doInteractLogic(boolean controller) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null || player.isSpectator() || !IGun.mainHandHoldGun(player)) return false;

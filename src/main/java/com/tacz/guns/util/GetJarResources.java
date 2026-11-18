@@ -156,6 +156,7 @@ public final class GetJarResources {
         List<String> lines = "jar".equals(sourceUrl.getProtocol())
                 ? collectJarFingerprintLines(sourceUrl)
                 : collectPathFingerprintLines(resolveSourcePath(sourceUrl));
+        lines.add("mod-version|" + FabricLoader.getInstance().getModContainer(GunMod.MOD_ID).orElseThrow().getMetadata().getVersion().getFriendlyString());
         Collections.sort(lines);
         return Md5Utils.md5Hex(String.join("\n", lines).getBytes(StandardCharsets.UTF_8));
     }

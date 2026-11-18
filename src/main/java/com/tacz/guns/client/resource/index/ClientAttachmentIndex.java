@@ -360,6 +360,20 @@ public class ClientAttachmentIndex {
         return null;
     }
 
+    public boolean hasRangefinder() {
+        return display.getTextShows().values().stream().anyMatch(t -> t != null && t.getRangefinder() != null);
+    }
+
+    public boolean hasImpactPrediction() {
+        return display.getTextShows().values().stream().anyMatch(t -> t != null && t.getRangefinder() != null && t.getRangefinder().showsImpact());
+    }
+
+    public boolean hasAmmoCounter() {
+        // Resolve at tooltip time so an open client switching languages sees the current text.
+        return display.getTextShows().values().stream().anyMatch(t -> t != null && t.getTextKey() != null
+                && net.minecraft.locale.Language.getInstance().getOrDefault(t.getTextKey()).contains("%ammo_count%"));
+    }
+
     public ScopeLensConfig getScopeLens() { return display.getScopeLens(); }
 
     public boolean isScope() {

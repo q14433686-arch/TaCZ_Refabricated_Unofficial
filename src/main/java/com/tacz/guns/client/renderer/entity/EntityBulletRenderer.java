@@ -148,47 +148,12 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                 Camera camera = Minecraft.getInstance().gameRenderer.mainCamera();
 
                 if (isFirstPerson) {
-                    // 【第 26 轮定稿：第一人称曳光弹起点锁定枪口】
-                    //
-                    // 【空间契约（26.2 字节码逐项核实）】
-                    // 1. 实体提交侧（本方法收到的 poseStack）：LevelRenderer#render 先把
-                    //    cameraState.viewRotationMatrix（= R(camera.rotation().conjugate())，world→view）
-                    //    push 进 RenderSystem modelViewStack，实体只做
-                    //    translate(entityPos - cameraPos)，全程不乘旋转
-                    //    —— 即本方法里 poseStack 的平移/新增平移都是【世界轴】，
-                    //    相机旋转由后续绘制时统一施加。（第 25 轮实测 poseBefore ≡ bulletPos - eye 亦证此。）
-                    // 2. 手部提交侧（muzzleRenderOffset 的采集点）：
-                    //    26.2 的 GameRenderer#renderItemInHand 开头
-                    //      poseStack.mulPose(new Matrix4f(viewRotationMatrix).invert())  // 基座 R(q)，view→world
-                    //      modelViewStack.mul(viewRotationMatrix)                        // W2V，绘制时抵消
-                    //    因此手部 pose 里读到的 m30/31/32 是【世界轴】的 R(q)·v，不是 1.21.1 的视图空间 v！
-                    //    第 25 轮曾据 submitHandsWithItems「只有两条 0.1 系数 bob mulPose」断言
-                    //    「poseStack 停留在视图空间」—— 那只看了 ItemInHandRenderer 内部，
-                    //    漏看了 renderItemInHand 给进来的基座，结论不成立。
-                    //    GunItemRendererWrapper#cacheMuzzlePosition 现在用【手部提交入口的基座矩阵 B】
-                    //    的转置把采集位移解算回纯视图空间（B 与枪口矩阵共享同一条基座/bob 前缀，
-                    //    Bᵀ·(m − B.t) 恒等于 1.21.1 语义的 v）——不依赖任何渲染管线内部状态，
-                    //    vanilla（B≈R(q)）、Iris 手部 pass（B≈I）等一切基座取值下同时正确。
-                    //    曾尝试改用 RenderSystem modelView 还原，但 26.2 绘制矩阵经由
-                    //    SubmitNodeCollector/DynamicTransforms 下发，RenderSystem modelView 栈
-                    //    仅为兼容保留、内容不可作为信源，实测无效，已弃用。
-                    //
-                    // 【症状对应】旧链路下采集到 R(q)·v 又被这里 rotate 一次（R(q)²·v），
-                    // 枪口起点按【二倍朝向角】偏转：面南/面北几乎无感，面向东南/西南/东北/西北时
-                    // 整串曳光弹起点被甩到枪口一侧 —— 反馈里「后坐力方向固定向左/右偏」即此；
-                    // 光影开启时手部 pass 不经过 26.2 的基座预乘，链路本就自洽，故一切正常。
-                    //
-                    // camera.rotation() 是【视图→世界】：Camera#setRotation 用
-                    // rotationYXZ(PI - yRot*DEG, -xRot*DEG, 0) 构造，随后
-                    // FORWARDS(0,0,-1).rotate(rotation) 得到世界前向。
-                    // 正是这里需要的方向，<b>直接 rotate，不要 conjugate</b>。
-                    //
-                    // 枪口采集与子弹提交不在同一次渲染段（世界 pass 先于手部 pass），
-                    // muzzleRenderOffset 是上一帧手部 pass 的留存值；用【当帧相机】旋转之，
-                    // 转头时仅残留一帧量级的视差，与上游设计一致。
+                    // Freeze both view-space origin and view-to-world frame on this tracer's first draw.
+                    // The hand-pass base has already been removed by cacheMuzzlePosition.
                     Vector3f offset = bullet.getFirstPersonRenderOffset();
                     if (offset == null) {
                         offset = new Vector3f(globalMuzzleOffset);
+                        bullet.setFirstPersonCameraRotation(camera.rotation());
                         bullet.setCameraXRot(camera.xRot());
                         bullet.setCameraYRot(camera.yRot());
                         bullet.setFirstPersonRenderOffset(offset);
@@ -198,7 +163,12 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                     offsetReducer = Math.max(0, (50.0 - disToEye)) / 50.0;
 
                     // 视图空间 -> 世界空间：camera.rotation() 即视图→世界，直接 rotate。
-                    Vector3f worldOffset = new Vector3f(globalMuzzleOffset).rotate(camera.rotation());
+                    var rotation = bullet.getFirstPersonCameraRotation();
+                    if (rotation == null) { // Offset supplied by an older add-on using the Euler API.
+                        rotation = new org.joml.Quaternionf().rotationY((float)Math.toRadians(-bullet.getCameraYRot() - 180))
+                                .rotateX((float)Math.toRadians(-bullet.getCameraXRot()));
+                    }
+                    Vector3f worldOffset = new Vector3f(offset).rotate(rotation);
                     firstPersonWorldOffset = new Vector3f(worldOffset);
                     poseStack.translate(worldOffset.x() * offsetReducer,
                             worldOffset.y() * offsetReducer,

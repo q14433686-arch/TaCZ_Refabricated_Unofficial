@@ -14,6 +14,7 @@ import com.tacz.guns.client.resource.ClientAssetsManager;
 import com.tacz.guns.client.resource.pojo.PackInfo;
 import com.tacz.guns.inventory.tooltip.AttachmentItemTooltip;
 import com.tacz.guns.resource.pojo.data.attachment.AttachmentData;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -176,6 +177,21 @@ public class ClientAttachmentItemTooltip implements ClientTooltipComponent {
                 Arrays.stream(split).forEach(s -> components.add(Component.literal(s).withStyle(style -> style.withColor(0xAAAAAA))));
             }
 
+            if (data.hasFlashHider()) {
+                if (data.getFlashHider() < 1.0f) {
+                    components.add(Component.translatable("tooltip.tacz.attachment.flash_hider.decrease").withStyle(ChatFormatting.GREEN));
+                } else if (data.getFlashHider() > 1.0f) {
+                    components.add(Component.translatable("tooltip.tacz.attachment.flash_hider.increase").withStyle(ChatFormatting.RED));
+                }
+            }
+            if (data.hasSmokeHider()) {
+                if (data.getSmokeHider() < 1.0f) {
+                    components.add(Component.translatable("tooltip.tacz.attachment.smoke_hider.decrease").withStyle(ChatFormatting.GREEN));
+                } else if (data.getSmokeHider() > 1.0f) {
+                    components.add(Component.translatable("tooltip.tacz.attachment.smoke_hider.increase").withStyle(ChatFormatting.RED));
+                }
+            }
+
             if (attachment.getItem() instanceof IAttachment iAttachment) {
                 TimelessAPI.getClientAttachmentIndex(attachmentId).ifPresent(attachmentIndex -> {
                     if (iAttachment.hasCustomLaserColor(attachment)) {
@@ -200,6 +216,17 @@ public class ClientAttachmentItemTooltip implements ClientTooltipComponent {
                     String zoomJoinText = StringUtils.join(zoomText, ", ");
                     components.add(Component.translatable("tooltip.tacz.attachment.zoom", zoomJoinText).withStyle(style -> style.withColor(0xFFAA00)));
                 }
+            }
+
+            if (index.hasRangefinder()) {
+                components.add(Component.translatable("tooltip.tacz.attachment.rangefinder").withStyle(ChatFormatting.AQUA));
+            }
+            if (index.hasImpactPrediction()) {
+                components.add(Component.translatable("tooltip.tacz.attachment.fire_control").withStyle(ChatFormatting.AQUA));
+            }
+
+            if (type == AttachmentType.SCOPE && index.hasAmmoCounter()) {
+                components.add(Component.translatable("tooltip.tacz.attachment.ammo_counter").withStyle(ChatFormatting.AQUA));
             }
 
             if (type == AttachmentType.EXTENDED_MAG) {

@@ -122,6 +122,16 @@ public final class TimelessAPI {
         return ClientIndexManager.getAllAttachments();
     }
 
+    @Environment(EnvType.CLIENT)
+    public static Set<Map.Entry<Identifier, ClientAttachmentVariantIndex>> getAllClientAttachmentVariantIndex() {
+        return Map.copyOf(ClientIndexManager.ATTACHMENT_VARIANT_INDEX).entrySet();
+    }
+
+    @Environment(EnvType.CLIENT)
+    public static Set<Map.Entry<Identifier, ClientSlotAdapterIndex>> getAllClientSlotAdapterIndex() {
+        return Map.copyOf(ClientIndexManager.SLOT_ADAPTER_INDEX).entrySet();
+    }
+
     public static Optional<CommonBlockIndex> getCommonBlockIndex(Identifier blockId) {
         return Optional.ofNullable(CommonAssetsManager.get().getBlockIndex(blockId));
     }

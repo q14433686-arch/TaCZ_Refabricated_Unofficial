@@ -1,4 +1,3 @@
-# Inspect the failed low-magnification particle control, alongside the successful Iris control.
-44413228399	smoke	tacz_amg10_particle_2
-44413228399	smoke	tacz_amg10_zoom_2
-44413228396	iris	tacz_amg10_particle_2
+# Same-branch pre-change raster references, not golden pixels across drivers.
+44417531060	smoke	tacz_display_wall
+44417531060	smoke	tacz_default_refit

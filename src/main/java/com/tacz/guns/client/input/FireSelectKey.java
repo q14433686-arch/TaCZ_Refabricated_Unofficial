@@ -1,6 +1,5 @@
 package com.tacz.guns.client.input;
 
-import cn.sh1rocu.tacz.api.event.InputEvent;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.item.IGun;
@@ -19,18 +18,6 @@ public class FireSelectKey {
             InputConstants.KEY_G,
             TaCZKeyCategory.TACZ);
 
-    public static void onFireSelectKeyPress(InputEvent.Key event) {
-        if (isInGame() && event.getAction() == InputConstants.PRESS && FIRE_SELECT_KEY.matches(InputConstants.Type.KEYBOARD.getOrCreate(event.getKey()))) {
-            doFireSelectLogic();
-        }
-    }
-
-    public static void onFireSelectMousePress(InputEvent.MouseButton.Post event) {
-        if (isInGame() && event.getAction() == InputConstants.PRESS && FIRE_SELECT_KEY.matches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
-            doFireSelectLogic();
-        }
-    }
-
     public static boolean onFireSelectControllerPress(boolean isPress) {
         if (isInGame() && isPress) {
             LocalPlayer player = Minecraft.getInstance().player;
@@ -45,7 +32,7 @@ public class FireSelectKey {
         return false;
     }
 
-    private static void doFireSelectLogic() {
+    static void doFireSelectLogic() {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null || player.isSpectator()) {
             return;

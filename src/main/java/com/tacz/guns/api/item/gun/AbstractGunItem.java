@@ -34,6 +34,7 @@ import net.minecraft.world.item.ItemStack;
 
 import org.apache.commons.lang3.StringUtils;
 import javax.annotation.Nonnull;
+import com.tacz.guns.util.ContentPackOrder;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -43,7 +44,7 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
     }
 
     private static Comparator<Map.Entry<Identifier, CommonGunIndex>> idNameSort() {
-        return Comparator.comparingInt(m -> m.getValue().getSort());
+        return ContentPackOrder.<CommonGunIndex>byNamespace().thenComparingInt(m -> m.getValue().getSort()).thenComparing(Map.Entry::getKey);
     }
 
     /**

@@ -48,18 +48,7 @@ public class ClientSetupEvent {
     }
 
     public static void registerKeyMappings() {
-        // 注册键位 (26.2: MKB 不可用，直接注册 KeyMapping)
-        KeyMappingHelper.registerKeyMapping(InspectKey.INSPECT_KEY);
-        KeyMappingHelper.registerKeyMapping(ReloadKey.RELOAD_KEY);
-        KeyMappingHelper.registerKeyMapping(ShootKey.SHOOT_KEY);
-        KeyMappingHelper.registerKeyMapping(InteractKey.INTERACT_KEY);
-        KeyMappingHelper.registerKeyMapping(FireSelectKey.FIRE_SELECT_KEY);
-        KeyMappingHelper.registerKeyMapping(AimKey.AIM_KEY);
-        KeyMappingHelper.registerKeyMapping(CrawlKey.CRAWL_KEY);
-        KeyMappingHelper.registerKeyMapping(RefitKey.REFIT_KEY);
-        KeyMappingHelper.registerKeyMapping(ZoomKey.ZOOM_KEY);
-        KeyMappingHelper.registerKeyMapping(MeleeKey.MELEE_KEY);
-        KeyMappingHelper.registerKeyMapping(ConfigKey.OPEN_CONFIG_KEY);
+        GunInputHandler.registerMappings();
     }
 
     public static void registerClientTooltips() {

@@ -22,6 +22,11 @@ public final class AmmoBlockConfigRead {
     }
 
     public static void init() {
+        // Only migrate the exact obsolete default; never rewrite a player's custom selection.
+        if (List.of("#forge:glass", "#forge:glass_panes").equals(AmmoConfig.DESTROY_BLOCKS.get())) {
+            AmmoConfig.DESTROY_BLOCKS.set(new java.util.ArrayList<>(AmmoConfig.DEFAULT_DESTROY_BLOCKS));
+            AmmoConfig.DESTROY_BLOCKS.save();
+        }
         passThroughBlocks = readBlockList(AmmoConfig.PASS_THROUGH_BLOCKS.get(), "PassThroughBlocks");
         destroyBlocks = readBlockList(AmmoConfig.DESTROY_BLOCKS.get(), "DestroyBlocks");
     }

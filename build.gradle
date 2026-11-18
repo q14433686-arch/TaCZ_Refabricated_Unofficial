@@ -51,6 +51,20 @@ loom {
 }
 
 repositories {
+    // Official signed Fabric releases; neither the controller nor Framework is bundled into TaCZ.
+    ['Controllable', 'Framework'].each { mod ->
+        exclusiveContent {
+            forRepository {
+                ivy {
+                    name = "MrCrayfish${mod}Releases"
+                    url = uri("https://github.com/MrCrayfish/${mod}/releases/download")
+                    patternLayout { artifact('v[revision]/[artifact]-[revision]-signed.[ext]') }
+                    metadataSources { artifact() }
+                }
+            }
+            filter { includeModule('mrcrayfish.release', mod.toLowerCase(Locale.ROOT) + '-fabric') }
+        }
+    }
     maven {
         // 阿里云镜像，方便国内开发
         url = uri("https://maven.aliyun.com/repository/public/")
@@ -212,6 +226,8 @@ dependencies {
     // implementation(include("dev.onyxstudios.cardinal-components-api:cardinal-components-base:5.2.3"))
     // implementation(include("dev.onyxstudios.cardinal-components-api:cardinal-components-entity:5.2.3"))
 
+    compileOnly "mrcrayfish.release:controllable-fabric:0.26.2+26.3"
+
     // MKB (Modern Keybinding)
     // implementation(include("maven.modrinth:modernkeybinding:1.20.X-1.2.0"))
 
@@ -331,7 +347,7 @@ tasks.withType(JavaCompile).configureEach {
 //
 // 【已审批的临时排除】以下模块的目标 mod 在 26.2/26.3 Fabric 暂无构建（经 Modrinth 核实），
 // 其 API 类不存在、无法编译。用户已批准临时排除，待上游移植后回补。
-// 26.2 线继承下来的：Accelerated Rendering、Controllable、KubeJS、Modern Keybinding(随 controllable)、Optifine。
+// 26.2 线继承下来的：Accelerated Rendering、KubeJS、Modern Keybinding、Optifine。
 // 26.3 移植期曾临时排除的 REI (26.3.823 + Architectury 22.0.3)、Zoomify (2.16.3+26.3)、
 // Shoulder Surfing Reloaded (26.3-5.2.0+fabric) 均已于 2026-09-30 恢复参编。
 // 注意：iris/sulkan 兼容按用户要求"两者都要兼容"，不在此排除清单内；
@@ -343,8 +359,6 @@ sourceSets {
             // AR(Accelerated Rendering)：仅排除硬依赖 argon4w 的 IMPL，保留 ARCompat/BeamRenderContext 门面（改为禁用态）
             exclude 'com/tacz/guns/compat/ar/ARCompatImpl.java'
             exclude 'com/tacz/guns/compat/ar/AcceleratedBeamRenderer.java'
-            // Controllable：仅排除硬依赖 mrcrayfish 的 IMPL，保留 ControllableCompat 门面
-            exclude 'com/tacz/guns/compat/controllable/ControllableInner.java'
             // KubeJS：dev.latvian.kubejs 无 26.2/26.3 Fabric 构建，核心 KubeJSGunEventPoster/GunMod 改为禁用态门面
             exclude 'com/tacz/guns/compat/kubejs/**'
             // 仅排除已被 PAL 实现替代、且硬依赖 KosmX API 的旧 animation 包/资产管理器；

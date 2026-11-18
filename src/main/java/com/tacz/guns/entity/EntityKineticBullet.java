@@ -143,6 +143,14 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
     private float cameraXRot;
     private float cameraYRot;
     private Vector3f firstPersonRenderOffset;
+    private org.joml.Quaternionf firstPersonCameraRotation;
+
+    @Nullable
+    public org.joml.Quaternionf getFirstPersonCameraRotation() { return firstPersonCameraRotation; }
+
+    public void setFirstPersonCameraRotation(org.joml.Quaternionfc rotation) {
+        firstPersonCameraRotation = new org.joml.Quaternionf(rotation);
+    }
     // 发射的枪械 ID
     private Identifier gunId = DefaultAssets.EMPTY_GUN_ID;
     // 枪械display ID

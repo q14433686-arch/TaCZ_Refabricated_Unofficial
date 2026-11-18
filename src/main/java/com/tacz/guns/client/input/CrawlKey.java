@@ -1,6 +1,5 @@
 package com.tacz.guns.client.input;
 
-import cn.sh1rocu.tacz.api.event.InputEvent;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.item.IGun;
@@ -21,11 +20,14 @@ public class CrawlKey {
             InputConstants.KEY_C,
             TaCZKeyCategory.TACZ);
 
-    public static void onCrawlPress(InputEvent.Key event) {
-        if (CRAWL_KEY.matches(InputConstants.Type.KEYBOARD.getOrCreate(event.getKey()))) {
-            if (event.getAction() == InputConstants.PRESS) onCrawlControllerPress(true);
-            else if (event.getAction() == InputConstants.RELEASE) onCrawlControllerPress(false);
-        }
+    private static boolean controllerDown;
+    public static void setControllerDown(boolean down) {
+        boolean released = controllerDown && !down;
+        controllerDown = down;
+        if (released) releaseIfNotHeld();
+    }
+    static void releaseIfNotHeld() {
+        if (!controllerDown && !CRAWL_KEY.isDown()) onCrawlControllerPress(false);
     }
 
     public static boolean onCrawlControllerPress(boolean isPress) {
