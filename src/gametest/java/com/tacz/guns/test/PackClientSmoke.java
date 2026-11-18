@@ -114,7 +114,9 @@ public class PackClientSmoke implements FabricClientGameTest {
             ExternalRigSmoke.afterReload(context, oldDisplay);
             SessionClockSmoke.pauseAndResume(context);
             saved = WorldReturnSmoke.prepare(context, world, rack);
+            GunMod.LOGGER.info("PORT_SMOKE_CLIENT: save prepared; closing first integrated world");
         }
+        GunMod.LOGGER.info("PORT_SMOKE_CLIENT: first integrated world closed; checking logout and reopening save");
         WorldReturnSmoke.reopen(context, saved);
     }
 

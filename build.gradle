@@ -279,6 +279,11 @@ def smokePack = tasks.register('zipSmokePack', Zip) {
 }
 tasks.named('runGameTest') { dependsOn smokePack }
 if (project.hasProperty('taczClientSmoke')) {
+    // FabricMC/fabric-api#5656: closing a singleplayer test world can deadlock in
+    // IntegratedServer.halt. Use the fixed test driver without changing the mod's Fabric API pin.
+    dependencies {
+        gametestRuntimeOnly(fabricApi.module('fabric-client-gametest-api-v1', '0.164.0+26.3')) { transitive = false }
+    }
     def installClientPack = tasks.register('installClientSmokePack', Copy) {
         dependsOn tasks.named('deleteGameTestRunDir')
         into layout.buildDirectory.dir('run/clientGameTest')
