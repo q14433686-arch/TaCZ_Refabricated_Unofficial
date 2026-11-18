@@ -26,6 +26,8 @@ final class MuzzleEffectsSmoke {
             ctx.runOnClient(mc -> { mc.options.setCameraType(CameraType.FIRST_PERSON); RenderConfig.RENDER_MUZZLE_SMOKE.set(true); NativeMuzzleEffects.clear(); });
             equip(ctx, world, "ak47", FireMode.AUTO);
             shoot(ctx, false, "tacz_muzzle_first");
+            equip(ctx, world, "ak47", FireMode.AUTO, true);
+            shoot(ctx, false, "tacz_muzzle_rc1");
             // Glock has no legacy texture; this catches accidental loader fallback/rejection.
             equip(ctx, world, "glock_17", FireMode.SEMI);
             shoot(ctx, false, "tacz_muzzle_glock");
@@ -51,10 +53,14 @@ final class MuzzleEffectsSmoke {
     }
 
     private static void equip(ClientGameTestContext ctx, TestSingleplayerContext world, String id, FireMode mode) {
+        equip(ctx, world, id, mode, false);
+    }
+    private static void equip(ClientGameTestContext ctx, TestSingleplayerContext world, String id, FireMode mode, boolean silencer) {
         world.getServer().runOnServer(s -> {
             var p = world.getConnection().getServerPlayer();
-            p.setItemInHand(InteractionHand.MAIN_HAND, GunItemBuilder.create().setId(Identifier.parse("tacz:"+id))
-                    .setAmmoCount(30).setAmmoInBarrel(true).setFireMode(mode).build());
+            var builder = GunItemBuilder.create().setId(Identifier.parse("tacz:"+id)).setAmmoCount(30).setAmmoInBarrel(true).setFireMode(mode);
+            if (silencer) builder.putAttachment(com.tacz.guns.api.item.attachment.AttachmentType.MUZZLE, Identifier.parse("tacz:muzzle_silencer_socom_rc1"));
+            p.setItemInHand(InteractionHand.MAIN_HAND, builder.build());
         });
         ctx.waitFor(mc -> mc.player.getMainHandItem().getItem() instanceof IGun gun && gun.getGunId(mc.player.getMainHandItem()).equals(Identifier.parse("tacz:"+id)));
         ctx.waitTicks(25);
@@ -64,12 +70,16 @@ final class MuzzleEffectsSmoke {
 
     private static void shoot(ClientGameTestContext ctx, boolean third, String screenshot) {
         long before = ctx.computeOnClient(mc -> third ? NativeMuzzleEffects.diagnostics().thirdFlashSubmits() : NativeMuzzleEffects.diagnostics().firstFlashSubmits());
+        boolean smokeEnabled = ctx.computeOnClient(mc -> RenderConfig.RENDER_MUZZLE_SMOKE.get());
+        long bursts = ctx.computeOnClient(mc -> NativeMuzzleEffects.diagnostics().smokeBursts());
         // Semi fires once per press, automatic holds through several render frames.
         for (int attempt=0; attempt<5; attempt++) {
             ctx.getInput().holdKey(ShootKey.SHOOT_KEY);
             try { ctx.waitTicks(3); } finally { ctx.getInput().releaseKey(ShootKey.SHOOT_KEY); }
             ctx.waitTicks(1);
             if (ctx.computeOnClient(mc -> (third ? NativeMuzzleEffects.diagnostics().thirdFlashSubmits() : NativeMuzzleEffects.diagnostics().firstFlashSubmits()) > before)) {
+                if (smokeEnabled && ctx.computeOnClient(mc -> NativeMuzzleEffects.diagnostics().smokeBursts()) <= bursts)
+                    throw new AssertionError("Flash submitted without a detached smoke burst: " + screenshot);
                 ctx.takeScreenshot(screenshot);
                 return;
             }

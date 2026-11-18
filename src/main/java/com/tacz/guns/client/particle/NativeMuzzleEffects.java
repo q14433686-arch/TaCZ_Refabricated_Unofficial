@@ -60,6 +60,7 @@ public final class NativeMuzzleEffects {
         final float offset;
         final float rotation = (float)(Math.random() * 120 - 60);
         final int frame = 4 + (int)(Math.random() * 14);
+        long flashBorn = -1;
         boolean smoked;
         boolean smokeEnabled = true;
         Shot(MuzzleEffectParameters effect, Identifier gun, boolean firstPerson, float offset) {
@@ -168,10 +169,15 @@ public final class NativeMuzzleEffects {
             }
         }
         Identifier definition = first ? effect.firstFlash() : effect.thirdFlash();
+        // Starting the 20ms particle at the first locator submit guarantees the instant
+        // emitter has one frame even when event handling and extraction straddle a slow frame.
+        if (shot.flashBorn < 0) shot.flashBorn = GunTime.nowMillis();
+        long flashAge = first ? GunTime.nowMillis() - shot.flashBorn : age;
         long lifetime = first ? 20 : 150;
-        if (age < 0 || age > lifetime || effect.flashScale() <= 0 || !supported(definition, FLASH)
+        if (age < 0 || flashAge > lifetime || effect.flashScale() <= 0 || !supported(definition, FLASH)
                 || RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) return true;
         float size = effect.flashScale() * .45f;
+        if (!Float.isFinite(size) || size > 32) return true;
         pose.rotate(com.mojang.math.Axis.ZP.rotationDegrees(shot.rotation));
         boolean clipped = first && ScopeBodyRenderTypes.maskReadyForViewmodel(true);
         RenderType type = clipped ? ScopeBodyRenderTypes.flashSwirlClipped(FLASH_TEXTURE) : RenderTypes.energySwirl(FLASH_TEXTURE, 0, 0);
@@ -199,8 +205,15 @@ public final class NativeMuzzleEffects {
             var config = effect.smokeDirection();
             if (config != null) {
                 float[] d = config.directions()[i % config.directions().length];
-                float spread = config.angleMode() ? (float)Math.tan(Math.toRadians(config.spread())) : config.spread();
-                direction.mul(2 * spread).add(d[0], d[1], d[2]);
+                if (config.angleMode()) {
+                    Vector3f axis = new Vector3f(d[0], d[1], d[2]);
+                    Vector3f tangent = Math.abs(axis.y) < .99f ? new Vector3f(0,1,0).cross(axis).normalize()
+                            : new Vector3f(1,0,0).cross(axis).normalize();
+                    Vector3f bitangent = new Vector3f(axis).cross(tangent).normalize();
+                    double cos = 1 - Math.random() * (1-Math.cos(Math.toRadians(config.spread())));
+                    double sin = Math.sqrt(Math.max(0, 1-cos*cos)), angle = Math.random()*2*Math.PI;
+                    direction.set(axis).mul((float)cos).fma((float)(sin*Math.cos(angle)), tangent).fma((float)(sin*Math.sin(angle)), bitangent);
+                } else direction.mul(2 * config.spread()).add(d[0], d[1], d[2]);
             }
             if (direction.lengthSquared() < .00001f) direction.set(0, 0, -1);
             direction.normalize();
@@ -230,7 +243,7 @@ public final class NativeMuzzleEffects {
             int alpha = (int)(128 * Math.max(0, 1-life/.9f));
             int grey = (int)(140 - 76*life);
             int color = alpha<<24 | grey<<16 | grey<<8 | grey;
-            quad(collector, pose, RenderTypes.entityTranslucent(SMOKE_TEXTURE), size, size, frame/6f, (frame+1)/6f, color, puff.light);
+            quad(collector, pose, RenderTypes.energySwirl(SMOKE_TEXTURE, 0, 0), size, size, frame/6f, (frame+1)/6f, color, puff.light);
         }
     }
     public static int flashLight(ItemStack stack, int light) {

@@ -18,6 +18,10 @@ public class RenderClothConfig {
     public static void init(ConfigBuilder root, ConfigEntryBuilder entryBuilder) {
         ConfigCategory render = root.getOrCreateCategory(Component.translatable("config.tacz.client.render"));
 
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.muzzle_smoke"), RenderConfig.RENDER_MUZZLE_SMOKE.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.muzzle_smoke.desc"))
+                .setSaveConsumer(RenderConfig.RENDER_MUZZLE_SMOKE::set).build());
+
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.ocular_inflate_enable"), RenderConfig.ENABLE_OCULAR_INFLATE.get())
                 .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.ocular_inflate_enable.desc"))
                 .setSaveConsumer(RenderConfig.ENABLE_OCULAR_INFLATE::set).build());
