@@ -168,7 +168,7 @@ final class ScopeLensSmoke {
         GunMod.LOGGER.info("PORT_THERMAL_DYNAMIC: 12 motion samples retained {}/{} hot pixels",min,max);
         var slimeId=world.getServer().computeOnServer(s->{var level=world.getConnection().getServerPlayer().level();
             level.getEntity(scene.cow).snapTo(Vec3.atBottomCenterOf(scene.aim).add(12,0,0));
-            var slime=new net.minecraft.world.entity.monster.Slime(EntityTypes.SLIME,level);
+            var slime=EntityTypes.SLIME.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
             slime.setSize(3,true);slime.setNoAi(true);slime.setNoGravity(true);slime.snapTo(Vec3.atBottomCenterOf(scene.aim));level.addFreshEntity(slime);return slime.getUUID();});
         try {
             ctx.waitFor(mc->mc.level.getEntity(slimeId)!=null);
