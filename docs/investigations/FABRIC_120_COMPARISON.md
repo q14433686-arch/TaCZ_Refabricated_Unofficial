@@ -63,3 +63,4 @@ python3 scripts/verify_120_resources.py
 
    `e01537c` [生产源码编译成功](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44232108232)，[完整构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44232108241) 在 Gradle 依赖解析遇 Maven Central HTTP 429，没进测试，不是像素验收结果。
    在 `77073ca` 的[完整客户端运行](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44232349588)中，专服及 UH-1 通过，XM157 已装备且 ADS 达标，但等不到 `drawBox`，**未过**。测试增加确定的空中视线以及区分测距/定位/投影的失败诊断，不放宽像素断言。
+   `3bfe86c` 的[诊断运行](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44232836021)读到 `026 M`、有效样本及已初始化相机，但 locator 的 `clip.w=-7.59`。CPU 投影漏乘与目镜掩码共用的提交时 ModelView，误判在相机后面；只在求投影时补这一因子，绘制不重复相乘。新测试换用斜向且超过一个游戏 tick 的样本，并增加解除 ADS / 重新瞄准检查。

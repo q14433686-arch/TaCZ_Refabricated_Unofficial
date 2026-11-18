@@ -1,5 +1,6 @@
 package com.tacz.guns.client.model.functional;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -49,7 +50,10 @@ public record ImpactMarkerRender(List<BedrockPart> path, Rangefinder settings) {
         pose.scale(2f/300, -2f/300, -2f/300);
         var clip = new Matrix4f();
         ((GameRendererProjectionAccessor)(Object)mc.gameRenderer).tacz$getHudProjection().getMatrix(clip);
-        clip.mul(pose.last().pose());
+        // The hand pose includes the inverse camera basis. Match the actual GPU transform
+        // (and the ocular mask's submit-time capture); pose alone is not camera-local.
+        // Only the CPU projection needs this factor. The collector applies ModelView at draw time.
+        clip.mul(RenderSystem.getModelViewMatrixCopy()).mul(pose.last().pose());
         // Solve clipY(localY)/clipW(localY) = desired NDC, including tilted animated locators.
         double denominator = clip.m11() - projected * clip.m13();
         if (Math.abs(denominator) < 1e-7) return;

@@ -1,13 +1,18 @@
 package com.tacz.guns.test;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.client.input.AimKey;
+import com.tacz.guns.client.model.functional.ImpactMarkerRender;
+import com.tacz.guns.mixin.client.GameRendererProjectionAccessor;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
@@ -16,6 +21,8 @@ import net.minecraft.world.entity.animal.cow.Cow;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
+
+import org.joml.Matrix4f;
 
 import javax.imageio.ImageIO;
 import java.io.IOException;
@@ -29,23 +36,27 @@ public final class ImpactMarkerSmoke {
 
     private static String diagnostic = "no marker submission";
     private static boolean trace;
-    public static void observe(com.tacz.guns.client.model.functional.ImpactMarkerRender marker, net.minecraft.world.item.ItemStack held,
-                               com.mojang.blaze3d.vertex.PoseStack root) {
-        if (!trace) return;
-        var mc = net.minecraft.client.Minecraft.getInstance();
-        root.pushPose();
-        try {
-            for (var part : marker.path()) part.translateAndRotateAndScale(root);
-            var hud = new org.joml.Matrix4f();
-            ((com.tacz.guns.mixin.client.GameRendererProjectionAccessor)(Object)mc.gameRenderer).tacz$getHudProjection().getMatrix(hud);
-            hud.mul(root.last().pose());
-            diagnostic = "slope=" + com.tacz.guns.client.model.papi.RangefinderReadout.impactSlope(held, marker.settings())
-                    + ", clip=" + hud.m30() + "," + hud.m31() + "," + hud.m33() + ", up=" + hud.m11()
-                    + ", camera=" + mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.initialized;
-        } finally { root.popPose(); }
+    private static double lastSlope;
+
+    public static boolean onSubmit(ImpactMarkerRender marker, PoseStack root) {
+        if (trace) {
+            var mc = Minecraft.getInstance();
+            Matrix4f hud = new Matrix4f();
+            ((GameRendererProjectionAccessor)(Object)mc.gameRenderer).tacz$getHudProjection().getMatrix(hud);
+            hud.mul(RenderSystem.getModelViewMatrixCopy());
+            root.pushPose();
+            try {
+                for (var part : marker.path()) part.translateAndRotateAndScale(root);
+                hud.mul(root.last().pose());
+                diagnostic = "clip=" + hud.m30() + "," + hud.m31() + "," + hud.m33()
+                        + ", camera=" + mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.initialized;
+            } finally { root.popPose(); }
+        }
+        return hide;
     }
 
-    public static boolean atDraw() { draws++; return hide; }
+    public static void onSample(double slope) { lastSlope = slope; }
+    public static void atDraw() { draws++; }
 
     static void run(ClientGameTestContext ctx, TestSingleplayerContext world) {
         var sight = Identifier.parse("tacz:scope_xm157");
@@ -56,11 +67,11 @@ public final class ImpactMarkerSmoke {
             var cow = new Cow(EntityTypes.COW, player.level());
             cow.setNoAi(true);
             cow.setNoGravity(true);
-            BlockPos targetPos = player.blockPosition().above(12).south(24);
+            BlockPos targetPos = player.blockPosition().above(12).south(42).east(6);
             cow.snapTo(Vec3.atBottomCenterOf(targetPos));
             // A random spawn can be on a hillside or beside a tree. Explicitly clear the sight line.
-            for (int i = 1; i <= 30; i++) {
-                var center = BlockPos.containing(player.getEyePosition().lerp(Vec3.atCenterOf(targetPos.above()), i / 30.0));
+            for (int i = 1; i <= 48; i++) {
+                var center = BlockPos.containing(player.getEyePosition().lerp(Vec3.atCenterOf(targetPos), i / 48.0));
                 for (int y = -1; y <= 1; y++) player.level().removeBlock(center.above(y), false);
             }
             player.level().addFreshEntity(cow);
@@ -69,16 +80,17 @@ public final class ImpactMarkerSmoke {
         try {
             ctx.waitFor(mc -> mc.level.getEntity(target) != null && mc.player.getMainHandItem().getItem() instanceof IGun g
                     && sight.equals(g.getAttachmentId(mc.player.getMainHandItem(), AttachmentType.SCOPE)));
-            BlockPos look = ctx.computeOnClient(mc -> mc.level.getEntity(target).blockPosition().above());
+            BlockPos look = ctx.computeOnClient(mc -> mc.level.getEntity(target).blockPosition());
             ctx.getInput().lookAt(look);
             ctx.getInput().holdKey(AimKey.AIM_KEY);
             ctx.waitFor(mc -> IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(1) >= .99f);
             ctx.runOnClient(mc -> { draws = 0; trace = true; });
-            try { ctx.waitFor(mc -> draws > 0); }
+            try { ctx.waitFor(mc -> draws > 0 && lastSlope > 0); }
             catch (AssertionError e) {
                 ctx.takeScreenshot("tacz_xm157_missing");
-                throw new AssertionError(ctx.computeOnClient(mc -> "No XM157 vertices: " + diagnostic + "; readout=" + RangefinderSmoke.lastReading()), e);
+                throw new AssertionError(ctx.computeOnClient(mc -> "No projected XM157 marker: " + diagnostic + "; draws=" + draws + ", slope=" + lastSlope + ", readout=" + RangefinderSmoke.lastReading()), e);
             }
+            ctx.runOnClient(mc -> trace = false);
             ctx.waitTicks(12);
             Path on = ctx.takeScreenshot("tacz_xm157_entity");
             ctx.runOnClient(mc -> hide = true);
@@ -89,6 +101,12 @@ public final class ImpactMarkerSmoke {
             Path again = ctx.takeScreenshot("tacz_xm157_restored");
             int pixels = restoredYellow(on, off, again);
             if (pixels < 2) throw new AssertionError("XM157 draw callback ran but no restored yellow marker pixels: " + pixels);
+            // The same entity remains visible to the player throughout this transition.
+            ctx.getInput().releaseKey(AimKey.AIM_KEY);
+            ctx.waitFor(mc -> IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(1) < .05f);
+            assertNoDraws(ctx, "out of ADS");
+            ctx.getInput().holdKey(AimKey.AIM_KEY);
+            ctx.waitFor(mc -> draws > 0);
             var wall = world.getServer().computeOnServer(server -> {
                 var player = world.getConnection().getServerPlayer();
                 BlockPos center = BlockPos.containing(player.getEyePosition().lerp(Vec3.atCenterOf(look), .5));
@@ -97,9 +115,8 @@ public final class ImpactMarkerSmoke {
             });
             ctx.waitFor(mc -> mc.level.getBlockState(wall).is(Blocks.STONE));
             ctx.waitTicks(6); // beyond the actual XM157 refresh interval
-            ctx.runOnClient(mc -> draws = 0);
-            ctx.waitTicks(8);
-            ctx.runOnClient(mc -> { if (draws != 0) throw new AssertionError("Marker persisted behind a solid block"); });
+            assertNoDraws(ctx, "behind a solid block");
+            ctx.takeScreenshot("tacz_xm157_occluded");
             GunMod.LOGGER.info("PORT_OPTIC: XM157 showed {} restored yellow pixels on entity, zero draws behind wall", pixels);
         } finally {
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
@@ -109,6 +126,12 @@ public final class ImpactMarkerSmoke {
                 if (cow != null) cow.discard();
             });
         }
+    }
+
+    private static void assertNoDraws(ClientGameTestContext ctx, String condition) {
+        ctx.runOnClient(mc -> draws = 0);
+        ctx.waitTicks(8);
+        ctx.runOnClient(mc -> { if (draws != 0) throw new AssertionError("XM157 marker persisted " + condition); });
     }
 
     private static int restoredYellow(Path on, Path control, Path restored) {
