@@ -178,3 +178,12 @@ PY
 [smith]: ../../src/main/java/com/tacz/guns/client/gui/GunSmithTableScreen.java
 [junit]: ../../src/test/java/com/tacz/guns
 [gametest]: ../../src/gametest/java/com/tacz/guns/test
+
+### 2026-11-17 本轮增量（最终运行结果见 COMPARISON）
+
+- [x] 普通持枪受伤倾斜配置与方向倍率；26.3 实际字节码注入点适配。
+- [x] 第三人称副手/快捷栏备用枪隐藏开关及中英文配置说明。
+- [x] 方块命中效果半径、射手例外、0无限；粒子稳定随机法线偏移。
+- [x] 六面弹孔方向/UV/偏移离线回归（6/6）。
+- [x] 新 `PORT_FEEDBACK` 完整客户端验收通过：`cf31dcc` / `44356857885` / job `134987165216`（独立门禁，不引用历史 muzzle 绿灯）。
+- [ ] 独立第二客户端、Iris 与命中特效像素/自定义包对照。
