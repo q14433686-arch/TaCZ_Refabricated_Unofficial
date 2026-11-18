@@ -40,7 +40,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import org.apache.commons.lang3.tuple.Pair;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -781,20 +780,13 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
                 return;
             }
             // 剩下的渲染
-            BedrockGunModel gunModel;
-            Identifier gunTexture;
-            Pair<BedrockGunModel, Identifier> lodModel = gunIndex.getLodModel();
-            if (lodModel == null || RenderDistance.inRenderHighPolyModelDistance(poseStack)) {
-                gunModel = gunIndex.getGunModel();
-                gunTexture = gunIndex.getModelTexture();
-            } else {
-                gunModel = lodModel.getLeft();
-                gunTexture = lodModel.getRight();
-            }
-            if (gunModel == null) {
+            var rig = gunIndex.getExternalModel(!RenderDistance.inRenderHighPolyModelDistance(poseStack));
+            if (rig == null) {
                 renderSlotTexture(poseStack, collector, pPackedLight, pPackedOverlay, gunIndex.getSlotTexture());
                 return;
             }
+            var gunModel = rig.getLeft();
+            var gunTexture = rig.getRight();
             // 移动到模型原点
             poseStack.translate(0.5, 2, 0.5);
             // 反转模型

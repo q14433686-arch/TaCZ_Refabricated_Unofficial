@@ -252,6 +252,7 @@ public class BedrockGunModel extends BedrockAnimatedModel {
         }
         currentGunItem = gunItem;
         currentExtendMagLevel = 0;
+        renderMount = false;
         adapterToRender.clear();
         // 更新配件物品的缓存，以供渲染使用
         for (AttachmentType type : AttachmentType.values()) {

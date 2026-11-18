@@ -40,7 +40,13 @@ public class ClientIndexManager {
     public static final Map<Identifier, ClientSlotAdapterIndex> SLOT_ADAPTER_INDEX = Maps.newHashMap();
     public static final Map<Identifier, ClientBlockIndex> BLOCK_INDEX = Maps.newHashMap();
 
+    // Workers check this token, never the render-thread HashMaps. Stale completions cannot be selected.
+    private static volatile long revision;
+    static long revision() { return revision; }
+
     public static void clear() {
+        GUN_DISPLAY.values().forEach(GunDisplayInstance::retireModels);
+        ++revision;
         GUN_DISPLAY.clear();
         GUN_INDEX.clear();
         AMMO_INDEX.clear();

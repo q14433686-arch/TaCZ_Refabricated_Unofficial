@@ -499,6 +499,14 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
         worldBakedByLight.clear();
     }
 
+    /** Called on the render thread when this display is retired; submitted draws may still reference its buffers. */
+    public void retire() {
+        releaseWorldBaked();
+        bakedBones.values().forEach(PolyMeshGpuRenderer::releaseDeferred);
+        bakedBones.clear();
+        gpuBaked = false;
+    }
+
     private void releaseBaked() {
         for (PolyMeshGpuRenderer.BakedBone baked : bakedBones.values()) {
             baked.close();

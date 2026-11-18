@@ -478,13 +478,10 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
                     shellRender.addShell(velocity);
                 }
 
-                var lod = display.getLodModel();
-                if (lod != null) {
-                    ShellRender lodShell = lod.getLeft().getShellRender(index);
-                    if (lodShell != null) {
-                        lodShell.addShell(velocity);
-                    }
-                }
+                display.forEachReadyExternalModel(rig -> {
+                    var shell = rig.getShellRender(index);
+                    if (shell != null) shell.addShell(velocity);
+                });
             }
         }
     }

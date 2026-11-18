@@ -65,8 +65,10 @@ public class PackClientSmoke implements FabricClientGameTest {
             context.waitFor(client -> client.player.isCreative());
             checkCreativePackSidebar(context);
             checkRacks(context, world, id);
+            var oldDisplay = ExternalRigSmoke.check(context);
             try { ConversionReloadSmoke.run(context, world); }
             catch (java.io.IOException e) { throw new java.io.UncheckedIOException(e); }
+            ExternalRigSmoke.afterReload(context, oldDisplay);
         }
     }
 
@@ -82,7 +84,9 @@ public class PackClientSmoke implements FabricClientGameTest {
             var board = (GunPegboardBlockEntity) level.getBlockEntity(pos);
             var cabinet = (GunDisplayCaseBlockEntity) level.getBlockEntity(pos.east());
             board.setColor(0x4088bb, false);
-            if (!board.setItem(6, gun) || !board.rotateItem(6) || !cabinet.setItem(9, gun)) throw new AssertionError("Couldn't populate display racks");
+            var mesh = gun.copy();
+            ((IGun) mesh.getItem()).setGunDisplayId(mesh, ExternalRigSmoke.MESH);
+            if (!board.setItem(6, gun) || !board.rotateItem(6) || !cabinet.setItem(9, mesh)) throw new AssertionError("Couldn't populate display racks");
         });
         context.waitFor(mc -> mc.level.getBlockEntity(pos) instanceof GunPegboardBlockEntity board && board.getRenderData() == 0x4088bb
                 && board.getRotation(6) == 1 && board.getItem(6).getItem() instanceof IGun g && g.getGunId(board.getItem(6)).equals(gunId)

@@ -1,5 +1,6 @@
 package com.tacz.guns.client.resource;
 
+import cn.sh1rocu.tacz.compat.meshloader.model.TaczPolyMeshGunModel;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -13,7 +14,6 @@ import com.tacz.guns.api.client.animation.ObjectAnimation;
 import com.tacz.guns.api.client.animation.gltf.AnimationStructure;
 import com.tacz.guns.api.client.animation.statemachine.LuaAnimationStateMachine;
 import com.tacz.guns.api.client.animation.statemachine.LuaStateMachineFactory;
-import com.tacz.guns.api.client.other.GunModelTypeManager;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
 import com.tacz.guns.client.model.BedrockGunModel;
@@ -22,8 +22,6 @@ import com.tacz.guns.client.resource.pojo.display.LaserConfig;
 import com.tacz.guns.client.resource.pojo.display.ammo.AmmoParticle;
 import com.tacz.guns.client.resource.pojo.display.ammo.HitSurfaceParticle;
 import com.tacz.guns.client.resource.pojo.display.gun.*;
-import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
-import com.tacz.guns.client.resource.pojo.model.BedrockVersion;
 import com.tacz.guns.client.sound.GunSoundPreload;
 import com.tacz.guns.config.client.ResourceConfig;
 import com.tacz.guns.sound.SoundManager;
@@ -45,7 +43,6 @@ import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.function.BiFunction;
 
 /**
  * 经过处理和校验的枪械显示数据
@@ -58,22 +55,20 @@ public class GunDisplayInstance {
 
     // 加载标志位
     private volatile boolean modelLoaded = false;
-    private volatile boolean lodLoaded = false;
     private volatile boolean animationLoaded = false;
 
     // 错误标志位
     private volatile boolean modelLoadFailed = false;
-    private volatile boolean lodLoadFailed = false;
     private volatile boolean animationLoadFailed = false;
 
     // 异步加载任务
     private volatile CompletableFuture<Void> modelWarmUpTask = null;
-    private volatile CompletableFuture<Void> lodWarmUpTask = null;
     private volatile CompletableFuture<Void> animationWarmUpTask = null;
 
     private String thirdPersonAnimation = "empty";
     private BedrockGunModel gunModel;
-    private @Nullable Pair<BedrockGunModel, Identifier> lodModel;
+    private final DisplayBake<Pair<BedrockGunModel, Identifier>> externalHigh;
+    private final DisplayBake<Pair<BedrockGunModel, Identifier>> externalLod;
 
     private LuaAnimationStateMachine<GunAnimationStateContext> animationStateMachine;
     private @Nullable LuaTable stateMachineParam;
@@ -110,6 +105,9 @@ public class GunDisplayInstance {
     GunDisplayInstance(Identifier displayId, GunDisplay display) {
         this.displayId = displayId;
         this.display = Objects.requireNonNull(display, "display");
+        long revision = ClientIndexManager.revision();
+        externalHigh = externalBake(false, revision);
+        externalLod = externalBake(true, revision);
         initBase(display);
         if (!ResourceConfig.ENABLE_LAZY_CLIENT_ASSET_LOAD.get()) {
             ensureAnimationLoaded();
@@ -137,25 +135,15 @@ public class GunDisplayInstance {
         }
     }
 
+    private DisplayBake<Pair<BedrockGunModel, Identifier>> externalBake(boolean lod, long revision) {
+        return new DisplayBake<>(ClientAssetLoadDispatcher.executor(), () -> revision == ClientIndexManager.revision(),
+                () -> GunRigBaker.bake(display, lod, true),
+                error -> GunMod.LOGGER.warn("Failed to bake external {} rig for {}", lod ? "LOD" : "main", displayId, error));
+    }
+
     public void warmUpLod() {
-        if (!ResourceConfig.ENABLE_LAZY_CLIENT_ASSET_LOAD.get()) {
-            ensureLodLoaded();
-            return;
-        }
-        if (lodLoaded || lodWarmUpTask != null) {
-            return;
-        }
-        synchronized (loadLock) {
-            if (lodLoaded || lodWarmUpTask != null) {
-                return;
-            }
-            lodWarmUpTask = CompletableFuture.runAsync(this::loadLodIfNecessary, ClientAssetLoadDispatcher.executor());
-            lodWarmUpTask.whenComplete((unused, throwable) -> {
-                if (throwable != null) {
-                    handleLodLoadFailure(throwable);
-                }
-            });
-        }
+        if (ResourceConfig.ENABLE_LAZY_CLIENT_ASSET_LOAD.get()) externalLod.request();
+        else externalLod.loadNow();
     }
 
     public void warmUpRuntime() {
@@ -192,26 +180,6 @@ public class GunDisplayInstance {
             task.join();
         } catch (CompletionException exception) {
             handleModelLoadFailure(exception.getCause() == null ? exception : exception.getCause());
-        }
-    }
-
-    private void ensureLodLoaded() {
-        if (lodLoaded || lodLoadFailed) {
-            return;
-        }
-        CompletableFuture<Void> task = lodWarmUpTask;
-        if (task == null) {
-            try {
-                loadLodIfNecessary();
-            } catch (Throwable throwable) {
-                handleLodLoadFailure(throwable);
-            }
-            return;
-        }
-        try {
-            task.join();
-        } catch (CompletionException exception) {
-            handleLodLoadFailure(exception.getCause() == null ? exception : exception.getCause());
         }
     }
 
@@ -252,19 +220,6 @@ public class GunDisplayInstance {
             checkTextureAndModel(display);
             checkTextShow(display);
             modelLoaded = true;
-        }
-    }
-
-    private void loadLodIfNecessary() {
-        if (lodLoaded) {
-            return;
-        }
-        synchronized (loadLock) {
-            if (lodLoaded) {
-                return;
-            }
-            checkLod(display);
-            lodLoaded = true;
         }
     }
 
@@ -327,20 +282,6 @@ public class GunDisplayInstance {
         }
         if (shouldLog) {
             GunMod.LOGGER.warn("Failed to load gun model {}", displayId, throwable);
-        }
-    }
-
-    private void handleLodLoadFailure(Throwable throwable) {
-        boolean shouldLog = false;
-        synchronized (loadLock) {
-            if (!lodLoaded) {
-                shouldLog = !lodLoadFailed;
-                lodWarmUpTask = null;
-                lodLoadFailed = true;
-            }
-        }
-        if (shouldLog) {
-            GunMod.LOGGER.warn("Failed to load gun lod {}", displayId, throwable);
         }
     }
 
@@ -415,75 +356,9 @@ public class GunDisplayInstance {
     }
 
     private void checkTextureAndModel(GunDisplay display) {
-        //获取模型类型
-        String modelType = display.getModelType();
-        BiFunction<BedrockModelPOJO, BedrockVersion, ? extends BedrockGunModel> constructor = GunModelTypeManager.getModelInstanceConstructor(modelType);
-        // 检查模型
-        Identifier modelLocation = display.getModelLocation();
-        Preconditions.checkArgument(modelLocation != null, "display object missing model field");
-        BedrockModelPOJO modelPOJO = ClientAssetsManager.INSTANCE.getBedrockModelPOJO(modelLocation);
-
-        // FALLBACK: 如果高模不存在，尝试加载 LOD 模型作为替代
-        if (modelPOJO == null) {
-            GunLod gunLod = display.getGunLod();
-            if (gunLod != null && gunLod.getModelLocation() != null) {
-                BedrockModelPOJO lodPOJO = ClientAssetsManager.INSTANCE.getBedrockModelPOJO(gunLod.getModelLocation());
-                if (lodPOJO != null) {
-                    GunMod.LOGGER.warn("High-poly model not found for {}, falling back to LOD model", modelLocation);
-                    modelPOJO = lodPOJO;
-                    // 使用 LOD 模型的材质
-                    if (gunLod.getModelTexture() != null) {
-                        modelTexture = gunLod.getModelTexture();
-                    }
-                }
-            }
-            if (modelPOJO == null) {
-                throw new IllegalArgumentException("there is no corresponding model file: " + modelLocation);
-            }
-        }
-
-        // 检查默认材质是否存在
-        if (modelTexture == null) {
-            Identifier textureLocation = display.getModelTexture();
-            Preconditions.checkArgument(textureLocation != null, "missing default texture");
-            modelTexture = textureLocation;
-        }
-        // 先判断是不是 1.10.0 版本基岩版模型文件
-        if (BedrockVersion.isLegacyVersion(modelPOJO) && modelPOJO.getGeometryModelLegacy() != null) {
-            gunModel = constructor.apply(modelPOJO, BedrockVersion.LEGACY);
-        }
-        // 判定是不是 1.12.0 版本基岩版模型文件
-        if (BedrockVersion.isNewVersion(modelPOJO) && modelPOJO.getGeometryModelNew() != null) {
-            gunModel = constructor.apply(modelPOJO, BedrockVersion.NEW);
-        }
-        Preconditions.checkArgument(gunModel != null, "there is no model data in the model file: " + modelLocation);
-    }
-
-    private void checkLod(GunDisplay display) {
-        GunLod gunLod = display.getGunLod();
-        if (gunLod != null) {
-            Identifier texture = gunLod.getModelTexture();
-            if (gunLod.getModelLocation() == null) {
-                return;
-            }
-            if (texture == null) {
-                return;
-            }
-            BedrockModelPOJO modelPOJO = ClientAssetsManager.INSTANCE.getBedrockModelPOJO(gunLod.getModelLocation());
-            if (modelPOJO == null) {
-                return;
-            }
-            // 先判断是不是 1.10.0 版本基岩版模型文件
-            if (BedrockVersion.isLegacyVersion(modelPOJO) && modelPOJO.getGeometryModelLegacy() != null) {
-                BedrockGunModel model = new BedrockGunModel(modelPOJO, BedrockVersion.LEGACY);
-                lodModel = Pair.of(model, texture);
-            }
-            // 判定是不是 1.12.0 版本基岩版模型文件
-            if (BedrockVersion.isNewVersion(modelPOJO) && modelPOJO.getGeometryModelNew() != null) {
-                BedrockGunModel model = new BedrockGunModel(modelPOJO, BedrockVersion.NEW);
-                lodModel = Pair.of(model, texture);
-            }
-        }
+        var baked = Objects.requireNonNull(GunRigBaker.bake(display, false, false));
+        gunModel = baked.getLeft();
+        modelTexture = baked.getRight();
     }
 
     private void checkAnimation(GunDisplay display) {
@@ -683,8 +558,27 @@ public class GunDisplayInstance {
 
     @Nullable
     public Pair<BedrockGunModel, Identifier> getLodModel() {
-        ensureLodLoaded();
-        return lodModel;
+        return externalLod.loadNow();
+    }
+
+    /** Collector path for third-person, ground and FIXED. Never waits for a bake or borrows the hand rig. */
+    public @Nullable Pair<BedrockGunModel, Identifier> getExternalModel(boolean preferLod) {
+        return preferLod ? externalLod.preferOver(externalHigh) : externalHigh.preferOver(externalLod);
+    }
+
+    void retireModels() {
+        if (modelLoaded && gunModel instanceof TaczPolyMeshGunModel mesh) mesh.retire();
+        forEachReadyExternalModel(model -> {
+            if (model instanceof TaczPolyMeshGunModel mesh) mesh.retire();
+        });
+    }
+
+    /** Deliver shell effects only to rigs that already exist; an animation event must not start a LOD bake. */
+    public void forEachReadyExternalModel(java.util.function.Consumer<BedrockGunModel> action) {
+        var high = externalHigh.ready();
+        var lod = externalLod.ready();
+        if (high != null) action.accept(high.getLeft());
+        if (lod != null) action.accept(lod.getLeft());
     }
 
     public @Nullable LuaAnimationStateMachine<GunAnimationStateContext> getAnimationStateMachine() {
