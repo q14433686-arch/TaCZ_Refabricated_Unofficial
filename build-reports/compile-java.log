@@ -1,4 +1,4 @@
-commit: 94883cdf3b529f12da25c149bea46fbcf283cbd4
+commit: 06fde22344e84b07a43ec71241fc1986ecbea81d
 Fetching distribution.
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
@@ -31,7 +31,7 @@ Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
 2 warnings
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795036436193.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795036788134.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -41,7 +41,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 16s
+BUILD SUCCESSFUL in 1m 11s
 1 actionable task: 1 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
   private void bobHurt(net.minecraft.client.renderer.state.level.CameraRenderState, com.mojang.blaze3d.vertex.PoseStack);
@@ -130,5 +130,39 @@ Consider enabling configuration cache to speed up this build: https://docs.gradl
        156: return
 
   private void bobView(net.minecraft.client.renderer.state.level.CameraRenderState, com.mojang.blaze3d.vertex.PoseStack);
+Compiled from "TranslucentFeatureRenderPhase.java"
+public class net.minecraft.client.renderer.feature.phase.TranslucentFeatureRenderPhase implements net.minecraft.client.renderer.feature.phase.FeatureRenderPhase<net.minecraft.client.renderer.feature.submit.TranslucentSubmit> {
+  private final java.util.List<net.minecraft.client.renderer.feature.submit.TranslucentSubmit> submits;
+  private final it.unimi.dsi.fastutil.floats.FloatList distances;
+  public net.minecraft.client.renderer.feature.phase.TranslucentFeatureRenderPhase();
+  public void submit(net.minecraft.client.renderer.feature.submit.TranslucentSubmit);
+  public void sortInto(net.minecraft.client.renderer.feature.phase.FeatureRenderPhase$Output);
+  private int[] sortIndices();
+  public boolean isEmpty();
+  public void submit(net.minecraft.client.renderer.feature.submit.SubmitNode);
+  private int lambda$sortIndices$0(int, int);
+}
+       191: iload_3
+       192: i2f
+       193: aload         15
+       195: iload         6
+       197: iload         14
+       199: iload         12
+       201: getstatic     #341                // Field net/minecraft/client/gui/Font$DisplayMode.SEE_THROUGH:Lnet/minecraft/client/gui/Font$DisplayMode;
+       204: invokestatic  #334                // Method nameTag:(Lorg/joml/Matrix4f;FFLnet/minecraft/util/FormattedCharSequence;IIILnet/minecraft/client/gui/Font$DisplayMode;)Lnet/minecraft/client/renderer/feature/TextFeatureRenderer$Submit;
+       207: invokevirtual #344                // Method net/minecraft/client/renderer/feature/phase/TranslucentFeatureRenderPhase.submit:(Lnet/minecraft/client/renderer/feature/submit/TranslucentSubmit;)V
+       210: goto          237
+       213: aload_0
+        22: invokespecial #369                // Method net/minecraft/client/renderer/feature/TextFeatureRenderer$Submit."<init>":(Lorg/joml/Matrix4fc;Lnet/minecraft/client/gui/Font$DisplayMode;ILnet/minecraft/client/renderer/feature/TextFeatureRenderer$Content;)V
+        25: astore        5
+        27: aload_2
+        28: getstatic     #341                // Field net/minecraft/client/gui/Font$DisplayMode.SEE_THROUGH:Lnet/minecraft/client/gui/Font$DisplayMode;
+        31: if_acmpne     46
+        34: aload_0
+        35: getfield      #148                // Field seeThrough:Lnet/minecraft/client/renderer/feature/phase/TranslucentFeatureRenderPhase;
+        38: aload         5
+        40: invokevirtual #344                // Method net/minecraft/client/renderer/feature/phase/TranslucentFeatureRenderPhase.submit:(Lnet/minecraft/client/renderer/feature/submit/TranslucentSubmit;)V
+        43: goto          75
+        46: aload         4
 
 == job status: success ==
