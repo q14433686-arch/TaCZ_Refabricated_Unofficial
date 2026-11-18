@@ -45,6 +45,12 @@ jobs:
           mkdir -p build-reports
           echo "commit: ${{ github.sha }}" > build-reports/compile-java.log
           ./gradlew compileJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
+      - name: Record camera hurt bytecode for version-port diagnostics
+        run: |
+          JAR=$(find .gradle "$HOME/.gradle" -name '*26.3*.jar' -path '*minecraft-merged*' | head -1)
+          if [ -n "$JAR" ]; then
+            javap -c -p -classpath "$JAR" net.minecraft.client.renderer.GameRenderer | sed -n '/void bobHurt(/,/^  [a-z]/p' >> build-reports/compile-java.log
+          fi
       - name: Push compile log back via contents API
         # 只在 arena/** 的 push 上回推 —— 主分支与 PR 不产生 ci-log commit
         if: always() && github.event_name == 'push' && startsWith(github.ref_name, 'arena/')
