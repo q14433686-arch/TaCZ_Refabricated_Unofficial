@@ -62,3 +62,5 @@ grep -Fq 'PORT_SMOKE_CLIENT: reopened same save; new snapshot, one action, saved
 # A successful pixel verdict is available through the Checks API even when artifact storage is inaccessible.
 verdict=$(grep -Eo 'PORT_OPTIC: XM157 showed [[:digit:]]+ restored yellow pixels on entity, zero draws behind wall' "$run/logs/latest.log")
 printf '::notice::%s\n' "$verdict"
+verdict=$(grep -Eo 'PORT_LENS: XL50 restored [[:digit:]]+ classic / [[:digit:]]+ PIP heat pixels; wall and live tag veto cold' "$run/logs/latest.log")
+printf '::notice::%s\n' "$verdict"

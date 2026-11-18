@@ -300,6 +300,8 @@ public final class ScopeMaskRenderer {
         return inHandPass || IrisCompat.isHandRendererActive();
     }
 
+    static @Nullable ScopeLensConfig lensThisFrame, lensLastFrame;
+
     /**
      * 每帧开头调用一次，快照上一帧结果并把本帧归零。
      *
@@ -311,8 +313,6 @@ public final class ScopeMaskRenderer {
      * <p>刻意<b>不</b>放在手部 pass 里：Iris 一帧有两次手部 pass，
      * 放那儿会被第二次抹掉，见 {@link #maskDrawnThisFrame} 的注释。</p>
      */
-    static ScopeLensConfig lensThisFrame, lensLastFrame;
-
     public static void beginFrame() {
         lensLastFrame = lensThisFrame;
         lensThisFrame = null;

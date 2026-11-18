@@ -164,6 +164,10 @@ jobs:
               lines = p.read_text(errors='replace').splitlines()
               for i in [i for i, line in enumerate(lines) if re.search(r'PORT_SMOKE_CLIENT|GameTest.*(?:[Ee]xception|[Ff]ail)|(?:IllegalStateException|AssertionError|MixinTransformerError|NullPointerException|NoSuchMethodError):|Encountered an unexpected exception', line)][-10:]:
                   note('client: ' + '\n'.join(lines[i:i+6]))
+          for p in client.glob('logs/latest.log'):
+              lines = p.read_text(errors='replace').splitlines()
+              for i in [i for i, line in enumerate(lines) if re.search(r'Heat capture unavailable|Pack lens failed|Scope PIP.*failed|Couldn.t compile pipeline|scope_lens.*[Ee]rror', line)][-4:]:
+                  note('lens: ' + '\n'.join(lines[i:i+8]))
           for p in client.glob('screenshots/**/*.png'): note(f'{p.name}: {p.stat().st_size} bytes')
           for p in sorted(client.glob('diagnostics/threads-*.txt'))[-2:]:
               sections = re.split(r'\n(?=")', p.read_text(errors='replace'))

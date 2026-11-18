@@ -4,6 +4,7 @@ import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.renderpearl.api.GpuFormat;
+import com.mojang.renderpearl.api.pipeline.DepthStencilState;
 import com.tacz.guns.GunMod;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeStorage;
@@ -71,9 +72,10 @@ public final class ScopeThermalCapture {
         if (!recording) return;
         // Exotic model materials may explicitly draw through terrain. Only replay ordinary
         // depth-tested bodies; never turn a see-through material into a heat source.
-        if (node instanceof ModelFeatureRenderer.Submit model
-                && !com.mojang.renderpearl.api.pipeline.DepthStencilState.DEFAULT.equals(
-                        model.renderType().pipeline().getDepthStencilState())) return;
+        if (node instanceof ModelFeatureRenderer.Submit model) {
+            DepthStencilState depth = model.renderType().pipeline().getDepthStencilState();
+            if (!DepthStencilState.DEFAULT.equals(depth)) return;
+        }
         bodies.order(0).solid.submit(node);
     }
 
@@ -98,7 +100,7 @@ public final class ScopeThermalCapture {
                 var dispatcher = Minecraft.getInstance().gameRenderer.featureRenderDispatcher();
                 try (var frame = dispatcher.prepareFrame(storage);
                      var pass = encoder.createRenderPass(() -> "tacz_scope_heat", mask.getColorTextureView(),
-                             Optional.of(new Vector4f()), mask.getDepthTextureView(), OptionalDouble.empty())) {
+                             Optional.of(new Vector4f(0f)), mask.getDepthTextureView(), OptionalDouble.empty())) {
                     frame.executeSolid(pass);
                 }
             } finally { mv.popMatrix(); }
