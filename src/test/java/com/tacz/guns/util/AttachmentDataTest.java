@@ -3,6 +3,7 @@ package com.tacz.guns.util;
 import com.google.gson.JsonParser;
 import com.tacz.guns.resource.manager.GunDataManager;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
+import com.tacz.guns.resource.modifier.custom.RecoilModifier;
 import com.tacz.guns.resource.network.CommonNetworkCache;
 import com.tacz.guns.resource.network.DataType;
 import com.tacz.guns.resource.pojo.data.attachment.Modifier;
@@ -47,6 +48,20 @@ class AttachmentDataTest {
                 assertEquals(7, AttachmentPropertyManager.eval(rpm, 1));
             }
         } finally { remote.clear(); }
+    }
+
+    @Test void omittedCameraAxesHaveZeroCacheWithoutSuppressingPresentAxis() {
+        var cache = new RecoilModifier();
+        var empty = GunDataManager.parseData(JsonParser.parseString("{}"));
+        var defaults = cache.initCache(null, empty).getValue(); // this cache has no stack dependency
+        assertEquals(0f, defaults.left().getDefaultValue().floatValue());
+        assertEquals(0f, defaults.right().getDefaultValue().floatValue());
+        var yawOnly = GunDataManager.parseData(JsonParser.parseString("""
+                {"recoil":{"pitch":[],"yaw":[{"time":0.1,"value":[-2,1]}]}}
+                """));
+        var asymmetric = cache.initCache(null, yawOnly).getValue();
+        assertEquals(0f, asymmetric.left().getDefaultValue().floatValue());
+        assertEquals(2f, asymmetric.right().getDefaultValue().floatValue());
     }
 
     @Test void recoilPushSelectsPoseAndCapsProjectiles() {

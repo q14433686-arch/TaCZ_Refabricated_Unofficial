@@ -27,8 +27,7 @@ public class PackClientSmoke implements FabricClientGameTest {
             context.waitFor(client -> client.player.getMainHandItem().getItem() instanceof IGun);
             world.getConnection().waitForChunksRender();
             context.waitTicks(30);
-            context.takeScreenshot("tacz_held_default_gun");
-            GunMod.LOGGER.info("PORT_SMOKE_CLIENT: saved default frame");
+            saveFrame(context, "tacz_held_default_gun");
             // Remote clients get the derived capability, never the server's logic file.
             context.waitFor(client -> {
                 var index = CommonNetworkCache.INSTANCE.getGunIndex(Identifier.parse("port_test:scripted"));
@@ -52,8 +51,18 @@ public class PackClientSmoke implements FabricClientGameTest {
                         .map(index -> index.getAttachmentModel() != null).orElse(false);
             });
             context.waitTicks(30);
-            context.takeScreenshot("tacz_held_variant");
-            GunMod.LOGGER.info("PORT_SMOKE_CLIENT: saved variant frame");
+            saveFrame(context, "tacz_held_variant");
+        }
+    }
+
+    private static void saveFrame(ClientGameTestContext context, String name) {
+        var path = context.takeScreenshot(name);
+        try {
+            long bytes = java.nio.file.Files.size(path);
+            if (bytes <= 0) throw new AssertionError("Empty screenshot: " + path);
+            GunMod.LOGGER.info("PORT_SMOKE_CLIENT: saved {} ({} bytes)", path, bytes);
+        } catch (java.io.IOException e) {
+            throw new AssertionError("Unreadable screenshot: " + path, e);
         }
     }
 }
