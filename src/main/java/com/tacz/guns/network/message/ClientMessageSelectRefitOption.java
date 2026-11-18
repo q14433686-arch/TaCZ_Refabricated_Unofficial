@@ -5,6 +5,7 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.advancement.GunRefitTrigger;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
 import com.tacz.guns.util.SlotAdapterHelper;
@@ -28,8 +29,12 @@ public record ClientMessageSelectRefitOption(int gunSlot, AttachmentType slot, K
     @Override public Type<ClientMessageSelectRefitOption> type() { return TYPE; }
 
     public void handle(ServerPlayer player) {
-        if (gunSlot != player.getInventory().getSelectedSlot() || !apply(player.getMainHandItem())) return;
+        if (gunSlot != player.getInventory().getSelectedSlot()) return;
+        var stack = player.getMainHandItem();
+        var before = stack.copy();
+        if (!apply(stack)) return;
         AttachmentPropertyManager.postChangeEvent(player, player.getMainHandItem());
+        GunRefitTrigger.INSTANCE.trigger(player, before, stack);
         player.inventoryMenu.broadcastChanges();
         NetworkHandler.sendToClientPlayer(new ServerMessageRefreshRefitScreen(), player);
     }

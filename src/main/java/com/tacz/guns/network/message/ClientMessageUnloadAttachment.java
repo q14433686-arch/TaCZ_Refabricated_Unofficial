@@ -3,6 +3,7 @@ package com.tacz.guns.network.message;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.advancement.GunRefitTrigger;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.util.VirtualOemAttachment;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
@@ -64,6 +65,7 @@ public class ClientMessageUnloadAttachment implements CustomPacketPayload {
                 //
                 // 现在改为先卸，再校验确实卸掉了，最后才发物品；
                 // 若发不进背包（背包满）则回滚，避免配件凭空消失。
+                var before = gunItem.copy();
                 iGun.unloadAttachment(gunItem, attachmentType);
                 if (!iGun.getAttachment(gunItem, attachmentType).isEmpty()) {
                     // 卸载没生效，直接放弃，绝不发物品
@@ -84,6 +86,7 @@ public class ClientMessageUnloadAttachment implements CustomPacketPayload {
                 if (attachmentType == AttachmentType.EXTENDED_MAG) {
                     iGun.dropAllAmmo(player, gunItem);
                 }
+                GunRefitTrigger.INSTANCE.trigger(player, before, gunItem);
                 player.inventoryMenu.broadcastChanges();
                 NetworkHandler.sendToClientPlayer(new ServerMessageRefreshRefitScreen(), player);
             }

@@ -2,6 +2,7 @@ package com.tacz.guns.block;
 
 import com.tacz.guns.block.entity.TargetBlockEntity;
 import com.tacz.guns.entity.EntityKineticBullet;
+import com.tacz.guns.advancement.TargetHitTrigger;
 import com.tacz.guns.init.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -126,6 +127,7 @@ public class TargetBlock extends BaseEntityBlock {
                 if (projectile instanceof EntityKineticBullet bullet) {
                     String formattedDamage = String.format("%.1f", bullet.getDamage(hit.getLocation()));
                     String formattedDistance = String.format("%.2f", hit.getLocation().distanceTo(player.position()));
+                    if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) TargetHitTrigger.INSTANCE.trigger(serverPlayer, hit.getLocation().distanceTo(player.position()));
                     player.sendOverlayMessage(Component.translatable("message.tacz.target_minecart.hit", formattedDamage, formattedDistance));
                 }
 

@@ -463,6 +463,17 @@ STUBS.update({
         @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD, ElementType.FIELD})
         public @interface NotNull {}
     """,
+    "net.minecraft.server.level.ServerPlayer": """
+        import net.minecraft.world.entity.player.Player;
+        public class ServerPlayer extends Player { public ServerPlayer(ServerLevel level) { super(level); } }
+    """,
+    "com.tacz.guns.advancement.TargetHitTrigger": """
+        import net.minecraft.server.level.ServerPlayer;
+        public class TargetHitTrigger {
+            public static final TargetHitTrigger INSTANCE = new TargetHitTrigger();
+            public void trigger(ServerPlayer player, double distance) {}
+        }
+    """,
     "cn.sh1rocu.tacz.api.LogicalSide": "public enum LogicalSide { SERVER }",
     "cn.sh1rocu.tacz.api.extension.IMinecart": "public interface IMinecart { boolean tacz$canBeRidden(); }",
     "com.tacz.guns.api.entity.ITargetEntity": """

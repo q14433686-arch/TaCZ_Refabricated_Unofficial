@@ -4,6 +4,7 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.advancement.GunRefitTrigger;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.util.VirtualOemAttachment;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
@@ -66,6 +67,7 @@ public class ClientMessageRefitGun implements CustomPacketPayload {
                 AttachmentType realType = iAttachment.getType(attachmentItem);
                 if (realType != attachmentType || !iGun.allowAttachmentType(gunItem, realType)) return;
                 ItemStack oldAttachmentItem = iGun.getAttachment(gunItem, realType);
+                var before = gunItem.copy();
                 iGun.installAttachment(gunItem, attachmentItem);
                 // 刷新配件数据
                 AttachmentPropertyManager.postChangeEvent(player, gunItem);
@@ -74,6 +76,7 @@ public class ClientMessageRefitGun implements CustomPacketPayload {
                 if (realType == AttachmentType.EXTENDED_MAG) {
                     iGun.dropAllAmmo(player, gunItem);
                 }
+                GunRefitTrigger.INSTANCE.trigger(player, before, gunItem);
                 player.inventoryMenu.broadcastChanges();
                 NetworkHandler.sendToClientPlayer(new ServerMessageRefreshRefitScreen(), player);
             }

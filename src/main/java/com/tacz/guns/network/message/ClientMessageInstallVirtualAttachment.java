@@ -5,6 +5,7 @@ import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.builder.AttachmentItemBuilder;
+import com.tacz.guns.advancement.GunRefitTrigger;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
 import com.tacz.guns.util.VirtualOemAttachment;
@@ -40,11 +41,13 @@ public record ClientMessageInstallVirtualAttachment(int slot, AttachmentType att
         if (returnOld && inventory.getFreeSlot() < 0) return;
 
         VirtualOemAttachment.mark(part);
+        var before = gun.copy();
         iGun.installAttachment(gun, part);
         if (!ItemStack.isSameItemSameComponents(part, iGun.getAttachment(gun, attachmentType))) return;
         if (returnOld && !inventory.add(old)) player.drop(old, false, Prediction.SERVER_ONLY);
         if (attachmentType == AttachmentType.EXTENDED_MAG) iGun.dropAllAmmo(player, gun);
         AttachmentPropertyManager.postChangeEvent(player, gun);
+        GunRefitTrigger.INSTANCE.trigger(player, before, gun);
         player.inventoryMenu.broadcastChanges();
         NetworkHandler.sendToClientPlayer(new ServerMessageRefreshRefitScreen(), player);
     }
