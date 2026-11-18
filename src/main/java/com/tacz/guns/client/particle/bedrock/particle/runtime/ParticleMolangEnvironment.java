@@ -45,7 +45,7 @@ public class ParticleMolangEnvironment {
     /**
      * 绑定发射器状态到 Molang 变量。在发射器相关表达式求值前调用。
      */
-    public void bindEmitter(float age, float lifetime, int r1, int r2, int r3, int r4) {
+    public void bindEmitter(float age, float lifetime, float r1, float r2, float r3, float r4) {
         MutableObjectBinding variableStorage = context.getVariableStorage();
         variableStorage.set("emitter_age", NumberValue.of(age));
         variableStorage.set("emitter_lifetime", NumberValue.of(lifetime));

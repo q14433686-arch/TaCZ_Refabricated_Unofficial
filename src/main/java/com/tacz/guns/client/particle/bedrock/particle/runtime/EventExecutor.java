@@ -97,15 +97,6 @@ public final class EventExecutor {
     private static void executeParticleEffect(ParticleEffectEvent effect, EventContext ctx) {
         if (ctx.level == null || ctx.position == null) return;
 
-        // 执行预编译的 pre_effect_expression
-        if (effect.compiledPreEffect() != null) {
-            try {
-                effect.compiledPreEffect().evaluate(ctx.molang.getContext());
-            } catch (Exception e) {
-                GunMod.LOGGER.warn("Failed to evaluate pre_effect_expression: {}", effect.preEffectExpression(), e);
-            }
-        }
-
         Identifier effectId = Identifier.tryParse(effect.effect());
         if (effectId == null) return;
         ParticleEffectDefinition childDef = ParticleDefinitionLoader.getInstance().getDefinition(effectId);
@@ -114,7 +105,9 @@ public final class EventExecutor {
             return;
         }
 
-        WorldEmitterManager.getInstance().addEmitter(ctx.level, ctx.position, Vec3.ZERO, childDef);
+        WorldEmitterManager.getInstance().addEmitter(ctx.level,
+                new org.joml.Matrix4f().translation((float)ctx.position.x,(float)ctx.position.y,(float)ctx.position.z),
+                Vec3.ZERO,childDef,effect.preEffectExpression());
     }
 
     private static void executeSoundEffect(SoundEffectEvent sound, EventContext ctx) {

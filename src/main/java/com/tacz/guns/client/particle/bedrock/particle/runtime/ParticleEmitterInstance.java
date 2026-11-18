@@ -44,10 +44,10 @@ public class ParticleEmitterInstance {
      */
     private final Map<String, Float> variableOverrides = new HashMap<>();
 
-    private final int emitterRandom1 = RANDOM.nextInt();
-    private final int emitterRandom2 = RANDOM.nextInt();
-    private final int emitterRandom3 = RANDOM.nextInt();
-    private final int emitterRandom4 = RANDOM.nextInt();
+    private final float emitterRandom1 = RANDOM.nextFloat();
+    private final float emitterRandom2 = RANDOM.nextFloat();
+    private final float emitterRandom3 = RANDOM.nextFloat();
+    private final float emitterRandom4 = RANDOM.nextFloat();
 
     private final List<ParticleInstance> particles = new ArrayList<>();
     private final List<ParticleInstance> pool = new ArrayList<>();
@@ -208,7 +208,7 @@ public class ParticleEmitterInstance {
 
     /** 公共入口，供 Runtime 组件调用 */
     public void spawnParticle() {
-        spawnParticleInternal();
+        if (particles.size() < MAX_PARTICLES) spawnParticleInternal();
     }
 
     public int emitManual(int count) {
@@ -247,7 +247,9 @@ public class ParticleEmitterInstance {
             c.update(p);
         }
 
+        float oldX=p.x, oldY=p.y, oldZ=p.z;
         p.tick(dt);
+        ParticleWorldPhysics.move(this,p,oldX,oldY,oldZ,dt);
 
         // 过期事件由 ParticleLifetimeExpression.Runtime.update() 处理
         // killPlane 由 ParticleLifetimeKillPlane.update() 处理
