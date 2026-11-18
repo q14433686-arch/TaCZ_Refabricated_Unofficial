@@ -30,6 +30,7 @@ public final class ParticleDefinitionLoader extends JsonDataManager<ParticleEffe
         identifiers=Map.copyOf(index);
     }
     public ParticleEffectDefinition getDefinition(Identifier id) {
+        if(id==null)return null;
         var d=dataMap.get(id);return d!=null?d:identifiers.get(id);
     }
 }

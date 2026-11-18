@@ -16,7 +16,7 @@ import com.tacz.guns.client.particle.bedrock.molang.runtime.value.NumberValue;
  */
 public class ParticleMolangEnvironment {
     private final MochaEngine<?> engine;
-    private final MolangContext<?> context;
+    private final MolangContext<Object> context;
 
     /** 创建独立的 Molang 环境 */
     public ParticleMolangEnvironment() {
@@ -85,6 +85,7 @@ public class ParticleMolangEnvironment {
     /**
      * 获取此环境的 MolangContext。
      */
+    public void bindEntity(net.minecraft.world.entity.Entity entity) { context.setEntity(entity); }
     public MolangContext<?> getContext() {
         return context;
     }

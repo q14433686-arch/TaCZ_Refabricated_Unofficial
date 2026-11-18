@@ -15,8 +15,12 @@ public record EmitterShapeEntityAABB(MolangExpression[] offset, boolean surfaceO
         float ox = (float) offset[0].evaluate(ctx);
         float oy = (float) offset[1].evaluate(ctx);
         float oz = (float) offset[2].evaluate(ctx);
-        p.x = ox + (random.nextFloat() * 2 - 1) * 0.5f;
-        p.y = oy + random.nextFloat();
-        p.z = oz + (random.nextFloat() * 2 - 1) * 0.5f;
+        if(!(ctx.getEntity() instanceof net.minecraft.world.entity.Entity entity))
+            throw new IllegalStateException("entity_aabb requires a bound emitter owner");
+        var box=entity.getBoundingBox();
+        float hx=(float)box.getXsize()/2,hy=(float)box.getYsize()/2,hz=(float)box.getZsize()/2;
+        float x=random.nextFloat()*2-1,y=random.nextFloat()*2-1,z=random.nextFloat()*2-1;
+        if(surfaceOnly){switch(random.nextInt(3)){case 0->x=random.nextBoolean()?1:-1;case 1->y=random.nextBoolean()?1:-1;case 2->z=random.nextBoolean()?1:-1;}}
+        p.x=ox+x*hx;p.y=oy+hy+y*hy;p.z=oz+z*hz;
     }
 }

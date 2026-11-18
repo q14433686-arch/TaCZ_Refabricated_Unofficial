@@ -39,8 +39,10 @@ final class CoreCompletionSmoke {
             awaitCount(ctx,"port_acceptance:inventory",9);
             ctx.waitTicks(30); // complete draw animation before the real inspect input
             long before=ctx.computeOnClient(mc->AnimationParticleDispatcher.submitted());
+            long customBefore=ctx.computeOnClient(mc->com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance().spawned());
             ctx.getInput().holdKey(InspectKey.INSPECT_KEY);ctx.waitTicks(1);ctx.getInput().releaseKey(InspectKey.INSPECT_KEY);
-            ctx.waitFor(mc->AnimationParticleDispatcher.submitted()>=before+4);
+            ctx.waitFor(mc->AnimationParticleDispatcher.submitted()>=before+5);
+            ctx.waitFor(mc->com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance().spawned()>customBefore);
             PackClientSmoke.saveFrame(ctx,"tacz_acceptance_inventory");
             world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer();p.getInventory().setItem(p.getInventory().getSelectedSlot(),
                     GunItemBuilder.create().setId(id("port_acceptance:magazine")).setAmmoCount(3).build());p.inventoryMenu.broadcastChanges();});

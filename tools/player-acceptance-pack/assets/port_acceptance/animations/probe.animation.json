@@ -22,6 +22,11 @@
         "0.4": {
           "effect": "minecraft:happy_villager",
           "locator": "root"
+        },
+        "0.3": {
+          "effect": "port_acceptance:runtime_probe",
+          "locator": "muzzle_flash",
+          "pre_effect_script": "variable.count = 3;"
         }
       }
     },
@@ -46,6 +51,11 @@
         "0.4": {
           "effect": "minecraft:happy_villager",
           "locator": "root"
+        },
+        "0.3": {
+          "effect": "port_acceptance:runtime_probe",
+          "locator": "muzzle_flash",
+          "pre_effect_script": "variable.count = 3;"
         }
       }
     },
@@ -70,6 +80,11 @@
         "0.4": {
           "effect": "minecraft:happy_villager",
           "locator": "root"
+        },
+        "0.3": {
+          "effect": "port_acceptance:runtime_probe",
+          "locator": "muzzle_flash",
+          "pre_effect_script": "variable.count = 3;"
         }
       }
     },
@@ -94,6 +109,11 @@
         "0.4": {
           "effect": "minecraft:happy_villager",
           "locator": "root"
+        },
+        "0.3": {
+          "effect": "port_acceptance:runtime_probe",
+          "locator": "muzzle_flash",
+          "pre_effect_script": "variable.count = 3;"
         }
       }
     }

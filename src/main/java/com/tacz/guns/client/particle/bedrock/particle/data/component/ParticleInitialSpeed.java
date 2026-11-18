@@ -12,7 +12,7 @@ import java.util.Random;
 
 import static com.tacz.guns.client.particle.bedrock.particle.data.ParticleJsonUtils.molangFromElement;
 
-public record ParticleInitialSpeed(MolangExpression speed)
+public record ParticleInitialSpeed(MolangExpression speed, MolangExpression[] vector)
         implements IParticleComponentDefinition, IParticleComponent {
 
     @Override
@@ -24,6 +24,7 @@ public record ParticleInitialSpeed(MolangExpression speed)
     public void apply(ParticleInstance p) {
         if (p.emitter == null) return;
         MolangContext<?> ctx = p.emitter.getMolang().getContext();
+        if(vector!=null){p.vx=(float)vector[0].evaluate(ctx);p.vy=(float)vector[1].evaluate(ctx);p.vz=(float)vector[2].evaluate(ctx);return;}
         float s = (float) speed.evaluate(ctx);
         if (s == 0) return;
         EmitterShape shape = p.emitter.getDefinition().emitterPreset().find(EmitterShape.class);
@@ -33,6 +34,11 @@ public record ParticleInitialSpeed(MolangExpression speed)
     }
 
     public static ParticleInitialSpeed fromJson(JsonElement value, ParticleMolangEnvironment molang) {
-        return new ParticleInitialSpeed(molang.compile(molangFromElement(value, "0")));
+        if(value.isJsonArray()){
+            var array=value.getAsJsonArray();if(array.size()!=3)throw new com.google.gson.JsonParseException("Initial speed vector requires 3 values");
+            return new ParticleInitialSpeed(null,new MolangExpression[]{molang.compile(molangFromElement(array.get(0),"0")),
+                molang.compile(molangFromElement(array.get(1),"0")),molang.compile(molangFromElement(array.get(2),"0"))});
+        }
+        return new ParticleInitialSpeed(molang.compile(molangFromElement(value, "0")),null);
     }
 }

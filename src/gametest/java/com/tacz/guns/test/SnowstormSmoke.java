@@ -25,6 +25,9 @@ final class SnowstormSmoke {
       """;
     static void run(ClientGameTestContext ctx,TestSingleplayerContext world){
         ctx.runOnClient(mc->{
+            if(com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader.getInstance()
+                    .getDefinition(net.minecraft.resources.Identifier.parse("port_acceptance:runtime_probe"))==null)
+                throw new AssertionError("External-pack particle definition was not loaded");
             var compiler=new ParticleMolangEnvironment();
             var def=new ParticleEffectDeserializer().parse(JsonParser.parseString(DEFINITION),compiler);
             var a=new ParticleMolangEnvironment();a.eval("variable.count = 3;");
@@ -41,7 +44,16 @@ final class SnowstormSmoke {
         long before=ctx.computeOnClient(mc->WorldEmitterManager.getInstance().rendered());
         ctx.waitTicks(3);
         if(ctx.computeOnClient(mc->WorldEmitterManager.getInstance().rendered())<=before)throw new AssertionError("Snowstorm did not submit actual render geometry");
-        ctx.takeScreenshot("tacz_snowstorm_runtime");
+        try {
+            var image=javax.imageio.ImageIO.read(ctx.takeScreenshot("tacz_snowstorm_runtime").toFile());
+            int pixels=0;
+            for(int y=0;y<image.getHeight();y++)for(int x=0;x<image.getWidth();x++){
+                int color=image.getRGB(x,y),r=(color>>16)&255,g=(color>>8)&255,b=color&255;
+                if(r>100&&b>100&&r>g*1.5&&b>g*1.5)pixels++;
+            }
+            if(pixels<8)throw new AssertionError("Submitted Snowstorm geometry was not visibly magenta: "+pixels);
+            GunMod.LOGGER.info("PORT_SNOWSTORM_PIXELS: {} magenta pixels in actual client frame",pixels);
+        }catch(java.io.IOException e){throw new java.io.UncheckedIOException(e);}
         ctx.waitTicks(25);
         if(ctx.computeOnClient(mc->WorldEmitterManager.getInstance().emitterCount())!=0)throw new AssertionError("Snowstorm retained expired emitters");
         GunMod.LOGGER.info("PORT_SNOWSTORM: compiled Molang math, isolated variables, pre-effect count, lifetimes and real render geometry passed");

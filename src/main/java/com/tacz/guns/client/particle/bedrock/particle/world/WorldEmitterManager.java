@@ -33,6 +33,7 @@ public final class WorldEmitterManager {
     public void bindAnimated(ParticleEmitterInstance emitter,int owner,net.minecraft.resources.Identifier gun,String locator,boolean first,Matrix4f hand,Matrix4f world){
         for(var a:pending)if(a.emitter==emitter){
             a.owner=owner;a.gun=gun;a.locator=locator;a.first=first;
+            emitter.getMolang().bindEntity(level.getEntity(owner));
             if(first){var fp=emitter.getDefinition().findComponent(FPEmitterLocalSpace.class);
                 if(fp==null)emitter.enableFPMode(true,true,true,false);
                 else emitter.enableFPMode(fp.position(),fp.rotation(),fp.velocity(),fp.toWorld());
@@ -81,8 +82,13 @@ public final class WorldEmitterManager {
         if(emitterCount()>=MAX_EMITTERS||particleCount()>=MAX_TOTAL_PARTICLES||eventBudget++>=256)return null;
         var env=new ParticleMolangEnvironment();
         // Pre-effect variables must exist when initialization/lifetime components are applied.
-        if(script!=null&&!script.isBlank())env.eval(script);
-        var emitter=new ParticleEmitterInstance(definition,env);
+        final ParticleEmitterInstance emitter;
+        try {
+            if(script!=null&&!script.isBlank())env.eval(script);
+            emitter=new ParticleEmitterInstance(definition,env);
+        } catch(RuntimeException ex) {
+            GunMod.LOGGER.error("Cannot initialize Snowstorm effect {}",definition.getIdentifier(),ex);return null;
+        }
         emitter.disableFPMode();
         emitter.setEmitterTransform(transform,transform);
         var pos=transform.getTranslation(new Vector3f());
@@ -122,9 +128,9 @@ public final class WorldEmitterManager {
     private void submitEmitter(SubmitNodeCollector collector,Active a,Vec3 camera,boolean hand,int inheritedLight){
             var emitter=a.emitter;var definition=emitter.getDefinition();var desc=definition.getDescription();
             RenderType type=switch(desc.getMaterial()){
-                case PARTICLES_OPAQUE -> RenderTypes.entityCutout(desc.getTexture());
+                case PARTICLES_OPAQUE,PARTICLES_ALPHA -> RenderTypes.entityCutout(desc.getTexture());
                 case PARTICLES_ADD,ENERGY_SWIRL -> RenderTypes.energySwirl(desc.getTexture(),0,0);
-                case PARTICLES_BLEND,PARTICLES_ALPHA,PARTICLES_EMISSIVE -> RenderTypes.entityTranslucent(desc.getTexture());
+                case PARTICLES_BLEND,PARTICLES_EMISSIVE -> RenderTypes.entityTranslucent(desc.getTexture());
             };
             var billboard=definition.findComponent(ParticleAppearanceBillboard.class);
             var mode=billboard==null?ParticleAppearanceBillboard.FaceCameraMode.ROTATE_XYZ:billboard.faceCameraMode();
