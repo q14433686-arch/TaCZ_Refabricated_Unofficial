@@ -1,5 +1,7 @@
 # 玩家反馈修复与剩余移植项复查
 
+> **最新有效性总表**：[FEATURE_VALIDITY_26_3.md](FEATURE_VALIDITY_26_3.md)。本页分轮追加，下面较早“未移植”的判定须结合末尾更新；尤其旧无光影热成像通过不代表 Iris 可用。26.3 不等于整个 26.X 已验证。
+
 对照固定为 Fabric `356bdf9d48f2225bac6ceb56adc5576a418517a8`，目标 MC 26.3；不把同名类缺失直接算作功能缺失。此文是当前状态入口，旧 PLAYER_CHECKLIST 中的表格是历史基线，后续追加段落才是逐轮证据。
 
 ## 1. 本次反馈定位
@@ -31,7 +33,7 @@
 
 静态扫描对照全部上游 config `define*` 键。本端缺少的上游键只有：`EnableExperimentalDisplayGunVbo`、`EnableStaticItemGunVbo`（26.3 原生渲染替代，不照搬旧 VBO 开关）；`EnableSableCompat`（集成未移植）；`HideGunPackCompatibilityWarning`（上游进服警告/关闭按钮流程尚未移植）。`PreLoadModConfig` 由本端 `PreLoadConfig` 负责，不因类名不同报缺失。
 
-## 3. 真正未移植 / 部分移植
+## 3. 当时未移植 / 部分移植（历史快照；最新状态见页首总表）
 
 | 项目 | 已核实的当前缺口 | 优先级/下一组验收 |
 |---|---|---|
