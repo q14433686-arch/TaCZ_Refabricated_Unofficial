@@ -43,6 +43,7 @@ public class PackClientSmoke implements FabricClientGameTest {
             world.getConnection().waitForChunksRender();
             context.waitTicks(30);
             saveFrame(context, "tacz_held_default_gun");
+            ScopeUserRegressionSmoke.run(context, world);
             if (Boolean.getBoolean("tacz.test.iris")) {
                 context.runOnClient(mc -> {
                     if (!com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack())
