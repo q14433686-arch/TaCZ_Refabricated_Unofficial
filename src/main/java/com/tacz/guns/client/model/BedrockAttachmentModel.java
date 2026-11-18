@@ -6,6 +6,7 @@ import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.bedrock.ModelRendererWrapper;
 import com.tacz.guns.client.model.functional.BeamRenderer;
+import com.tacz.guns.client.model.functional.ImpactMarkerRender;
 import com.tacz.guns.client.render.scope.IReticleRenderer;
 import com.tacz.guns.client.render.scope.ReticleRendererRegistry;
 import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
@@ -314,6 +315,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      * 是全流程里唯一知道"现在用的是哪一组"的地方。</p>
      */
     private int activeViewGroup = 0;
+    private @Nullable ImpactMarkerRender impactMarker;
 
     /** 由渲染事件在每帧定位阶段写入，见 {@link #activeViewGroup}。 */
     public void setActiveViewGroup(int group) {
@@ -491,6 +493,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      * 枪身上的文字（如弹匣计数）本就该常显、也不在镜筒上。</p>
      */
     public void setTextShowList(Map<String, TextShow> textShowList) {
+        impactMarker = ImpactMarkerRender.of(getPath(modelMap.get(ImpactMarkerRender.NODE)), textShowList);
         textShowList.forEach((name, textShow) -> this.setFunctionalRenderer(name,
                 bedrockPart -> {
                     // 未开镜（或刚开始开镜）时不提交，见 javadoc「门禁为什么还留着」。
@@ -735,6 +738,17 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 reticle.submitReticle(new IReticleRenderer.Context(
                         poseStack, collector, transformType, reticleType, illuminatedReticleType,
                         light, overlay, currentAimingProgress(), maskActive), active);
+            }
+        }
+
+        if (impactMarker != null && transformType != null && transformType.firstPerson()) {
+            Integer active = isScope && isSight && activeViewGroup != 0 ? activeOcularIndex() : null;
+            // Named division roots are hidden from the main pass; respect the active one, but a
+            // root-level locator is common to all groups. Do not draw a marker from the other view.
+            if (active == null || !divisionByIndex.containsKey(active) || divisionByIndex.values().stream().noneMatch(impactMarker.path()::contains)
+                    || impactMarker.path().contains(divisionByIndex.get(active))) {
+                impactMarker.submit(currentGunItem, poseStack, collector, reticleMaskable && RenderConfig.SCOPE_MASK_ENABLE.get()
+                        && !ScopeMaskGeometry.isEmpty() && ScopeMaskTextureHandle.syncToMaskTarget(), overlay);
             }
         }
 

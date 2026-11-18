@@ -5,6 +5,7 @@ import com.tacz.guns.client.resource.pojo.display.gun.Rangefinder;
 import com.tacz.guns.client.resource.pojo.display.gun.TextShow;
 import org.junit.jupiter.api.Test;
 
+import static com.tacz.guns.client.model.papi.ImpactPreview.slope;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RangefinderTest {
@@ -19,6 +20,22 @@ class RangefinderTest {
         assertEquals("---", config.format(100));
         assertEquals("---", config.format(-1));
         assertEquals("---", config.format(Double.NaN));
+    }
+
+    @Test void markerIsOptInAndUsesOpaquePackColor() {
+        assertFalse(gson.fromJson("{}", Rangefinder.class).showsImpact());
+        var node = gson.fromJson("{\"show_impact_prediction\":true,\"impact_prediction_color\":\"fcfe00\",\"impact_prediction_scale\":2}", Rangefinder.class);
+        assertTrue(node.showsImpact());
+        assertEquals(0xfffcfe00, node.getImpactColor());
+        assertEquals(2f, node.getImpactScale());
+    }
+
+    @Test void blockTickPreviewEndsAtRangeOrExpiry() {
+        assertEquals(0, slope(5, 10, .5, .5, 4));
+        assertEquals(.25/12.5, slope(12.5, 10, .5, .5, 4), 1e-6);
+        assertTrue(Double.isNaN(slope(99, 10, .5, .5, 2)));
+        assertTrue(Double.isNaN(slope(10, 0, .5, 0, 10)));
+        assertTrue(Double.isNaN(slope(10, Double.NaN, .5, 0, 10)));
     }
 
     @Test void boundsWorldQueriesButHonorsZeroDistance() {

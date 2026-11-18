@@ -1,5 +1,10 @@
 package com.tacz.guns.client.model.papi;
 
+import com.tacz.guns.api.GunProperties;
+import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.entity.IGunOperator;
+import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.config.common.AmmoConfig;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.resource.pojo.display.gun.Rangefinder;
@@ -17,9 +22,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-/** Client-thread-only, read-only world query. Collector callbacks receive text, not a live player. */
+/** Client-thread-only, read-only world query. Text and marker share one world sample regardless of model traversal order. */
 public final class RangefinderReadout {
-    private record Sample(long tick, String text) {}
+    private record Hit(double blocks, boolean entity) {}
+    private record Sample(long tick, String text, double impactSlope) {}
+    private static final Sample MISS = new Sample(-1, Rangefinder.MISS, Double.NaN);
     // The definition, not its refresh interval, identifies a text node's settings.
     private static final Map<Rangefinder, Sample> samples = new WeakHashMap<>();
     private static LocalPlayer owner;
@@ -35,12 +42,22 @@ public final class RangefinderReadout {
 
     static String read(ItemStack stack, @Nullable Rangefinder config) {
         if (config == null) return "";
+        return sample(stack, config).text;
+    }
+
+    /** Screen projection is per frame; only the client-world measurement is throttled. */
+    public static double impactSlope(ItemStack stack, Rangefinder config) {
+        return config.showsImpact() ? sample(stack, config).impactSlope : Double.NaN;
+    }
+
+    private static Sample sample(ItemStack stack, Rangefinder config) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
-        if (player == null || !player.isAlive() || stack == null || !(stack.getItem() instanceof IGun gun)) return Rangefinder.MISS;
+        if (player == null || !player.isAlive() || stack == null || !(stack.getItem() instanceof IGun gun)) return MISS;
         var hand = player.getMainHandItem();
         if (!(hand.getItem() instanceof IGun current) || hand != stack && (!gun.getGunId(stack).equals(current.getGunId(hand))
-                || !gun.getGunDisplayId(stack).equals(current.getGunDisplayId(hand)))) return Rangefinder.MISS;
+                || !gun.getGunDisplayId(stack).equals(current.getGunDisplayId(hand))
+                || !gun.getAttachmentId(stack, AttachmentType.SCOPE).equals(current.getAttachmentId(hand, AttachmentType.SCOPE)))) return MISS;
         if (owner != player || held != hand) {
             samples.clear();
             owner = player;
@@ -49,18 +66,30 @@ public final class RangefinderReadout {
         float partial = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         if (IClientPlayerGunOperator.fromLocalPlayer(player).getClientAimingProgress(partial) < .9f) {
             samples.remove(config);
-            return Rangefinder.MISS;
+            return MISS;
         }
         long tick = player.level().getGameTime();
         Sample old = samples.get(config);
-        if (old != null && tick >= old.tick && tick - old.tick < config.getRefreshTick()) return old.text;
-        String text = config.format(measure(player, partial, config.getMaxDistance()));
-        samples.put(config, new Sample(tick, text));
-        return text;
+        if (old != null && tick >= old.tick && tick - old.tick < config.getRefreshTick()) return old;
+        Hit hit = measure(player, partial, config.getMaxDistance());
+        double slope = hit.entity && config.showsImpact() ? impact(player, hand, current, hit.blocks) : Double.NaN;
+        var result = new Sample(tick, config.format(hit.blocks), slope);
+        samples.put(config, result);
+        return result;
     }
 
-    private static double measure(LocalPlayer player, float partial, float range) {
-        if (range == 0) return -1;
+    private static double impact(LocalPlayer player, ItemStack stack, IGun gun, double distance) {
+        var index = TimelessAPI.getClientGunIndex(gun.getGunId(stack)).orElse(null);
+        if (index == null || index.getGunData().getBulletData() == null) return Double.NaN;
+        var data = index.getGunData().getBulletData();
+        var cache = IGunOperator.fromLivingEntity(player).getCacheProperty();
+        float speed = cache == null ? data.getSpeed() : cache.getCacheOrDefault(GunProperties.AMMO_SPEED, data.getSpeed());
+        return ImpactPreview.slope(distance, speed * AmmoConfig.GLOBAL_BULLET_SPEED_MODIFIER.get() / 20,
+                data.getGravity(), data.getFriction(), (int) (data.getLifeSecond() * 20));
+    }
+
+    private static Hit measure(LocalPlayer player, float partial, float range) {
+        if (range == 0) return new Hit(-1, false);
         var level = player.level();
         Vec3 eye = player.getEyePosition(partial), look = player.getViewVector(partial);
         var block = BlockRayTrace.rayTraceBlocks(level, new ClipContext(eye, eye.add(look.scale(range)),
@@ -76,12 +105,12 @@ public final class RangefinderReadout {
             for (var entity : level.getEntities(player, area, e -> e.isAlive() && e.isPickable()
                     && !e.isSpectator() && !e.isPassengerOfSameVehicle(player))) {
                 var box = HitboxHelper.getFixedBoundingBox(entity, player).inflate(.25, 8, .25);
-                if (box.contains(from)) return d;
+                if (box.contains(from)) return new Hit(d, true);
                 var hit = box.clip(from, to);
                 if (hit.isPresent()) closest = Math.min(closest, eye.distanceTo(hit.get()));
             }
-            if (Double.isFinite(closest)) return Math.min(closest, endDistance);
+            if (Double.isFinite(closest)) return new Hit(Math.min(closest, endDistance), true);
         }
-        return miss ? -1 : endDistance;
+        return new Hit(miss ? -1 : endDistance, false);
     }
 }

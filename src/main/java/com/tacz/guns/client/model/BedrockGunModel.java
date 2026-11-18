@@ -31,6 +31,7 @@ import static com.tacz.guns.client.model.GunModelConstant.*;
 public class BedrockGunModel extends BedrockAnimatedModel {
     protected final EnumMap<AttachmentType, List<BedrockPart>> refitAttachmentViewPath = Maps.newEnumMap(AttachmentType.class);
     private final EnumMap<AttachmentType, ItemStack> currentAttachmentItem = Maps.newEnumMap(AttachmentType.class);
+    private @Nullable ImpactMarkerRender impactMarker;
     private final Set<String> adapterToRender = Sets.newHashSet();
     private final ArrayList<ShellRender> shellRenderList = new ArrayList<>();
 
@@ -241,6 +242,7 @@ public class BedrockGunModel extends BedrockAnimatedModel {
      * 添加枪械自定义的文本显示
      */
     public void setTextShowList(Map<String, TextShow> textShowList) {
+        impactMarker = ImpactMarkerRender.of(getPath(modelMap.get(ImpactMarkerRender.NODE)), textShowList);
         textShowList.forEach((name, textShow) -> this.setFunctionalRenderer(name, bedrockPart -> new TextShowRender(this, textShow, currentGunItem)));
     }
 
@@ -341,6 +343,8 @@ public class BedrockGunModel extends BedrockAnimatedModel {
                 com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.clipForViewmodel(
                         renderType, gunTexture, transformType != null && transformType.firstPerson()),
                 light, overlay);
+        if (impactMarker != null && transformType != null && transformType.firstPerson())
+            impactMarker.submit(gunItem, poseStack, collector, false, overlay);
     }
 
 
