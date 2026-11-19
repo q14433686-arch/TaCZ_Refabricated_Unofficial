@@ -2,6 +2,8 @@ package com.tacz.guns.test;
 
 import cn.sh1rocu.tacz.TaCZFabric;
 import com.tacz.guns.GunMod;
+import com.tacz.guns.client.tuning.TuningProfiles;
+import com.tacz.guns.client.tuning.TuningValues;
 import com.tacz.guns.api.GunProperties;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.entity.IGunOperator;
@@ -88,22 +90,22 @@ final class HudPrecisionSmoke {
         check(code.equals("TACZ-HUD2:DESIGNER,DOT_1,RING,ORIGINAL,5,FF00FF,16.00,4.00,2.00,1.75,100,2.99,255,0,9.37,7.25,1500"), "Fractional profile: " + code);
         ctx.clickScreenButton(UI + "reset_hud"); paste(ctx, code); check(code.equals(copy(ctx)), "Ring round trip");
         saveHud(ctx, Mode.DESIGNER);
-        ctx.runOnClient(mc -> check(Dimension.RADIUS.option.get() == 9.37 && Dimension.THICKNESS.option.get() == 1.75
-                && Dimension.KICK.option.get() == 7.25, "Disk reload lost hundredths"));
+        ctx.runOnClient(mc -> check(fromDisk().base().get(Dimension.RADIUS.option) == 9.37 && fromDisk().base().get(Dimension.THICKNESS.option) == 1.75
+                && fromDisk().base().get(Dimension.KICK.option) == 7.25, "Disk reload lost hundredths"));
         ring(frame(ctx, "ring_rest", false), scale, 1, true);
-        ctx.runOnClient(mc -> { Measure.ASPECT.option.set(150); ViewTuningConfig.DOT.set(false); ViewTuningConfig.OUTLINE.set(true); });
+        ctx.runOnClient(mc -> { setBase(Measure.ASPECT.option, 150); setBase(ViewTuningConfig.DOT, false); setBase(ViewTuningConfig.OUTLINE, true); });
         ring(frame(ctx, "ring_ellipse", false), scale, 1.5, false);
-        ctx.runOnClient(mc -> { Measure.ASPECT.option.set(100); ViewTuningConfig.DOT.set(true); ViewTuningConfig.OUTLINE.set(false); });
+        ctx.runOnClient(mc -> { setBase(Measure.ASPECT.option, 100); setBase(ViewTuningConfig.DOT, true); setBase(ViewTuningConfig.OUTLINE, false); });
         // On odd physical dimensions the middle pixel is ON the axis. Only .02 GUI units apart:
         // integer GUI geometry would produce identical dot coverage at both settings.
         int[] counts = new int[2];
         for (int i = 0; i < 2; i++) {
             double d = 6d / scale + (i == 0 ? -.01 : .01);
-            ctx.runOnClient(mc -> Dimension.DOT_SIZE.option.set(d));
+            ctx.runOnClient(mc -> setBase(Dimension.DOT_SIZE.option, d));
             counts[i] = pixels(frame(ctx, "dot_hundredth_" + i, true), 4*scale, (x,y) -> true).n;
         }
         check(counts[0] == 25 && counts[1] == 49, "Hundredths did not reach the raster: " + counts[0] + "/" + counts[1]);
-        ctx.runOnClient(mc -> Dimension.DOT_SIZE.option.set(2.99));
+        ctx.runOnClient(mc -> setBase(Dimension.DOT_SIZE.option, 2.99));
         GunMod.LOGGER.info("PORT_HUD_PRECISION: native axes even/odd + 2560x1417 at 4x {}; circle, open ellipse and dot subpixel boundary {}/{} framebuffer pixels", reported, counts[0], counts[1]);
         realBurst(ctx, world, scale);
     }
@@ -138,6 +140,7 @@ final class HudPrecisionSmoke {
 
     private static void realBurst(ClientGameTestContext ctx, TestSingleplayerContext world, int scale) {
         var previous = world.getServer().computeOnServer(s -> world.getConnection().getServerPlayer().getMainHandItem().copy());
+        var previousProfile = ctx.computeOnClient(mc -> TuningProfiles.current().copy());
         var rotation = ctx.computeOnClient(mc -> new float[]{mc.player.getYRot(), mc.player.getXRot()});
         try {
             equip(world, GunItemBuilder.create().setId(BURST).setAmmoCount(20).setAmmoInBarrel(true).setFireMode(FireMode.BURST).build());
@@ -146,7 +149,11 @@ final class HudPrecisionSmoke {
             ctx.waitFor(mc -> mc.player.onGround() && !op(mc).getDataHolder().clientStateLock && IGunOperator.fromLivingEntity(mc.player).getSynDrawCoolDown() == 0);
             ctx.runOnClient(mc -> {
                 // Re-enable the physical term, but keep every modified stance exactly zero for the entire shot.
-                Measure.SPREAD_SCALE.option.set(100);
+                setBase(Measure.SPREAD_SCALE.option, 100);
+                // Only the exact gun is dynamic. Reading the shared TOML, account default or editor
+                // preview in the post-fire callback cannot open the envelope in this test.
+                setBase(ViewTuningConfig.DYNAMIC, false);
+                setBurstDynamic(true);
                 var cache = IGunOperator.fromLivingEntity(mc.player).getCacheProperty();
                 var zero = new EnumMap<>(cache.getCache(GunProperties.INACCURACY)); zero.replaceAll((k,v) -> 0f);
                 cache.setCache(GunProperties.INACCURACY, zero);
@@ -163,12 +170,12 @@ final class HudPrecisionSmoke {
             check(settled.width() == rest.width() && settled.n == rest.n, "Shot cue did not return to rest");
             ctx.runOnClient(mc -> {
                 check(IGunOperator.fromLivingEntity(mc.player).getCacheProperty().getCache(GunProperties.INACCURACY).values().stream().allMatch(v -> v == 0f), "Test spread changed");
-                ViewTuningConfig.DYNAMIC.set(false);
+                setBurstDynamic(false);
             });
             trigger(ctx, 6);
             check(lastPeak == 0f, "Static mode recorded an impulse");
             ring(frame(ctx, "burst_static", false), scale, 1, true);
-            ctx.runOnClient(mc -> { ViewTuningConfig.DYNAMIC.set(true); cancel = true; });
+            ctx.runOnClient(mc -> { setBurstDynamic(true); cancel = true; });
             ctx.getInput().holdKey(ShootKey.SHOOT_KEY);
             try { ctx.waitFor(mc -> cancelled.get() == 3); } finally { ctx.getInput().releaseKey(ShootKey.SHOOT_KEY); }
             check(client.get() == 6, "Cancelled fire emitted a post");
@@ -184,8 +191,17 @@ final class HudPrecisionSmoke {
             GunMod.LOGGER.info("PORT_HUD_SHOTS: zero modified spread, 3 local burst posts; ring widths rest/open/returned={}/{}/{} framebuffer px; static, cancelled and dry controls passed", rest.width(), opened.width(), settled.width());
         } finally {
             watched = null; ctx.runOnClient(mc -> cancel = false); ctx.getInput().releaseKey(ShootKey.SHOOT_KEY);
+            ctx.runOnClient(mc -> check(TuningProfiles.save(TuningProfiles.account(), previousProfile), "Could not restore base profile"));
             equip(world, previous); ctx.getInput().lookAt(rotation[0], rotation[1]);
         }
+    }
+
+    private static void setBurstDynamic(boolean enabled) {
+        var p = TuningProfiles.current().copy();
+        String type = TuningProfiles.type(BURST);
+        var exact = new TuningValues.Draft(p.hud(type, BURST.toString()));
+        exact.set(ViewTuningConfig.DYNAMIC, enabled); p.setHud(type, BURST.toString(), exact);
+        check(TuningProfiles.save(TuningProfiles.account(), p), "Could not save exact-gun firing fixture");
     }
 
     private static void trigger(ClientGameTestContext ctx, int count) {

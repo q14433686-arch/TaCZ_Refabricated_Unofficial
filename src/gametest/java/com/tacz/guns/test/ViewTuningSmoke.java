@@ -12,6 +12,9 @@ import com.tacz.guns.client.input.AimKey;
 import com.tacz.guns.client.input.GunInputHandler;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.client.tuning.TuningValues;
+import com.tacz.guns.client.tuning.TuningProfile;
+import com.tacz.guns.client.tuning.TuningProfileStore;
+import com.tacz.guns.client.tuning.TuningProfiles;
 import com.tacz.guns.client.tuning.ViewmodelPosition;
 import com.tacz.guns.compat.shouldersurfing.ShoulderSurfingCompat;
 import com.tacz.guns.config.client.RenderConfig;
@@ -48,28 +51,35 @@ import org.joml.Vector3f;
 import java.awt.image.BufferedImage;
 import java.util.EnumMap;
 import java.util.List;
-import java.util.Objects;
+import java.nio.file.Files;
 
 /** Paused live hand, native widgets, disk readback and final HUD pixels with both Mesa and Iris. */
 final class ViewTuningSmoke {
     private static final String UI = "gui.tacz.view_tuning.";
 
-    // FCAP save fires a synchronous notification, then the (default-on) NightConfig file watcher
-    // installs a fresh config on its own thread. Don't let that disk re-read undo the NEXT test's
-    // intentionally memory-only keybind settings. Observe the real callback, not a wall-clock sleep.
-    private static volatile Mode diskMode;
+    // Only legacy migration touches FCAP. A normal editor save must not wake its global watcher.
+    private static volatile double watchedSize;
     static {
         ModConfigEvents.reloading(GunMod.MOD_ID).register(config -> {
-            if (config.getType() == ModConfig.Type.CLIENT && Thread.currentThread() != Minecraft.getInstance().getRunningThread()) {
-                diskMode = ViewTuningConfig.MODE.get();
-            }
+            if (config.getType() == ModConfig.Type.CLIENT && Thread.currentThread() != Minecraft.getInstance().getRunningThread())
+                watchedSize = Dimension.SIZE.option.get();
         });
     }
 
-    private static void awaitDiskReload(ClientGameTestContext ctx, Mode mode) {
-        if (!ForgeConfigApiPortConfig.getConfigValue(ModConfigValues.DISABLE_CONFIG_WATCHER)) {
-            ctx.waitFor(mc -> diskMode == mode && ViewTuningConfig.MODE.get() == mode);
-        }
+    static TuningProfile fromDisk() {
+        var owner = TuningProfiles.account();
+        check(Files.isRegularFile(TuningProfiles.DIRECTORY.resolve(owner + ".json")), "No account profile on disk");
+        return new TuningProfileStore(TuningProfiles.DIRECTORY, TuningValues.DEFAULTS).get(owner);
+    }
+
+    private static void checkDisk(ClientGameTestContext ctx, Mode mode) {
+        ctx.runOnClient(mc -> check(fromDisk().base().get(ViewTuningConfig.MODE) == mode
+                && TuningProfiles.current().base().get(ViewTuningConfig.MODE) == mode, "Saved profile mode differs on disk"));
+    }
+
+    static <T> void setBase(ConfigValue<T> option, T value) {
+        var p = TuningProfiles.current().copy(); p.base().set(option, value);
+        check(TuningProfiles.save(TuningProfiles.account(), p), "Could not save profile fixture");
     }
 
     static void run(ClientGameTestContext ctx, TestSingleplayerContext world) {
@@ -78,13 +88,8 @@ final class ViewTuningSmoke {
         String clipboard = ctx.computeOnClient(mc -> mc.keyboardHandler.getClipboard());
         var camera = ctx.computeOnClient(mc -> mc.options.getCameraType());
         var previous = ctx.computeOnClient(mc -> {
-            var backup = new TuningValues.Draft();
-            for (Axis axis : Axis.values()) remember(backup, axis.option);
-            for (Measure measure : Measure.values()) remember(backup, measure.option);
-            for (Dimension d : Dimension.values()) remember(backup, d.option);
-            for (var option : List.of(ViewTuningConfig.MODE, ViewTuningConfig.RGB, ViewTuningConfig.DOT,
-                    ViewTuningConfig.OUTLINE, ViewTuningConfig.SHAPE, ViewTuningConfig.TEXTURE_CENTER,
-                    ViewTuningConfig.DYNAMIC, RenderConfig.CROSSHAIR_TYPE)) remember(backup, option);
+            var backup = TuningProfiles.current().copy();
+            check(TuningProfiles.save(TuningProfiles.account(), TuningProfile.seeded(TuningValues.DEFAULTS)), "Cannot prepare account profile");
             mc.options.setCameraType(CameraType.FIRST_PERSON);
             key.setKey(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_J));
             KeyMapping.resetMapping();
@@ -105,7 +110,7 @@ final class ViewTuningSmoke {
                     check(!saveButton(mc).active, "Save enabled with invalid axis: " + bad);
                 }
                 x.setValue("0.237"); field(mc, "axis.y").setValue("-.113"); field(mc, "axis.z").setValue("-.330");
-                check(saveButton(mc).active && Axis.X.option.get() == 0d, "Live preview wrote through to config");
+                check(saveButton(mc).active && TuningProfiles.current().base().get(Axis.X.option) == 0d, "Live preview wrote through to config");
                 // Halfway contains half the offset; overshooting either full ADS or full refit leaves the exact authored matrix.
                 for (float[] state : new float[][]{{.5f, 0, .5f}, {0, .5f, .5f}, {1.01f, 0, 0}, {0, 1f, 0}}) {
                     Matrix4f authored = new Matrix4f().translate(.2f, -.1f, .4f).rotateXYZ(.1f, .3f, .6f);
@@ -153,30 +158,17 @@ final class ViewTuningSmoke {
             frame(ctx, "colors");
             String hudCode = profileRoundTrips(ctx, positionCode);
             frame(ctx, "designer");
-            diskMode = null;
+
             ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(PauseScreen.class);
-            awaitDiskReload(ctx, Mode.DESIGNER);
+            checkDisk(ctx, Mode.DESIGNER);
             ctx.runOnClient(mc -> {
-                var path = FabricLoader.getInstance().getConfigDir().resolve("tacz-client.toml");
-                try (var file = CommentedFileConfig.builder(path).build()) {
-                    file.load();
-                    check(Objects.equals(file.get(Axis.X.option.getPath()), .237d)
-                            && Objects.equals(file.get(ViewTuningConfig.MODE.getPath()), "DESIGNER")
-                            && Objects.equals(file.get(ViewTuningConfig.RGB.getPath()), 0xFF00FF)
-                            && Objects.equals(file.get(Dimension.THICKNESS.option.getPath()), 3d), "Tuning not persisted to " + path);
-                }
+                var saved = fromDisk().base();
+                check(saved.get(Axis.X.option) == .237d && saved.get(ViewTuningConfig.RGB) == 0xFF00FF
+                        && saved.get(Dimension.THICKNESS.option) == 3d, "Personal XYZ/HUD were not persisted");
+                check(Axis.X.option.get() == 0d && ViewTuningConfig.MODE.get() == Mode.PRESET,
+                        "Editor overwrote the shared TOML seed");
             });
-            // An actual HUD1-era integer TOML entry (not just a clipboard string) at an unchanged config path.
-            if (!ForgeConfigApiPortConfig.getConfigValue(ModConfigValues.DISABLE_CONFIG_WATCHER)) {
-                diskMode = null;
-                ctx.runOnClient(mc -> {
-                    try (var file = CommentedFileConfig.builder(FabricLoader.getInstance().getConfigDir().resolve("tacz-client.toml")).build()) {
-                        file.load(); file.set(Dimension.SIZE.option.getPath(), 37); file.save();
-                    }
-                });
-                awaitDiskReload(ctx, Mode.DESIGNER);
-                ctx.runOnClient(mc -> check(Dimension.SIZE.option.get() == 37d, "Legacy TOML integer was reset or misread"));
-            }
+            legacyMigration(ctx);
             ctx.setScreen(() -> null); ctx.waitTicks(8);
             int scale = ctx.computeOnClient(mc -> mc.getWindow().getGuiScale());
             // 4 arms of length 4, thickness 3, plus 3x3 center. Bounding box = 3 + 2*(4+2).
@@ -201,17 +193,17 @@ final class ViewTuningSmoke {
             ctx.clickScreenButton(UI + "page.style"); ctx.clickScreenButton(UI + "mode.designer");
             ctx.clickScreenButton(UI + "page.geometry");
             ctx.runOnClient(mc -> field(mc, "size").setValue("32"));
-            diskMode = null;
+
             ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null);
-            awaitDiskReload(ctx, Mode.PNG);
+            checkDisk(ctx, Mode.PNG);
             // The test resource pack overrides the slot with a 32x32 texture, six opaque centered columns.
             int png = assertHud(frame(ctx, "png"), scale, 6 * 32, 6, 32);
             ctx.getInput().pressKey(key); ctx.waitForScreen(ViewTuningScreen.class);
             ctx.clickScreenButton(UI + "crosshair"); ctx.clickScreenButton(UI + "page.geometry");
             ctx.clickScreenButton(UI + "center.original"); ctx.clickScreenButton(UI + "center.clear");
             ctx.runOnClient(mc -> { field(mc, "aspect").setValue("150"); field(mc, "dot_size").setValue("4"); });
-            diskMode = null;
-            ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); awaitDiskReload(ctx, Mode.PNG);
+
+            ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); checkDisk(ctx, Mode.PNG);
             // 32x48: six columns, except the middle 12 rows. The replacement center is 4x4, not stretched.
             assertHud(frame(ctx, "png_center"), scale, 6 * 36 + 16, 6, 48);
             ctx.getInput().pressKey(key); ctx.waitForScreen(ViewTuningScreen.class);
@@ -221,29 +213,30 @@ final class ViewTuningSmoke {
             ctx.clickScreenButton(UI + "page.share"); paste(ctx, hudCode);
             ctx.runOnClient(mc -> check(TuningValues.visible().get(ViewTuningConfig.MODE) == Mode.DESIGNER, "Imported code not previewed"));
             ctx.getInput().pressKey(InputConstants.KEY_ESCAPE); ctx.waitForScreen(null);
-            ctx.runOnClient(mc -> check(ViewTuningConfig.MODE.get() == Mode.PNG && Measure.ASPECT.option.get() == 150, "Escape saved reset/import"));
+            ctx.runOnClient(mc -> check(TuningProfiles.current().base().get(ViewTuningConfig.MODE) == Mode.PNG && TuningProfiles.current().base().get(Measure.ASPECT.option) == 150, "Escape saved reset/import"));
             presetStyles(ctx, scale, key);
             HudPrecisionSmoke.run(ctx, world, key, scale);
+            AccountHudSmoke.run(ctx, world, key, scale);
             GunMod.LOGGER.info("PORT_VIEW_TUNING: live muzzle delta={}, changed hand pixels={}, HUD designer/PNG={}/{} px at {}x, ADS and F5=0; disk, reset, cancel and rebound key passed",
                     delta, handPixels, designer, png, scale);
         } finally {
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
             ctx.getInput().releaseKey(o -> o.keyShift);
             ctx.setScreen(() -> null);
-            diskMode = null;
+
             Mode restored = ctx.computeOnClient(mc -> {
-                Mode mode = previous.get(ViewTuningConfig.MODE);
-                previous.save(); mc.keyboardHandler.setClipboard(clipboard); mc.options.setCameraType(camera); key.setKey(binding); KeyMapping.resetMapping();
+                Mode mode = previous.base().get(ViewTuningConfig.MODE);
+                check(TuningProfiles.save(TuningProfiles.account(), previous), "Profile restore failed"); mc.keyboardHandler.setClipboard(clipboard); mc.options.setCameraType(camera); key.setKey(binding); KeyMapping.resetMapping();
                 return mode;
             });
-            awaitDiskReload(ctx, restored);
+            checkDisk(ctx, restored);
             ctx.waitFor(mc -> !mc.isPaused() && InputExtraCheck.isInGame());
         }
     }
 
     static void saveHud(ClientGameTestContext ctx, Mode mode) {
-        diskMode = null;
-        ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); awaitDiskReload(ctx, mode);
+
+        ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); checkDisk(ctx, mode);
         ctx.waitFor(mc -> !mc.isPaused() && InputExtraCheck.isInGame());
     }
 
@@ -283,7 +276,7 @@ final class ViewTuningSmoke {
         check(copy(ctx).equals(position), "Position round trip lost precision");
         ctx.clickScreenButton(UI + "crosshair");
         check(copy(ctx).equals(hud), "Position import changed HUD");
-        ctx.runOnClient(mc -> check(Axis.X.option.get() == 0d && ViewTuningConfig.MODE.get() == Mode.PRESET,
+        ctx.runOnClient(mc -> check(TuningProfiles.current().base().get(Axis.X.option) == 0d && TuningProfiles.current().base().get(ViewTuningConfig.MODE) == Mode.PRESET,
                 "Sharing bypassed Save"));
         ctx.clickScreenButton(UI + "page.geometry");
         return hud;
@@ -300,8 +293,8 @@ final class ViewTuningSmoke {
         String dynamic = copy(ctx);
         ctx.clickScreenButton(UI + "reset_hud"); paste(ctx, dynamic);
         check(copy(ctx).equals(dynamic), "Dynamic geometry round trip failed");
-        diskMode = null;
-        ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); awaitDiskReload(ctx, Mode.DESIGNER);
+
+        ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); checkDisk(ctx, Mode.DESIGNER);
         ctx.waitFor(mc -> mc.player.onGround() && mc.player.getPose() == Pose.STANDING && !mc.isPaused());
         double stand = boxFrame(ctx, "stand", scale, InaccuracyType.STAND);
         ctx.getInput().holdKey(o -> o.keyShift);
@@ -350,8 +343,8 @@ final class ViewTuningSmoke {
         ctx.getInput().pressKey(key); ctx.waitForScreen(ViewTuningScreen.class);
         ctx.clickScreenButton(UI + "crosshair"); ctx.clickScreenButton(UI + "mode.png");
         ctx.clickScreenButton(UI + "motion.static");
-        diskMode = null;
-        ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); awaitDiskReload(ctx, Mode.PRESET);
+
+        ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); checkDisk(ctx, Mode.PRESET);
         ctx.waitTicks(4);
         double r = projectedRadius(ctx, InaccuracyType.STAND);
         assertHud(frame(ctx, "dot_spread"), scale, 16 + 4 * 2, 8 + 2 * r, 8 + 2 * r);
@@ -360,8 +353,8 @@ final class ViewTuningSmoke {
         ctx.getInput().pressKey(key); ctx.waitForScreen(ViewTuningScreen.class);
         ctx.clickScreenButton(UI + "crosshair"); ctx.clickScreenButton(UI + "motion.dynamic");
         for (int i = 0; i < 3; i++) ctx.clickScreenButton(">"); // DOT_1 -> CIRCLE_3
-        diskMode = null;
-        ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); awaitDiskReload(ctx, Mode.PRESET);
+
+        ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); checkDisk(ctx, Mode.PRESET);
         BufferedImage ring = frame(ctx, "preset_ring");
         Ink bounds = ink(ring, 38 * scale);
         int w = bounds.x1 - bounds.x0 + 1, h = bounds.y1 - bounds.y0 + 1;
@@ -370,9 +363,32 @@ final class ViewTuningSmoke {
         GunMod.LOGGER.info("PORT_HUD_PRESETS: dynamic pinned dot and static customized CIRCLE_3 {}x{} framebuffer px passed", w, h);
     }
 
-    private static <T> void remember(TuningValues.Draft backup, ConfigValue<T> option) {
-        backup.set(option, option.get());
-        option.set(option.getDefault());
+    private static void legacyMigration(ClientGameTestContext ctx) {
+        if (ForgeConfigApiPortConfig.getConfigValue(ModConfigValues.DISABLE_CONFIG_WATCHER)) return;
+        var path = FabricLoader.getInstance().getConfigDir().resolve("tacz-client.toml");
+        double original = ctx.computeOnClient(mc -> Dimension.SIZE.option.get());
+        try {
+            watchedSize = -1;
+            ctx.runOnClient(mc -> {
+                try (var file = CommentedFileConfig.builder(path).build()) {
+                    file.load(); file.set(Dimension.SIZE.option.getPath(), 37); file.save();
+                }
+            });
+            ctx.waitFor(mc -> watchedSize == 37);
+            ctx.runOnClient(mc -> {
+                var fresh = new TuningProfileStore(TuningProfiles.DIRECTORY, ConfigValue::get).get(java.util.UUID.randomUUID());
+                check(fresh.base().get(Dimension.SIZE.option) == 37d && TuningProfiles.current().base().get(Dimension.SIZE.option) != 37d,
+                        "Legacy integer did not seed a new account independently of the saved one");
+            });
+        } finally {
+            watchedSize = -1;
+            ctx.runOnClient(mc -> {
+                try (var file = CommentedFileConfig.builder(path).build()) {
+                    file.load(); file.set(Dimension.SIZE.option.getPath(), original); file.save();
+                }
+            });
+            ctx.waitFor(mc -> watchedSize == original);
+        }
     }
 
     static EditBox field(Minecraft mc, String key) {

@@ -14,7 +14,7 @@ import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.gui.GunRefitScreen;
 import com.tacz.guns.client.gui.ViewTuningScreen;
 import com.tacz.guns.client.renderer.crosshair.GunCrosshair;
-import com.tacz.guns.client.tuning.TuningValues;
+import com.tacz.guns.client.tuning.TuningProfiles;
 import com.tacz.guns.compat.shouldersurfing.ShoulderSurfingCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import net.fabricmc.api.EnvType;
@@ -123,7 +123,7 @@ public class RenderCrosshairEvent {
         if (Minecraft.getInstance().gui.screen() instanceof ViewTuningScreen editor && editor.isCrosshairTab()) return;
         // The GUI ortho projection uses framebuffer dimensions / scale, *not* ceil(gui dimensions).
         float divisor = 2f * window.getGuiScale();
-        GunCrosshair.draw(graphics, window.getWidth() / divisor, window.getHeight() / divisor, TuningValues.visible());
+        GunCrosshair.draw(graphics, window.getWidth() / divisor, window.getHeight() / divisor, TuningProfiles.forStack(Minecraft.getInstance().player.getMainHandItem()));
     }
 
     private static void renderHitMarker(GuiGraphicsExtractor graphics, Window window) {

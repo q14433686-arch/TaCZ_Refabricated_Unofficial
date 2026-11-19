@@ -80,7 +80,8 @@ final class TrackingActionSmoke {
         clientPre.set(0); serverPosts.set(0); clientPosts.set(0); clientFinishes.set(0);
         var type = ServerMessageGunActionPost.TYPE;
         boolean wasDynamic = context.computeOnClient(mc -> {
-            boolean old = ViewTuningConfig.DYNAMIC.get(); ViewTuningConfig.DYNAMIC.set(true);
+            boolean old = com.tacz.guns.client.tuning.TuningProfiles.current().base().get(ViewTuningConfig.DYNAMIC);
+            ViewTuningSmoke.setBase(ViewTuningConfig.DYNAMIC, true);
             IClientPlayerGunOperator.fromLocalPlayer(mc.player).getDataHolder().hudShotEnvelope.clear();
             return old;
         });
@@ -126,7 +127,7 @@ final class TrackingActionSmoke {
             GunMod.LOGGER.info("PORT_ACTION: tracking client observed settled fire/reload once; legacy pre remained with post channel withdrawn");
         } finally {
             watched = null;
-            context.runOnClient(mc -> ViewTuningConfig.DYNAMIC.set(wasDynamic));
+            context.runOnClient(mc -> ViewTuningSmoke.setBase(ViewTuningConfig.DYNAMIC, wasDynamic));
             server.runOnServer(s -> mob.discard());
         }
     }

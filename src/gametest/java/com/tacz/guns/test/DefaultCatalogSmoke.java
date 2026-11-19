@@ -39,7 +39,9 @@ final class DefaultCatalogSmoke {
                 throw new AssertionError("Unloaded logic script: " + e.getKey());
         }
         var advances = files(server.getResourceManager(), "advancement");
-        if (advances.size() != 23) throw new AssertionError("Expected 23 default advancements: " + advances);
+        long unlocks = advances.stream().filter(id -> id.getPath().startsWith("recipes/")).count();
+        if (advances.size() - unlocks != 23 || unlocks != 19 || server.getAdvancements().get(Identifier.parse("lrtactical:recipes/smith_table")) == null)
+            throw new AssertionError("Expected 23 pack advancements and 19+1 ordinary crafting unlocks: " + advances);
         for (var id : advances) if (server.getAdvancements().get(id) == null) throw new AssertionError("Undecoded advancement " + id);
         int recipes = 0;
         for (var id : files(server.getResourceManager(), "recipe")) {
@@ -59,6 +61,6 @@ final class DefaultCatalogSmoke {
             recipes++;
         }
         if (recipes != 202) throw new AssertionError("Expected 202 default table recipes, got " + recipes);
-        GunMod.LOGGER.info("PORT_CATALOG: server loaded 229 indexes, 202 typed recipes, logic scripts and 23 advancements");
+        GunMod.LOGGER.info("PORT_CATALOG: server loaded 229 indexes, 202 typed recipes, logic scripts and 23 pack advancements plus 20 crafting unlocks");
     }
 }

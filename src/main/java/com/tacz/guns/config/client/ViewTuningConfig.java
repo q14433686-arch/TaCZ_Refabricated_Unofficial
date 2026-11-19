@@ -5,7 +5,7 @@ import net.minecraftforge.common.ForgeConfigSpec;
 /** Player-local presentation only. The existing render.CrosshairType remains the preset selector. */
 public final class ViewTuningConfig {
     public enum Mode { PRESET, DESIGNER, PNG }
-    public enum Shape { CROSS, T, SIDES, BOX, RING }
+    public enum Shape { CROSS, T, SIDES, BOX, RING, LADDER }
     public enum TextureCenter { ORIGINAL, CLEAR, DOT }
 
     public enum Axis {

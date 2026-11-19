@@ -67,7 +67,7 @@ public enum TuningShare {
                 parsed.set(ViewTuningConfig.MODE, Mode.valueOf(f[0]));
                 parsed.set(RenderConfig.CROSSHAIR_TYPE, CrosshairType.valueOf(f[1]));
                 var shape = Shape.valueOf(f[2]);
-                if (v1 && shape == Shape.RING) return false;
+                if (v1 && (shape == Shape.RING || shape == Shape.LADDER)) return false;
                 parsed.set(ViewTuningConfig.SHAPE, shape);
                 parsed.set(ViewTuningConfig.TEXTURE_CENTER, TextureCenter.valueOf(f[3]));
                 int flags = integer(f[4], 0, 7);

@@ -5,6 +5,7 @@ import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.event.common.GunFirePostEvent;
 import com.tacz.guns.client.gameplay.ShotEnvelope;
 import com.tacz.guns.client.tuning.TuningValues;
+import com.tacz.guns.client.tuning.TuningProfiles;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.config.client.ViewTuningConfig;
 import com.tacz.guns.config.client.ViewTuningConfig.Dimension;
@@ -26,9 +27,11 @@ public final class GunCrosshair {
         if (!event.getLogicalSide().isClient()) return;
         var player = Minecraft.getInstance().player;
         // Tracking packets can post this event for OTHER players. A dry/cancelled shot doesn't post it at all.
-        if (player != null && event.getShooter() == player && ViewTuningConfig.DYNAMIC.get()) {
+        if (player != null && event.getShooter() == player) {
+            var style = TuningProfiles.forStack(event.getGunItemStack());
+            if (!style.get(ViewTuningConfig.DYNAMIC)) return;
             IClientPlayerGunOperator.fromLocalPlayer(player).getDataHolder().hudShotEnvelope
-                    .fire(GunTime.nowMillis(), Measure.RECOVERY.option.get());
+                    .fire(GunTime.nowMillis(), style.get(Measure.RECOVERY.option));
         }
     }
 
@@ -45,7 +48,7 @@ public final class GunCrosshair {
         float spread = 0, reserve = 0;
         if (dynamic) {
             var mc = Minecraft.getInstance();
-            float shot = mc.player == null ? 0 : IClientPlayerGunOperator.fromLocalPlayer(mc.player)
+            float shot = fitRadius != Integer.MAX_VALUE || mc.player == null ? 0 : IClientPlayerGunOperator.fromLocalPlayer(mc.player)
                     .getDataHolder().hudShotEnvelope.sample(GunTime.nowMillis());
             float kick = dim(v, Dimension.KICK), level = Math.max(shot, previewShot);
             spread = GunSpread.radius(mc, v.get(Measure.SPREAD_SCALE.option)) + level * kick;
@@ -86,7 +89,8 @@ public final class GunCrosshair {
             }
             // Negative gap pulls arms into the central core. Stop at the axis, never swap the arms.
             float inner = Math.max(0, Math.max(t, dot) / 2 + dim(v, Dimension.GAP)) + spread;
-            fit(gui, Math.max(dot / 2, inner + reserve + Math.max(len, vertical)) + 1, fitRadius);
+            float depth = shape == Shape.LADDER ? 3 * Math.max(vertical, t) + t / 2 : vertical;
+            fit(gui, Math.max(dot / 2, inner + reserve + Math.max(len, depth)) + 1, fitRadius);
             if (len > 0) {
                 if (outline) lines(gui, shape, inner, len, vertical, t, black, true);
                 lines(gui, shape, inner, len, vertical, t, color, false);
@@ -132,7 +136,16 @@ public final class GunCrosshair {
             part(gui, -inner - len, -t / 2, len, t, color, border);
             part(gui, inner, -t / 2, len, t, color, border);
             if (shape == Shape.CROSS) part(gui, -t / 2, -inner - vertical, t, vertical, color, border);
-            if (shape != Shape.SIDES) part(gui, -t / 2, inner, t, vertical, color, border);
+            if (shape == Shape.LADDER) {
+                // A decorative game HUD: three unnumbered rungs below the fixed center. No range or trajectory input.
+                float step = Math.max(vertical, t), from = inner;
+                for (int i = 1; i <= 3; i++) {
+                    float y = inner + i * step, half = Math.max(t / 2, len * (i + 1) / 4);
+                    part(gui, -t / 2, from, t, y - t / 2 - from, color, border);
+                    part(gui, -half, y - t / 2, 2 * half, t, color, border);
+                    from = y + t / 2;
+                }
+            } else if (shape != Shape.SIDES) part(gui, -t / 2, inner, t, vertical, color, border);
         }
     }
 

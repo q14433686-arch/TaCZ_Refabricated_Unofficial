@@ -4,6 +4,9 @@ import com.tacz.guns.client.gameplay.ShotEnvelope;
 import com.tacz.guns.client.renderer.crosshair.CrosshairType;
 import com.tacz.guns.client.renderer.crosshair.GunCrosshair;
 import com.tacz.guns.client.tuning.TuningValues;
+import com.tacz.guns.client.tuning.TuningProfile;
+import com.tacz.guns.client.tuning.TuningProfiles;
+import com.tacz.guns.client.gui.HudAssignments.Scope;
 import com.tacz.guns.client.tuning.TuningShare;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.config.client.ViewTuningConfig;
@@ -43,11 +46,15 @@ public final class ViewTuningScreen extends Screen {
     private static final Pattern INTEGER = Pattern.compile("[+-]?[0-9]+");
     private static final Pattern HUNDREDTHS = Pattern.compile("[+-]?(?:[0-9]+(?:[.,][0-9]{0,2})?|[.,][0-9]{1,2})");
     private static final Pattern THOUSANDTHS = Pattern.compile("[+-]?(?:[0-9]+(?:[.,][0-9]{0,3})?|[.,][0-9]{1,3})");
-    private enum Page { STYLE, GEOMETRY, COLOR, SHARE }
+    private enum Page { STYLE, GEOMETRY, COLOR, SHARE, RULES }
     private Page page = Page.STYLE;
     private String shareStatus;
     @Nullable private final Screen parent;
-    private final TuningValues.Draft draft = new TuningValues.Draft();
+    private final java.util.UUID owner = TuningProfiles.account();
+    private final TuningProfile working = TuningProfiles.current().copy();
+    private final HudAssignments target;
+    private TuningValues.Draft draft = working.base();
+    private boolean saveFailed;
     private final Set<EditBox> invalid = new HashSet<>();
     private final List<Button> needsValid = new ArrayList<>();
     private boolean crosshairTab;
@@ -77,7 +84,11 @@ public final class ViewTuningScreen extends Screen {
     private ViewTuningScreen(@Nullable Screen parent) {
         super(label("title"));
         this.parent = parent;
+        this.target = new HudAssignments(working, Minecraft.getInstance().player.getMainHandItem());
     }
+
+    public boolean isCurrentAccount() { return owner.equals(TuningProfiles.account()); }
+    @Override public void tick() { if (!isCurrentAccount()) onClose(); else super.tick(); }
 
     public TuningValues draft() { return draft; }
     public boolean isCrosshairTab() { return crosshairTab; }
@@ -101,8 +112,9 @@ public final class ViewTuningScreen extends Screen {
         button(X, top + 204, HALF, CommonComponents.GUI_CANCEL, this::onClose);
         needsValid.add(button(X + HALF + 2, top + 204, HALF, label("save"), () -> {
             if (invalid.isEmpty()) {
-                draft.save();
-                onClose();
+                stageHud();
+                if (TuningProfiles.save(owner, working)) onClose();
+                else saveFailed = true;
             }
         }));
     }
@@ -114,7 +126,9 @@ public final class ViewTuningScreen extends Screen {
     }
 
     private void tab(boolean crosshair) {
+        stageHud();
         crosshairTab = crosshair;
+        loadTarget();
         shareStatus = null;
         rebuildWidgets();
     }
@@ -154,7 +168,8 @@ public final class ViewTuningScreen extends Screen {
 
     private void initCrosshair() {
         for (Page p : Page.values()) {
-            Button b = button(X + W / 4 * p.ordinal(), top + 40, W / 4 - 1, label("page." + key(p)), () -> {
+            int count = Page.values().length;
+            Button b = button(X + W * p.ordinal() / count, top + 40, W / count - 1, label("page." + key(p)), () -> {
                 page = p;
                 shareStatus = null;
                 rebuildWidgets();
@@ -222,7 +237,54 @@ public final class ViewTuningScreen extends Screen {
                 addMeasure(Measure.OPACITY, 5, true);
             }
             case SHARE -> shareButtons(row(0));
+            case RULES -> initRules();
         }
+    }
+
+    // An inherited style is read-only until the first edit. Capture the entire resolved HUD on
+    // edit; merely browsing a type/gun must not pin it or copy its position. All of this is local
+    // to this screen until Save, including deleting an existing rule.
+    private void stageHud() {
+        if (crosshairTab && target.scope != Scope.DEFAULT && draft.changed())
+            working.setHud(target.type(), target.gun(), draft);
+    }
+
+    private void loadTarget() {
+        draft = !crosshairTab || target.scope == Scope.DEFAULT ? working.base()
+                : new TuningValues.Draft(working.hud(target.type(), target.gun()));
+        previewShots.clear();
+    }
+
+    private void select(Scope scope, @Nullable String key) {
+        stageHud();
+        target.scope = scope;
+        if (key != null) target.select(key);
+        loadTarget(); shareStatus = null;
+        rebuildWidgets();
+    }
+
+    private void initRules() {
+        for (Scope scope : Scope.values()) {
+            var b = button(X + W * scope.ordinal() / 3, row(0), W / 3 - 1, label("scope." + key(scope)), () -> select(scope, null));
+            b.active = scope != target.scope && target.available(scope);
+        }
+        if (target.scope == Scope.DEFAULT) return;
+
+        button(X, row(2), 22, Component.literal("<"), () -> select(target.scope, target.step(-1)));
+        button(X + 24, row(2), W - 48, label("held"), () -> select(target.scope, target.held())).active = target.held() != null;
+        button(X + W - 22, row(2), 22, Component.literal(">"), () -> select(target.scope, target.step(1)));
+        var search = addRenderableWidget(new EditBox(font, X, row(3), W - 47, H, label("search_hint")));
+        search.setMaxLength(256); search.setHint(label("search_hint"));
+        button(X + W - 45, row(3), 45, label("find"), () -> {
+            var match = target.find(search.getValue());
+            if (match != null) select(target.scope, match); else shareStatus = "not_found";
+        });
+        boolean override = draft.changed() || working.overrides(target.type(), target.gun());
+        button(X, row(4), W, label(override ? "inherit" : "customize"), () -> {
+            if (override) working.inherit(target.type(), target.gun());
+            else working.setHud(target.type(), target.gun(), draft);
+            loadTarget(); shareStatus = null; rebuildWidgets();
+        });
     }
 
     private static String key(Enum<?> e) { return e.name().toLowerCase(Locale.ROOT); }
@@ -310,7 +372,10 @@ public final class ViewTuningScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta) {
-        gui.text(font, invalid.isEmpty() ? title : label("invalid"), X + 1, top + 5, invalid.isEmpty() ? -1 : 0xFFFF9999, false);
+        if (!isCurrentAccount()) return;
+        Component heading = !invalid.isEmpty() ? label("invalid") : saveFailed ? label("save_failed") : !crosshairTab ? title
+                : target.scope == Scope.DEFAULT ? label("editing_default") : label("value", label("scope." + key(target.scope)), target.name(target.key()));
+        gui.text(font, font.plainSubstrByWidth(heading.getString(), W - 2), X + 1, top + 5, invalid.isEmpty() && !saveFailed ? -1 : 0xFFFF9999, false);
         if (crosshairTab) {
             Mode mode = draft.get(ViewTuningConfig.MODE);
             switch (page) {
@@ -325,6 +390,14 @@ public final class ViewTuningScreen extends Screen {
                 case COLOR -> {
                     gui.text(font, label("rgb"), X + 2, row(4) + 5, -1, false);
                     gui.fill(X + W - 96, row(4) + 3, X + W - 84, row(4) + 15, 0xFF000000 | draft.get(ViewTuningConfig.RGB));
+                }
+                case RULES -> {
+                    if (target.scope == Scope.DEFAULT) hint(gui, label("rule_hint"), row(2));
+                    else {
+                        gui.text(font, font.plainSubstrByWidth(target.name(target.key()).getString(), W - 4), X + 2, row(1) + 5, -1, false);
+                        if (shareStatus != null) status(gui, row(5) + 4);
+                        else gui.text(font, font.plainSubstrByWidth(target.key(), W - 4), X + 2, row(5) + 4, 0xFFE0E7E9, false);
+                    }
                 }
                 case SHARE -> {
                     hint(gui, label("share_hint"), row(2));
