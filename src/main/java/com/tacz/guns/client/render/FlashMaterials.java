@@ -23,13 +23,13 @@ public final class FlashMaterials {
     private static final Map<Key, RenderType> TYPES = new HashMap<>();
 
     public static RenderType swirl(Identifier texture, boolean clipped, int uvOffset) {
-        if (!IrisCompat.isUsingRenderPack()) return clipped ? ScopeBodyRenderTypes.swirlClipped(texture, uvOffset)
+        if (!IrisCompat.hasActiveIrisPack()) return clipped ? ScopeBodyRenderTypes.swirlClipped(texture, uvOffset)
                 : RenderTypes.energySwirl(texture, uvOffset, uvOffset);
         return type(Layer.SWIRL, texture, clipped, uvOffset);
     }
 
     public static RenderType legacyStrip(Identifier texture, boolean clipped) {
-        if (!IrisCompat.isUsingRenderPack()) return clipped ? ScopeBodyRenderTypes.flashTranslucent(texture)
+        if (!IrisCompat.hasActiveIrisPack()) return clipped ? ScopeBodyRenderTypes.flashTranslucent(texture)
                 : RenderTypes.entityTranslucent(texture);
         return type(Layer.STRIP, texture, clipped, 0);
     }

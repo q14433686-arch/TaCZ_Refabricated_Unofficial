@@ -147,6 +147,11 @@ public final class IrisCompat {
         return result;
     }
 
+    /** Unlike the generic pack fallback, never opt Sulkan into an Iris-specific material. */
+    public static boolean hasActiveIrisPack() {
+        return FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS) && isUsingRenderPack();
+    }
+
     private static boolean computeUsingRenderPack() {
         // Iris 检查 - 使用反射避免硬依赖
         if (FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) {

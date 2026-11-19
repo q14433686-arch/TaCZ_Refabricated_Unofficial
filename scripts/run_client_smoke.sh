@@ -50,7 +50,13 @@ esac
 timeout -k 20s 10m ./gradlew "${args[@]}" runClientGameTest --console=plain --stacktrace 2>&1 | tee "$RUNNER_TEMP/tacz-client.log"
 if [[ -n ${TACZ_IRIS_COLOR:-} ]]; then
     grep -Fq 'PORT_REIMAGINED: complete' "$run/logs/latest.log"
-    grep -E 'PORT_REIMAGINED:|program match for tacz:pipeline/(illuminated|muzzle)' "$run/logs/latest.log" | sed 's/^/::notice::/'
+    for marker in 'removed caster residual=' 'stock locator changed=' 'same stock white strip texel' 'timed exposure held'; do
+        grep -Fq "PORT_REIMAGINED: $marker" "$run/logs/latest.log"
+    done
+    grep -Fq 'material=energy_swirl' "$run/logs/latest.log"
+    # Avoid the Checks per-step notice cap hiding the final verdict: count/material/colour first.
+    grep -E 'PORT_REIMAGINED: (metal |skin |ground |stock locator|same stock|removed caster)|PORT_SCOPE_PARTICLE:' "$run/logs/latest.log" | sed 's/^/::notice::/'
+    grep -E 'PORT_REIMAGINED: (shadow |.*caster bounds|Complementary)|program match for tacz:pipeline/(illuminated|muzzle)' "$run/logs/latest.log"
     exit
 fi
 if [[ ${TACZ_SMOKE_PAL:-} == true ]]; then

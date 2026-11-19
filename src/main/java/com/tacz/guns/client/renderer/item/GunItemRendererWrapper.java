@@ -1,5 +1,6 @@
 package com.tacz.guns.client.renderer.item;
 
+import com.tacz.guns.client.render.ViewmodelFlash;
 import cn.sh1rocu.simplebedrockmodel.api.event.ViewportEvent;
 import com.google.common.base.Suppliers;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -401,7 +402,7 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             // 之后的视图坐标也逐帧记下：若 viewRoot 与 viewMuzzle 同偏同量，偏转来自定位/延滞链；
             // 若 viewRoot 不偏而 viewMuzzle 偏，则来自骨骼动画层（枪口骨骼路径）。
             debugRecoilGunRoot(poseStack.last().pose());
-            com.tacz.guns.client.render.ViewmodelFlash.submit(stack, light, baseLight ->
+            ViewmodelFlash.submit(stack, light, baseLight ->
                     gunModel.submit(poseStack, stack, ctx, collector, renderType,
                             display.getModelTexture(), baseLight, OverlayTexture.NO_OVERLAY));
             // 缓存枪口位置，为第一人称曳光弹渲染作准备

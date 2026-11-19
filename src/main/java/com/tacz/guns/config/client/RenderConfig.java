@@ -24,7 +24,7 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue SCOPE_THERMAL_ENABLE;
     public static ForgeConfigSpec.BooleanValue ENABLE_OCULAR_INFLATE;
     public static ForgeConfigSpec.DoubleValue OCULAR_INFLATE;
-    /** Iris 瞄具掩码注入策略。HAND_ONLY 只碰手部/枪械程序；ALL 旧行为（全注）；OFF 全关（光影下不裁剪，仅对照实验）。默认 HAND_ONLY。 */
+    /** Iris 瞄具掩码注入策略。HAND_ONLY 只碰手部程序和裁剪自发光所用的实体程序；ALL 旧行为（全注）；OFF 全关（光影下不裁剪，仅对照实验）。默认 HAND_ONLY。 */
     public enum IrisScopeMaskInjection {
         HAND_ONLY,
         ALL,

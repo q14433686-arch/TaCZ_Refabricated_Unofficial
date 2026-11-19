@@ -13,7 +13,7 @@ public final class ViewmodelFlash {
 
     public static void submit(ItemStack gun, int ambient, IntConsumer draw) {
         int lit = NativeMuzzleEffects.flashLight(gun, ambient);
-        if (lit == ambient || !IrisCompat.isUsingRenderPack()) {
+        if (lit == ambient || !IrisCompat.hasActiveIrisPack()) {
             draw.accept(lit);
             return;
         }

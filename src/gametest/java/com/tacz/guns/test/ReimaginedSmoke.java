@@ -1,11 +1,13 @@
 package com.tacz.guns.test;
 
 import cn.sh1rocu.tacz.api.LogicalSide;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.event.common.GunFirePostEvent;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
+import com.tacz.guns.client.model.bedrock.IlluminatedMaterials;
 import com.tacz.guns.client.particle.NativeMuzzleEffects;
 import com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader;
 import com.tacz.guns.client.particle.bedrock.particle.world.SnowstormMaterials;
@@ -16,14 +18,11 @@ import com.tacz.guns.test.mixin.ReimaginedShotControl;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.rendertype.RenderType;
-import com.tacz.guns.client.model.bedrock.IlluminatedMaterials;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -127,12 +126,19 @@ public final class ReimaginedSmoke {
             var dropped=server.computeOnServer(s->{var level=world.getConnection().getServerPlayer().level();
                 var e=new ItemEntity(level,base.getX()+.5,base.getY()+.8,base.getZ()+4.5,gun(SVD),0,0,0); e.setNoGravity(true); e.setPickUpDelay(32767);level.addFreshEntity(e);return e.getUUID();});
             ctx.waitFor(mc->mc.level.getEntity(dropped)!=null);
-            shadow(ctx,"drop",failures);
+            var before = shadow(ctx,"drop",failures);
             server.runOnServer(s->world.getConnection().getServerPlayer().level().getEntity(dropped).snapTo(Vec3.atCenterOf(base.offset(3,0,5))));
             ctx.waitFor(mc->mc.level.getEntity(dropped).getX()>base.getX()+2);
-            shadow(ctx,"moved",failures);
+            var moved = shadow(ctx,"moved",failures);
+            if (Math.hypot(before.x-moved.x,before.y-moved.y)<8) failures.append(" stationary-shadow");
             server.runOnServer(s->world.getConnection().getServerPlayer().level().getEntity(dropped).discard());
             ctx.waitFor(mc->mc.level.getEntity(dropped)==null); frame(ctx,"removed");
+            ctx.runOnClient(mc->{
+                omitCaster=true; var absent=renderDepth(mc); omitCaster=false; var all=renderDepth(mc); int changed=0;
+                for(int i=0;i<all.length;i++) if(Math.abs(absent[i]-all[i])>.00015f) changed++;
+                GunMod.LOGGER.info("PORT_REIMAGINED: removed caster residual={}",changed);
+                if(changed>2) failures.append(" residual-shadow");
+            });
             server.runCommand("time set 18000");
             // Dim blue ACT light behind the camera. Keep the first person mesh and its base ambient material.
             server.runOnServer(s->world.getConnection().getServerPlayer().level().setBlock(base.offset(0,0,-6),Blocks.SOUL_LANTERN.defaultBlockState(),Block.UPDATE_ALL));
@@ -142,18 +148,22 @@ public final class ReimaginedSmoke {
             var off=frame(ctx,"night_off");
             ctx.runOnClient(mc->{pulse=true;bodyOnly=true;});
             var body=frame(ctx,"night_body");
-            ctx.runOnClient(mc->bodyOnly=false); frame(ctx,"night_stock");
-            ctx.runOnClient(mc->{pulse=false;NativeMuzzleEffects.clear();WorldEmitterManager.getInstance().clear();});
-            GunMod.LOGGER.info("PORT_REIMAGINED: {} held shot extractions; off/body samples (gun and skin) {}",pulses,regions(off,body));
+            ctx.runOnClient(mc->bodyOnly=false); var stock=frame(ctx,"night_stock");
+            ctx.runOnClient(mc->pulse=false); ctx.waitTicks(20); // let the 50 ms shot pulse expire normally
+            var cooled=frame(ctx,"night_cooled");
+            ReimaginedFrames.exposure(off,body,stock,cooled,failures);
+            GunMod.LOGGER.info("PORT_REIMAGINED: timed exposure held for {} hand extractions",pulses);
             if(pulses==0)throw new AssertionError("No real hand submits");
             equip(ctx,world,null);
             ctx.runOnClient(mc->tile=1); var strip=rgb(frame(ctx,"night_strip"));
             ctx.runOnClient(mc->tile=2); var emitted=rgb(frame(ctx,"night_reference"));
             GunMod.LOGGER.info("PORT_REIMAGINED: same stock white strip texel RGB={} emissive reference={}",Arrays.toString(strip),Arrays.toString(emitted));
             for(int i=0;i<3;i++) if(emitted[i]<110 || Math.abs(strip[i]-emitted[i])>14){failures.append(" strip!=emissive");break;}
+            ctx.runOnClient(mc->tile=0);
+            ScopeUserRegressionSmoke.run(ctx, world, true);
             if(!failures.isEmpty()) throw new AssertionError("Reimagined: "+failures);
             GunMod.LOGGER.info("PORT_REIMAGINED: complete");
-        } finally { ctx.runOnClient(mc->{tile=0;pulse=bodyOnly=shadowReference=omitCaster=false;targets=oldMaterial=svdBody=null;}); }
+        } finally { ctx.runOnClient(mc->{tile=0;pulse=bodyOnly=shadowReference=omitCaster=false;targets=null;oldMaterial=svdBody=null;}); }
     }
     private static float[] renderDepth(Minecraft mc) {
         // Four complete renders on the SAME client tick. No advancing item bob/spin or actor
@@ -162,9 +172,11 @@ public final class ReimaginedSmoke {
         mc.gameRenderer.render(); RenderSystem.getDevice().createCommandEncoder().submit();
         return depth();
     }
-    private static void shadow(ClientGameTestContext ctx, String label, StringBuilder failures) {
+    private record Center(double x, double y) {}
+
+    private static Center shadow(ClientGameTestContext ctx, String label, StringBuilder failures) {
         frame(ctx,label);
-        ctx.runOnClient(mc->{
+        return ctx.computeOnClient(mc->{
             // A null shadow mapping was the suspected regression. Use the original visible
             // (non-shadow) illuminated type as a deliberate bad caster for sensitivity.
             svdBody=RenderTypes.entityCutout(Identifier.parse("tacz:textures/gun/uv/svd.png"));
@@ -174,16 +186,24 @@ public final class ReimaginedSmoke {
             var actual=renderDepth(mc);
             oldMaterial=unmapped; var bad=renderDepth(mc); oldMaterial=null;
             int n=(int)Math.sqrt(actual.length), width=0, near=0, agree=0,spurious=0,badSpurious=0;
+            int minX=n,minY=n,maxX=0,maxY=0,sumX=0,sumY=0;
             // Static nearby terrain, but waving leaves/foliage may change a few individual
             // distant texels even within a tick. Count long contiguous runs as well as area.
             for(int y=0;y<n;y++) {int run=0;for(int x=0;x<n;x++) {
                 int i=x+y*n; boolean ref=Math.abs(ideal[i]-absent[i])>.00015f, got=Math.abs(actual[i]-absent[i])>.00015f;
-                if(ref)near++; if(ref && Math.abs(actual[i]-ideal[i])<.00015f)agree++;
+                if(ref) {
+                    near++; sumX+=x; sumY+=y;
+                    minX=Math.min(x,minX); minY=Math.min(y,minY); maxX=Math.max(x,maxX); maxY=Math.max(y,maxY);
+                    if(Math.abs(actual[i]-ideal[i])<.00015f)agree++;
+                }
                 if(!ref && got)spurious++;
                 if(!ref && Math.abs(bad[i]-absent[i])>.00015f){badSpurious++;width=Math.max(width,++run);}else run=0;
             }}
             GunMod.LOGGER.info("PORT_REIMAGINED: shadow {} reference={} same-depth={} extra={} unmapped-extra={} unmapped-longest-row={} selects={}",label,near,agree,spurious,badSpurious,width,shadowBodies);
-            if(shadowBodies==0 || near<3 || agree<near*.70 || spurious>Math.max(12,near*.15)) failures.append(' ').append(label).append("-shadow");
+            GunMod.LOGGER.info("PORT_REIMAGINED: {} caster bounds ({},{})..({},{})",label,minX,minY,maxX,maxY);
+            if (label.equals("held") && (width<n/6 || badSpurious<near*3)) failures.append(" insensitive-shadow-control");
+            if(shadowBodies==0 || near<3 || maxX-minX>n/8 || maxY-minY>n/8 || agree<near*.90 || spurious>Math.max(8,near*.1)) failures.append(' ').append(label).append("-shadow");
+            return new Center(sumX/(double)Math.max(1,near),sumY/(double)Math.max(1,near));
         });
     }
     // Sample the shipped flash strip through the production material factory against the pack's
@@ -207,14 +227,5 @@ public final class ReimaginedSmoke {
             int c=image.getRGB(x,y);for(int i=0;i<3;i++)s[i]+=(c>>(16-8*i))&255;n++;
         }
         for(int i=0;i<3;i++)s[i]/=n;return s;
-    }
-    private static String regions(BufferedImage off,BufferedImage on){
-        var msg=new StringBuilder();
-        for (int[] rect:new int[][]{{62,71,65,74},{49,67,51,70}}){
-            int[] a=new int[3],b=new int[3];int n=0;
-            for(int y=off.getHeight()*rect[1]/100;y<off.getHeight()*rect[3]/100;y++)for(int x=off.getWidth()*rect[0]/100;x<off.getWidth()*rect[2]/100;x++){
-                for(int i=0;i<3;i++){a[i]+=off.getRGB(x,y)>>(16-8*i)&255;b[i]+=on.getRGB(x,y)>>(16-8*i)&255;}n++;}
-            for(int i=0;i<3;i++){a[i]/=n;b[i]/=n;}msg.append(Arrays.toString(a)).append(" -> ").append(Arrays.toString(b)).append(';');
-        }return msg.toString();
     }
 }

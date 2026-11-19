@@ -1,5 +1,7 @@
 package com.tacz.guns.util;
 
+import com.tacz.guns.client.render.ViewmodelFlash;
+import com.tacz.guns.client.render.FlashMaterials;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
 import com.tacz.guns.compat.ar.ARCompat;
@@ -121,13 +123,13 @@ public final class RenderHelper {
             }
             // 【手臂对齐修复】中和 vanilla 1.21.9+ 的 zRot=±0.1，见本方法第 6 轮注释。
             resetFirstPersonArmLean(renderer);
-            float gain = com.tacz.guns.client.render.ViewmodelFlash.gain();
+            float gain = ViewmodelFlash.gain();
             if (gain > 0 && renderer.getModel() instanceof PlayerModel model) {
                 int gray = Math.round(gain * 255);
                 // Same live ModelPart (including sleeve visibility) and pose as vanilla. Submit
                 // AFTER the regular depth-writing body/arm; do not relight the skin globally.
                 collector.order(1).submitModelPart(hand == HumanoidArm.RIGHT ? model.rightArm : model.leftArm,
-                        matrixStack, com.tacz.guns.client.render.FlashMaterials.reflection(skinTexture), combinedLight,
+                        matrixStack, FlashMaterials.reflection(skinTexture), combinedLight,
                         net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, null, 0xff000000 | gray * 0x010101);
             }
         } finally {

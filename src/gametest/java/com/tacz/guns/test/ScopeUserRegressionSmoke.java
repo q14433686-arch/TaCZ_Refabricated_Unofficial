@@ -15,6 +15,11 @@ import net.minecraft.world.InteractionHand;
 /** User-reported AMG10 regression: exercise all actual aiming locators, not just installation. */
 final class ScopeUserRegressionSmoke {
     static void run(ClientGameTestContext ctx, TestSingleplayerContext world) {
+        run(ctx, world, false);
+    }
+
+    /** The actual user pack also exercises the separately mapped emissive aperture path. */
+    static void run(ClientGameTestContext ctx, TestSingleplayerContext world, boolean emissive) {
         var scope=Identifier.parse("tacz:scope_amg_10");
         var saved=world.getServer().computeOnServer(s->world.getConnection().getServerPlayer().getMainHandItem().copy());
         var prior=ctx.computeOnClient(mc->new boolean[]{mc.options.bobView().get(),RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.get()});
@@ -48,7 +53,7 @@ final class ScopeUserRegressionSmoke {
                             ?"invalid aperture "+w+"x"+h+" at "+(b[1]+b[3])/2:"";
                 });
                 if(!failure.isEmpty())errors.append("zoom ").append(z).append(": ").append(failure).append("; ");
-                checkOwnedParticle(ctx,z);
+                checkOwnedParticle(ctx,z,emissive);
             }
             if(!errors.isEmpty())throw new AssertionError("AMG10 optical-axis mismatch: "+errors);
             GunMod.LOGGER.info("PORT_AMG10: all three zooms produced bounded on-axis apertures");
@@ -61,7 +66,7 @@ final class ScopeUserRegressionSmoke {
         }
     }
 
-    private static void checkOwnedParticle(ClientGameTestContext ctx,int zoom) {
+    private static void checkOwnedParticle(ClientGameTestContext ctx,int zoom,boolean emissive) {
         var runtime=com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance();
         final java.awt.image.BufferedImage baseline;
         try { baseline=javax.imageio.ImageIO.read(ctx.takeScreenshot("tacz_amg10_particle_baseline_"+zoom).toFile()); }
@@ -71,13 +76,13 @@ final class ScopeUserRegressionSmoke {
             var def=new com.tacz.guns.client.particle.bedrock.particle.data.ParticleEffectDeserializer().parse(
                     com.google.gson.JsonParser.parseString("""
                     {"particle_effect":{"description":{"identifier":"port_test:scope_particle","basic_render_parameters":{
-                    "material":"particles_add","texture":"minecraft:textures/particle/generic_0"}},"components":{
+                    "material":"%s","texture":"minecraft:textures/particle/generic_0"}},"components":{
                     "sbm:fp_emitter_local_space":{"position":false,"rotation":false,"velocity":false,"to_world":true},
                     "minecraft:emitter_rate_instant":{"num_particles":1},"minecraft:emitter_lifetime_once":{"active_time":0.1},
                     "minecraft:emitter_shape_point":{"offset":[0,0,0]},"minecraft:particle_lifetime_expression":{"max_lifetime":1},
                     "minecraft:particle_appearance_billboard":{"size":[0.3,0.3],"facing_camera_mode":"rotate_xyz"},
                     "minecraft:particle_appearance_tinting":{"color":[1,0,1,1]}}}}
-                    """),env);
+                    """.formatted(emissive?"energy_swirl":"particles_add")),env);
             var p=mc.gameRenderer.mainCamera().position().add(mc.player.getLookAngle().scale(2));
             var matrix=new org.joml.Matrix4f().translation((float)p.x,(float)p.y,(float)p.z);
             var emitter=runtime.addEmitter(mc.level,matrix,net.minecraft.world.phys.Vec3.ZERO,def,"",mc.player);
@@ -101,7 +106,7 @@ final class ScopeUserRegressionSmoke {
                 if ((c >>> 16 & 255) > green+15 && (c & 255) > green+15 && dr>30 && db>=0 && dr+db-2*dg>40) magenta++;
             }
             if(zoom<2?magenta>0:magenta<8)throw new AssertionError("Owned particle aperture policy zoom="+zoom+" magenta="+magenta);
-            GunMod.LOGGER.info("PORT_SCOPE_PARTICLE: AMG10 zoom={} central magenta={}",zoom,magenta);
+            GunMod.LOGGER.info("PORT_SCOPE_PARTICLE: AMG10 zoom={} central magenta={} material={}",zoom,magenta,emissive?"energy_swirl":"particles_add");
         } catch(java.io.IOException e) { throw new java.io.UncheckedIOException(e); }
         finally { ctx.runOnClient(mc->runtime.clear()); }
     }

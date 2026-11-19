@@ -2,6 +2,7 @@ package com.tacz.guns.client.particle.bedrock.particle.world;
 
 import com.mojang.renderpearl.api.pipeline.*;
 import com.tacz.guns.client.particle.bedrock.particle.data.ParticleDescription;
+import com.tacz.guns.client.render.FlashMaterials;
 import com.tacz.guns.client.render.scope.*;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.minecraft.client.renderer.BindGroupLayouts;
@@ -24,7 +25,7 @@ public final class SnowstormMaterials {
         return switch (desc.getMaterial()) {
             case PARTICLES_OPAQUE -> clipped ? ScopeBodyRenderTypes.clipped(texture) : RenderTypes.entityCutout(texture);
             case PARTICLES_ALPHA, PARTICLES_BLEND -> clipped ? ScopeBodyRenderTypes.flashTranslucent(texture) : RenderTypes.entityTranslucent(texture);
-            case ENERGY_SWIRL -> com.tacz.guns.client.render.FlashMaterials.swirl(texture, clipped, 1);
+            case ENERGY_SWIRL -> FlashMaterials.swirl(texture, clipped, 1);
             case PARTICLES_ADD, PARTICLES_EMISSIVE -> TYPES.computeIfAbsent(
                     new Key(new Pass(desc.getMaterial() == ParticleDescription.Material.PARTICLES_EMISSIVE, clipped, hand || clipped), texture), key -> {
                 var setup = RenderSetup.builder(PIPELINES.computeIfAbsent(key.pass, SnowstormMaterials::pipeline))
