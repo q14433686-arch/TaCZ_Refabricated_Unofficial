@@ -71,15 +71,24 @@
 
 ## PAL 离屏与第一人称约束的独立验收
 
-`4f2df05` 的[普通构建、专服与 Mesa 客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138832/job/135268736218)、[手柄](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138908/job/135268736808)、[两个 viewer](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138855)通过。[PAL 作业](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138849/job/135268736137)已进入游戏，但测试自己构造的 `RemotePlayer` 没有出生包提供 ID，读 `getId()` 即报错；没有到达离屏动作断言。这是夹具的失败，不据此改 PAL 播放逻辑。[Iris 作业](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138863/job/135268736379)解析 Gson/Kotlin 元数据遇 HTTP 429，没有光影画面。最近同时跑完普通与光影渲染套件的提交仍是 `3594ef8`。
+`4f2df05` 的[普通构建、专服与 Mesa 客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138832/job/135268736218)、[手柄](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138908/job/135268736808)、[两个 viewer](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138855)通过。[PAL 作业](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138849/job/135268736137)已进入游戏，但测试自己构造的 `RemotePlayer` 没有出生包提供 ID，读 `getId()` 即报错；没有到达离屏动作断言。这是夹具的失败，不据此改 PAL 播放逻辑。[Iris 作业](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138863/job/135268736379)解析 Gson/Kotlin 元数据遇 HTTP 429，没有光影画面。当时最近同时跑完普通与光影渲染套件的提交是 `3594ef8`。
 
-复测把未占用的负 ID 赋给这个仅用于测试的角色，不向服务端发假玩家。另用同一套第一人称模型、同一个运动的父骨骼和三条等时动画，在 ADS 实际写入约束矩阵前后取样；+1 → 0 → −1 同机位留三张图，比较两种符号与零对照的姿态差异。这两种新验收不能靠测试代码存在就标绿。
+`b49d4e9` 首次[跑完 PAL 1.2.7 的离屏验收](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44438204138/job/135272258500)。这个集成客户端给测试 `RemotePlayer` 分配了一个未占用的负 ID，不向服务端发假玩家。转身背对角色时模型 `setupAnim` 计数为零，步枪上身循环已启动并推进；转回看见角色，背过身收枪、换手枪时无需再渲染就切到了不同的待机动画，第二次转回仍在播。本地玩家 F5 后自己的控制器启用，回第一人称后停止；远端手枪层不受影响。**不是两台网络客户端，也没有测任意第三人称模组的组合。**
+
+同一提交的[普通 Mesa / Vulkan](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44438204095/job/135272258661)与[启用测试光影的 Iris / OpenGL](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44438204109/job/135272258600)均通过完整套件。为了从数值断言走到画面，在 AK 第一人称模型的同一父骨骼上写入相同位移与 12° 旋转，唯一区别是 `constraint` 三轴的位移和旋转通道：**+1 → 0 → −1**。中间的零防止沿用上一条正向动画蒙混过关。ADS 权重 ≥0.95 时在实际姿态栈写入前后取样，再用同一机位的图比较（不含聊天框和快捷栏；RGB 三通道绝对差之和 ≥48 的像素数）。
+
+| 客户端 | ±1 的平移／旋转校正上界 | 零对照平移／旋转（弧度） | + 与 − 不同的像素 | + 与 0 / − 与 0 |
+|---|---:|---:|---:|---:|
+| 普通 | <0.000001 / 0 | 0.3998 / 0.2103 | 6,877 | 109,523 / 109,700 |
+| Iris 光影 | <0.000001 / 0 | 0.4010 / 0.2094 | 4,096 | 111,198 / 111,153 |
+
+结论是**这组三条实际动画**中正负输入被当成同一幅值，零输入则产生可见的不同姿态；没有声称正负两帧逐像素相等，或每个第三方模型的 ADS 都无偏移。之前的 JUnit 仍分别覆盖混合、复位和根约束节点。
 
 ## 尚不能外推的部分
 
 - **输入与展示：** `ae8f1d9` 的[超时][rack-failure]后来在 `043fba5` 定位到原版好友 GUI 吞掉 O（两端均未收到 use）。新默认 K 和旧 `options.txt` 的手动改绑说明见 README。已过的是生存模式的指定板／柜和烘焙物品，不是每种第三方特殊渲染器或用户现存的所有键位组合。
 - **粒子与曳光：** 世界六材质、玩家开火跨帧、0/5 碎屑和本测试光影的三档准镜有独立证据。普通客户端的手部六材质与侧倾有单独对照；不能外推到任意光影包。[旧版正对照为零的原帧](../../build-reports/visual/44425974217-tacz_amg10_particle_2.png)也不能作通过证据。
-- **近似实现与预算：** 保留测距 1,024 格、标记倍率 32、模拟 600 tick 及实体寿命上限；超预算或不可达不画。普通发光骨骼的环境 sky 与面法线是两件事，仍需非准星骨骼的方向光画面对照。约束通道的数值/复位不是所有 ADS 动作的手部姿态证明。PAL 玩家离屏／再入镜、第三方大包与 GPU 性能也不能由 16 板的 CPU 样本推出。转换器遇不可证等价的条件仍报出，不静默改包。
+- **近似实现与预算：** 保留测距 1,024 格、标记倍率 32、模拟 600 tick 及实体寿命上限；超预算或不可达不画。普通发光骨骼的环境 sky 与面法线是两件事，仍需非准星骨骼的方向光画面对照。约束的指定 ADS 夹具和 PAL 单客户端离屏/再入镜实测见上；并非所有 ADS 动作或两人联网验收。第三方大包与 GPU 性能不能由 16 板的 CPU 样本推出。转换器遇不可证等价的条件仍报出，不静默改包。
 - **外部组合：** Sable/Simulated、独立 EMI 插件、Accelerated Rendering 都没有在本轮获得可验证的 26.3 运行组合；AR 仍是禁用，不写成已修。未找到可验证组合不等于不存在。KubeJS 不把目标 Fabric 上游已注释的事件投递算作已运行能力。其它 26.X 线的欠账保留在原审计。
 
 [pad]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44427465994/job/135236056454

@@ -1,13 +1,9 @@
-# Compare the real hand alpha/blend discrepancy under Iris to the ordinary passing client.
-44434717131	smoke	tacz_mesh_empty
-44434717131	smoke	tacz_mesh_ghost
-44434717131	smoke	tacz_mesh_placed
-44434717131	smoke	tacz_hand_material_dark_particles_opaque
-44434717131	smoke	tacz_hand_material_dark_particles_alpha
-44434717131	smoke	tacz_billboard_roll_0_rotate_y
-44434717131	smoke	tacz_billboard_roll_30_rotate_y
-44434717131	smoke	tacz_billboard_roll_30_rotate_xyz
-44434717123	iris	tacz_hand_material_dark_control
-44434717123	iris	tacz_hand_material_dark_particles_opaque
-44434717123	iris	tacz_hand_material_dark_particles_alpha
-44434717123	iris	tacz_hand_material_dark_particles_blend
+# PAL re-entry and signed-constraint controls. Original frames from the same b49d4e9 source.
+44438204138	pal	tacz_pal_remote_rifle
+44438204138	pal	tacz_pal_remote_pistol
+44438204095	smoke	tacz_constraint_ads_positive
+44438204095	smoke	tacz_constraint_ads_zero
+44438204095	smoke	tacz_constraint_ads_negative
+44438204109	iris	tacz_constraint_ads_positive
+44438204109	iris	tacz_constraint_ads_zero
+44438204109	iris	tacz_constraint_ads_negative
