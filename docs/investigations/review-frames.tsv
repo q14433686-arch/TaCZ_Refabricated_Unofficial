@@ -10,3 +10,6 @@
 44482591156	smoke	tacz_view_tuning_m320_rule
 44482591156	smoke	tacz_view_tuning_m320_ladder
 44482591156	smoke	tacz_view_tuning_rpg7_type
+# PR 122: same-frame scale diagnostic (green = full-facing reference, magenta = upright).
+44563511559	iris	tacz_billboard_roll_0_control
+44563511559	iris	tacz_billboard_roll_0_rotate_y_pair
