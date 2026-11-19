@@ -51,7 +51,7 @@ public final class SurfaceLights {
 
     private record Ray(Vec3 origin, Vec3 delta) {}
     private record Anchor(Identifier gun, Identifier display, boolean first, long frame, Ray ray) {}
-    private record Draw(List<SurfaceProjection.Patch> patches, int rgb, float strength) {}
+    private record Draw(List<SurfaceProjection.Patch> patches, int rgb, float strength, double bias) {}
     private static final class Pulse {
         final Vec3 pos, eye, bias;
         final double range;
@@ -184,6 +184,12 @@ public final class SurfaceLights {
         pulses.removeIf(p -> p.expired(now) || !(p.eye==null ? RenderConfig.EXPLOSION_SURFACE_LIGHT.get()
                 : RenderConfig.MUZZLE_SURFACE_LIGHT.get() && !RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()));
         var draws=new ArrayList<Draw>(MAX_PULSES);
+        var mc=Minecraft.getInstance();
+        var state=mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
+        // Terrain and emissive entities can have different subpixel jitter under Iris. A
+        // .002-block normal offset disappears behind a jittered floor at grazing incidence.
+        // Bound the clearance in BOTH screen pixels and blocks; never disable depth testing.
+        double pixelSlope=IrisCompat.hasActiveIrisPack() ? 2.0/(Math.max(1,mc.getWindow().getHeight())*Math.max(.1,Math.abs(state.projectionMatrix.m11()))) : 0;
         for (var p:pulses) {
             boolean firstBuild=p.patches==null;
             if ((firstBuild || (p.refreshCrater && tick>p.builtTick)) && builds<MAX_PULSES && (p.eye==null || muzzleBuilds<MAX_MUZZLES)) {
@@ -195,11 +201,15 @@ public final class SurfaceLights {
                 p.builtTick=tick;
                 if (firstBuild) p.start=now; else p.refreshCrater=false; // never restart the envelope
             }
-            if (p.patches!=null && !p.patches.isEmpty()) draws.add(new Draw(p.patches,p.rgb,p.intensity(now)));
+            if (p.patches!=null && !p.patches.isEmpty()) {
+                double far=p.pos.distanceTo(camera)+p.range/(p.eye==null ? 1 : 1-SpillField.MUZZLE_BIAS);
+                double bias=.002+Math.min(.09,.85*far*pixelSlope);
+                draws.add(new Draw(p.patches,p.rgb,p.intensity(now),bias));
+            }
         }
         if (draws.isEmpty()) return;
         out.submitCustomGeometry(new PoseStack(),FlashMaterials.surface(),(pose,vertices) -> {
-            for (var draw:draws) for (var patch:draw.patches) patch.draw(pose,vertices,camera,draw.rgb,draw.strength);
+            for (var draw:draws) for (var patch:draw.patches) patch.draw(pose,vertices,camera,draw.rgb,draw.strength,draw.bias);
         });
     }
     private SurfaceLights() {}

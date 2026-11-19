@@ -36,7 +36,11 @@ public class PackClientSmoke implements FabricClientGameTest {
             context.waitFor(client -> CommonNetworkCache.INSTANCE.getGunIndex(id) != null
                     && TimelessAPI.getClientGunIndex(id).isPresent());
             GunMod.LOGGER.info("PORT_SMOKE_CLIENT: default client index and sync installed");
-            if (System.getProperty("tacz.test.irisColor") != null) { ReimaginedSmoke.run(context, world); return; }
+            if (System.getProperty("tacz.test.irisColor") != null) {
+                ReimaginedSmoke.run(context, world); // verifies the actual selected pack and ACT setting
+                SurfaceLightSmoke.run(context, world, false);
+                return;
+            }
             context.runOnClient(mc -> DefaultClientCatalogSmoke.client());
             world.getServer().runOnServer(server -> world.getConnection().getServerPlayer().setItemInHand(
                     InteractionHand.MAIN_HAND, GunItemBuilder.create().setId(id).setAmmoCount(3).build()));
@@ -46,7 +50,7 @@ public class PackClientSmoke implements FabricClientGameTest {
             saveFrame(context, "tacz_held_default_gun");
             if (Boolean.getBoolean("tacz.test.pal")) { PalRuntimeSmoke.run(context); return; }
             if (Boolean.getBoolean("tacz.test.controller")) { ControllerSmoke.run(context, world); return; }
-            SurfaceLightSmoke.run(context, world);
+            SurfaceLightSmoke.run(context, world, true);
             DroppedGunSmoke.run(context, world);
             ViewTuningSmoke.run(context, world);
             if (!Boolean.getBoolean("tacz.test.iris")) RackPreviewSmoke.run(context, world, id);

@@ -7,6 +7,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -21,7 +22,7 @@ import java.util.List;
  * axis with the source. Build only on admission. No chunk rebuilds, new lights or depth reads. */
 final class SurfaceProjection {
     static final int MUZZLE_RAYS = 144, BLAST_RAYS = 384;
-    private static final double DEPTH_BIAS = .002, AIR_GAP = .10;
+    private static final double AIR_GAP = .10;
     private static final Direction[] FACES = Direction.values();
 
     // Near-first so the cost of a solid, irregular room is bounded too. Distances between
@@ -83,10 +84,12 @@ final class SurfaceProjection {
         var air = new BlockPos.MutableBlockPos();
         var result = new ArrayList<Patch>();
         int rays = 0;
+        int cutoffSq = -1;
         scan: for (var offset : OFFSETS) {
             if (offset.distanceSq > limit) break;
             tile.set(base.getX()+offset.x, base.getY()+offset.y, base.getZ()+offset.z);
-            if (!world.getBlockState(tile).isSolidRender()) continue;
+            var state=world.getBlockState(tile);
+            if (!state.isSolidRender() || state.getRenderShape()!=RenderShape.MODEL) continue;
             for (var face : FACES) {
                 var axis = face.getAxis();
                 int sign = sign(face), plane = plane(tile,face);
@@ -95,7 +98,7 @@ final class SurfaceProjection {
                 if (world.getBlockState(air).isSolidRender()) continue;
                 var target = Vec3.atCenterOf(tile).relative(face,.5);
                 if (field.gain(target.x,target.y,target.z) < .006f) continue;
-                if (rays++ == rayBudget) break scan;
+                if (rays++ == rayBudget) { cutoffSq=offset.distanceSq; break scan; }
                 // Stop OUTSIDE the face. A ray aimed *inside* a coplanar floor at a shallow
                 // angle hits the preceding tile instead, especially at a surface detonation.
                 if (clip(world, source, target.relative(face,.012)).getType() != HitResult.Type.MISS) continue;
@@ -105,6 +108,14 @@ final class SurfaceProjection {
                         gain(field,axis,plane,u+1,v)*ambient, gain(field,axis,plane,u+1,v+1)*ambient,
                         gain(field,axis,plane,u,v+1)*ambient));
             }
+        }
+        if (cutoffSq>=0) {
+            // In a tight room the budget can end halfway through a bright ring of blocks.
+            // A missing tile can start half a diagonal before its centre. Fade to zero by
+            // that distance, rather than leave a staircase cut through the wall highlight.
+            var gridCenter=Vec3.atCenterOf(base);
+            double outer=Math.max(0,Math.sqrt(cutoffSq)-Math.sqrt(3)/2), inner=Math.max(0,outer-.85);
+            result.replaceAll(p->p.taper(gridCenter,inner*inner,outer*outer));
         }
         return List.copyOf(result);
     }
@@ -120,11 +131,22 @@ final class SurfaceProjection {
     /** World coordinates stay integer/double until camera subtraction. Attenuation is shared
      * at the corners of adjacent tiles; no circular alpha mask is repeated per block. */
     record Patch(Direction face, int plane, int u, int v, float bl, float br, float tr, float tl) {
-        void draw(PoseStack.Pose pose, VertexConsumer out, Vec3 camera, int rgb, float strength) {
+        Patch taper(Vec3 center,double innerSq,double outerSq) {
+            var a=face.getAxis();
+            double n=plane-center.get(a), x=u-(a==Direction.Axis.X?center.y:center.x), y=v-(a==Direction.Axis.Z?center.y:center.z);
+            if (n*n+Math.max(x*x,(x+1)*(x+1))+Math.max(y*y,(y+1)*(y+1))<=innerSq) return this;
+            return new Patch(face,plane,u,v,bl*edge(n,x,y,innerSq,outerSq),br*edge(n,x+1,y,innerSq,outerSq),
+                    tr*edge(n,x+1,y+1,innerSq,outerSq),tl*edge(n,x,y+1,innerSq,outerSq));
+        }
+        private static float edge(double n,double u,double v,double inner,double outer) {
+            return (float)Math.clamp((outer-(n*n+u*u+v*v))/Math.max(.01,outer-inner),0,1);
+        }
+        void draw(PoseStack.Pose pose, VertexConsumer out, Vec3 camera, int rgb, float strength,double depthBias) {
+            if (bl+br+tr+tl<=0) return;
             var axis = face.getAxis();
             double n = plane - camera.get(axis);
             if (n * sign(face) >= 0) return;
-            n += sign(face)*DEPTH_BIAS;
+            n += sign(face)*depthBias;
             double x = u - (axis==Direction.Axis.X ? camera.y : camera.x);
             double y = v - (axis==Direction.Axis.Z ? camera.y : camera.z);
             boolean flip = (axis == Direction.Axis.Y) == (sign(face) > 0);

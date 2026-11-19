@@ -48,12 +48,22 @@ case ${TACZ_SMOKE_VIEWER:-} in
     *) echo 'Expected jei or rei' >&2; exit 2;;
 esac
 timeout -k 20s 10m ./gradlew "${args[@]}" runClientGameTest --console=plain --stacktrace 2>&1 | tee "$RUNNER_TEMP/tacz-client.log"
+surface_frames() {
+    for marker in 'live AK wall left/right' 'tracked RPG7 enabled=false' 'tracked RPG7 enabled=true' 'live RPG7 wall +/-5 blocks' 'server LR frag'; do
+        grep -Fq "$marker" "$run/logs/latest.log"
+    done
+    for frame in ak_off ak_on muzzle_behind muzzle_expired rpg_off rpg_on blast_expired blast_behind; do
+        test -s "$run/screenshots/tacz_surface_${frame}.png"
+    done
+    printf '::notice::PORT_SURFACE: %s\n' "$(sed -n 's/.*PORT_SURFACE: //p' "$run/logs/latest.log" | paste -sd ';' -)"
+}
 if [[ -n ${TACZ_IRIS_COLOR:-} ]]; then
     grep -Fq 'PORT_REIMAGINED: complete' "$run/logs/latest.log"
     for marker in 'removed caster residual=' 'stock locator changed=' 'same stock white strip texel' 'timed exposure held'; do
         grep -Fq "PORT_REIMAGINED: $marker" "$run/logs/latest.log"
     done
     grep -Fq 'material=energy_swirl' "$run/logs/latest.log"
+    surface_frames
     # Avoid the Checks per-step notice cap hiding the final verdict: count/material/colour first.
     grep -E 'PORT_REIMAGINED: (metal |skin |ground |stock locator|same stock|removed caster)|PORT_SCOPE_PARTICLE:' "$run/logs/latest.log" | sed 's/^/::notice::/'
     grep -E 'PORT_REIMAGINED: (shadow |.*caster bounds|Complementary)|program match for tacz:pipeline/(illuminated|muzzle)' "$run/logs/latest.log"
@@ -66,13 +76,8 @@ if [[ ${TACZ_SMOKE_PAL:-} == true ]]; then
 fi
 # Require both material paths, not just a generic "rendered" message. Frame data stays in the job artifact.
 if [[ -z ${TACZ_SMOKE_VIEWER:-} && ${TACZ_SMOKE_CONTROLLER:-} != true ]]; then
-    for marker in 'live AK wall left/right' 'spill=false, 64' 'spill=true, 64' 'tracked RPG7 enabled=false' 'tracked RPG7 enabled=true' 'live RPG7 wall +/-5 blocks' 'server LR frag'; do
-        grep -Fq "$marker" "$run/logs/latest.log"
-    done
-    for frame in ak_off ak_on muzzle_behind muzzle_expired rpg_off rpg_on blast_expired blast_behind; do
-        test -s "$run/screenshots/tacz_surface_${frame}.png"
-    done
-    printf '::notice::PORT_SURFACE: %s\n' "$(sed -n 's/.*PORT_SURFACE: //p' "$run/logs/latest.log" | paste -sd ';' -)"
+    surface_frames
+    for marker in 'spill=false, 64' 'spill=true, 64'; do grep -Fq "$marker" "$run/logs/latest.log"; done
     # Geometry counts (deferred replay) and live frame samples are different measurements.
     grep -Fq 'new cyan slot pixels in the pile' "$run/logs/latest.log"
     # Keep all paired samples in one Checks notice (GitHub caps notices per step).

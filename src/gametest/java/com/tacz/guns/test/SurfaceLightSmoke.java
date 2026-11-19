@@ -68,9 +68,10 @@ public final class SurfaceLightSmoke {
     public static void endCollect() { if (samples!=null) collectNs+=System.nanoTime()-collectStart; SurfaceLightFrames.afterCollection(); }
     private static int n;
 
-    static void run(ClientGameTestContext ctx, TestSingleplayerContext world) {
+    static void run(ClientGameTestContext ctx, TestSingleplayerContext world, boolean measureLoad) {
         var opt = ctx.computeOnClient(mc -> new boolean[]{RenderConfig.MUZZLE_SURFACE_LIGHT.get(),RenderConfig.LEGACY_MUZZLE_LIGHT.get(),
                 RenderConfig.EXPLOSION_SURFACE_LIGHT.get(),mc.options.bobView().get()});
+        var chat=ctx.computeOnClient(mc->mc.options.chatVisibility().get());
         var saved = world.getServer().computeOnServer(s -> world.getConnection().getServerPlayer().getMainHandItem().copy());
         var facing = ctx.computeOnClient(mc -> new float[]{mc.player.getYRot(),mc.player.getXRot()});
         BlockPos origin=ctx.computeOnClient(mc->BlockPos.containing(mc.player.getEyePosition()));
@@ -92,7 +93,9 @@ public final class SurfaceLightSmoke {
             ctx.waitFor(mc->mc.player.getMainHandItem().isEmpty() && mc.level.getBlockState(origin.south(BACK)).is(concrete));
             world.getConnection().waitForChunksRender(); ctx.waitTicks(22);
             ctx.runOnClient(mc->{
-                setup(mc,origin); mc.options.bobView().set(false); RenderConfig.MUZZLE_SURFACE_LIGHT.set(false);
+                setup(mc,origin); mc.options.bobView().set(false);
+                // The real first shot grants an advancement; its fading chat banner crosses the floor ROI.
+                mc.options.chatVisibility().set(net.minecraft.world.entity.player.ChatVisiblity.HIDDEN); RenderConfig.MUZZLE_SURFACE_LIGHT.set(false);
                 RenderConfig.LEGACY_MUZZLE_LIGHT.set(true); RenderConfig.EXPLOSION_SURFACE_LIGHT.set(true);
                 // Locatorless RPG exposure belongs to the held gun, not to its eventual explosion.
                 var launcher=GunItemBuilder.create().setId(RPG).build();
@@ -100,8 +103,10 @@ public final class SurfaceLightSmoke {
                 if (NativeMuzzleEffects.flashLight(launcher,0)!=10<<4 || NativeMuzzleEffects.flashLight(rifle,0)!=0) throw new AssertionError("Locatorless RPG exposure / different gun");
             });
             muzzleFrames(ctx,world,origin);
-            ctx.runOnClient(mc->{SurfaceLights.clear();position(mc,origin,false);previousTick=-1;replay=true;});
-            for (boolean enable : new boolean[]{false,true,true,false}) timing(ctx,enable);
+            if (measureLoad) {
+                ctx.runOnClient(mc->{SurfaceLights.clear();position(mc,origin,false);previousTick=-1;replay=true;});
+                for (boolean enable : new boolean[]{false,true,true,false}) timing(ctx,enable);
+            }
             ctx.runOnClient(mc->{replay=false;SurfaceLights.clear();RenderConfig.MUZZLE_SURFACE_LIGHT.set(true);});
             world.getServer().runOnServer(s->{var level=world.getConnection().getServerPlayer().level();
                 for (int x=1-SIDE;x<SIDE;x++) for (int y=-1;y<5;y++) level.removeBlock(origin.offset(x,y,PARTITION),false);
@@ -113,7 +118,7 @@ public final class SurfaceLightSmoke {
         } finally {
             ctx.runOnClient(mc->{ SurfaceLightFrames.clear();samples=submitSamples=null;replay=false;Arrays.fill(actors,null);rifle=null;NativeMuzzleEffects.clear();
                 RenderConfig.MUZZLE_SURFACE_LIGHT.set(opt[0]);RenderConfig.LEGACY_MUZZLE_LIGHT.set(opt[1]);
-                RenderConfig.EXPLOSION_SURFACE_LIGHT.set(opt[2]);mc.options.bobView().set(opt[3]); });
+                RenderConfig.EXPLOSION_SURFACE_LIGHT.set(opt[2]);mc.options.bobView().set(opt[3]);mc.options.chatVisibility().set(chat); });
             world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer();old.forEach((pos,state)->p.level().setBlock(pos,state,Block.UPDATE_ALL));p.setItemInHand(InteractionHand.MAIN_HAND,saved);p.inventoryMenu.broadcastChanges();});
             ctx.getInput().lookAt(facing[0],facing[1]);
             world.getConnection().waitForChunksRender();ctx.waitTicks(5);
@@ -230,7 +235,10 @@ public final class SurfaceLightSmoke {
             level.explode(null,on.pos.x,on.pos.y,target.getZ()+1.5,3f,false,net.minecraft.world.level.Level.ExplosionInteraction.NONE);});
         var leak=SurfaceLightFrames.read(ctx).deltas(before,b,.40);
         GunMod.LOGGER.info("PORT_SURFACE: live RPG7 wall +/-5 blocks and forward floor, mean red over rest ON={}, OFF={}, expired={}, behind wall={}, observer={} blocks",Arrays.toString(lit),Arrays.toString(dark),Arrays.toString(residue),Arrays.toString(leak),on.pos.distanceTo(ctx.computeOnClient(mc->mc.player.getEyePosition())));
-        checkSamples("live RPG7 beyond particle core",lit,14,dark,residue,leak);
+        // Compare the two physical hits after subtracting each piece of wall's own rest
+        // colour. This also excludes any native flash/bloom a pack already gives the OFF shot.
+        int[] added=lit.clone(); for (int i=0;i<added.length;i++) added[i]-=dark[i];
+        checkSamples("live RPG7 beyond particle core",added,14,residue,leak);
     }
     private static Region[] blastPoints(Vec3 hit,BlockPos origin) {
         return new Region[]{Region.wall(hit.add(5,.35,0)),Region.wall(hit.add(-5,.35,0)),Region.floor(new Vec3(hit.x+3.5,origin.getY()-1,hit.z-4))};
