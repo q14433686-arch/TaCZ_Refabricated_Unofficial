@@ -99,7 +99,7 @@
 
 结论是**这组三条实际动画**中正负输入被当成同一幅值，零输入则产生可见的不同姿态；没有声称正负两帧逐像素相等，或每个第三方模型的 ADS 都无偏移。之前的 JUnit 仍分别覆盖混合、复位和根约束节点。
 
-**原帧复核：** [普通 +](../../build-reports/visual/44438204095-tacz_constraint_ads_positive.png) / [0](../../build-reports/visual/44438204095-tacz_constraint_ads_zero.png) / [−](../../build-reports/visual/44438204095-tacz_constraint_ads_negative.png)，[Iris +](../../build-reports/visual/44438204109-tacz_constraint_ads_positive.png) / [0](../../build-reports/visual/44438204109-tacz_constraint_ads_zero.png) / [−](../../build-reports/visual/44438204109-tacz_constraint_ads_negative.png)。这是人为加大动作的测量模型，不是原版 AK 持枪演示。[PAL 第一次入镜](../../build-reports/visual/44438204138-tacz_pal_remote_rifle.png)与[第二次](../../build-reports/visual/44438204138-tacz_pal_remote_pistol.png)可见同一角色，但本地第一人称模型挡住了一部分手臂；上一段对离屏切换的判断来自控制器和模型计数，而非这两张图的枪形。
+**原帧复核：** [普通 +](../../build-reports/visual/44438204095-tacz_constraint_ads_positive.png) / [0](../../build-reports/visual/44438204095-tacz_constraint_ads_zero.png) / [−](../../build-reports/visual/44438204095-tacz_constraint_ads_negative.png)，[Iris +](../../build-reports/visual/44438204109-tacz_constraint_ads_positive.png) / [0](../../build-reports/visual/44438204109-tacz_constraint_ads_zero.png) / [−](../../build-reports/visual/44438204109-tacz_constraint_ads_negative.png)。逐帧看，普通客户端的正／负两帧都把物品侧移到画面左侧，零对照则回到中央。这是人为加大动作的测量模型，不是原版 AK 持枪演示。[PAL 第一次入镜](../../build-reports/visual/44438204138-tacz_pal_remote_rifle.png)与[第二次](../../build-reports/visual/44438204138-tacz_pal_remote_pistol.png)可见同一角色，但本地第一人称模型挡住了一部分手臂；上一段对离屏切换的判断来自控制器和模型计数，而非这两张图的枪形。
 
 ## 普通发光骨骼，不用准星代测
 
@@ -132,10 +132,12 @@
 
 | 渲染路径 | 朝向 | 普通子骨骼 G10/G90 | 发光子骨骼 G10/G90 | 入样像素（普通 / 发光） |
 |---|---:|---:|---:|---:|
-| Mesa cutout | 35° | 98/208 | **244/244** | 11,074 / 11,162 |
-| Mesa cutout | 125° | 101/244 | **244/244** | 10,554 / 10,554 |
-| Mesa 半透明材质、镜像 | 35° | 98/244 | **244/244** | 11,162 / 11,162 |
-| Mesa 半透明材质、镜像 | 125° | 98/211 | **244/244** | 10,554 / 10,554 |
+| Mesa cutout | 35° | [98/208](../../build-reports/visual/44443513579-tacz_bone_light_35_plain.png) | [**244/244**](../../build-reports/visual/44443513579-tacz_bone_light_35_glow.png) | 11,074 / 11,162 |
+| Mesa cutout | 125° | [101/244](../../build-reports/visual/44443513579-tacz_bone_light_125_plain.png) | [**244/244**](../../build-reports/visual/44443513579-tacz_bone_light_125_glow.png) | 10,554 / 10,554 |
+| Mesa 半透明材质、镜像 | 35° | [98/244](../../build-reports/visual/44443513579-tacz_bone_light_mirror_35_plain.png) | [**244/244**](../../build-reports/visual/44443513579-tacz_bone_light_mirror_35_glow.png) | 11,162 / 11,162 |
+| Mesa 半透明材质、镜像 | 125° | [98/211](../../build-reports/visual/44443513579-tacz_bone_light_mirror_125_plain.png) | [**244/244**](../../build-reports/visual/44443513579-tacz_bone_light_mirror_125_glow.png) | 10,554 / 10,554 |
+
+从[普通空墙](../../build-reports/visual/44443513579-tacz_material_dark_control.png)和上表八个原帧重算，分位数和像素数逐项吻合作业日志。Iris 的[同机位空墙](../../build-reports/visual/44443513680-tacz_material_dark_control.png)、[125° 镜像普通](../../build-reports/visual/44443513680-tacz_bone_light_mirror_125_plain.png)和[发光](../../build-reports/visual/44443513680-tacz_bone_light_mirror_125_glow.png)也可独立复算。
 
 这次不只是“各面一致”：普通对照明显分面，而发光件没有退回此前的暗值 98，改变绕序仍然亮。Iris 四组的普通／发光都是 **244/244**，说明这些几何在该光影中可见，但光影本身不做法线对照，方向光结论来自普通客户端。同提交还复现了上一节两行粒子测量；PAL 再次测得支撑手 Δz=4.00、Δroll=0.338。
 
