@@ -1,4 +1,4 @@
-commit: 88cb2c3ce936a7c448d7fe9b4725593d99234af8
+commit: 1686095785a9d92df305ebc1c291ba298e264994
 Fetching distribution.
 Downloading https://services.gradle.org/distributions/gradle-9.5.1-bin.zip
 .............10%.............20%..............30%.............40%.............50%..............60%.............70%..............80%.............90%.............100%
@@ -31,7 +31,7 @@ Note: Recompile with -Xlint:deprecation for details.
 Note: Some input files use unchecked or unsafe operations.
 Note: Recompile with -Xlint:unchecked for details.
 2 warnings
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795053834877.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795054419000.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -41,7 +41,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 8s
+BUILD SUCCESSFUL in 1m
 1 actionable task: 1 executed
 Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.1/userguide/configuration_cache_enabling.html
   private void bobHurt(net.minecraft.client.renderer.state.level.CameraRenderState, com.mojang.blaze3d.vertex.PoseStack);
@@ -228,6 +228,61 @@ final class net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding 
   public net.minecraft.resources.Identifier location();
   public java.util.function.Supplier<com.mojang.renderpearl.api.textures.GpuSampler> sampler();
 }
+Compiled from "OitPipelineSet.java"
+public final class net.minecraft.client.renderer.oit.OitPipelineSet extends java.lang.Record {
+  private final com.mojang.renderpearl.api.pipeline.RenderPipeline depthBoundsPipeline;
+  private final com.mojang.renderpearl.api.pipeline.RenderPipeline transmittancePipeline;
+  private final com.mojang.renderpearl.api.pipeline.RenderPipeline accumulatePipeline;
+  public net.minecraft.client.renderer.oit.OitPipelineSet(com.mojang.renderpearl.api.pipeline.RenderPipeline, com.mojang.renderpearl.api.pipeline.RenderPipeline, com.mojang.renderpearl.api.pipeline.RenderPipeline);
+  public com.mojang.renderpearl.api.pipeline.RenderPipeline getPipeline(net.minecraft.client.renderer.oit.OitStage);
+  public static net.minecraft.client.renderer.oit.OitPipelineSet$Builder builder(java.lang.String, com.mojang.renderpearl.api.pipeline.RenderPipeline$Builder);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public com.mojang.renderpearl.api.pipeline.RenderPipeline depthBoundsPipeline();
+  public com.mojang.renderpearl.api.pipeline.RenderPipeline transmittancePipeline();
+  public com.mojang.renderpearl.api.pipeline.RenderPipeline accumulatePipeline();
+}
+Compiled from "RenderSetup.java"
+public class net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder {
+  private final com.mojang.renderpearl.api.pipeline.RenderPipeline pipeline;
+  private net.minecraft.client.renderer.oit.OitPipelineSet oitPipelineSet;
+  private boolean useLightmap;
+  private boolean useOverlay;
+  private net.minecraft.client.renderer.rendertype.LayeringTransform layeringTransform;
+  private net.minecraft.client.renderer.rendertype.TextureTransform textureTransform;
+  private boolean affectsCrumbling;
+  private boolean sortOnUpload;
+  private net.minecraft.client.renderer.rendertype.RenderSetup$OutlineProperty outlineProperty;
+  private java.lang.String outlineTextureName;
+  private final java.util.Map<java.lang.String, net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding> textures;
+  private boolean forceSolidModelPhase;
+  private net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder(com.mojang.renderpearl.api.pipeline.RenderPipeline);
+  public net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder withTexture(java.lang.String, net.minecraft.resources.Identifier);
+  public net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder withTexture(java.lang.String, net.minecraft.resources.Identifier, java.util.function.Supplier<com.mojang.renderpearl.api.textures.GpuSampler>);
+  public net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder useLightmap();
+  public net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder useOverlay();
+  public net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder affectsCrumbling();
+  public net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder sortOnUpload();
+  public net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder setLayeringTransform(net.minecraft.client.renderer.rendertype.LayeringTransform);
+  public net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder setTextureTransform(net.minecraft.client.renderer.rendertype.TextureTransform);
+  public net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder setOutline(net.minecraft.client.renderer.rendertype.RenderSetup$OutlineProperty);
+  public net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder setOutline(net.minecraft.client.renderer.rendertype.RenderSetup$OutlineProperty, java.lang.String);
+  public net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder setOitPipelines(net.minecraft.client.renderer.oit.OitPipelineSet);
+  public net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder withForcedSolidModelPhase();
+  public net.minecraft.client.renderer.rendertype.RenderSetup createRenderSetup();
+  private static com.mojang.renderpearl.api.textures.GpuSampler lambda$withTexture$1(java.util.function.Supplier);
+  private static com.mojang.renderpearl.api.textures.GpuSampler lambda$withTexture$0();
+}
+  public static final com.mojang.renderpearl.api.pipeline.RenderPipeline$Snippet ENTITY_NO_LIGHTMAP_SNIPPET;
+  public static final com.mojang.renderpearl.api.pipeline.RenderPipeline$Snippet ENTITY_SNIPPET;
+  public static final com.mojang.renderpearl.api.pipeline.RenderPipeline$Snippet OIT_ENTITY_SNIPPET;
+  public static final com.mojang.renderpearl.api.pipeline.RenderPipeline$Snippet ENTITY_EMISSIVE_SNIPPET;
+  public static final net.minecraft.client.renderer.oit.OitPipelineSet OIT_ENTITY;
+  public static final net.minecraft.client.renderer.oit.OitPipelineSet OIT_ENTITY_EMISSIVE;
+  public static final net.minecraft.client.renderer.oit.OitPipelineSet OIT_ENTITY_CULL;
+  public static final com.mojang.renderpearl.api.pipeline.RenderPipeline$Snippet ENTITY_SHADOW_SNIPPET;
+  public static final net.minecraft.client.renderer.oit.OitPipelineSet OIT_ENTITY_SHADOW;
         14: new           #199                // class org/joml/Matrix4f
         17: dup
         18: aload         4
