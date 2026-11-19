@@ -568,6 +568,7 @@
   "gui.tacz.view_tuning.preview": "HUD preview",
   "gui.tacz.view_tuning.png_hint": "Resource pack texture: tacz:textures/crosshair/custom.png",
   "gui.tacz.view_tuning.reset_model": "Reset gun position",
+  "gui.tacz.view_tuning.reset_rule": "Use factory style for this target",
   "gui.tacz.view_tuning.reset_hud": "Reset entire crosshair",
   "gui.tacz.view_tuning.save": "Save",
   "gui.tacz.view_tuning.page.rules": "Rules",

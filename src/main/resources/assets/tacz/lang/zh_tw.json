@@ -483,6 +483,7 @@
   "gui.tacz.view_tuning.preview": "HUD 預覽",
   "gui.tacz.view_tuning.png_hint": "資源包材質：tacz:textures/crosshair/custom.png",
   "gui.tacz.view_tuning.reset_model": "重設持槍位置",
+  "gui.tacz.view_tuning.reset_rule": "此目標改用出廠樣式",
   "gui.tacz.view_tuning.reset_hud": "重設整套準星",
   "gui.tacz.view_tuning.save": "儲存",
   "gui.tacz.view_tuning.page.rules": "分配",
