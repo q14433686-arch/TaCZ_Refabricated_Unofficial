@@ -53,10 +53,18 @@
 | [64 件同款](../../build-reports/visual/44432265461-tacz_rack_load_same.png) | 1,568 | 1 μs | 4 μs |
 | [64 件不同款](../../build-reports/visual/44432265461-tacz_rack_load_different.png) | 784 | 3 μs | 9 μs |
 
+## 手部、侧倾、纯网格和旋转模板
+
+`b57d091` 的[普通客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44433542086/job/135256637739)在纯网格预览处失败：0/6,972 个中间色像素。[预览](../../build-reports/visual/44433542086-tacz_mesh_ghost.png)和[放入后](../../build-reports/visual/44433542086-tacz_mesh_placed.png)几乎全屏青色，无法分辨手中网格与挂板。该提交的 [Iris](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44433542106/job/135256637522) 在第一张手部对照图以前报 `PreparedFrame already in use`，不是“手部粒子不可见”的测量。测试旧代码替换了状态机拥有的轨道表，违背 `AnimationStateContext` 的身份检查；不能据此在产品里强制关闭主帧。
+
+`bdd681a` 的[普通 Mesa 客户端、Full build 与专服](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44434717131/job/135260690861)通过。现在手持普通 AK 模型；**青色只存在于 `FIXED` 外显的纯 `poly_mesh` LOD**，槽位以外的天空也不允许整片变色。对准第二面时有中间色网格，实际按 K 后变为不透明，服务端逐项核对组件与计数。A/B/C 工作台、标靶、雕像都实际从模板旋转 90° 和 180° 放置；双格关系和对应 BE 内容经 GameTest 检查。
+
+六个外部动画关键帧在状态机自己分配的轨道播放，发射器跟随真实枪口，`to_world=false`。Mesa 下统计新增粉色像素的色强分位比（q20/q85），煤块前 cutout **1.00**、alpha/blend 都是 **0.318**；浅色背板分别为 **1.00 / 0.467 / 0.467**。另外三种手部材质也有可见像素，不用这些数证明照明、深度写入或 UV 滚动都已对齐。相机仰视 35° 再侧倾 0°/30° 时，从画面取狭长纹理的主轴：`rotate_y` 和 `lookat_y` 与投影的世界竖直方向吻合（绝对点积 ≥0.98），高度缩短；对照 `rotate_xyz` 仍在屏幕上竖直。`b57d091` 的 [JEI 和 REI](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44433542067)也分别跑通了重载后的展示和双向查询，不再停在 429。
+
 ## 尚不能外推的部分
 
 - **输入与展示：** `ae8f1d9` 的[超时][rack-failure]后来在 `043fba5` 定位到原版好友 GUI 吞掉 O（两端均未收到 use）。新默认 K 和旧 `options.txt` 的手动改绑说明见 README。已过的是生存模式的指定板／柜和烘焙物品，不是每种第三方特殊渲染器或用户现存的所有键位组合。
-- **粒子与曳光：** 世界六材质、玩家开火跨帧、0/5 碎屑和本测试光影的三档准镜有独立证据。手部六材质、侧倾画面、其它光影包不能只从世界渲染推断；[旧版正对照为零的原帧](../../build-reports/visual/44425974217-tacz_amg10_particle_2.png)也不能作通过证据。
+- **粒子与曳光：** 世界六材质、玩家开火跨帧、0/5 碎屑和本测试光影的三档准镜有独立证据。普通客户端的手部六材质与侧倾有单独对照；不能外推到任意光影包。[旧版正对照为零的原帧](../../build-reports/visual/44425974217-tacz_amg10_particle_2.png)也不能作通过证据。
 - **近似实现与预算：** 保留测距 1,024 格、标记倍率 32、模拟 600 tick 及实体寿命上限；超预算或不可达不画。普通发光骨骼的环境 sky 与面法线是两件事，仍需非准星骨骼的方向光画面对照。约束通道的数值/复位不是所有 ADS 动作的手部姿态证明。PAL 玩家离屏／再入镜、第三方大包与 GPU 性能也不能由 16 板的 CPU 样本推出。转换器遇不可证等价的条件仍报出，不静默改包。
 - **外部组合：** Sable/Simulated、独立 EMI 插件、Accelerated Rendering 都没有在本轮获得可验证的 26.3 运行组合；AR 仍是禁用，不写成已修。未找到可验证组合不等于不存在。KubeJS 不把目标 Fabric 上游已注释的事件投递算作已运行能力。其它 26.X 线的欠账保留在原审计。
 

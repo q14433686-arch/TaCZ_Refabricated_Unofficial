@@ -28,26 +28,15 @@ jobs:
           assert len(entries) <= 12
           with tempfile.TemporaryDirectory() as tmp:
               for run, kind, frame in entries:
-                  assert re.fullmatch(r'[0-9]+',run) and kind in ('smoke','viewer-jei','viewer-rei','iris') and re.fullmatch(r'tacz_[a-z0-9_]+',frame)
+                  assert re.fullmatch(r'[0-9]+',run) and kind in ('smoke','viewer-jei','viewer-rei','iris','pal') and re.fullmatch(r'tacz_[a-z0-9_]+',frame)
                   output = dest / f'{run}-{frame}.png'
                   if output.exists(): continue
                   meta = json.loads(subprocess.check_output(['gh','api',f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{run}']))
                   assert meta['event']=='push' and meta['head_branch']==os.environ['GITHUB_REF_NAME'] and meta['conclusion'] in ('success','failure')
-                  assert meta['path']=='.github/workflows/'+('build.yml' if kind=='smoke' else 'iris-smoke.yml' if kind=='iris' else 'viewer-smoke.yml')
+                  assert meta['path']=='.github/workflows/'+('build.yml' if kind=='smoke' else 'iris-smoke.yml' if kind=='iris' else 'animation-smoke.yml' if kind=='pal' else 'viewer-smoke.yml')
                   artifact = kind+'-'+meta['head_sha']; root = Path(tmp)/artifact
                   if not root.exists():
                       subprocess.run(['gh','run','download',run,'-n',artifact,'-D',str(root)],check=True)
-                      if meta['conclusion'] == 'failure' and kind == 'iris':
-                          log, = root.rglob('clientGameTest/logs/latest.log')
-                          lines = log.read_text(errors='replace').splitlines()
-                          last = max((i for i,s in enumerate(lines) if ' PORT_' in s),default=0)
-                          # Surface the call site of the *first* renderer error, not only the secondary frame-in-use crash.
-                          errors = [i for i in range(last,len(lines)) if '/ERROR]' in lines[i] or lines[i].startswith('Caused by:')]
-                          for i in errors[:4]:
-                              trace = [m.group(1) for s in lines[i+1:i+45] if (m := re.match(r'\s*at (?:knot//)?([\w.$]+)\(',s))]
-                              print('::notice::' + (lines[i] + ' | ' + ' > '.join(trace[:22]))[:2600].replace('%','%25'))
-                          frames = sorted(p.stem for p in root.rglob('*_tacz_hand_material_*.png'))
-                          print('::notice::Captured hand material frames: ' + ', '.join(frames)[:1500])
                   pictures = list(root.rglob('*.png'))
                   matches = [p for p in pictures if p.name.endswith(frame+'.png')]
                   if len(matches)!=1: raise ValueError(f'{frame}: expected 1 file, found {len(matches)}; available: {[p.name for p in pictures][:20]}')
@@ -56,12 +45,6 @@ jobs:
                   with source.open('rb') as png:
                       if png.read(8) != b'\x89PNG\r\n\x1a\n': raise ValueError(f'Invalid PNG: {source.name}')
                   shutil.copyfile(source, output)
-                  if frame in ('tacz_rack_load_same', 'tacz_rack_load_different'):
-                      mode = frame.rsplit('_', 1)[1]
-                      log, = root.rglob('clientGameTest/logs/latest.log')
-                      pattern = rf'PORT_RACK_LOAD: 64 {mode} items, (\d+) board extractions, CPU median=(\d+) us p95=(\d+) us'
-                      samples, median, p95 = re.search(pattern, log.read_text(errors='replace')).groups()
-                      print(f'::notice::Run {run}: 64 {mode} items; {samples} board extractions; median {median} us, p95 {p95} us')
           PY
       - name: Report frame diagnostics
         if: failure()

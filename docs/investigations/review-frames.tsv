@@ -1,5 +1,13 @@
-# Investigate the mesh-only triplet and first hand-material render failure, not successful controls from other paths.
-44433542086	smoke	tacz_mesh_empty
-44433542086	smoke	tacz_mesh_ghost
-44433542086	smoke	tacz_mesh_placed
-44433542106	iris	tacz_material_dark_energy_swirl
+# Compare the real hand alpha/blend discrepancy under Iris to the ordinary passing client.
+44434717131	smoke	tacz_mesh_empty
+44434717131	smoke	tacz_mesh_ghost
+44434717131	smoke	tacz_mesh_placed
+44434717131	smoke	tacz_hand_material_dark_particles_opaque
+44434717131	smoke	tacz_hand_material_dark_particles_alpha
+44434717131	smoke	tacz_billboard_roll_0_rotate_y
+44434717131	smoke	tacz_billboard_roll_30_rotate_y
+44434717131	smoke	tacz_billboard_roll_30_rotate_xyz
+44434717123	iris	tacz_hand_material_dark_control
+44434717123	iris	tacz_hand_material_dark_particles_opaque
+44434717123	iris	tacz_hand_material_dark_particles_alpha
+44434717123	iris	tacz_hand_material_dark_particles_blend
