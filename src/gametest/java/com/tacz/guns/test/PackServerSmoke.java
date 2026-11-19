@@ -17,6 +17,10 @@ import com.tacz.guns.util.VirtualOemAttachment;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.item.crafting.RecipeType;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -57,11 +61,11 @@ public class PackServerSmoke {
     @GameTest
     public void ordinaryTableCraftsWorkbench(GameTestHelper helper) {
         var level = helper.getLevel();
-        var log = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.OAK_LOG);
-        var iron = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_INGOT);
-        var block = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_BLOCK);
-        var input = net.minecraft.world.item.crafting.CraftingInput.of(3, 3, java.util.List.of(log, log, log, iron, block, iron, iron, net.minecraft.world.item.ItemStack.EMPTY, iron));
-        var recipe = level.getServer().getRecipeManager().getRecipeFor(net.minecraft.world.item.crafting.RecipeType.CRAFTING, input, level).orElseThrow();
+        var log = new ItemStack(Items.OAK_LOG);
+        var iron = new ItemStack(Items.IRON_INGOT);
+        var block = new ItemStack(Items.IRON_BLOCK);
+        var input = CraftingInput.of(3, 3, java.util.List.of(log, log, log, iron, block, iron, iron, ItemStack.EMPTY, iron));
+        var recipe = level.getServer().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level).orElseThrow();
         helper.assertTrue(recipe.id().identifier().equals(Identifier.parse("tacz:gun_smith_table"))
                 && recipe.value().assemble(input).is(com.tacz.guns.init.ModItems.GUN_SMITH_TABLE), "Server 3x3 crafting did not yield the workbench");
         helper.succeed();

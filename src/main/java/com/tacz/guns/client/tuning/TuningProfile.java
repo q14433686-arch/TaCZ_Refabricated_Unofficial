@@ -33,8 +33,8 @@ public final class TuningProfile {
 
     public void setHud(@Nullable String type, @Nullable String gun, TuningValues style) {
         var target = new TuningValues.Draft(base); // overrides contain HUD only; XYZ always reads from this account
-        if (gun != null) guns.put(gun, target); else if (type != null) types.put(type, target); else target = base;
         require(TuningShare.CROSSHAIR.decode(TuningShare.CROSSHAIR.encode(style), target));
+        if (gun != null) guns.put(gun, target); else if (type != null) types.put(type, target); else base.merge(target);
     }
 
     public static TuningProfile seeded(TuningValues seed) {

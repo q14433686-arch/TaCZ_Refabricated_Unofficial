@@ -12,10 +12,11 @@ public interface TuningValues {
     TuningValues DEFAULTS = ConfigValue::getDefault;
     <T> T get(ConfigValue<T> option);
 
+    /** Preview while the editor is on top; account-wide pose otherwise. The HUD resolves the actual held stack. */
     static TuningValues visible() {
         var mc = Minecraft.getInstance();
         if (mc.gui.screen() instanceof ViewTuningScreen editor && editor.isCurrentAccount()) return editor.draft();
-        return mc.player == null ? TuningProfiles.current().base() : TuningProfiles.forStack(mc.player.getMainHandItem());
+        return TuningProfiles.current().base();
     }
 
     final class Draft implements TuningValues {

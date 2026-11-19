@@ -18,7 +18,9 @@ import com.tacz.guns.compat.recipeviewer.AmmoQueryEntry;
 import com.tacz.guns.compat.recipeviewer.AttachmentQueryData;
 import com.tacz.guns.compat.recipeviewer.GunAmmoQueryEntry;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
+import dev.architectury.event.EventResult;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
+import me.shedaniel.rei.api.client.registry.entry.EntryRegistry;
 import me.shedaniel.rei.api.client.registry.transfer.TransferHandlerRegistry;
 import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
@@ -48,6 +50,10 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
 
     @Override
     public void registerCategories(CategoryRegistry registry) {
+        // The category API has no unregister. A table removed by a later pack sync has neither a
+        // visible tab nor recipes; the next natural REI registration drops the empty key entirely.
+        registry.registerVisibilityPredicate(category -> category instanceof GunSmithTableCategory table
+                && TimelessAPI.getCommonBlockIndex(table.table()).isEmpty() ? EventResult.interruptFalse() : EventResult.pass());
         registerTables(registry);
         registry.add(new AttachmentQueryCategory());
         registry.add(new AmmoQueryCategory());
@@ -63,8 +69,10 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
             ItemStack icon = BlockItemBuilder.create(item).setId(entry.getKey()).build();
             // 根据需要的枪械工作台类型生成动态id
             CategoryIdentifier<GunSmithTableDisplay> id = CategoryIdentifier.of(GunMod.MOD_ID, "plugins/gun_smith_table/" + entry.getKey().toString().replace(':', '_'));
-            if (registry.tryGet(id).isEmpty()) {
-                registry.add(new GunSmithTableCategory(item.getName(icon), icon, id));
+            var existing = registry.tryGet(id).map(CategoryRegistry.CategoryConfiguration::getCategory).orElse(null);
+            var title = item.getName(icon);
+            if (existing == null || existing instanceof GunSmithTableCategory table && !table.represents(title, icon)) {
+                registry.add(new GunSmithTableCategory(entry.getKey(), title, icon, id));
                 registry.addWorkstations(id, EntryStacks.of(icon));
             }
             displays.put(entry.getKey(), id);
@@ -73,7 +81,7 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
     }
 
     @Override
-    public void registerEntries(me.shedaniel.rei.api.client.registry.entry.EntryRegistry entries) {
+    public void registerEntries(EntryRegistry entries) {
         ReiPackRefresh.rememberVariants();
     }
 

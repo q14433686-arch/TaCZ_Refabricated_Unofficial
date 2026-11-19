@@ -1,6 +1,14 @@
 package com.tacz.guns.test;
 
 import cn.sh1rocu.tacz.compat.rei.REIClientPlugin;
+import com.tacz.guns.GunMod;
+import com.tacz.guns.client.compat.RecipeViewerReloadBridge;
+import me.shedaniel.rei.api.client.registry.entry.EntryRegistry;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
+import me.shedaniel.rei.impl.client.registry.display.DisplayRegistryImpl;
+import me.shedaniel.rei.plugin.common.BuiltinPlugin;
+import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import me.shedaniel.rei.api.client.gui.screen.DisplayScreen;
 import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
 import me.shedaniel.rei.api.client.view.ViewSearchBuilder;
@@ -8,26 +16,37 @@ import me.shedaniel.rei.api.common.plugins.PluginManager;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
+
+import java.util.List;
 
 final class ReiViewerSmoke implements ViewerSmoke {
-    private static me.shedaniel.rei.api.common.display.Display crafting(String id) {
-        return DisplayRegistry.getInstance().get(me.shedaniel.rei.plugin.common.BuiltinPlugin.CRAFTING).stream()
-                .filter(d -> d.getDisplayLocation().filter(Identifier.parse(id)::equals).isPresent()).findFirst().orElse(null);
+    private static Display syncedCrafting(String id) {
+        var registry = DisplayRegistry.getInstance();
+        var location = Identifier.parse(id);
+        return registry.get(BuiltinPlugin.CRAFTING).stream()
+                .filter(d -> d.getDisplayLocation().filter(location::equals).isPresent() && registry.getDisplayOrigin(d) == DisplayRegistryImpl.SYNCED)
+                .findFirst().orElse(null);
     }
 
-    void checkLateSync(net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext ctx) {
-        // An integrated server can resend when REI reloads both sides. Require the SAME live synced
+    void checkLateSync(ClientGameTestContext ctx, boolean reloaded) {
+        // An integrated server can resend when REI reloads both sides. Require the SAME live SET
         // display objects, not simply a nonempty list some later packet could have recreated.
-        ctx.waitFor(mc -> !PluginManager.areAnyReloading() && crafting("tacz:gun_smith_table") != null
-                && crafting("minecraft:crafting_table") != null && !DisplayRegistry.getInstance().get(REIClientPlugin.GUN_AMMO_QUERY).isEmpty(), 1200);
-        var before = ctx.computeOnClient(mc -> java.util.List.of(crafting("tacz:gun_smith_table"), crafting("minecraft:crafting_table"),
-                DisplayRegistry.getInstance().get(REIClientPlugin.GUN_AMMO_QUERY).getFirst()));
-        ctx.runOnClient(mc -> com.tacz.guns.client.compat.RecipeViewerReloadBridge.requestReload());
-        ctx.waitFor(mc -> !PluginManager.areAnyReloading() && !DisplayRegistry.getInstance().get(REIClientPlugin.GUN_AMMO_QUERY).contains(before.get(2))
+        var ids = reloaded ? List.of("tacz:gun_smith_table", "minecraft:crafting_table", "reload_smoke:paper")
+                : List.of("tacz:gun_smith_table", "minecraft:crafting_table");
+        ctx.waitFor(mc -> !PluginManager.areAnyReloading() && ids.stream().allMatch(id -> syncedCrafting(id) != null)
+                && !DisplayRegistry.getInstance().get(REIClientPlugin.GUN_AMMO_QUERY).isEmpty(), 1200);
+        var before = ctx.computeOnClient(mc -> ids.stream().map(ReiViewerSmoke::syncedCrafting).toList());
+        var oldQuery = ctx.computeOnClient(mc -> DisplayRegistry.getInstance().get(REIClientPlugin.GUN_AMMO_QUERY).getFirst());
+        ctx.runOnClient(mc -> RecipeViewerReloadBridge.requestReload());
+        ctx.waitFor(mc -> !PluginManager.areAnyReloading() && !DisplayRegistry.getInstance().get(REIClientPlugin.GUN_AMMO_QUERY).contains(oldQuery)
                 && forward(EXISTING), 1200);
         ctx.runOnClient(mc -> {
-            if (crafting("tacz:gun_smith_table") != before.get(0) || crafting("minecraft:crafting_table") != before.get(1))
-                throw new AssertionError("Gun-pack refresh replaced authoritative vanilla crafting displays");
+            for (int i = 0; i < ids.size(); i++) if (syncedCrafting(ids.get(i)) != before.get(i))
+                throw new AssertionError("Gun-pack refresh replaced server crafting display " + ids.get(i));
+            if (reloaded && EntryRegistry.getInstance().getEntryStacks().noneMatch(e -> e.getType() == VanillaEntryTypes.ITEM
+                    && ViewerSmoke.isGun(e.<ItemStack>castValue(), NEW))) throw new AssertionError("Reloaded gun missing from REI sidebar");
+            GunMod.LOGGER.info("PORT_REI_CRAFTING: same server-synced crafting displays before/after late pack refresh: {}", ids);
         });
     }
 

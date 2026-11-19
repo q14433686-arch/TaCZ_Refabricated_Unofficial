@@ -3,6 +3,9 @@ package com.tacz.guns.test;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.resource.network.CommonNetworkCache;
+import com.tacz.guns.init.ModItems;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.display.SlotDisplayContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screens.Screen;
@@ -45,15 +48,15 @@ interface ViewerSmoke {
             });
             // Prove discovery on the vanilla recipe-book channel, not just a custom viewer category.
             world.getServer().runOnServer(server -> world.getConnection().getServerPlayer().getInventory()
-                    .add(new ItemStack(net.minecraft.world.item.Items.IRON_BLOCK)));
+                    .add(new ItemStack(Items.IRON_BLOCK)));
             ctx.waitFor(mc -> mc.player.getRecipeBook().getCollections().stream().flatMap(c -> c.getRecipes().stream())
-                    .flatMap(e -> e.display().result().resolveForStacks(net.minecraft.world.item.crafting.display.SlotDisplayContext.fromLevel(mc.level)).stream())
-                    .anyMatch(stack -> stack.is(com.tacz.guns.init.ModItems.GUN_SMITH_TABLE)), 300);
-            if (api instanceof ReiViewerSmoke rei) rei.checkLateSync(ctx);
+                    .flatMap(e -> e.display().result().resolveForStacks(SlotDisplayContext.fromLevel(mc.level)).stream())
+                    .anyMatch(stack -> stack.is(ModItems.GUN_SMITH_TABLE)), 300);
+            if (api instanceof ReiViewerSmoke rei) rei.checkLateSync(ctx, false);
             ConversionReloadSmoke.run(ctx, world);
             world.getConnection().waitForChunksRender();
             ctx.waitFor(mc -> mc.gui.screen() == null && mc.gui.overlay() == null && api.forward(NEW) && api.reverse(NEW), 1200);
-            if (api instanceof ReiViewerSmoke rei) rei.checkLateSync(ctx);
+            if (api instanceof ReiViewerSmoke rei) rei.checkLateSync(ctx, true);
             Path background = ctx.takeScreenshot("tacz_world_before_" + viewer);
             // Match the normal player entry point, not an in-flight join/loading screen.
             ctx.getInput().pressKey(options -> options.keyInventory);

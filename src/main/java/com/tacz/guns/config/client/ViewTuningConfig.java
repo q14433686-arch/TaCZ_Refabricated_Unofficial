@@ -60,12 +60,12 @@ public final class ViewTuningConfig {
     public static ForgeConfigSpec.BooleanValue DOT, OUTLINE, DYNAMIC;
 
     public static void init(ForgeConfigSpec.Builder builder) {
-        builder.comment("First-person hip position in view units: +X right, +Y up, +Z closer. Zero keeps the pack pose.").push("viewmodel");
+        builder.comment("Seed for new account profiles. First-person hip position in view units: +X right, +Y up, +Z closer. Zero keeps the pack pose.").push("viewmodel");
         for (Axis axis : Axis.values()) {
             axis.option = builder.defineInRange("Offset" + axis.name(), 0d, axis.min, axis.max);
         }
         builder.pop();
-        builder.comment("Gun HUD crosshair only; sizes are in GUI pixels, not framebuffer pixels.").push("crosshair");
+        builder.comment("Seed for new account profiles. Gun HUD crosshair only; sizes are in GUI pixels, not framebuffer pixels.").push("crosshair");
         MODE = builder.comment("PNG uses assets/tacz/textures/crosshair/custom.png from your resource pack.")
                 .defineEnum("Mode", Mode.PRESET);
         SHAPE = builder.defineEnum("LineShape", Shape.CROSS);

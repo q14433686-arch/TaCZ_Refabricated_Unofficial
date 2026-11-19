@@ -45,7 +45,9 @@ public final class ReiPackRefresh {
         // holder between stages or while an async reload is queued but not yet executing a plugin.
         if (PluginManager.areAnyReloading() || ReloadManagerImpl.countRunningReloadTasks() != 0) return false;
         var categories = CategoryRegistry.getInstance();
-        if (categories.tryGet(REIClientPlugin.AMMO_QUERY).isEmpty()) return false;
+        // No initial registration yet (or our plugin is disabled). A natural pass reads the
+        // already-installed cache; polling forever or preempting it would do more harm than good.
+        if (categories.tryGet(REIClientPlugin.AMMO_QUERY).isEmpty()) return true;
         var registry = (DisplayRegistryImpl) DisplayRegistry.getInstance();
         var newDisplays = new ArrayList<Display>();
         REIClientPlugin.collect(REIClientPlugin.registerTables(categories), newDisplays::add);

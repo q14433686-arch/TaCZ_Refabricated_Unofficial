@@ -40,6 +40,10 @@ final class ConversionReloadSmoke {
                 {"type":"tacz:gun_smith_table_crafting","materials":[{"item":{"item":"minecraft:dirt"}}],
                  "result":{"type":"custom","group":"misc","item":{"item":"minecraft:stick","count":2,"nbt":"{reloaded:9b}"}}}
                 """);
+        Files.writeString(recipes.resolve("paper.json"), """
+                {"type":"minecraft:crafting_shapeless","ingredients":[{"item":"minecraft:dirt"},{"item":"minecraft:stick"}],
+                 "result":{"item":"minecraft:paper","count":2}}
+                """);
         Files.writeString(recipes.resolve("missing.json"), """
                 {"type":"minecraft:crafting_shapeless","conditions":[{"type":"forge:mod_loaded","modid":"absent"}],
                  "ingredients":[{"item":"absent:part"}],"result":{"item":"minecraft:stick"}}
@@ -64,7 +68,7 @@ final class ConversionReloadSmoke {
         reloaded.join();
         world.getServer().runOnServer(server -> {
             var ids = server.getRecipeManager().getRecipes().stream().map(h -> h.id().identifier()).filter(i -> i.getNamespace().equals("reload_smoke")).collect(java.util.stream.Collectors.toSet());
-            if (!ids.equals(java.util.Set.of(id, Identifier.parse("reload_smoke:custom")))) throw new AssertionError("Wrong reloaded registry recipes: " + ids);
+            if (!ids.equals(java.util.Set.of(id, Identifier.parse("reload_smoke:custom"), Identifier.parse("reload_smoke:paper")))) throw new AssertionError("Wrong reloaded registry recipes: " + ids);
         });
         context.waitFor(mc -> CommonNetworkCache.INSTANCE.getTableRecipe(id) != null, 600);
         context.runOnClient(mc -> {

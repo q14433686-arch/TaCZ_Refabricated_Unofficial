@@ -1,5 +1,6 @@
 package com.tacz.guns.client.tuning;
 
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
 import com.tacz.guns.GunMod;
@@ -17,6 +18,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 /** Client-thread owned. Cache only the active launcher identity; display names and server UUIDs are not file names. */
 public final class TuningProfileStore {
+    private static final Gson JSON = new GsonBuilder().setPrettyPrinting().create();
     private static final int LIMIT = 8 * 1024 * 1024;
     private final Path directory;
     private final TuningValues legacy;
@@ -42,7 +44,11 @@ public final class TuningProfileStore {
             }
         } catch (NoSuchFileException missing) {
             // The old shared TOML is a read-only seed, never the destination of a personal edit.
-            saved = TuningProfile.seeded(legacy);
+            try { saved = TuningProfile.seeded(legacy); }
+            catch (RuntimeException invalid) {
+                GunMod.LOGGER.warn("Invalid legacy TaCZ view settings; starting from factory defaults (shared file unchanged).", invalid);
+                saved = TuningProfile.seeded(TuningValues.DEFAULTS);
+            }
         } catch (IOException | RuntimeException e) {
             readFailed = true;
             saved = TuningProfile.seeded(TuningValues.DEFAULTS);
@@ -55,7 +61,7 @@ public final class TuningProfileStore {
     public boolean save(UUID owner, TuningProfile edited) {
         if (!owner.equals(active) || readFailed) return false;
         try {
-            byte[] data = (new GsonBuilder().setPrettyPrinting().create().toJson(edited.json()) + "\n").getBytes(StandardCharsets.UTF_8);
+            byte[] data = (JSON.toJson(edited.json()) + "\n").getBytes(StandardCharsets.UTF_8);
             if (data.length > LIMIT) throw new IOException("Oversized tuning profile");
             Files.createDirectories(directory);
             Path tmp = Files.createTempFile(directory, owner + ".", ".tmp");

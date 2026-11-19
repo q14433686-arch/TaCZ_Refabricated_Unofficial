@@ -40,10 +40,8 @@ public final class RecipeViewerReloadBridge {
 
     /** Queues one coalesced reload after cache installation and index rebuilding have completed. */
     public static void requestReload() {
-        if (hasJei() || hasRei()) {
-            reloadRequested = true;
-            reiPending = hasRei();
-        }
+        reloadRequested = hasJei();
+        reiPending = hasRei();
     }
 
     /** Drops pending work when the client leaves before the synchronized cache can be used. */
@@ -77,11 +75,7 @@ public final class RecipeViewerReloadBridge {
         GunMod.LOGGER.info("[TACZ Recipe Viewer] Refreshing after gun-pack sync ({} table(s), {} recipe(s)).",
                 tableCount, recipeCount);
 
-        // Do not short-circuit: when both viewers are installed each receives its own refresh attempt.
-        boolean requiresResourceFallback = false;
-        if (hasJei() && !refreshJei(client)) {
-            requiresResourceFallback = true;
-        }
+        boolean requiresResourceFallback = !refreshJei(client);
         if (!requiresResourceFallback || resourceFallbackUsed) {
             reloadInProgress = false;
             if (requiresResourceFallback) {

@@ -313,7 +313,7 @@ public class RenderConfig {
         builder.comment("The threshold for fading out when rendering bullet hole particles");
         BULLET_HOLE_PARTICLE_FADE_THRESHOLD = builder.defineInRange("BulletHoleParticleFadeThreshold", 0.98, 0, 1);
 
-        builder.comment("The crosshair when holding a gun");
+        builder.comment("Legacy crosshair preset seed for accounts without a personal view profile.");
         CROSSHAIR_TYPE = builder.defineEnum("CrosshairType", CrosshairType.DOT_1);
 
         builder.comment("The starting position of the hit marker");

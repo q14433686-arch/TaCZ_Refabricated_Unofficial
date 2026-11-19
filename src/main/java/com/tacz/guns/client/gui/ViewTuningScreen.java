@@ -269,7 +269,6 @@ public final class ViewTuningScreen extends Screen {
             b.active = scope != target.scope && target.available(scope);
         }
         if (target.scope == Scope.DEFAULT) return;
-
         button(X, row(2), 22, Component.literal("<"), () -> select(target.scope, target.step(-1)));
         button(X + 24, row(2), W - 48, label("held"), () -> select(target.scope, target.held())).active = target.held() != null;
         button(X + W - 22, row(2), 22, Component.literal(">"), () -> select(target.scope, target.step(1)));
