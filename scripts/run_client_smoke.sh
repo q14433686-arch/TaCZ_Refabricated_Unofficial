@@ -66,6 +66,7 @@ if [[ ${TACZ_SMOKE_PAL:-} == true ]]; then
 fi
 # Require both material paths, not just a generic "rendered" message. Frame data stays in the job artifact.
 if [[ -z ${TACZ_SMOKE_VIEWER:-} && ${TACZ_SMOKE_CONTROLLER:-} != true ]]; then
+    for marker in PORT_HUD_PRECISION PORT_HUD_SHOTS; do grep -F "$marker:" "$run/logs/latest.log" | sed 's/^/::notice::/'; done
     grep -F 'PORT_HUD_PRESETS:' "$run/logs/latest.log" | sed 's/^/::notice::/'
     grep -F 'PORT_HUD_PROFILES: AK stand/sneak/zero-cache radii=' "$run/logs/latest.log" | sed 's/^/::notice::/'
     grep -F 'PORT_VIEW_TUNING: live muzzle delta=' "$run/logs/latest.log" | sed 's/^/::notice::/'

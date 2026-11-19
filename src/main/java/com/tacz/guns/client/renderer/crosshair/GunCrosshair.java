@@ -102,7 +102,8 @@ public final class GunCrosshair {
         if (dot == 0) dot = 1;
         float grow = dotPreset ? 0 : 2 * spread, w = size + grow, h = size * aspect + grow;
         TextureCenter center = v.get(ViewTuningConfig.TEXTURE_CENTER);
-        float core = center == TextureCenter.DOT ? dot : center == TextureCenter.CLEAR ? 0 : 1;
+        // The authored DOT_1 center covers 10 of its 128 texels; don't bury ticks inside a large preset.
+        float core = center == TextureCenter.DOT ? dot : center == TextureCenter.ORIGINAL && dotPreset ? Math.max(w, h) * (10f / 128) : 0;
         float inner = core / 2 + spread;
         float extent = Math.max(Math.max(w, h), core) / 2;
         fit(gui, dotPreset && dynamic ? Math.max(extent, inner + 2) : extent, fitRadius);

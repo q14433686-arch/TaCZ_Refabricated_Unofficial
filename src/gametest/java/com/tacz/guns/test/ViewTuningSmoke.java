@@ -26,6 +26,7 @@ import fuzs.forgeconfigapiport.fabric.api.v5.ModConfigEvents;
 import fuzs.forgeconfigapiport.fabric.impl.config.ForgeConfigApiPortConfig;
 import fuzs.forgeconfigapiport.fabric.impl.config.ModConfigValues;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
+import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.CameraType;
@@ -71,7 +72,7 @@ final class ViewTuningSmoke {
         }
     }
 
-    static void run(ClientGameTestContext ctx) {
+    static void run(ClientGameTestContext ctx, TestSingleplayerContext world) {
         var key = GunInputHandler.VIEW_TUNING_KEY;
         var binding = ctx.computeOnClient(mc -> KeyMappingHelper.getBoundKeyOf(key));
         String clipboard = ctx.computeOnClient(mc -> mc.keyboardHandler.getClipboard());
@@ -165,6 +166,17 @@ final class ViewTuningSmoke {
                             && Objects.equals(file.get(Dimension.THICKNESS.option.getPath()), 3d), "Tuning not persisted to " + path);
                 }
             });
+            // An actual HUD1-era integer TOML entry (not just a clipboard string) at an unchanged config path.
+            if (!ForgeConfigApiPortConfig.getConfigValue(ModConfigValues.DISABLE_CONFIG_WATCHER)) {
+                diskMode = null;
+                ctx.runOnClient(mc -> {
+                    try (var file = CommentedFileConfig.builder(FabricLoader.getInstance().getConfigDir().resolve("tacz-client.toml")).build()) {
+                        file.load(); file.set(Dimension.SIZE.option.getPath(), 37); file.save();
+                    }
+                });
+                awaitDiskReload(ctx, Mode.DESIGNER);
+                ctx.runOnClient(mc -> check(Dimension.SIZE.option.get() == 37d, "Legacy TOML integer was reset or misread"));
+            }
             ctx.setScreen(() -> null); ctx.waitTicks(8);
             int scale = ctx.computeOnClient(mc -> mc.getWindow().getGuiScale());
             // 4 arms of length 4, thickness 3, plus 3x3 center. Bounding box = 3 + 2*(4+2).
@@ -211,6 +223,7 @@ final class ViewTuningSmoke {
             ctx.getInput().pressKey(InputConstants.KEY_ESCAPE); ctx.waitForScreen(null);
             ctx.runOnClient(mc -> check(ViewTuningConfig.MODE.get() == Mode.PNG && Measure.ASPECT.option.get() == 150, "Escape saved reset/import"));
             presetStyles(ctx, scale, key);
+            HudPrecisionSmoke.run(ctx, world, key, scale);
             GunMod.LOGGER.info("PORT_VIEW_TUNING: live muzzle delta={}, changed hand pixels={}, HUD designer/PNG={}/{} px at {}x, ADS and F5=0; disk, reset, cancel and rebound key passed",
                     delta, handPixels, designer, png, scale);
         } finally {
@@ -228,12 +241,18 @@ final class ViewTuningSmoke {
         }
     }
 
-    private static String copy(ClientGameTestContext ctx) {
+    static void saveHud(ClientGameTestContext ctx, Mode mode) {
+        diskMode = null;
+        ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); awaitDiskReload(ctx, mode);
+        ctx.waitFor(mc -> !mc.isPaused() && InputExtraCheck.isInGame());
+    }
+
+    static String copy(ClientGameTestContext ctx) {
         ctx.clickScreenButton(UI + "copy");
         return ctx.computeOnClient(mc -> mc.keyboardHandler.getClipboard());
     }
 
-    private static void paste(ClientGameTestContext ctx, String code) {
+    static void paste(ClientGameTestContext ctx, String code) {
         ctx.runOnClient(mc -> mc.keyboardHandler.setClipboard(code));
         ctx.clickScreenButton(UI + "paste");
     }
@@ -356,7 +375,7 @@ final class ViewTuningSmoke {
         option.set(option.getDefault());
     }
 
-    private static EditBox field(Minecraft mc, String key) {
+    static EditBox field(Minecraft mc, String key) {
         return mc.gui.screen().children().stream().filter(EditBox.class::isInstance).map(EditBox.class::cast)
                 .filter(b -> b.getMessage().equals(Component.translatable(UI + key))).findFirst().orElseThrow();
     }
