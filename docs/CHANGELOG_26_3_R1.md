@@ -1,4 +1,10 @@
-# TaCZ Refabricated 26.3 R1-hotfix3 release notes（草稿，尚未发布）
+# TaCZ Refabricated · Minecraft 26.3 / Fabric
+
+## 1.2.0 R1
+
+[26.3 特性合并](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/122)后的源码版本由 `1.1.8+fabric.26.3.R1-hotfix3` 改为 **`1.2.0+fabric.26.3.R1`**。这次只更改模组版本，不改默认内容包、依赖或其他 MC 版本线。枪包按新的 SemVer 核心比较；[范围示例](../README.md#版本约束)。
+
+## 1.1.8 R1-hotfix3（以下为当时的变更记录）
 
 **构建元数据：`1.1.8+fabric.26.3.R1-hotfix3`**
 

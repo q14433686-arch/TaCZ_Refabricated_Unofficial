@@ -7,8 +7,8 @@
 ## 0. 版本号（最容易错，先做）
 
 - [ ] `gradle.properties` 的 `mod_version` 已是目标版本
-      （形如 `1.1.8+fabric.26.2.R3-hotfix2`；规矩见该文件注释块——SemVer 核心
-      `1.1.8` 不能动，发布身份只放 build metadata，hotfix 序号不加分隔符）。
+      （26.3 当前为 `1.2.0+fabric.26.3.R1`；SemVer 核心按本线决定，平台与 R 序号放在 `+` 后。
+      不要因 26.3 升版而一并修改旧线或默认内容包的版本）。
 - [ ] `fabric.mod.json` 的 `name` 括号里与 `description` 末尾的版本表述一致。
 - [ ] README 五处一致：顶部版本句 /「已使用 R? 版本号」提示行 / 支持环境表两行 /
       SemVer 说明段。
@@ -39,7 +39,7 @@
 
 ## 3. GitHub Release
 
-- [ ] tag 与文件名含完整版本（`TACZ-Refabricated-26.2-1.1.8+fabric.26.2.R?.jar`）。
+- [ ] tag 与文件名含完整版本（`TACZ-Refabricated-26.3-1.2.0+fabric.26.3.R1.jar`）。
 - [ ] **Release 正文首行必须是环境行**（MC + 加载器 + Java + Fabric API +
       Forge Config API Port 的版本要求）——`AGENTS.md` §4 的硬规定。
 - [ ] 正文的修复/特性声明全部有实测或 commit 依据，无「顺嘴写上」的项。

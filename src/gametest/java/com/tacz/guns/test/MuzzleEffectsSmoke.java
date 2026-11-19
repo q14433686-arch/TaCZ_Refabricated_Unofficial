@@ -76,6 +76,9 @@ final class MuzzleEffectsSmoke {
             equip(ctx,world,AK,NONE,DEFAULTS); // Omitted smoke_scale requests the definition's default, not suppression.
             ctx.runOnClient(mc -> RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.set(true));
             fire(ctx,world,false,true,false,null);
+            // Same owner, stack and view for the next sample: the probe would count draws from
+            // this smoke-on shot too. Let its particles expire before testing a new smoke-off shot.
+            ctx.waitFor(mc -> WorldEmitterManager.getInstance().emitterCount() == 0);
             ctx.runOnClient(mc -> { RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.set(false); RenderConfig.RENDER_MUZZLE_SMOKE.set(false); });
             fire(ctx,world,true,false,false,"tacz_muzzle_smoke_off").check(.75f);
             ctx.runOnClient(mc -> RenderConfig.RENDER_MUZZLE_SMOKE.set(true));

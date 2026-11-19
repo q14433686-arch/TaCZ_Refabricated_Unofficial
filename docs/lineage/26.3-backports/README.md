@@ -36,4 +36,4 @@ git show de43f82:docs/investigations/ORDINARY_CRAFTING_26_3.md
 
 26.3 的[构建、专服与普通客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44482591156)、[Iris](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44482591124)、[独立 JEI/REI](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44481576437)及[测试源码](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/de43f82cfb00ff61ac81acb4384896e740074a85/src/gametest/java/com/tacz/guns/test)是**对照**，不是旧线成绩。旧线没有同名 GameTest 任务时，移植夹具或记录同操作的实际进服结果，不要将缺任务视为通过。
 
-每条线分别在[交接账本](../HANDOFF_LEDGER.md)回填：**目标 SHA / 该线 JAR 与 CI 链接 / 无可选模组的专服＋客户端 / 单测过的可选组合 / 剩余或不适用项及原因**。未验证项维持 OPEN；不为让枪包通过扫描把 SemVer 核心改成 `1.2.0`，不以编译绿灯宣称完整包兼容。
+每条线分别在[交接账本](../HANDOFF_LEDGER.md)回填：**目标 SHA / 该线 JAR 与 CI 链接 / 无可选模组的专服＋客户端 / 单测过的可选组合 / 剩余或不适用项及原因**。未验证项维持 OPEN。26.3 的模组版本已单独升为 `1.2.0+fabric.26.3.R1`，三个接收分支不跟随改号，也不能以版本号或编译绿灯宣称完整包兼容。
