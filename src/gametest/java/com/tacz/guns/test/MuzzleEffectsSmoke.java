@@ -4,6 +4,8 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.client.input.ShootKey;
@@ -26,9 +28,13 @@ final class MuzzleEffectsSmoke {
         try {
             ctx.runOnClient(mc -> { mc.options.setCameraType(CameraType.FIRST_PERSON); RenderConfig.RENDER_MUZZLE_SMOKE.set(true); NativeMuzzleEffects.clear(); });
             equip(ctx, world, "ak47", FireMode.AUTO);
+            ctx.runOnClient(mc -> MuzzleQuadProbe.begin(mc.player.getId(), true));
             shoot(ctx, false, "tacz_muzzle_first");
+            var bare = ctx.computeOnClient(mc -> MuzzleQuadProbe.last);
             equip(ctx, world, "ak47", FireMode.AUTO, true);
+            ctx.runOnClient(mc -> MuzzleQuadProbe.begin(mc.player.getId(), true));
             shoot(ctx, false, "tacz_muzzle_rc1");
+            ctx.runOnClient(mc -> { MuzzleQuadProbe.reduction("first", bare, MuzzleQuadProbe.last); MuzzleQuadProbe.stop(); });
             // Glock has no legacy texture; this catches accidental loader fallback/rejection.
             equip(ctx, world, "glock_17", FireMode.SEMI);
             shoot(ctx, false, "tacz_muzzle_glock");
@@ -49,7 +55,7 @@ final class MuzzleEffectsSmoke {
             GunMod.LOGGER.info("PORT_MUZZLE: AK47/Glock first-person, F5, tracked shooter, smoke-off flash and teardown submissions passed; pixel parity not asserted");
         } finally {
             ctx.getInput().releaseKey(ShootKey.SHOOT_KEY);
-            ctx.runOnClient(mc -> { mc.options.setCameraType(camera); RenderConfig.RENDER_MUZZLE_SMOKE.set(smoke); NativeMuzzleEffects.clear(); });
+            ctx.runOnClient(mc -> { MuzzleQuadProbe.stop(); mc.options.setCameraType(camera); RenderConfig.RENDER_MUZZLE_SMOKE.set(smoke); NativeMuzzleEffects.clear(); });
         }
     }
 
@@ -57,13 +63,17 @@ final class MuzzleEffectsSmoke {
         equip(ctx, world, id, mode, false);
     }
     private static void equip(ClientGameTestContext ctx, TestSingleplayerContext world, String id, FireMode mode, boolean silencer) {
+        var expected = silencer ? Identifier.parse("tacz:muzzle_silencer_socom_rc1") : DefaultAssets.EMPTY_ATTACHMENT_ID;
         world.getServer().runOnServer(s -> {
             var p = world.getConnection().getServerPlayer();
             var builder = GunItemBuilder.create().setId(Identifier.parse("tacz:"+id)).setAmmoCount(30).setAmmoInBarrel(true).setFireMode(mode);
             if (silencer) builder.putAttachment(com.tacz.guns.api.item.attachment.AttachmentType.MUZZLE, Identifier.parse("tacz:muzzle_silencer_socom_rc1"));
-            p.setItemInHand(InteractionHand.MAIN_HAND, builder.build());
+            var stack = builder.build();
+            if (!expected.equals(((IGun)stack.getItem()).getAttachmentId(stack, AttachmentType.MUZZLE))) throw new AssertionError("Mount rejected: " + expected);
+            p.setItemInHand(InteractionHand.MAIN_HAND, stack); p.inventoryMenu.broadcastChanges();
         });
-        ctx.waitFor(mc -> mc.player.getMainHandItem().getItem() instanceof IGun gun && gun.getGunId(mc.player.getMainHandItem()).equals(Identifier.parse("tacz:"+id)));
+        ctx.waitFor(mc -> mc.player.getMainHandItem().getItem() instanceof IGun gun && gun.getGunId(mc.player.getMainHandItem()).equals(Identifier.parse("tacz:"+id))
+                && expected.equals(gun.getAttachmentId(mc.player.getMainHandItem(), AttachmentType.MUZZLE)));
         ctx.waitTicks(25);
         ctx.waitFor(mc -> IGunOperator.fromLivingEntity(mc.player).getSynDrawCoolDown() == 0
                 && IClientPlayerGunOperator.fromLocalPlayer(mc.player).getDataHolder().clientBaseTimestamp >= 0);
