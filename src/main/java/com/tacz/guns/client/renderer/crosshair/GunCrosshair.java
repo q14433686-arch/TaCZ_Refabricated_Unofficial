@@ -32,19 +32,36 @@ public final class GunCrosshair {
         gui.pose().pushMatrix();
         gui.pose().translate(x, y);
         if (mode != Mode.DESIGNER) {
-            int size = values.get(Measure.SIZE.option), w = size + 2 * spread, h = scaled(size, aspect) + 2 * spread;
-            fit(gui, (Math.max(Math.max(w, h), dot) + 1) / 2, fitRadius);
             var preset = values.get(RenderConfig.CROSSHAIR_TYPE);
+            boolean dotPreset = mode == Mode.PRESET && preset == CrosshairType.DOT_1;
+            int grow = dotPreset ? 0 : 2 * spread;
+            int size = values.get(Measure.SIZE.option), w = size + grow, h = scaled(size, aspect) + grow;
+            int diameter = Math.max(dot, 1);
+            int extent = (Math.max(Math.max(w, h), diameter) + 1) / 2;
+            if (dotPreset && spread > 0) extent = Math.max(extent, spread + (diameter + 1) / 2 + 2);
+            fit(gui, extent, fitRadius);
             Identifier texture = mode == Mode.PNG ? CUSTOM_PNG : CrosshairType.getTextureLocation(preset);
             TextureCenter center = mode == Mode.PRESET && preset == CrosshairType.EMPTY ? TextureCenter.ORIGINAL : values.get(ViewTuningConfig.TEXTURE_CENTER);
-            texture(gui, texture, w, h, center, dot == 0 ? 1 : dot, color);
+            texture(gui, texture, w, h, center, diameter, color);
+            if (dotPreset && spread > 0) {
+                // The default preset is a tiny dot. Keep it pinned; resizing that texture alone can
+                // quantize two quite different spreads to exactly the same on-screen dot.
+                int core = center == TextureCenter.DOT ? diameter : 1;
+                lines(gui, Shape.CROSS, -core / 2 - spread, core - core / 2 + spread, 2, 2, 1, 0, color, false);
+            }
         } else {
             int t = values.get(Measure.THICKNESS.option), gap = values.get(Measure.GAP.option) + spread;
             int len = values.get(Measure.LENGTH.option), vertical = scaled(len, aspect);
             dot = values.get(ViewTuningConfig.DOT) ? (dot == 0 ? t : dot) : 0;
+            Shape shape = values.get(ViewTuningConfig.SHAPE);
+            if (len == 0 && dot > 0 && spread > 0) {
+                // A designer made of just a point gets the same spread cue. A truly empty style stays empty.
+                shape = Shape.CROSS;
+                len = vertical = 2;
+                t = 1;
+            }
             int core = Math.max(t, dot), low = -core / 2 - gap, high = core - core / 2 + gap;
             fit(gui, high + Math.max(len, vertical) + 1, fitRadius);
-            Shape shape = values.get(ViewTuningConfig.SHAPE);
             if (values.get(ViewTuningConfig.OUTLINE)) lines(gui, shape, low, high, len, vertical, t, dot, opacity << 24, true);
             lines(gui, shape, low, high, len, vertical, t, dot, color, false);
         }

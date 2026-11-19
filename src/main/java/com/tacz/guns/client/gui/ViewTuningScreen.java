@@ -90,7 +90,7 @@ public final class ViewTuningScreen extends Screen {
             for (Axis axis : Axis.values()) addAxis(axis, top + 41 + 20 * axis.ordinal());
             shareButtons(top + 142);
         }
-        button(X, top + 184, W, label("reset"), this::resetPage);
+        button(X, top + 184, W, label(crosshairTab ? "reset_hud" : "reset_model"), this::resetPage);
         button(X, top + 204, HALF, CommonComponents.GUI_CANCEL, this::onClose);
         needsValid.add(button(X + HALF + 2, top + 204, HALF, label("save"), () -> {
             if (invalid.isEmpty()) {

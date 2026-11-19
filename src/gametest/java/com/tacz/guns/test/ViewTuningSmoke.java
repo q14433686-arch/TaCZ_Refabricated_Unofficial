@@ -194,13 +194,14 @@ final class ViewTuningSmoke {
             // 32x48: six columns, except the middle 12 rows. The replacement center is 4x4, not stretched.
             assertHud(frame(ctx, "png_center"), scale, 6 * 36 + 16, 6, 48);
             ctx.getInput().pressKey(key); ctx.waitForScreen(ViewTuningScreen.class);
-            ctx.clickScreenButton(UI + "crosshair"); ctx.clickScreenButton(UI + "reset");
+            ctx.clickScreenButton(UI + "crosshair"); ctx.clickScreenButton(UI + "reset_hud");
             ctx.runOnClient(mc -> check(TuningValues.visible().get(ViewTuningConfig.MODE) == Mode.PRESET
                     && TuningValues.visible().get(Axis.X.option) == .237d, "Reset affected wrong page"));
             ctx.clickScreenButton(UI + "page.share"); paste(ctx, hudCode);
             ctx.runOnClient(mc -> check(TuningValues.visible().get(ViewTuningConfig.MODE) == Mode.DESIGNER, "Imported code not previewed"));
             ctx.getInput().pressKey(InputConstants.KEY_ESCAPE); ctx.waitForScreen(null);
             ctx.runOnClient(mc -> check(ViewTuningConfig.MODE.get() == Mode.PNG && Measure.ASPECT.option.get() == 150, "Escape saved reset/import"));
+            presetStyles(ctx, scale, key);
             GunMod.LOGGER.info("PORT_VIEW_TUNING: live muzzle delta={}, changed hand pixels={}, HUD designer/PNG={}/{} px at {}x, ADS and F5=0; disk, reset, cancel and rebound key passed",
                     delta, handPixels, designer, png, scale);
         } finally {
@@ -232,7 +233,7 @@ final class ViewTuningSmoke {
         ctx.clickScreenButton(UI + "page.share");
         String hud = copy(ctx);
         check(hud.startsWith("TACZ-HUD1:DESIGNER,"), "Wrong HUD share: " + hud);
-        ctx.clickScreenButton(UI + "reset");
+        ctx.clickScreenButton(UI + "reset_hud");
         String neutral = copy(ctx);
         for (String bad : List.of(position, hud.replace("HUD1", "HUD2"), hud + ",1", hud.substring(0, hud.lastIndexOf(',') + 1) + "201", "x".repeat(257))) {
             paste(ctx, bad);
@@ -265,6 +266,10 @@ final class ViewTuningSmoke {
         ctx.clickScreenButton(UI + "motion.static");
         ctx.clickScreenButton(UI + "page.geometry");
         ctx.runOnClient(mc -> { slider(mc, "aspect", 125d/175); slider(mc, "dot_size", 5d/12); });
+        ctx.clickScreenButton(UI + "page.share");
+        String dynamic = copy(ctx);
+        ctx.clickScreenButton(UI + "reset_hud"); paste(ctx, dynamic);
+        check(copy(ctx).equals(dynamic), "Dynamic geometry round trip failed");
         diskMode = null;
         ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); awaitDiskReload(ctx, Mode.DESIGNER);
         ctx.waitFor(mc -> mc.player.onGround() && mc.player.getPose() == Pose.STANDING && !mc.isPaused());
@@ -294,15 +299,45 @@ final class ViewTuningSmoke {
 
     private static int boxFrame(ClientGameTestContext ctx, String name, int scale, InaccuracyType stance) {
         ctx.waitTicks(4);
-        int r = ctx.computeOnClient(mc -> {
-            float uncertainty = IGunOperator.fromLivingEntity(mc.player).getCacheProperty().getCache(GunProperties.INACCURACY).get(stance);
-            float projection = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.projectionMatrix.m11();
-            return (int) Math.round(uncertainty * .0172275 * projection * mc.getWindow().getGuiScaledHeight() / 2);
-        });
+        int r = projectedRadius(ctx, stance);
         // Base box 17x21, outline stroke 3 and a separate 5x5 center. Only the gap may grow.
         int w = 17 + 2 * r, h = 21 + 2 * r;
         assertHud(frame(ctx, "box_" + name), scale, 6 * (w + h - 6) + 25, w, h);
         return r;
+    }
+
+    private static int projectedRadius(ClientGameTestContext ctx, InaccuracyType stance) {
+        return ctx.computeOnClient(mc -> {
+            float uncertainty = IGunOperator.fromLivingEntity(mc.player).getCacheProperty().getCache(GunProperties.INACCURACY).get(stance);
+            float projection = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.projectionMatrix.m11();
+            return (int) Math.round(uncertainty * .0172275 * projection * mc.getWindow().getGuiScaledHeight() / 2);
+        });
+    }
+
+    private static void presetStyles(ClientGameTestContext ctx, int scale, KeyMapping key) {
+        // Keep the saved 32x48 image geometry and 4px replacement center. The basic dot must not
+        // disappear or turn into a larger blob: only its four two-pixel spread ticks may move.
+        ctx.getInput().pressKey(key); ctx.waitForScreen(ViewTuningScreen.class);
+        ctx.clickScreenButton(UI + "crosshair"); ctx.clickScreenButton(UI + "mode.png");
+        ctx.clickScreenButton(UI + "motion.static");
+        diskMode = null;
+        ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); awaitDiskReload(ctx, Mode.PRESET);
+        ctx.waitTicks(4);
+        int r = projectedRadius(ctx, InaccuracyType.STAND);
+        assertHud(frame(ctx, "dot_spread"), scale, 16 + 4 * 2, 8 + 2 * r, 8 + 2 * r);
+
+        // Exercise a real shipped image, not a second procedural lookalike or just the custom PNG slot.
+        ctx.getInput().pressKey(key); ctx.waitForScreen(ViewTuningScreen.class);
+        ctx.clickScreenButton(UI + "crosshair"); ctx.clickScreenButton(UI + "motion.dynamic");
+        for (int i = 0; i < 3; i++) ctx.clickScreenButton(">"); // DOT_1 -> CIRCLE_3
+        diskMode = null;
+        ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); awaitDiskReload(ctx, Mode.PRESET);
+        BufferedImage ring = frame(ctx, "preset_ring");
+        Ink bounds = ink(ring, 38 * scale);
+        int w = bounds.x1 - bounds.x0 + 1, h = bounds.y1 - bounds.y0 + 1;
+        check(w > 22*scale && w < 29*scale && h > 1.4*w && h < 1.6*w && ink(ring, 5*scale).count == 16*scale*scale,
+                "Legacy ring lost its 32x48 proportions or 4x4 center: " + bounds);
+        GunMod.LOGGER.info("PORT_HUD_PRESETS: dynamic pinned dot and static customized CIRCLE_3 {}x{} framebuffer px passed", w, h);
     }
 
     private static <T> void remember(TuningValues.Draft backup, ConfigValue<T> option) {
@@ -348,8 +383,10 @@ final class ViewTuningSmoke {
         return count;
     }
 
-    private static int assertHud(BufferedImage image, int scale, int area, int width, int height) {
-        int cx = image.getWidth()/2, cy = image.getHeight()/2, r = 38 * scale;
+    private record Ink(int count, int x0, int y0, int x1, int y1) {}
+
+    private static Ink ink(BufferedImage image, int r) {
+        int cx = image.getWidth()/2, cy = image.getHeight()/2;
         int count = 0, x0 = cx+r, y0 = cy+r, x1 = cx-r, y1 = cy-r;
         for (int y = cy-r; y <= cy+r; y++) for (int x = cx-r; x <= cx+r; x++) {
             int p = image.getRGB(x, y);
@@ -357,6 +394,13 @@ final class ViewTuningSmoke {
                 count++; x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y);
             }
         }
+        return new Ink(count, x0, y0, x1, y1);
+    }
+
+    private static int assertHud(BufferedImage image, int scale, int area, int width, int height) {
+        int cx = image.getWidth()/2, cy = image.getHeight()/2;
+        Ink ink = ink(image, 38 * scale);
+        int count = ink.count, x0 = ink.x0, x1 = ink.x1, y0 = ink.y0, y1 = ink.y1;
         if (area == 0) check(count == 0, "HUD reticle escaped its visibility gate: " + count);
         else {
             int expected = area * scale * scale;
