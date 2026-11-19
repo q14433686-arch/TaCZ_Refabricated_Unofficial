@@ -19,6 +19,13 @@ abstract class SurfaceSampleClock {
         SurfaceLightSmoke.observeExplosion(packet.center());
     }
 
+    // Gametest only: CPU time spent in admission cleanup, raycasts, patch assembly and
+    // queueing. This does NOT measure deferred vertex writes, GPU fill or the entire frame.
+    @Inject(method = "submit", at = @At("HEAD"))
+    private static void beginCollect(CallbackInfo ci) { SurfaceLightSmoke.beginCollect(); }
+    @Inject(method = "submit", at = @At("RETURN"))
+    private static void endCollect(CallbackInfo ci) { SurfaceLightSmoke.endCollect(); }
+
     @Redirect(method = "submit", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/util/time/GunTime;nowMillis()J"))
     private static long sampleInstant() {
         return SurfaceLightSmoke.sampleTime >= 0 ? SurfaceLightSmoke.sampleTime : GunTime.nowMillis();

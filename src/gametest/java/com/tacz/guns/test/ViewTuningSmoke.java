@@ -6,6 +6,8 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.GunProperties;
 import com.tacz.guns.api.entity.IGunOperator;
+import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.client.render.scope.ScopePipRenderer;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.client.gui.ViewTuningScreen;
 import com.tacz.guns.client.input.AimKey;
@@ -96,6 +98,13 @@ final class ViewTuningSmoke {
             return backup;
         });
         try {
+            // The preceding drop test restores the server's AK from an empty hand. Pausing
+            // before equip/draw settles can freeze the model below the screen: its locator
+            // still moves, but both screenshot ROIs are genuinely empty.
+            ctx.waitFor(mc -> mc.player.getMainHandItem().getItem() instanceof IGun);
+            ctx.waitTicks(25);
+            ctx.waitFor(mc -> !IClientPlayerGunOperator.fromLocalPlayer(mc.player).getDataHolder().clientStateLock
+                    && IGunOperator.fromLivingEntity(mc.player).getSynDrawCoolDown()==0);
             ctx.setScreen(() -> new PauseScreen(true));
             ctx.clickScreenButton(UI + "title");
             ctx.waitFor(mc -> mc.isPaused() && mc.gui.screen() instanceof ViewTuningScreen);
@@ -121,6 +130,10 @@ final class ViewTuningSmoke {
                     check(authored.equals(result, .00001f), "Wrong hip/ADS/refit interpolation");
                 }
             });
+            // The editor is paused, but extraction and presentation keep advancing. Read
+            // the completed changed hand frame, not the last presented pre-edit frame.
+            long editedFrame = ctx.computeOnClient(mc -> ScopePipRenderer.frameNumber());
+            ctx.waitFor(mc -> ScopePipRenderer.frameNumber() >= editedFrame+2);
             BufferedImage moved = frame(ctx, "moved");
             Vector3f delta = muzzle(ctx).sub(before);
             check(Math.abs(delta.x - .237) < .035 && Math.abs(delta.y + .113) < .035 && delta.z < -.08f,

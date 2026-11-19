@@ -56,7 +56,10 @@ public final class SurfaceLightSmoke {
         if (watchedShooter != null) clientBlast=center;
     }
     private static long previousTick;
-    private static long[] samples;
+    private static long[] samples, submitSamples;
+    private static long collectStart, collectNs;
+    public static void beginCollect() { if (samples!=null) collectStart=System.nanoTime(); }
+    public static void endCollect() { if (samples!=null) collectNs+=System.nanoTime()-collectStart; }
     private static int n;
 
     static void run(ClientGameTestContext ctx, TestSingleplayerContext world) {
@@ -103,7 +106,8 @@ public final class SurfaceLightSmoke {
             ctx.runOnClient(mc->sampleTime=-1);
             ctx.waitFor(mc->SurfaceLights.diagnostics().active()==0,80); // Release the clock; a single pulse really expires.
             ctx.runOnClient(mc->{SurfaceLights.clear();position(mc,origin,false);previousTick=-1;replay=true;});
-            timing(ctx,false); timing(ctx,true);
+            // Counterbalance warmup/order effects: both off→on and on→off, all samples reported.
+            for (boolean enable : new boolean[]{false,true,true,false}) timing(ctx,enable);
             ctx.runOnClient(mc->{replay=false;SurfaceLights.clear();});
             try { rocket(ctx,world,origin); } catch(AssertionError e) { failures.append(" rocket: ").append(e.getMessage()); }
             try { packets(ctx,world); } catch(AssertionError e) {
@@ -113,7 +117,7 @@ public final class SurfaceLightSmoke {
             try { laser(ctx,world,origin); } catch(AssertionError e) { failures.append(" laser: ").append(e.getMessage()); }
             if (!failures.isEmpty()) throw new AssertionError("Near-field controls:"+failures);
         } finally {
-            ctx.runOnClient(mc->{ sampleTime=-1;samples=null;replay=false; Arrays.fill(actors,null);rifle=null;NativeMuzzleEffects.clear();
+            ctx.runOnClient(mc->{ sampleTime=-1;samples=submitSamples=null;replay=false; Arrays.fill(actors,null);rifle=null;NativeMuzzleEffects.clear();
                 RenderConfig.LASER_IMPACT_SPOT.set(opt[0]);RenderConfig.MUZZLE_SURFACE_LIGHT.set(opt[1]);
                 RenderConfig.LEGACY_MUZZLE_LIGHT.set(opt[2]);RenderConfig.EXPLOSION_SURFACE_LIGHT.set(opt[3]); });
             world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer(); old.forEach((pos,state)->p.level().setBlock(pos,state,Block.UPDATE_ALL));p.setItemInHand(InteractionHand.MAIN_HAND,saved);p.inventoryMenu.broadcastChanges();});
@@ -140,7 +144,9 @@ public final class SurfaceLightSmoke {
         });
         RenderTickEvent.EVENT.register(e->{
             if (e.phase!=RenderTickEvent.Phase.START) return;
-            if (samples!=null && n<samples.length) samples[n++]=mc.getFrameTimeNs();
+            if (samples!=null && n<samples.length) {
+                samples[n]=mc.getFrameTimeNs();submitSamples[n++]=collectNs;collectNs=0;
+            }
             if (!replay) return;
             long tick=mc.level.getGameTime();
             if (previousTick!=tick) {
@@ -175,11 +181,13 @@ public final class SurfaceLightSmoke {
         var t=frameTimes(ctx);
         var d=ctx.computeOnClient(mc->SurfaceLights.diagnostics());
         if(d.active()>2 || (d.projections()>before.projections())!=enable) throw new AssertionError("Muzzle budget/control: "+d);
-        GunMod.LOGGER.info("PORT_SURFACE: 16 sources/600 RPM, spill={}, 64 renderFrame samples median/p95/p99={} / {} / {} us, admitted projections={}",enable,t[32]/1000,t[60]/1000,t[63]/1000,d.projections()-before.projections());
+        GunMod.LOGGER.info("PORT_SURFACE: 16 sources/600 RPM, spill={}, 64 renderFrame samples median/p95/p99={} / {} / {} us, SurfaceLights.submit p95={} us, admitted projections={}",enable,t.frame[32]/1000,t.frame[60]/1000,t.frame[63]/1000,t.submit[60]/1000,d.projections()-before.projections());
     }
-    private static long[] frameTimes(ClientGameTestContext ctx) {
-        ctx.runOnClient(mc->{n=0;samples=new long[64];});ctx.waitFor(mc->n==samples.length);
-        return ctx.computeOnClient(mc->{var t=samples;samples=null;Arrays.sort(t);return t;});
+    private record Timings(long[] frame,long[] submit) {}
+    private static Timings frameTimes(ClientGameTestContext ctx) {
+        ctx.runOnClient(mc->{n=0;collectNs=0;samples=new long[64];submitSamples=new long[64];});ctx.waitFor(mc->n==samples.length);
+        return ctx.computeOnClient(mc->{var t=new Timings(samples,submitSamples);samples=submitSamples=null;
+            Arrays.sort(t.frame);Arrays.sort(t.submit);return t;});
     }
     /** A funded shot by a tracked remote holder. Check the received explosion coordinates against
      * the actual projectile/block hit on the server, not an explosion predicted at launch. */
@@ -250,11 +258,13 @@ public final class SurfaceLightSmoke {
         if (added<6) throw new AssertionError("No colored NGAL impact in wall frame: "+added);
         // Same beam, hand and camera in both conditions. Neither screenshot nor tracking
         // setup is part of the frame timing. One held laser is not a four-player benchmark.
-        for (boolean enable : new boolean[]{false,true}) {
+        for (boolean enable : new boolean[]{false,true,true,false}) {
             ctx.runOnClient(mc->RenderConfig.LASER_IMPACT_SPOT.set(enable));ctx.waitTicks(8);
             var t=frameTimes(ctx);
-            GunMod.LOGGER.info("PORT_SURFACE: 1 held NGAL, spot={}, 64 renderFrame samples median/p95/p99={} / {} / {} us",enable,t[32]/1000,t[60]/1000,t[63]/1000);
+            GunMod.LOGGER.info("PORT_SURFACE: 1 held NGAL, spot={}, 64 renderFrame samples median/p95/p99={} / {} / {} us, SurfaceLights.submit p95={} us",enable,t.frame[32]/1000,t.frame[60]/1000,t.frame[63]/1000,t.submit[60]/1000);
         }
+        ctx.runOnClient(mc->RenderConfig.LASER_IMPACT_SPOT.set(true));
+        ctx.waitFor(mc->SurfaceLights.diagnostics().beamHits()>0,60);
         world.getServer().runOnServer(s->{var level=world.getConnection().getServerPlayer().level();
             for(int x=-4;x<=4;x++) for(int y=-2;y<=2;y++) level.setBlock(origin.offset(x,y,3),Blocks.GLASS.defaultBlockState(),Block.UPDATE_ALL);
         });
