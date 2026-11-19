@@ -6,7 +6,7 @@ import net.minecraftforge.common.ForgeConfigSpec;
 public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue ENABLE_LASER_FADE_OUT;
     public static ForgeConfigSpec.BooleanValue RENDER_MUZZLE_SMOKE;
-    public static ForgeConfigSpec.BooleanValue LASER_IMPACT_SPOT, MUZZLE_SURFACE_LIGHT, LEGACY_MUZZLE_LIGHT, EXPLOSION_SURFACE_LIGHT;
+    public static ForgeConfigSpec.BooleanValue MUZZLE_SURFACE_LIGHT, LEGACY_MUZZLE_LIGHT, EXPLOSION_SURFACE_LIGHT;
     public static ForgeConfigSpec.BooleanValue DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER;
     public static ForgeConfigSpec.DoubleValue GUN_HURT_BOB_MULTIPLIER;
     public static ForgeConfigSpec.BooleanValue ILLUMINATED_REAL_SKY;
@@ -286,7 +286,6 @@ public class RenderConfig {
         builder.push("render");
         DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER = builder.comment("Hide third-person offhand and unselected hotbar guns; keep main hand visible").define("DisableThirdPersonOffhandAndHotbarGunRender", false);
         GUN_HURT_BOB_MULTIPLIER = builder.comment("First-person ordinary hurt tilt while holding a gun; front/back hits are additionally halved").defineInRange("GunHurtBobMultiplier", 0.1, 0, 1);
-        LASER_IMPACT_SPOT = builder.comment("Project a small colored dot on the first opaque wall hit by a held laser.").define("LaserImpactSpot", false);
         MUZZLE_SURFACE_LIGHT = builder.comment("Briefly light nearby opaque block faces on a successful shot (client visual only).").define("MuzzleSurfaceLight", false);
         LEGACY_MUZZLE_LIGHT = builder.comment("Estimate shot exposure for old textured flashes and explosive launchers that omit the flash. Never enables disabled renew effects.").define("LegacyMuzzleLight", false);
         EXPLOSION_SURFACE_LIGHT = builder.comment("Project a short-range pulse for standard explosion notifications (including TNT) and tracked LR stun bursts.").define("ExplosionSurfaceLight", false);

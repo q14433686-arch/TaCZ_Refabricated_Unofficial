@@ -475,8 +475,6 @@
   "config.tacz.common.ammo.bullet_damage_ignore_list": "Bullet Damage Ignore List",
   "config.tacz.common.ammo.bullet_damage_ignore_list.desc": "Entity type IDs protected when the ignore list is enabled. Defaults to vanilla paintings, item frames and glow item frames.",
   "config.tacz.common.other.hide_gun_pack_compatibility_warning": "Hide Gun Pack Compatibility Warnings",
-  "config.tacz.client.render.laser_impact_spot": "Laser impact spot",
-  "config.tacz.client.render.laser_impact_spot.desc": "Paint the beam color on the nearest opaque block hit. No light along the beam.",
   "config.tacz.client.render.muzzle_surface_light": "Muzzle light on nearby surfaces",
   "config.tacz.client.render.muzzle_surface_light.desc": "Briefly brighten nearby opaque block faces on firing. Visual only; no world lighting changes.",
   "config.tacz.client.render.legacy_muzzle_light": "Estimate old-pack muzzle light",

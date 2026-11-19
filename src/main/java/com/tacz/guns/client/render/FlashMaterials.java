@@ -41,12 +41,13 @@ public final class FlashMaterials {
 
     /** A soft receiver decal in the world pass; keep terrain depth and destination alpha. */
     public static RenderType surface() { return type(Layer.SURFACE, SURFACE_TEXTURE, false, 0); }
-    private static final Identifier SURFACE_TEXTURE = Identifier.parse("tacz:textures/effect/surface_spill.png");
+    private static final Identifier SURFACE_TEXTURE = Identifier.parse("tacz:textures/effect/surface_white.png");
 
     private static RenderType type(Layer layer, Identifier texture, boolean clipped, int uvOffset) {
         return TYPES.computeIfAbsent(new Key(new Pass(layer, clipped), texture, uvOffset), key -> {
             var setup = RenderSetup.builder(PIPELINES.computeIfAbsent(key.pass, FlashMaterials::pipeline))
-                    .withTexture("Sampler0", texture).useLightmap().sortOnUpload();
+                    .withTexture("Sampler0", texture).useLightmap();
+            if (layer != Layer.SURFACE) setup.sortOnUpload(); // additive terrain faces need no depth sort
             // Iris's synthesized ENTITY program samples UV1 even for emissive surfaces.
             // Bind the actual neutral overlay texel, never an unrelated or unbound sampler.
             if (layer == Layer.SURFACE) setup.useOverlay();

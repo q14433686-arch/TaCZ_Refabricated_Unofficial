@@ -398,8 +398,6 @@
   "gui.tacz.refit.builtin_suffix": " （自帶）",
   "gui.tacz.refit.adapter_none": "無適配器",
   "gui.tacz.refit.adapter_requires_unload": "在修改該適配器前先卸下當前配件。",
-  "config.tacz.client.render.laser_impact_spot": "雷射命中光斑",
-  "config.tacz.client.render.laser_impact_spot.desc": "在光束首次命中的不透明方塊上顯示同色光斑。不照亮整條光束。",
   "config.tacz.client.render.muzzle_surface_light": "槍口近場散射",
   "config.tacz.client.render.muzzle_surface_light.desc": "擊發時短暫照亮附近的不透明方塊表面。僅改變畫面，不改變世界光照。",
   "config.tacz.client.render.legacy_muzzle_light": "估算舊槍包擊發曝光",

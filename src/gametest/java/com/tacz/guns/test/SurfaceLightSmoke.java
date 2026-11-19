@@ -7,7 +7,11 @@ import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.event.common.GunFirePostEvent;
 import com.tacz.guns.api.event.server.AmmoHitBlockEvent;
 import com.tacz.guns.api.item.IGun;
-import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
+import com.tacz.guns.client.input.ShootKey;
+import com.tacz.guns.test.SurfaceLightFrames.Frame;
+import com.tacz.guns.test.SurfaceLightFrames.Trigger;
+import com.tacz.guns.test.SurfaceLightFrames.Region;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.client.particle.NativeMuzzleEffects;
@@ -35,17 +39,17 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
-import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.UUID;
 
-/** Fixed receivers and a wall between the camera and the negative control. No gun, particles,
- * tracers or visible actors in the scatter A/B. Separately verify a real held beam and actual
- * server -> client detonation packets. Never mix packet generation or screenshot readback into timing. */
+/** Same dark lane, camera and actual stock gun in the shot controls. Real-time post-render
+ * readback is separate from cost measurements. No projection, pulse or particle is injected
+ * for the positive pixel tests. Synthetic shooters are used only for occlusion/load controls. */
 public final class SurfaceLightSmoke {
-    public static long sampleTime = -1;
-    private static final Identifier AK=id("ak47"), RPG=id("rpg7"), M4=id("m4a1"), NGAL=id("laser_ngal");
+    private static final Identifier AK=id("ak47"), RPG=id("rpg7");
+    private static final int PARTITION=5, BACK=30, SIDE=8;
+    private static int localShots;
     private static Identifier id(String path) { return Identifier.fromNamespaceAndPath("tacz",path); }
     private static final Cow[] actors = new Cow[16];
     private static ItemStack rifle;
@@ -54,80 +58,105 @@ public final class SurfaceLightSmoke {
     private static volatile Vec3 serverHit, clientBlast;
     public static void observeExplosion(Vec3 center) {
         if (watchedShooter != null) clientBlast=center;
+        SurfaceLightFrames.trigger(Trigger.EXPLOSION);
     }
     private static long previousTick;
     private static long[] samples, submitSamples;
     private static long collectStart, collectNs;
     public static void beginCollect() { if (samples!=null) collectStart=System.nanoTime(); }
-    public static void endCollect() { if (samples!=null) collectNs+=System.nanoTime()-collectStart; }
+    public static void endCollect() { if (samples!=null) collectNs+=System.nanoTime()-collectStart; SurfaceLightFrames.afterCollection(); }
     private static int n;
 
     static void run(ClientGameTestContext ctx, TestSingleplayerContext world) {
-        var opt = ctx.computeOnClient(mc -> new boolean[]{RenderConfig.LASER_IMPACT_SPOT.get(),RenderConfig.MUZZLE_SURFACE_LIGHT.get(),
-                RenderConfig.LEGACY_MUZZLE_LIGHT.get(),RenderConfig.EXPLOSION_SURFACE_LIGHT.get()});
+        var opt = ctx.computeOnClient(mc -> new boolean[]{RenderConfig.MUZZLE_SURFACE_LIGHT.get(),RenderConfig.LEGACY_MUZZLE_LIGHT.get(),
+                RenderConfig.EXPLOSION_SURFACE_LIGHT.get(),mc.options.bobView().get()});
         var saved = world.getServer().computeOnServer(s -> world.getConnection().getServerPlayer().getMainHandItem().copy());
-        var facing = ctx.computeOnClient(mc -> new float[]{mc.player.getYRot(), mc.player.getXRot()});
+        var facing = ctx.computeOnClient(mc -> new float[]{mc.player.getYRot(),mc.player.getXRot()});
         BlockPos origin=ctx.computeOnClient(mc->BlockPos.containing(mc.player.getEyePosition()));
         var old=world.getServer().computeOnServer(s -> {
             var p=world.getConnection().getServerPlayer(); var level=p.level(); p.setItemInHand(InteractionHand.MAIN_HAND,ItemStack.EMPTY);
             var states=new LinkedHashMap<BlockPos,BlockState>();
-            for(int x=-4;x<=4;x++) for(int y=-2;y<=2;y++) for(int z=-3;z<=3;z++) {
+            for(int x=-SIDE;x<=SIDE;x++) for(int y=-2;y<=5;y++) for(int z=-3;z<=BACK;z++) {
                 var pos=origin.offset(x,y,z);
-                var block = Math.abs(x)==4 || Math.abs(y)==2 || Math.abs(z)==3 ? Blocks.COAL_BLOCK : Blocks.AIR;
-                states.put(pos,level.getBlockState(pos)); level.setBlock(pos,block.defaultBlockState(),Block.UPDATE_ALL);
+                var block = Math.abs(x)==SIDE || y==-2 || y==5 || z==-3 || z==BACK || z==PARTITION ? Blocks.GRAY_CONCRETE : Blocks.AIR;
+                var prev=level.getBlockState(pos);
+                if (prev.is(block) && z!=PARTITION) continue;
+                states.put(pos,prev); level.setBlock(pos,block.defaultBlockState(),Block.UPDATE_ALL);
             }
             return states;
         });
-        StringBuilder failures = new StringBuilder();
         try {
             ctx.getInput().lookAt(0,0);
-            ctx.waitFor(mc->mc.player.getMainHandItem().isEmpty() && mc.level.getBlockState(origin.south(3)).is(Blocks.COAL_BLOCK));
+            ctx.waitFor(mc->mc.player.getMainHandItem().isEmpty() && mc.level.getBlockState(origin.south(BACK)).is(Blocks.GRAY_CONCRETE));
             world.getConnection().waitForChunksRender(); ctx.waitTicks(22);
             ctx.runOnClient(mc->{
-                setup(mc,origin); RenderConfig.MUZZLE_SURFACE_LIGHT.set(false); RenderConfig.LEGACY_MUZZLE_LIGHT.set(true);
-                RenderConfig.EXPLOSION_SURFACE_LIGHT.set(true); RenderConfig.LASER_IMPACT_SPOT.set(false);
-                // RPG7 really omits muzzle_flash and has no locator. A launch is NOT an explosion notification.
+                setup(mc,origin); mc.options.bobView().set(false); RenderConfig.MUZZLE_SURFACE_LIGHT.set(false);
+                RenderConfig.LEGACY_MUZZLE_LIGHT.set(true); RenderConfig.EXPLOSION_SURFACE_LIGHT.set(true);
+                // Locatorless RPG exposure belongs to the held gun, not to its eventual explosion.
                 var launcher=GunItemBuilder.create().setId(RPG).build();
                 ReimaginedShotControl.taczTest$shot(new GunFirePostEvent(mc.player,launcher,LogicalSide.CLIENT));
                 if (NativeMuzzleEffects.flashLight(launcher,0)!=10<<4 || NativeMuzzleEffects.flashLight(rifle,0)!=0) throw new AssertionError("Locatorless RPG exposure / different gun");
-                sampleShot();
             });
-            ctx.waitTicks(3);
-            var off=frame(ctx,"off");
-            ctx.runOnClient(mc->{RenderConfig.MUZZLE_SURFACE_LIGHT.set(true);sampleShot();}); ctx.waitTicks(4);
-            var frontFrame=frame(ctx,"front");
-            int lit=redDelta(off,frontFrame);
-            var front=ctx.computeOnClient(mc->SurfaceLights.diagnostics());
-            ctx.runOnClient(mc->{SurfaceLights.clear();position(mc,origin,true);sampleShot();}); ctx.waitTicks(4);
-            var rear=frame(ctx,"behind");
-            int leak=redDelta(off,rear);
-            GunMod.LOGGER.info("PORT_SURFACE: central wall red delta front/behind over off={}/{}, front {}, same pixel off/on {} / {}",lit,leak,front,pixel(off),pixel(frontFrame));
-            if (lit<8 || Math.abs(leak)>Math.max(4,lit/5)) failures.append(" wall front/behind=").append(lit).append("/").append(leak);
-            ctx.runOnClient(mc->sampleTime=-1);
-            ctx.waitFor(mc->SurfaceLights.diagnostics().active()==0,80); // Release the clock; a single pulse really expires.
+            muzzleFrames(ctx,world,origin);
             ctx.runOnClient(mc->{SurfaceLights.clear();position(mc,origin,false);previousTick=-1;replay=true;});
-            // Counterbalance warmup/order effects: both off→on and on→off, all samples reported.
             for (boolean enable : new boolean[]{false,true,true,false}) timing(ctx,enable);
             ctx.runOnClient(mc->{replay=false;SurfaceLights.clear();RenderConfig.MUZZLE_SURFACE_LIGHT.set(true);});
-            try { rocket(ctx,world,origin); } catch(AssertionError e) { failures.append(" rocket: ").append(e.getMessage()); }
-            try { packets(ctx,world); } catch(AssertionError e) {
-                var state=ctx.computeOnClient(mc->SurfaceLights.diagnostics());
-                failures.append(" packets: ").append(e.getMessage()).append(" ").append(state);
-            }
-            try { laser(ctx,world,origin); } catch(AssertionError e) { failures.append(" laser: ").append(e.getMessage()); }
-            if (!failures.isEmpty()) throw new AssertionError("Near-field controls:"+failures);
+            world.getServer().runOnServer(s->{var level=world.getConnection().getServerPlayer().level();
+                for (int x=1-SIDE;x<SIDE;x++) for (int y=-1;y<5;y++) level.removeBlock(origin.offset(x,y,PARTITION),false);
+            });
+            ctx.waitFor(mc->mc.level.getBlockState(origin.south(PARTITION)).isAir());
+            world.getConnection().waitForChunksRender(); ctx.waitTicks(12);
+            blastFrames(ctx,world,origin);
+            packets(ctx,world);
         } finally {
-            ctx.runOnClient(mc->{ sampleTime=-1;samples=submitSamples=null;replay=false; Arrays.fill(actors,null);rifle=null;NativeMuzzleEffects.clear();
-                RenderConfig.LASER_IMPACT_SPOT.set(opt[0]);RenderConfig.MUZZLE_SURFACE_LIGHT.set(opt[1]);
-                RenderConfig.LEGACY_MUZZLE_LIGHT.set(opt[2]);RenderConfig.EXPLOSION_SURFACE_LIGHT.set(opt[3]); });
-            world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer(); old.forEach((pos,state)->p.level().setBlock(pos,state,Block.UPDATE_ALL));p.setItemInHand(InteractionHand.MAIN_HAND,saved);p.inventoryMenu.broadcastChanges();});
+            ctx.runOnClient(mc->{ SurfaceLightFrames.clear();samples=submitSamples=null;replay=false;Arrays.fill(actors,null);rifle=null;NativeMuzzleEffects.clear();
+                RenderConfig.MUZZLE_SURFACE_LIGHT.set(opt[0]);RenderConfig.LEGACY_MUZZLE_LIGHT.set(opt[1]);
+                RenderConfig.EXPLOSION_SURFACE_LIGHT.set(opt[2]);mc.options.bobView().set(opt[3]); });
+            world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer();old.forEach((pos,state)->p.level().setBlock(pos,state,Block.UPDATE_ALL));p.setItemInHand(InteractionHand.MAIN_HAND,saved);p.inventoryMenu.broadcastChanges();});
             ctx.getInput().lookAt(facing[0],facing[1]);
             world.getConnection().waitForChunksRender();ctx.waitTicks(5);
         }
     }
-    private static void sampleShot() {
-        ReimaginedShotControl.taczTest$shot(new GunFirePostEvent(actors[0],rifle,LogicalSide.CLIENT));
-        sampleTime=com.tacz.guns.util.time.GunTime.nowMillis();
+
+    private static void muzzleFrames(ClientGameTestContext ctx,TestSingleplayerContext world,BlockPos origin) {
+        world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer();
+            p.setItemInHand(InteractionHand.MAIN_HAND,GunItemBuilder.create().setId(AK).setAmmoCount(8).setAmmoInBarrel(true).setFireMode(FireMode.SEMI).build());
+            p.inventoryMenu.broadcastChanges();});
+        ctx.waitFor(mc->mc.player.getMainHandItem().getItem() instanceof IGun); ctx.waitTicks(28);
+        ctx.waitFor(mc->IGunOperator.fromLivingEntity(mc.player).getSynDrawCoolDown()==0 && IClientPlayerGunOperator.fromLocalPlayer(mc.player).getDataHolder().clientBaseTimestamp>=0);
+        var eye=ctx.computeOnClient(mc->mc.player.getEyePosition());
+        double wall=origin.getZ()+PARTITION;
+        Region[] points={Region.wall(new Vec3(eye.x+1.8,eye.y+.75,wall)),Region.wall(new Vec3(eye.x-1.8,eye.y+.75,wall)),
+                Region.floor(new Vec3(eye.x+1.35,origin.getY()-1,wall-.95))};
+        var rest=SurfaceLightFrames.still(ctx,"muzzle_rest");
+        var off=fireLocal(ctx,world,false); var on=fireLocal(ctx,world,true);
+        ctx.waitFor(mc->SurfaceLights.diagnostics().active()==0); ctx.waitTicks(20); ctx.getInput().lookAt(0,0);ctx.waitTicks(4);
+        var expired=SurfaceLightFrames.still(ctx,"muzzle_expired");
+        var spread=on.deltas(off,points,.16); var residue=expired.deltas(rest,points,.16);
+        world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer();p.setItemInHand(InteractionHand.MAIN_HAND,ItemStack.EMPTY);p.inventoryMenu.broadcastChanges();});
+        ctx.waitFor(mc->mc.player.getMainHandItem().isEmpty());ctx.waitTicks(15);
+        var empty=SurfaceLightFrames.still(ctx,"empty");
+        ctx.runOnClient(mc->{SurfaceLights.clear();position(mc,origin,true);SurfaceLightFrames.arm("muzzle_behind",Trigger.STILL);
+            ReimaginedShotControl.taczTest$shot(new GunFirePostEvent(actors[0],rifle,LogicalSide.CLIENT));});
+        var leak=SurfaceLightFrames.read(ctx).deltas(empty,points,.16);
+        GunMod.LOGGER.info("PORT_SURFACE: live AK wall left/right + forward floor mean red ON-OFF={}, expired={}, behind wall={}",Arrays.toString(spread),Arrays.toString(residue),Arrays.toString(leak));
+        checkSamples("live AK wall left/right + forward floor",spread,10,residue,leak);
+    }
+    private static Frame fireLocal(ClientGameTestContext ctx,TestSingleplayerContext world,boolean enabled) {
+        ctx.getInput().lookAt(0,0);ctx.waitTicks(12);
+        ctx.runOnClient(mc->{RenderConfig.MUZZLE_SURFACE_LIGHT.set(enabled);SurfaceLightFrames.arm("ak_"+(enabled?"on":"off"),Trigger.SHOT);localShots=0;});
+        int ammo=world.getServer().computeOnServer(s->{var g=world.getConnection().getServerPlayer().getMainHandItem();return ((IGun)g.getItem()).getCurrentAmmoCount(g);});
+        ctx.getInput().holdKey(ShootKey.SHOOT_KEY);
+        try {ctx.waitFor(mc->localShots>0);} finally {ctx.getInput().releaseKey(ShootKey.SHOOT_KEY);}
+        var frame=SurfaceLightFrames.read(ctx);
+        world.getServer().waitFor(s->{var g=world.getConnection().getServerPlayer().getMainHandItem();return ((IGun)g.getItem()).getCurrentAmmoCount(g)==ammo-1;});
+        return frame;
+    }
+    private static void checkSamples(String label,int[] lit,int required,int[]... controls) {
+        for (int i=0;i<lit.length;i++) {
+            if (lit[i]<required) throw new AssertionError(label+" too dim: "+Arrays.toString(lit));
+            for (int[] c:controls) if (Math.abs(c[i])>6) throw new AssertionError(label+" false positive: "+Arrays.toString(c)+", lit="+Arrays.toString(lit));
+        }
     }
     private static void setup(Minecraft mc, BlockPos origin) {
         rifle=GunItemBuilder.create().setId(AK).build();
@@ -142,7 +171,11 @@ public final class SurfaceLightSmoke {
             var owner=e.getAmmo().getOwner();
             if (owner!=null && owner.getUUID().equals(watchedShooter)) serverHit=e.getHitResult().getLocation();
         });
+        GunFirePostEvent.EVENT.register(e->{
+            if(e.getLogicalSide().isClient() && e.getShooter()==mc.player) {localShots++; SurfaceLightFrames.trigger(Trigger.SHOT);}
+        });
         RenderTickEvent.EVENT.register(e->{
+            if (e.phase==RenderTickEvent.Phase.END) SurfaceLightFrames.renderEnd(mc);
             if (e.phase!=RenderTickEvent.Phase.START) return;
             if (samples!=null && n<samples.length) {
                 samples[n]=mc.getFrameTimeNs();submitSamples[n++]=collectNs;collectNs=0;
@@ -161,19 +194,8 @@ public final class SurfaceLightSmoke {
         for(int i=0;i<actors.length;i++) {
             var cow=actors[i];
             cow.snapTo(new Vec3(eye.x+(i==0?0:(i%4-1.5)*.32),eye.y-cow.getEyeHeight()+.12,
-                    origin.getZ()+(behind?4.25:1.65)+(i/4)*.05),0,0);
+                    origin.getZ()+(behind?PARTITION+1.5:1.0)+(i/4)*.05),0,0);
         }
-    }
-    private static BufferedImage frame(ClientGameTestContext c,String name) { return SnowstormMaterialSmoke.read(c.takeScreenshot("tacz_surface_"+name)); }
-    private static String pixel(BufferedImage image) {
-        return Integer.toHexString(image.getRGB(image.getWidth()/2+15,image.getHeight()/2+15));
-    }
-    private static int redDelta(BufferedImage a,BufferedImage b) {
-        int cx=a.getWidth()/2,cy=a.getHeight()/2,sum=0,n=0;
-        for (int x=-25;x<25;x++) for(int y=-25;y<25;y++) if(Math.abs(x)>8||Math.abs(y)>8) {
-            sum+=(b.getRGB(cx+x,cy+y)>>16&255)-(a.getRGB(cx+x,cy+y)>>16&255);n++;
-        }
-        return sum/n;
     }
     private static void timing(ClientGameTestContext ctx, boolean enable) {
         ctx.runOnClient(mc->RenderConfig.MUZZLE_SURFACE_LIGHT.set(enable));ctx.waitTicks(10);
@@ -189,45 +211,61 @@ public final class SurfaceLightSmoke {
         return ctx.computeOnClient(mc->{var t=new Timings(samples,submitSamples);samples=submitSamples=null;
             Arrays.sort(t.frame);Arrays.sort(t.submit);return t;});
     }
-    /** A funded shot by a tracked remote holder. Check the received explosion coordinates against
-     * the actual projectile/block hit on the server, not an explosion predicted at launch. */
-    private static void rocket(ClientGameTestContext ctx, TestSingleplayerContext world, BlockPos origin) {
+    private record Impact(Frame frame, Vec3 pos) {}
+    private static void blastFrames(ClientGameTestContext ctx, TestSingleplayerContext world, BlockPos origin) {
+        var target=origin.south(BACK);
+        var before=SurfaceLightFrames.still(ctx,"range_rest");
+        var off=rocket(ctx,world,target,false);ctx.waitTicks(24);
+        var on=rocket(ctx,world,target,true);
+        ctx.waitFor(mc->SurfaceLights.diagnostics().active()==0); ctx.waitTicks(24);
+        var expired=SurfaceLightFrames.still(ctx,"blast_expired");
+        // Four to five blocks from the actual hit, not the particle core or shooter. Each
+        // explosion uses its own server-confirmed centre (stock RPG spread is not disabled).
+        Region[] a=blastPoints(off.pos,origin), b=blastPoints(on.pos,origin);
+        int[] lit=on.frame.deltas(before,b,.40), dark=off.frame.deltas(before,a,.40), residue=expired.deltas(before,b,.40);
+        ctx.runOnClient(mc->SurfaceLightFrames.arm("blast_behind",Trigger.EXPLOSION));
+        world.getServer().runOnServer(s->{var level=world.getConnection().getServerPlayer().level();
+            level.explode(null,on.pos.x,on.pos.y,target.getZ()+1.5,3f,false,net.minecraft.world.level.Level.ExplosionInteraction.NONE);});
+        var leak=SurfaceLightFrames.read(ctx).deltas(before,b,.40);
+        GunMod.LOGGER.info("PORT_SURFACE: live RPG7 wall +/-5 blocks and forward floor, mean red over rest ON={}, OFF={}, expired={}, behind wall={}, observer={} blocks",Arrays.toString(lit),Arrays.toString(dark),Arrays.toString(residue),Arrays.toString(leak),on.pos.distanceTo(ctx.computeOnClient(mc->mc.player.getEyePosition())));
+        checkSamples("live RPG7 beyond particle core",lit,14,dark,residue,leak);
+    }
+    private static Region[] blastPoints(Vec3 hit,BlockPos origin) {
+        return new Region[]{Region.wall(hit.add(5,.35,0)),Region.wall(hit.add(-5,.35,0)),Region.floor(new Vec3(hit.x+3.5,origin.getY()-1,hit.z-4))};
+    }
+    /** Tracked stock RPG-7 shoots towards the visible backstop, not outside the camera room. */
+    private static Impact rocket(ClientGameTestContext ctx, TestSingleplayerContext world, BlockPos target,boolean enabled) {
         var server=world.getServer();
-        var target=origin.east(10).above(6);
-        var states=server.computeOnServer(s->{var level=world.getConnection().getServerPlayer().level();
-            var old=new LinkedHashMap<BlockPos,BlockState>();
-            for(int i=-1;i<=1;i++) for(int j=-1;j<=1;j++) {
-                var at=target.offset(i,0,j);old.put(at,level.getBlockState(at));level.setBlock(at,Blocks.OBSIDIAN.defaultBlockState(),Block.UPDATE_ALL);
-            }
-            return old;
-        });
         var destroy=server.computeOnServer(s->AmmoConfig.EXPLOSIVE_AMMO_DESTROYS_BLOCK.get());
         var before=ctx.computeOnClient(mc->SurfaceLights.diagnostics());
         try {
             var shooter=server.computeOnServer(s->{var level=world.getConnection().getServerPlayer().level();
                 var mob=EntityTypes.HUSK.create(level,EntitySpawnReason.COMMAND);
                 if(mob==null) throw new AssertionError("No tracked launcher holder");
-                mob.snapTo(Vec3.atCenterOf(target).add(0,8,0),0,90);mob.setNoGravity(true);mob.setNoAi(true);
+                mob.snapTo(Vec3.atCenterOf(target).add(0,-mob.getEyeHeight(),-10),0,0);mob.setNoGravity(true);mob.setNoAi(true);
                 mob.setItemInHand(InteractionHand.MAIN_HAND,GunItemBuilder.create().setId(RPG).setAmmoCount(1).setAmmoInBarrel(true).setFireMode(FireMode.SEMI).build());
                 level.addFreshEntity(mob);IGunOperator.fromLivingEntity(mob).initialData();return mob;
             });
             watchedShooter=shooter.getUUID();serverHit=clientBlast=null;
             world.getConnection().waitForClientboundEntityUpdates(EntityTypes.HUSK);
             ctx.waitFor(mc->mc.level.getEntity(watchedShooter)!=null,100);
+            ctx.runOnClient(mc->{RenderConfig.EXPLOSION_SURFACE_LIGHT.set(enabled);SurfaceLightFrames.arm("rpg_"+(enabled?"on":"off"),Trigger.EXPLOSION);});
             server.runOnServer(s->{AmmoConfig.EXPLOSIVE_AMMO_DESTROYS_BLOCK.set(false);
-                var api=ScriptGuardSmoke.bind(shooter);api.setPitchSupplier(()->90f);api.shootOnce(true);
+                var api=ScriptGuardSmoke.bind(shooter);api.setPitchSupplier(()->0f);api.setYawSupplier(()->0f);api.shootOnce(true);
             });
-            ctx.waitFor(mc->serverHit!=null && clientBlast!=null && SurfaceLights.diagnostics().explosions()>before.explosions(),120);
+            ctx.waitFor(mc->serverHit!=null && clientBlast!=null,120);
+            var frame=SurfaceLightFrames.read(ctx);
             var d=ctx.computeOnClient(mc->SurfaceLights.diagnostics());
-            if (d.muzzles()!=before.muzzles()+1 || d.explosions()!=before.explosions()+1 || serverHit.distanceToSqr(clientBlast)>1e-8
-                    || Math.abs(serverHit.y-(target.getY()+1))>.01 || Math.abs(serverHit.x-(target.getX()+.5))>1.51 || Math.abs(serverHit.z-(target.getZ()+.5))>1.51)
-                throw new AssertionError("RPG launch and authoritative hit: "+before+" -> "+d+", target "+target+", "+serverHit+"/"+clientBlast);
-            GunMod.LOGGER.info("PORT_SURFACE: tracked RPG7 -> 1 launch, 1 separate blast at server block hit (position error={} blocks)",serverHit.distanceTo(clientBlast));
+            if (d.muzzles()!=before.muzzles()+1 || d.explosions()!=before.explosions()+(enabled?1:0) || serverHit.distanceToSqr(clientBlast)>1e-8
+                    || Math.abs(serverHit.z-target.getZ())>.01 || Math.abs(serverHit.x-(target.getX()+.5))>2 || Math.abs(serverHit.y-(target.getY()+.5))>2)
+                throw new AssertionError("RPG launch/impact/ON-OFF: "+before+" -> "+d+", target "+target+", "+serverHit+"/"+clientBlast);
+            GunMod.LOGGER.info("PORT_SURFACE: tracked RPG7 enabled={} hit {}, position error={} blocks",enabled,clientBlast,serverHit.distanceTo(clientBlast));
+            return new Impact(frame,clientBlast);
         } finally {
             server.runOnServer(s->{var level=world.getConnection().getServerPlayer().level();
                 if(watchedShooter!=null && level.getEntity(watchedShooter)!=null) level.getEntity(watchedShooter).discard();
-                states.forEach((pos,state)->level.setBlock(pos,state,Block.UPDATE_ALL));AmmoConfig.EXPLOSIVE_AMMO_DESTROYS_BLOCK.set(destroy);
-            });watchedShooter=null;serverHit=clientBlast=null;
+                AmmoConfig.EXPLOSIVE_AMMO_DESTROYS_BLOCK.set(destroy);});
+            watchedShooter=null;serverHit=clientBlast=null;
         }
     }
     private static void packets(ClientGameTestContext ctx, TestSingleplayerContext world) {
@@ -242,40 +280,6 @@ public final class SurfaceLightSmoke {
         world.getServer().runOnServer(s->((StunGrenadeEntity)world.getConnection().getServerPlayer().level().getEntity(stun)).onDeath(null));
         ctx.waitFor(mc->SurfaceLights.diagnostics().stuns()==before.stuns()+1,100);
         GunMod.LOGGER.info("PORT_SURFACE: server LR frag -> 1 blast, LR stun -> 1 white pulse, 0 unrelated FLASH pulses");
-    }
-    private static void laser(ClientGameTestContext ctx,TestSingleplayerContext world,BlockPos origin) {
-        world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer();p.setItemInHand(InteractionHand.MAIN_HAND,GunItemBuilder.create().setId(M4).setAmmoCount(5).putAttachment(AttachmentType.LASER,NGAL).build());p.inventoryMenu.broadcastChanges();});
-        ctx.waitFor(mc->{var stack=mc.player.getMainHandItem();return stack.getItem() instanceof IGun gun && NGAL.equals(gun.getAttachmentId(stack,AttachmentType.LASER));});
-        ctx.waitTicks(26);var off=frame(ctx,"laser_off");ctx.runOnClient(mc->RenderConfig.LASER_IMPACT_SPOT.set(true));
-        try { ctx.waitFor(mc->SurfaceLights.diagnostics().beamHits()>0,100); }
-        catch(AssertionError e) { throw new AssertionError("Held NGAL did not project: "+ctx.computeOnClient(mc->SurfaceLights.diagnostics()),e); }ctx.waitTicks(4);var on=frame(ctx,"laser_on");
-        int added=0;
-        for(int y=on.getHeight()/5;y<on.getHeight()*3/4;y++) for(int x=on.getWidth()/5;x<on.getWidth()*4/5;x++) {
-            int a=off.getRGB(x,y),b=on.getRGB(x,y);
-            int ca=Math.min(a>>8&255,a&255)-(a>>16&255), cb=Math.min(b>>8&255,b&255)-(b>>16&255);
-            if(cb>30 && cb-ca>25) added++;
-        }
-        if (added<6) throw new AssertionError("No colored NGAL impact in wall frame: "+added);
-        // Same beam, hand and camera in both conditions. Neither screenshot nor tracking
-        // setup is part of the frame timing. One held laser is not a four-player benchmark.
-        for (boolean enable : new boolean[]{false,true,true,false}) {
-            ctx.runOnClient(mc->RenderConfig.LASER_IMPACT_SPOT.set(enable));ctx.waitTicks(8);
-            var t=frameTimes(ctx);
-            GunMod.LOGGER.info("PORT_SURFACE: 1 held NGAL, spot={}, 64 renderFrame samples median/p95/p99={} / {} / {} us, SurfaceLights.submit p95={} us",enable,t.frame[32]/1000,t.frame[60]/1000,t.frame[63]/1000,t.submit[60]/1000);
-        }
-        ctx.runOnClient(mc->RenderConfig.LASER_IMPACT_SPOT.set(true));
-        ctx.waitFor(mc->SurfaceLights.diagnostics().beamHits()>0,60);
-        world.getServer().runOnServer(s->{var level=world.getConnection().getServerPlayer().level();
-            for(int x=-4;x<=4;x++) for(int y=-2;y<=2;y++) level.setBlock(origin.offset(x,y,3),Blocks.GLASS.defaultBlockState(),Block.UPDATE_ALL);
-        });
-        ctx.waitFor(mc->mc.level.getBlockState(origin.south(3)).is(Blocks.GLASS) && SurfaceLights.diagnostics().beamHits()==0,60);
-        world.getServer().runOnServer(s->{var level=world.getConnection().getServerPlayer().level();
-            for(int x=-4;x<=4;x++) for(int y=-2;y<=2;y++) level.setBlock(origin.offset(x,y,3),Blocks.COAL_BLOCK.defaultBlockState(),Block.UPDATE_ALL);
-        });
-        ctx.waitFor(mc->SurfaceLights.diagnostics().beamHits()>0,60);
-        world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer();p.setItemInHand(InteractionHand.MAIN_HAND,ItemStack.EMPTY);p.inventoryMenu.broadcastChanges();});
-        ctx.waitFor(mc->mc.player.getMainHandItem().isEmpty() && SurfaceLights.diagnostics().beamHits()==0,60);
-        GunMod.LOGGER.info("PORT_SURFACE: held NGAL cyan wall spot: {} added cyan pixels with beam in both frames; no painted glass, spot restored on coal and cleared on unequip",added);
     }
     private SurfaceLightSmoke() {}
 }

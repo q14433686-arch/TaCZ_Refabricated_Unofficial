@@ -14,130 +14,131 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
-/** Project a radial footprint onto actual receivers. No chunk rebuild, background jobs,
- * depth-buffer readback, block mutation, or quads floating in air. Partial/non-opaque shapes
- * stop the ray but aren't painted as full cubes. Coordinates remain doubles until camera subtraction. */
+/** Sample exposed terrain throughout a small light volume, not six fixed-size decals below/on
+ * axis with the source. Build only on admission. No chunk rebuilds, new lights or depth reads. */
 final class SurfaceProjection {
-    private static final double BIAS = .002;
-    private static final Direction[] DIRECTIONS = Direction.values();
+    static final int MUZZLE_RAYS = 144, BLAST_RAYS = 384;
+    private static final double DEPTH_BIAS = .002, AIR_GAP = .10;
+    private static final Direction[] FACES = Direction.values();
 
-    record Patch(Direction face, double plane, double l, double b, double r, double t,
-                 float u0, float v0, float u1, float v1, float gain) {
-        void draw(PoseStack.Pose pose, VertexConsumer out, Vec3 camera, int rgb, float strength) {
-            var axis = face.getAxis();
-            if ((normal(camera, axis) - plane) * sign(face) <= 0) return;
-            // Encode light intensity in RGB, not coverage. Packs that cut out alpha < .1
-            // should not discard an entire dim receiver. The texture alpha is radial coverage.
-            float intensity = Math.clamp(gain * strength, 0f, 1f);
-            int color = Math.round((rgb >> 16 & 255) * intensity) << 16
-                    | Math.round((rgb >> 8 & 255) * intensity) << 8 | Math.round((rgb & 255) * intensity);
-            if (color == 0) return;
-            int argb = 0xff000000 | color;
-            double depth = plane - normal(camera, axis) + sign(face) * BIAS;
-            double x = u(camera, axis), y = v(camera, axis);
-            // u×v points along +X, -Y and +Z respectively. Keep the receiving side front-facing.
-            boolean flip = (axis == Direction.Axis.Y) == (sign(face) > 0);
-            double left = (flip ? r : l)-x, right = (flip ? l : r)-x;
-            float sl = flip ? u1 : u0, sr = flip ? u0 : u1;
-            vertex(pose, out, face, depth, left, b-y, sl, v0, argb);
-            vertex(pose, out, face, depth, right, b-y, sr, v0, argb);
-            vertex(pose, out, face, depth, right, t-y, sr, v1, argb);
-            vertex(pose, out, face, depth, left, t-y, sl, v1, argb);
+    // Near-first so the cost of a solid, irregular room is bounded too. Distances between
+    // two block centres may differ from point-to-corner distances by at most sqrt(3).
+    private record Offset(int x, int y, int z, int distanceSq) {}
+    private static final Offset[] OFFSETS = offsets();
+    private static Offset[] offsets() {
+        int n = (int)Math.ceil(SpillField.MAX_RADIUS + Math.sqrt(3));
+        var values = new ArrayList<Offset>();
+        for (int x=-n; x<=n; x++) for (int y=-n; y<=n; y++) for (int z=-n; z<=n; z++) {
+            int ds = x*x + y*y + z*z;
+            if (ds <= n*n) values.add(new Offset(x,y,z,ds));
         }
+        values.sort(Comparator.comparingInt(Offset::distanceSq));
+        return values.toArray(Offset[]::new);
     }
 
-    static BlockHitResult clip(ClientLevel world, Vec3 from, Vec3 to) {
+    private static BlockHitResult clip(ClientLevel world, Vec3 from, Vec3 to) {
         return world.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, CollisionContext.empty()));
     }
 
-    /** A viewmodel/long barrel must not put the source on the other side of a thin wall. */
     static Vec3 visibleOrigin(ClientLevel world, Vec3 eye, Vec3 muzzle) {
         var hit = clip(world, eye, muzzle);
-        return hit.getType() == HitResult.Type.MISS ? muzzle : hit.getLocation().relative(hit.getDirection(), .015);
+        return hit.getType() == HitResult.Type.MISS ? muzzle : hit.getLocation().relative(hit.getDirection(), AIR_GAP);
     }
 
-    static @Nullable Patch laser(ClientLevel world, BlockHitResult hit, double size, float gain) {
-        if (!receiver(world, hit)) return null;
-        var face = hit.getDirection();
-        return patch(hit.getBlockPos(), face, hit.getLocation(), size, gain);
-    }
-
-    /** Six primary rays, at most 3x3 coplanar receivers each. Reuse across all frames of
-     * this pulse. Test visibility from the source to each extra patch, not from the camera. */
-    static List<Patch> scatter(ClientLevel world, Vec3 center, double range) {
-        var patches = new ArrayList<Patch>();
-        // An explosive impact can be exactly on an integer face. Move it to the nearest
-        // exposed side of that face, but never project out of a source buried in solid terrain.
-        BlockPos cell = BlockPos.containing(center);
+    /** Block impacts commonly lie exactly on a grid plane, even when floor(center) is AIR.
+     * Give grazing rays an air-side origin. Don't search out of a wall or move toward the camera. */
+    private static @Nullable Vec3 airSide(ClientLevel world, Vec3 center) {
+        var cell = BlockPos.containing(center);
         if (world.getBlockState(cell).isSolidRender()) {
-            double best = .03;
             Direction side = null;
-            for (Direction dir : DIRECTIONS) {
-                double dist = Math.abs(normal(center, dir.getAxis()) - plane(cell, dir));
-                if (dist < best && world.getBlockState(cell.relative(dir)).isAir()) { best = dist; side = dir; }
-            }
-            if (side == null) return List.of();
-            center = center.relative(side, best + .015);
-        }
-        for (Direction ray : DIRECTIONS) {
-            BlockHitResult hit = clip(world, center, center.relative(ray, range));
-            if (!receiver(world, hit)) continue;
-            Direction face = hit.getDirection();
-            if (face != ray.getOpposite()) continue;
-            var pos = hit.getLocation();
-            double d = center.distanceTo(pos) / range;
-            double size = Math.min(1.45, range * .5) * Math.sqrt(Math.max(0, 1-d*d));
-            if (size < .05) continue;
-            float falloff = (float)(1 - d*d);
-            for (int i=-1; i<=1; i++) for (int j=-1; j<=1; j++) {
-                BlockPos tile = offset(hit.getBlockPos(), face.getAxis(), i, j);
-                if (!world.getBlockState(tile).isSolidRender() || world.getBlockState(tile.relative(face)).isSolidRender()) continue;
-                float ambient = world.getMaxLocalRawBrightness(tile.relative(face)) / 15f;
-                var p = patch(tile, face, pos, size, falloff * (1 - .7f * ambient));
-                if (p == null) continue;
-                if (i != 0 || j != 0) {
-                    Vec3 target = xyz(face.getAxis(), p.plane - sign(face)*.01, (p.l+p.r)/2, (p.b+p.t)/2);
-                    var visible = clip(world, center, target);
-                    if (!receiver(world, visible) || visible.getDirection() != face || !visible.getBlockPos().equals(tile)) continue;
+            double nearest = .20;
+            for (Direction face : FACES) {
+                var outside = cell.relative(face);
+                double d = Math.abs(center.get(face.getAxis()) - plane(cell,face));
+                if (d <= nearest && world.getBlockState(outside).getCollisionShape(world,outside).isEmpty()) {
+                    nearest = d; side = face;
                 }
-                patches.add(p);
             }
+            return side == null ? null : center.relative(side, nearest + AIR_GAP);
         }
-        return List.copyOf(patches);
+        for (Direction face : FACES) {
+            double d = Math.abs(center.get(face.getAxis()) - plane(cell,face));
+            if (d < AIR_GAP && world.getBlockState(cell.relative(face)).isSolidRender())
+                center = center.relative(face.getOpposite(), AIR_GAP - d);
+        }
+        return center;
     }
 
-    private static boolean receiver(ClientLevel world, BlockHitResult hit) {
-        return hit.getType() == HitResult.Type.BLOCK && !hit.isInside() && world.getBlockState(hit.getBlockPos()).isSolidRender()
-                && Math.abs(normal(hit.getLocation(), hit.getDirection().getAxis()) - plane(hit.getBlockPos(), hit.getDirection())) < .001;
+    static List<Patch> scatter(ClientLevel world, Vec3 origin, Vec3 bias, double radius, Vec3 camera, int rayBudget) {
+        var source = airSide(world,origin);
+        if (source == null) return List.of();
+        var field = new SpillField(source,bias,radius);
+        var center = field.boundingCenter();
+        var base = BlockPos.containing(center);
+        double limit = Math.pow(field.boundingRadius() + Math.sqrt(3), 2);
+        var tile = new BlockPos.MutableBlockPos();
+        var air = new BlockPos.MutableBlockPos();
+        var result = new ArrayList<Patch>();
+        int rays = 0;
+        scan: for (var offset : OFFSETS) {
+            if (offset.distanceSq > limit) break;
+            tile.set(base.getX()+offset.x, base.getY()+offset.y, base.getZ()+offset.z);
+            if (!world.getBlockState(tile).isSolidRender()) continue;
+            for (var face : FACES) {
+                var axis = face.getAxis();
+                int sign = sign(face), plane = plane(tile,face);
+                if ((source.get(axis)-plane)*sign <= 0 || (camera.get(axis)-plane)*sign <= 0) continue;
+                air.setWithOffset(tile,face);
+                if (world.getBlockState(air).isSolidRender()) continue;
+                var target = Vec3.atCenterOf(tile).relative(face,.5);
+                if (field.gain(target.x,target.y,target.z) < .006f) continue;
+                if (rays++ == rayBudget) break scan;
+                // Stop OUTSIDE the face. A ray aimed *inside* a coplanar floor at a shallow
+                // angle hits the preceding tile instead, especially at a surface detonation.
+                if (clip(world, source, target.relative(face,.012)).getType() != HitResult.Type.MISS) continue;
+                float ambient = 1 - .65f * world.getMaxLocalRawBrightness(air) / 15f;
+                int u = u(tile,axis), v = v(tile,axis);
+                result.add(new Patch(face,plane,u,v, gain(field,axis,plane,u,v)*ambient,
+                        gain(field,axis,plane,u+1,v)*ambient, gain(field,axis,plane,u+1,v+1)*ambient,
+                        gain(field,axis,plane,u,v+1)*ambient));
+            }
+        }
+        return List.copyOf(result);
     }
-    private static @Nullable Patch patch(BlockPos tile, Direction face, Vec3 center, double radius, float gain) {
-        var axis = face.getAxis();
-        double x = u(center,axis), y = v(center,axis);
-        var origin = Vec3.atLowerCornerOf(tile);
-        double l = Math.max(x-radius,u(origin,axis)), r = Math.min(x+radius,u(origin,axis)+1);
-        double b = Math.max(y-radius,v(origin,axis)), t = Math.min(y+radius,v(origin,axis)+1);
-        if (l>=r || b>=t) return null;
-        return new Patch(face, plane(tile,face), l,b,r,t, uv(l,x,radius),uv(b,y,radius),uv(r,x,radius),uv(t,y,radius),gain);
+
+    private static float gain(SpillField f, Direction.Axis a, int p, int u, int v) {
+        return switch (a) { case X -> f.gain(p,u,v); case Y -> f.gain(u,p,v); case Z -> f.gain(u,v,p); };
     }
-    private static float uv(double p,double c,double radius) { return (float)(.5+(p-c)/(2*radius)); }
     private static int sign(Direction d) { return d.getStepX()+d.getStepY()+d.getStepZ(); }
-    private static double plane(BlockPos p, Direction d) { return p.get(d.getAxis()) + (sign(d)>0 ? 1 : 0); }
-    private static double normal(Vec3 p,Direction.Axis a) { return p.get(a); }
-    private static double u(Vec3 p,Direction.Axis a) { return a==Direction.Axis.X?p.y:p.x; }
-    private static double v(Vec3 p,Direction.Axis a) { return a==Direction.Axis.Z?p.y:p.z; }
-    private static BlockPos offset(BlockPos p,Direction.Axis a,int i,int j) {
-        return switch(a){ case X -> p.offset(0,i,j); case Y -> p.offset(i,0,j); case Z -> p.offset(i,j,0); };
-    }
-    private static Vec3 xyz(Direction.Axis a,double n,double u,double v) {
-        return switch(a){ case X -> new Vec3(n,u,v); case Y -> new Vec3(u,n,v); case Z -> new Vec3(u,v,n); };
-    }
-    private static void vertex(PoseStack.Pose pose, VertexConsumer out, Direction face, double n, double u, double v, float s, float t, int color) {
-        var a = face.getAxis();
-        out.addVertex(pose.pose(), (float)(a==Direction.Axis.X?n:u), (float)(a==Direction.Axis.Y?n:a==Direction.Axis.X?u:v), (float)(a==Direction.Axis.Z?n:v))
-                .setColor(color).setUv(s,t).setOverlay(OverlayTexture.NO_OVERLAY).setLight(15728880)
-                .setNormal(pose,face.getStepX(),face.getStepY(),face.getStepZ());
+    private static int plane(BlockPos pos,Direction d) { return pos.get(d.getAxis()) + (sign(d)>0 ? 1 : 0); }
+    private static int u(BlockPos p,Direction.Axis a) { return a==Direction.Axis.X ? p.getY() : p.getX(); }
+    private static int v(BlockPos p,Direction.Axis a) { return a==Direction.Axis.Z ? p.getY() : p.getZ(); }
+
+    /** World coordinates stay integer/double until camera subtraction. Attenuation is shared
+     * at the corners of adjacent tiles; no circular alpha mask is repeated per block. */
+    record Patch(Direction face, int plane, int u, int v, float bl, float br, float tr, float tl) {
+        void draw(PoseStack.Pose pose, VertexConsumer out, Vec3 camera, int rgb, float strength) {
+            var axis = face.getAxis();
+            double n = plane - camera.get(axis);
+            if (n * sign(face) >= 0) return;
+            n += sign(face)*DEPTH_BIAS;
+            double x = u - (axis==Direction.Axis.X ? camera.y : camera.x);
+            double y = v - (axis==Direction.Axis.Z ? camera.y : camera.z);
+            boolean flip = (axis == Direction.Axis.Y) == (sign(face) > 0);
+            vertex(pose,out,n,x,y,bl*strength,rgb);
+            if (flip) vertex(pose,out,n,x,y+1,tl*strength,rgb); else vertex(pose,out,n,x+1,y,br*strength,rgb);
+            vertex(pose,out,n,x+1,y+1,tr*strength,rgb);
+            if (flip) vertex(pose,out,n,x+1,y,br*strength,rgb); else vertex(pose,out,n,x,y+1,tl*strength,rgb);
+        }
+        private void vertex(PoseStack.Pose pose, VertexConsumer out, double n, double u, double v, float gain, int rgb) {
+            var axis = face.getAxis();
+            out.addVertex(pose.pose(), (float)(axis==Direction.Axis.X?n:u), (float)(axis==Direction.Axis.Y?n:axis==Direction.Axis.X?u:v), (float)(axis==Direction.Axis.Z?n:v))
+                    .setColor(Math.round((rgb>>16&255)*gain),Math.round((rgb>>8&255)*gain),Math.round((rgb&255)*gain),255)
+                    .setUv(.5f,.5f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(15728880).setNormal(pose,face.getStepX(),face.getStepY(),face.getStepZ());
+        }
     }
     private SurfaceProjection() {}
 }
