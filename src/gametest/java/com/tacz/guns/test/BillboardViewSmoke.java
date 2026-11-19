@@ -6,6 +6,7 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.client.particle.bedrock.particle.data.ParticleEffectDeserializer;
 import com.tacz.guns.client.particle.bedrock.particle.runtime.ParticleMolangEnvironment;
 import com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager;
+import com.tacz.guns.compat.firstperson.FirstPersonAnimationCompat;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
@@ -37,6 +38,10 @@ final class BillboardViewSmoke {
             for (int angle : List.of(0, 30)) {
                 ctx.runOnClient(mc -> { roll = angle; rt.clear(); });
                 ctx.waitTicks(4);
+                // HandMaterialSmoke emptied the inventory, but the render stack intentionally
+                // keeps its gun AND arms through put-away. They can occlude half of a test card.
+                ctx.waitFor(mc -> mc.player.getMainHandItem().isEmpty()
+                        && FirstPersonAnimationCompat.getMainRenderStack(mc.player).isEmpty());
                 String prefix = "tacz_billboard_roll_" + angle + "_";
                 var base = SnowstormMaterialSmoke.read(ctx.takeScreenshot(prefix + "control"));
                 for (String mode : List.of("rotate_y", "lookat_y")) {

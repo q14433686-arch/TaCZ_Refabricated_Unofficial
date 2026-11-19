@@ -86,6 +86,8 @@
 
 同一提交的[无可选模组普通构建及客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44436002439/job/135265017304)亦通过；手部深/浅背景的 alpha 对 blend 距离为 **0.65 / 0.32**（各自对 cutout 均超过 26），不是同一份 Iris 结果。独立的 [JEI/REI 两项](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44436002559)通过。该轮 PAL 与手柄作业却未启动游戏：Gradle 无法为 Fabric Maven 的 ASM POM 解析 `org.ow2:ow2:1.5.1`，不能作为这两个可选组合的结果。CI 仅为此组 Central 坐标在解析前加入一个镜像；不替换版本，也不跳过游戏测试。
 
+**合并门禁中的粒子测量：** [PR #122](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/122) 的一次 Mesa 回归在 `rotate_y` 高度断言失败。换成同帧、同深度的对照后，在 [Iris 空场原帧](../../build-reports/visual/44563511559-tacz_billboard_roll_0_control.png)仍能看见上一项用例的枪和双臂；[同帧绿参照与洋红测试片](../../build-reports/visual/44563511559-tacz_billboard_roll_0_rotate_y_pair.png)中，右臂挡住了洋红片上半截。物品槽已空不代表第一人称收枪动画已经结束。`BillboardViewSmoke` 现在等待实际绘制的主手栈也为空再采样；不关闭收枪动画、不改产品渲染，仍要求长轴对齐 ≥0.98、缩短比例与预期之差 ≤0.09。
+
 ## PAL 离屏与第一人称约束的独立验收
 
 `4f2df05` 的[普通构建、专服与 Mesa 客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138832/job/135268736218)、[手柄](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138908/job/135268736808)、[两个 viewer](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138855)通过。[PAL 作业](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138849/job/135268736137)已进入游戏，但测试自己构造的 `RemotePlayer` 没有出生包提供 ID，读 `getId()` 即报错；没有到达离屏动作断言。这是夹具的失败，不据此改 PAL 播放逻辑。[Iris 作业](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138863/job/135268736379)解析 Gson/Kotlin 元数据遇 HTTP 429，没有光影画面。当时最近同时跑完普通与光影渲染套件的提交是 `3594ef8`。
