@@ -103,6 +103,10 @@ if [[ ${TACZ_SMOKE_CONTROLLER:-} == true ]]; then
     exit
 fi
 if [[ -n ${TACZ_SMOKE_VIEWER:-} ]]; then
+    grep -F '[TaCZ Workbench Sync]' "$run/logs/latest.log" | tail -1 | sed 's/^/::notice::/'
+    if [[ $TACZ_SMOKE_VIEWER == rei ]]; then
+        grep -F 'distinct tacz workbench recipes displayed:' "$run/logs/latest.log" | tail -1 | sed 's/^/::notice::/'
+    fi
     for state in false true; do
         grep -F 'PORT_WORKBENCH_VIEWER:' "$run/logs/latest.log" | grep -F "(reloaded=$state)" | sed 's/^/::notice::/'
     done

@@ -71,8 +71,10 @@ interface ViewerSmoke {
                     throw new AssertionError(tableId + " missing=" + missing + " unexpected=" + displayed);
                 }
                 var recipeId = Identifier.parse("tacz:" + sample.prefix() + sample.product());
-                if (!viewer.workbenchRecipes(tableId, sample.focus()).contains(recipeId))
-                    throw new AssertionError("Output search did not find " + recipeId + " on " + tableId);
+                var focused = viewer.workbenchRecipes(tableId, sample.focus()).stream()
+                        .filter(id -> id.getNamespace().equals("tacz")).collect(Collectors.toSet());
+                if (!focused.equals(Set.of(recipeId)))
+                    throw new AssertionError("Output search for " + recipeId + " on " + tableId + " returned " + focused);
             }
             var ammoTable = Identifier.parse("tacz:ammo_workbench");
             var shell = AmmoItemBuilder.create().setId(Identifier.parse("tacz:12g")).build();
@@ -80,7 +82,8 @@ interface ViewerSmoke {
             var defaults = viewer.workbenchRecipes(ammoTable, shell);
             var specialist = viewer.workbenchRecipes(Identifier.parse("port_test:specialist"), shell);
             if (cache.getTableRecipe(specialId) == null || defaults.contains(specialId) || !specialist.contains(specialId)
-                    || specialist.contains(Identifier.parse("tacz:ammo/12g")) || defaults.contains(Identifier.parse("reload_smoke:shells")) != reloaded)
+                    || !defaults.contains(Identifier.parse("tacz:ammo/12g")) || specialist.contains(Identifier.parse("tacz:ammo/12g"))
+                    || defaults.contains(Identifier.parse("reload_smoke:shells")) != reloaded)
                 throw new AssertionError("Third-party or blacklisted recipe misclassified: default=" + defaults + ", specialist=" + specialist);
             GunMod.LOGGER.info("PORT_WORKBENCH_VIEWER: 70 gun, 107 attachment, 25 ammo recipes match wire IDs; three output searches and specialist blacklist passed (reloaded={})", reloaded);
         });

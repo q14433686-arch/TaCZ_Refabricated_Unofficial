@@ -7,6 +7,13 @@
       "icon": {
         "id": "minecraft:paper"
       }
+    },
+    {
+      "id": "tacz:shotgun_shells",
+      "name": "Fixture shells",
+      "icon": {
+        "id": "minecraft:paper"
+      }
     }
   ]
 }
