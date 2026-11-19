@@ -16,7 +16,7 @@ import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import com.tacz.guns.util.ContentPackOrder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -54,8 +54,7 @@ public final class PegboardStressCommand {
 
         // The index sort is the order used by the creative gun list; the id makes ties deterministic.
         List<ItemStack> guns = TimelessAPI.getAllCommonGunIndex().stream()
-                .sorted(Comparator.comparingInt((Map.Entry<Identifier, CommonGunIndex> entry) -> entry.getValue().getSort())
-                        .thenComparing(entry -> entry.getKey().toString()))
+                .sorted(ContentPackOrder.byPackThenSort(CommonGunIndex::getSort))
                 .map(entry -> GunItemBuilder.create()
                         .setId(entry.getKey())
                         .setFireMode(entry.getValue().getGunData().getFireModeSet().getFirst())

@@ -13,14 +13,12 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 /** Play an authored animation keyframe at a real first-person muzzle locator. Unlike a world
  * emitter in front of the camera, these definitions have local position and to_world=false. */
 final class HandMaterialSmoke {
     private static final Identifier DISPLAY = Identifier.parse("port_test:hand_materials");
-    private static final int TRACK = 48;
 
     static void run(ClientGameTestContext ctx, TestSingleplayerContext world, String backing) {
         var rt = WorldEmitterManager.getInstance();
@@ -35,11 +33,14 @@ final class HandMaterialSmoke {
         try {
             ctx.waitFor(mc -> mc.player.getMainHandItem().getItem() instanceof IGun g && DISPLAY.equals(g.getGunDisplayId(mc.player.getMainHandItem())));
             ctx.waitTicks(40);
-            var controller = ctx.computeOnClient(mc -> TimelessAPI.getGunDisplay(mc.player.getMainHandItem()).orElseThrow().getAnimationStateMachine().getAnimationController());
-            var order = ctx.computeOnClient(mc -> controller.getUpdatingTrackArray());
-            ctx.runOnClient(mc -> {
-                if (controller.getAnimation(TRACK) != null) throw new AssertionError("Test track is occupied");
-                if (order != null) { var copy = new ArrayList<Integer>(); order.forEach(copy::add); copy.add(TRACK); controller.setUpdatingTrackArray(copy); }
+            var machine = ctx.computeOnClient(mc -> TimelessAPI.getGunDisplay(mc.player.getMainHandItem()).orElseThrow().getAnimationStateMachine());
+            ctx.waitFor(mc -> machine.getContext() != null);
+            var controller = machine.getAnimationController();
+            // The LUA state context owns its DiscreteTrackArray by identity. Allocate through
+            // the same API as a pack script, never substitute a copied updating-track iterable.
+            int track = ctx.computeOnClient(mc -> {
+                var context = machine.getContext();
+                return context.assignNewTrack(context.addTrackLine());
             });
             try {
                 String prefix = "tacz_hand_material_" + backing + "_";
@@ -49,7 +50,7 @@ final class HandMaterialSmoke {
                     long before = ctx.computeOnClient(mc -> {
                         if (!controller.containPrototype(name)) throw new AssertionError("Display did not load animation " + name);
                         long count = rt.rendered();
-                        controller.runAnimation(TRACK, name, ObjectAnimation.PlayType.PLAY_ONCE_STOP, 0);
+                        controller.runAnimation(track, name, ObjectAnimation.PlayType.PLAY_ONCE_STOP, 0);
                         return count;
                     });
                     try { ctx.waitFor(mc -> rt.particleCount() == 1 && rt.rendered() > before); }
@@ -57,7 +58,7 @@ final class HandMaterialSmoke {
                             rt.emitterCount() + " emitters, " + rt.particleCount() + " particles, " + (rt.rendered()-before) + " submits"), e); }
                     var frame = SnowstormMaterialSmoke.read(ctx.takeScreenshot(prefix + name));
                     ratios.put(name, strengthRatio(control, frame, prefix + name));
-                    ctx.runOnClient(mc -> { controller.removeAnimation(TRACK); rt.clear(); });
+                    ctx.runOnClient(mc -> { controller.removeAnimation(track); rt.clear(); });
                     ctx.waitTicks(2);
                 }
                 double cutout = ratios.get("particles_opaque"), alpha = ratios.get("particles_alpha"), blend = ratios.get("particles_blend");
@@ -65,7 +66,7 @@ final class HandMaterialSmoke {
                     throw new AssertionError(prefix + " opacity bands: " + ratios);
                 GunMod.LOGGER.info("PORT_HAND_MATERIALS: {} six visible muzzle-local effects; q20/q85 color strength {}", backing, ratios);
             } finally {
-                ctx.runOnClient(mc -> { controller.removeAnimation(TRACK); controller.setUpdatingTrackArray(order); rt.clear(); });
+                ctx.runOnClient(mc -> { controller.removeAnimation(track); rt.clear(); });
             }
         } finally {
             world.getServer().runOnServer(s -> {

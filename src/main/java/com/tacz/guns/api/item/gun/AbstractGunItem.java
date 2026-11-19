@@ -44,7 +44,7 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
     }
 
     private static Comparator<Map.Entry<Identifier, CommonGunIndex>> idNameSort() {
-        return ContentPackOrder.<CommonGunIndex>byNamespace().thenComparingInt(m -> m.getValue().getSort()).thenComparing(Map.Entry::getKey);
+        return ContentPackOrder.byPackThenSort(CommonGunIndex::getSort);
     }
 
     /**

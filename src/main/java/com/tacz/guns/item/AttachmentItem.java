@@ -61,7 +61,7 @@ public class AttachmentItem extends Item implements AttachmentItemDataAccessor, 
     }
 
     private static Comparator<Map.Entry<Identifier, CommonAttachmentIndex>> idNameSort() {
-        return ContentPackOrder.<CommonAttachmentIndex>byNamespace().thenComparingInt(m -> m.getValue().getSort()).thenComparing(Map.Entry::getKey);
+        return ContentPackOrder.byPackThenSort(CommonAttachmentIndex::getSort);
     }
 
     public static NonNullList<ItemStack> fillItemCategory(AttachmentType type) {

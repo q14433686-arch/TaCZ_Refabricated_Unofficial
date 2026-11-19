@@ -125,7 +125,7 @@ public class AmmoItem extends Item implements AmmoItemDataAccessor, IItem {
     }
 
     private static Comparator<Map.Entry<Identifier, CommonAmmoIndex>> idNameSort() {
-        return ContentPackOrder.<CommonAmmoIndex>byNamespace().thenComparingInt(m -> m.getValue().getSort()).thenComparing(Map.Entry::getKey);
+        return ContentPackOrder.byPackThenSort(CommonAmmoIndex::getSort);
     }
 
     public static NonNullList<ItemStack> fillItemCategory() {

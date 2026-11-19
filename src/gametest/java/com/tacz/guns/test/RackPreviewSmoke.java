@@ -100,7 +100,13 @@ final class RackPreviewSmoke {
             equip(world,ItemStack.EMPTY);ctx.waitFor(mc->mc.player.getMainHandItem().isEmpty());
             var mesh = GunItemBuilder.create().setId(id).build();
             ((IGun)mesh.getItem()).setGunDisplayId(mesh,Identifier.parse("port_test:rack_mesh"));
-            checkCell(ctx,world,pos,mesh,"mesh");
+            // The player sees a normal hand model; only the rack LOD can emit cyan geometry.
+            var lodDistance = com.tacz.guns.config.client.RenderConfig.GUN_LOD_RENDER_DISTANCE;
+            int previous = ctx.computeOnClient(mc -> lodDistance.get());
+            try {
+                ctx.runOnClient(mc -> lodDistance.set(0));
+                checkCell(ctx,world,pos,mesh,"mesh");
+            } finally { ctx.runOnClient(mc -> lodDistance.set(previous)); }
         } finally {
             ctx.getInput().releaseShift();
             world.getServer().runOnServer(s -> {
@@ -122,7 +128,7 @@ final class RackPreviewSmoke {
         ctx.waitFor(mc -> ItemStack.isSameItemSameComponents(item, mc.player.getMainHandItem()));
         int slot = requireSlot(ctx, pos, true, "aimed " + name);
         if (name.equals("mesh")) ctx.waitFor(mc -> {
-            var rig = com.tacz.guns.api.TimelessAPI.getGunDisplay(mc.player.getMainHandItem()).orElseThrow().getExternalModel(false);
+            var rig = com.tacz.guns.api.TimelessAPI.getGunDisplay(mc.player.getMainHandItem()).orElseThrow().getExternalModel(true);
             return rig != null && rig.getLeft() instanceof cn.sh1rocu.tacz.compat.meshloader.model.TaczPolyMeshGunModel poly && poly.hasPolyMesh();
         });
         if (name.equals("corner") && slot < DisplayRackBlockEntity.SLOTS_PER_FACE) throw new AssertionError("Wrong corner face: "+slot);
@@ -210,6 +216,8 @@ final class RackPreviewSmoke {
             var a = ImageIO.read(empty.toFile()); var b = ImageIO.read(ghost.toFile()); var c = ImageIO.read(placed.toFile());
             if (placed.getFileName().toString().endsWith("tacz_rack_placed.png")) checkOccupiedOutline(a, c);
             boolean mesh = placed.getFileName().toString().endsWith("tacz_mesh_placed.png");
+            if (mesh && (delta(a.getRGB(100,100),b.getRGB(100,100)) > 45 || delta(a.getRGB(100,100),c.getRGB(100,100)) > 45))
+                throw new AssertionError("Mesh scene changed outside the aimed cell (sky control)");
             int between = 0, model = 0;
             // Mark only pixels in the cell that change towards, but not all the way to, the deposited model.
             for (int y = a.getHeight()/2-40; y < a.getHeight()/2+40; y++) for (int x = a.getWidth()/2-44; x < a.getWidth()/2+44; x++) {
