@@ -1,6 +1,12 @@
-# Original bound-use and player-fired tracer frames (same branch).
-44429872717	smoke	tacz_rack_empty
-44429872717	smoke	tacz_rack_ghost
-44429872717	smoke	tacz_rack_placed
-44429872551	iris	tacz_fired_tracer_before_turn
-44429872551	iris	tacz_fired_tracer_after_turn
+# Investigate both failed particle controls and inspect the bound-use rack, corner and baked item.
+44430716200	smoke	tacz_snowstorm_runtime
+44430716200	smoke	tacz_rack_empty
+44430716200	smoke	tacz_rack_placed
+44430716200	smoke	tacz_corner_empty
+44430716200	smoke	tacz_corner_ghost
+44430716200	smoke	tacz_corner_placed
+44430716200	smoke	tacz_vanilla_quad_empty
+44430716200	smoke	tacz_vanilla_quad_ghost
+44430716200	smoke	tacz_vanilla_quad_placed
+44430716192	iris	tacz_amg10_particle_baseline_1
+44430716192	iris	tacz_amg10_particle_1
