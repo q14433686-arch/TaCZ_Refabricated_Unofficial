@@ -2,7 +2,22 @@
 
 ## 1.2.0 R1
 
-[26.3 特性合并](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/122)后的源码版本由 `1.1.8+fabric.26.3.R1-hotfix3` 改为 **`1.2.0+fabric.26.3.R1`**。这次只更改模组版本，不改默认内容包、依赖或其他 MC 版本线。枪包按新的 SemVer 核心比较；[范围示例](../README.md#版本约束)。
+**Minecraft 26.3 · Fabric Loader 0.19.5+ · Java 25+ · Fabric API（本构建 0.160.7+26.3）· Forge Config API Port 26.3.0+**
+
+**开发／试玩记录，不是已发布文件的更新公告。** [#122](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/122) 合入 1.2 特性，[#123](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/123) 将**模组**版本改为 `1.2.0+fabric.26.3.R1`，该次升号没有给默认包、依赖或其他版本线一起改号。同号的 [#124 试玩构建 `a14e06e3`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/124#issuecomment-7024035841) 另含下表最后三项。已发布的 `1.1.8+fabric.26.3.R1-hotfix3` 仍是旧文件。[玩家指南](PLAYER_GUIDE_26_3.md) · [实机图册](SCREENSHOTS_26_3.md) · [枪包 Wiki 补遗](wiki/GUNPACK_26_3.md)。
+
+| 玩家的变化（相对旧 26.3 文件） | 范围与依据 |
+|---|---|
+| 默认包扩大到 70 枪、25 种弹药、126 个配件索引，另有 5 个转接座；新增／调整配方、动画、语言和进度。改装可选原厂虚拟件、配件变体及兼容的座；切换或拆除仍由服务器检查。 | [内容来源清单](../DEFAULT_PACK_120.tsv)、[默认目录与装配测试](investigations/FABRIC_120_PORT_26_3.md)。索引数不等于可合成数，不表示逐枪验过所有动作。 |
+| 操作可重绑键鼠，支持单独卸弹或 Alt + 换弹；K 持枪交互，可选手柄输入与反馈。枪包可指定换弹退出瞄准、逐段装填、背包散热、射手位移、枪声引怪、举枪曲线与声音参数。服主可设空手趴下／俯仰、空中散布、友伤队友穿过、实体忽略列表、破坏方块与硬度、命中特效发送距离。 | [玩法与配置](investigations/FEATURE_VALIDITY_26_3.md)、[键位与可选运行环境](investigations/PORT_GAPS_26_3_VALIDATION.md)。手柄为虚拟 SDL 设备；不是任意整合包或双客户端全组合。 |
+| 铁／金／钻石弹药库可存取、补盒、带库存升级；可染色的挂板、连锁展示柜有空槽预览、旋转、取放和持久化。创造栏可按包筛选、翻页，DMR 独立分类；悬停提示区分实际能力。 | [菜单、预览和物品原图](SCREENSHOTS_26_3.md#工作台收纳与陈列)。 |
+| 账号独立的第一人称持枪 XYZ、可调色／形状／动态反馈的准星与 PNG、分享码；单枪优先于类别、类别优先于账号默认。 | [编辑器、分配与三连发](investigations/HUD_RETICLE_26_3.md)。只改客户端显示。 |
+| UH-1 测距、枪模余弹数、XM157 镜内标记、XL50 热源遮挡；瞄具镜片与可选 PIP 分开。`renew` 焰／烟、配件消焰比例、动画 Snowstorm 粒子、曳光与命中碎屑分层。改进组合镜裁剪、发光骨骼、第三人称动作和 Reimagined 夜间枪焰／SVD 长影。 | [镜内与第三人称](investigations/PORT_GAPS_26_3_VALIDATION.md)、[粒子](investigations/SNOWSTORM_RUNTIME_26_3.md)、[配件](investigations/MUZZLE_ATTACHMENTS_26_3.md)、[Reimagined](investigations/REIMAGINED_26_3.md)。不是所有光影包的画质保证。 |
+| 目录／ZIP 的版本覆盖层，枪包重载后同步索引与查看器，兼容提示；转换器可先检查、另行导出 26.3 层。具名动作／弹药源接口、玩法时钟与真实时钟分开；内置 TML、部分 LRTactical 仍保留。 | [转换与脚本](GUNPACK_CONVERSION_26_3.md)、[枪包作者入口](wiki/GUNPACK_26_3.md)。按 SemVer 核心 `1.2.0` [检查范围](../README.md#版本约束)，不保证每个 1.2 枪包。 |
+| 原版普通合成补上 20 个配方书解锁条件；枪包晚到时 REI 保留服务器的普通配方。JEI／REI 可双向查枪与弹／配件。 | [原版 3×3、配方书、查看器分开验证](investigations/ORDINARY_CRAFTING_26_3.md)。不是 EMI 集成。 |
+| **#124 · 专用台配方**：不同枪包的同名 `recipe_filters` 不再互盖，只写黑名单在传到客机后不会屏蔽所有制作页；普通配方不合并、不绕过服主禁用项。 | [过滤与诊断](investigations/ORDINARY_CRAFTING_26_3.md#原版合成在但客机查不到默认包的制作配方)：分别看枪械／配件／弹药台的制作页，不用用途页总数代替。 |
+| **#124 · 地上的枪**：无可用作者低模时，默认从 8 格起用槽位图代表真实掉落物；`0` 含近处，`-1` 关闭，没有图标保留 3D。原 3D 路径不再提交模型没写的面，有效零 UV 面保留。 | [3D／图标与条件](investigations/DROPPED_GUN_LOD_26_3.md)。不隐藏物品，不改展示框、手持或服务端，不承诺固定帧率增益。 |
+| **#124 · 实验补光**：`MuzzleSurfaceLight` 从枪口向前和两侧照墙地；`ExplosionSurfaceLight` 从实际爆点而非发射者照附近表面；`LegacyMuzzleLight` 单独为合条件旧枪估算曝光。三项默认关闭。移除额外镭射落点，保留原光束与原 `renew` 枪／手曝光。 | [单发开／关原图、过期与遮挡](investigations/SURFACE_LIGHT_26_3.md)。普通 Vulkan、Iris 测试光影和 Reimagined 的指定场景已跑；不改变方块光、刷怪、伤害或致盲。 |
 
 ## 1.1.8 R1-hotfix3（以下为当时的变更记录）
 
