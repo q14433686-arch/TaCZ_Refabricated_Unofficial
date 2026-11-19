@@ -33,7 +33,35 @@
 
 **默认枪包范围（静态统计）**：70 个枪械 display 中 68 个声明 `renew`，另 2 个未声明 `muzzle_flash`。18 个 `muzzle_*_data.json` 中，9 个消音件都显式写了 0.2 或 0.13；另有非消音的 Cthulhu 写 0.13，8 个既未配置倍率也未配置消音。因此「装任意枪口都应该完全消焰」不是包的规则。没有改默认枪包资源，也没有把 68 个 display 算作 68 次游戏实测。
 
-## 验证记录
+## 修复后：游戏里测到了什么？
+
+产品与测试源码 [`b7eca81`][green-code]。同一修订的 [普通 Mesa 客户端、完整构建、JUnit 与专服][green-mesa]和[启用测试光影的 Iris 客户端][green-iris]都通过。没有改发布版本。
+
+| 默认包实际绘制，AK47 | 裸枪宽 × 高 | RC1 宽 × 高 | 实测装/不装 |
+|---|---:|---:|---:|
+| 第一人称，两种后端 | 0.675000 × 0.675000 | 0.135000 × 0.135000 | 宽、高均为 **0.2000** |
+| 自己按 F5，两种后端 | 0.379688 × 0.379688 | 0.075938 × 0.075938 | 宽、高均为 **0.2000** |
+| 旁观另一个持枪 Husk，两种后端 | — | 0.086063 × 0.086063 | 除以该模型缩放 0.6375 后为 **0.135**；不是第二个玩家进程 |
+
+- **装、换、拆都有对照**：生存按键单发；先等客户端确认枪 ID、显示配置与枪口槽，再要求服务端弹匣正好少一发。实测卸下同一栈上的 RC1 后恢复原大小；非消音 Cthulhu 命中 `0.13` 倍，Cyclone 无消焰字段保持原大，Glock 无旧贴图仍走新版。
+- **熄灭不是漏开枪**：测试包让枪械专属规则覆盖配件公共 `0.2` 为显式零；另一个内置件只在该枪上消音、未写倍率。两例都扣弹，**无闪光、无旧贴片任务、有世界烟几何**。反向测试中，配件关烟但增大闪光、客户端关烟保留闪光、调试关火保留缺省大小的烟均通过。旧 `default` 用同样的按键和扣弹检查，非消音件仍提交旧贴片，RC1 和专属消音内置件不提交。
+- **枪口位置不是靠截图猜**：从一发 F5 受控长寿命粒子冻结模拟，改变模型根而不改变粒子速度和相机。相对裸枪骨骼的刷新后局部 Z：普通 **−0.4624997**，Iris **−0.4625001**（RC1 配置 `−7.4/16`）。根再平移 +1.25 时，两边的闪光绘制位置均移 **+1.25**，烟粒子均为 **0**，烟发射器本身也没有被拖走。手部提取没有改写此 F5 锚点。这是可重复的矩阵/绘制快照对照，不是两名玩家奔跑录像。
+- **烟的独立输入**：[JUnit][unit]直接编译随包 `muzzle_flash_smoke.particle.json`，实跑发射和粒子组件。用不重叠的随机计数区间（默认 3–15、倍率后 30–120）、依随机种子计算的宽高、初速模长 9 / 22.5、零角单向及非零角双向锥的逐粒子速度分量作断言。显式烟大小/数量/速度倍率零与枪械缺省值分开检查。不是把三个 getter 打印一遍。
+
+### 像素与证据边界
+
+默认贴图的 UV、旋转随机，寿命只有 20 ms；上表量**真实默认闪光顶点**，不把按键后几 tick 的截图说成那一帧。另让真实 AK 用测试包的长寿命亮紫方片，在 `creation_expression` 里读取 `v.muzzle_scale` 决定尺寸，烟层为 `null`。该方片足够亮、大且略微横移，便于从枪身、HUD 和草地分离。每个栈都有自己的未开火参照。
+
+| 后端 | 裸枪（对照 / 开火） | RC1（对照 / 开火） | 比各自对照新增紫色像素 |
+|---|---|---|---:|
+| 普通 | [未开火][mb0] / [开火][mb1] | [未开火][mr0] / [开火][mr1] | **5821 → 65** |
+| Iris | [未开火][ib0] / [开火][ib1] | [未开火][ir0] / [开火][ir1] | **5570 → 217** |
+
+在每张 854×480 原图内取 `x ∈ [W/5,4W/5)`、`y ∈ [H/5,3H/4)`（整数除法），比较同坐标 `C = min(R,B) − G`，数 `C_on > 60` 且 `C_on − C_off > 50` 的像素。两后端均要求 RC1 非空（至少 12 像素）且裸枪覆盖大于其 5 倍。已从[回传的八张原始 PNG][frames]在工作区独立复算，四个计数与客户端完全相同。**不要求面积比刚好为 0.04**：枪身遮挡、配件前移和投影都会改变可见面积。另在同一发的枪模光照函数以黑暗环境采样，裸枪 / RC1 的方块光等级为 **10 / 3**；不是世界被照亮的像素测量。
+
+重跑入口：[实际开火用例][game-test]、[四顶点探针][probe]、[锚点对照][anchor-test]、[默认烟定义单测][unit]。没有跑独立双客户端、实体显卡或每一种第三方枪包；未声称所有武器或任意自写 `particle_effects` 动画与上游逐像素一致。若某包仍显示大闪光，应先分开检查实际生效的 `default`/`renew`、枪械专属覆盖、每个视角的定义 ID，以及动画是否另画了一层。
+
+### 保留的中间失败
 
 第一轮修复（`cd25f1e`）[构建 / JUnit / 专服通过][first-mesa]，普通客户端通过默认枪焰边长、消焰、旧火光等断言，最后的自定义颜色对照 **失败（0 / 0）**。原始 [裸枪开火帧](../../build-reports/visual/44448317547-tacz_muzzle_marker_bare_on.png) 与 [RC1 开火帧](../../build-reports/visual/44448317547-tacz_muzzle_marker_rc1_on.png) 中，枪口有被枪身遮住一部分的暗紫色样本；与各自未开火帧比较，新增区域 `min(R,B) – G` 最高只有 59，未过原定 >60。没有用这个失败证明「已经可见」，也没有把门槛降到 59：后续只改测试用颜色材质、扩大/横移标记、固定背景方向，并保留逐发几何和像素两道断言。同修订的 [Iris][first-iris] 在更早的 XL50 光学对照失败，**没有运行到枪口测试**。
 
@@ -50,3 +78,20 @@
 [definition-change]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/commit/0d74fe8bec14c48967d6c3d902e7f2057dc46e41
 [flash-json]: ../../src/main/resources/assets/tacz/custom/tacz_default_gun/assets/tacz/particle_definitions/muzzle_flash.particle.json
 [smoke-json]: ../../src/main/resources/assets/tacz/custom/tacz_default_gun/assets/tacz/particle_definitions/muzzle_flash_smoke.particle.json
+
+[green-code]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/commit/b7eca8146d16e61defb2f47d3381f8427a1d3779
+[green-mesa]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44449218116/job/135308741827
+[green-iris]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44449218152/job/135308741538
+[unit]: ../../src/test/java/com/tacz/guns/client/particle/MuzzleDefinitionTest.java
+[game-test]: ../../src/gametest/java/com/tacz/guns/test/MuzzleEffectsSmoke.java
+[probe]: ../../src/gametest/java/com/tacz/guns/test/MuzzleQuadProbe.java
+[anchor-test]: ../../src/gametest/java/com/tacz/guns/test/MuzzleBindingSmoke.java
+[mb0]: ../../build-reports/visual/44449218116-tacz_muzzle_marker_bare_off.png
+[mb1]: ../../build-reports/visual/44449218116-tacz_muzzle_marker_bare_on.png
+[mr0]: ../../build-reports/visual/44449218116-tacz_muzzle_marker_rc1_off.png
+[mr1]: ../../build-reports/visual/44449218116-tacz_muzzle_marker_rc1_on.png
+[ib0]: ../../build-reports/visual/44449218152-tacz_muzzle_marker_bare_off.png
+[ib1]: ../../build-reports/visual/44449218152-tacz_muzzle_marker_bare_on.png
+[ir0]: ../../build-reports/visual/44449218152-tacz_muzzle_marker_rc1_off.png
+[ir1]: ../../build-reports/visual/44449218152-tacz_muzzle_marker_rc1_on.png
+[frames]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44450021773
