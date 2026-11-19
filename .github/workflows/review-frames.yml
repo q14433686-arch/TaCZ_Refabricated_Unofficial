@@ -42,7 +42,9 @@ jobs:
                   matches = [p for p in pictures if p.name.endswith(frame+'.png')]
                   if len(matches)!=1: raise ValueError(f'{frame}: expected 1 file, found {len(matches)}; available: {[p.name for p in pictures][:20]}')
                   source, = matches
-                  if not 0 < source.stat().st_size <= 512*1024: raise ValueError(f'Size budget exceeded: {source.name}')
+                  # A dithered 854x480 Reimagined frame does not compress like the solid-colour fixtures.
+                  limit = 1700*1024 if kind.startswith('reimagined-') else 512*1024
+                  if not 0 < source.stat().st_size <= limit: raise ValueError(f'Size budget exceeded: {source.name}')
                   with source.open('rb') as png:
                       if png.read(8) != b'\x89PNG\r\n\x1a\n': raise ValueError(f'Invalid PNG: {source.name}')
                   shutil.copyfile(source, output)
