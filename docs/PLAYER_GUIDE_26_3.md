@@ -1,6 +1,6 @@
 # 26.3 玩家指南：从第一张工作台到自己的展示墙
 
-**适用文件：Minecraft 26.3 / Fabric，`1.2.0+fabric.26.3.R1` 测试构建。** 下文包含 [PR #124 的试玩版 `a14e06e3`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/124#issuecomment-7024035841)。已发布的 **1.1.8 R1-hotfix3** 没有这一整组功能；26.2、26.1.2、1.21.11 也各有自己的文件。先按[版本表](../README.md#选择你的-minecraft-版本--pick-your-minecraft-version)选对，再试下面的操作。
+**适用文件：Minecraft 26.3 / Fabric，`1.2.0+fabric.26.3.R1` 测试构建。** 下文以 [PR #124 的 `a28882da` 测试 ZIP](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44640438182/artifacts/14587040861) 为准（解压取 JAR）。`a14e06e3` 有墙地补光，**没有**后续的实体和陈列物补光。已发布的 **1.1.8 R1-hotfix3** 没有这一整组功能；26.2、26.1.2、1.21.11 也各有自己的文件。先按[版本表](../README.md#选择你的-minecraft-版本--pick-your-minecraft-version)选对，再试下面的操作。
 
 [实机截图图册 / Screenshot gallery](SCREENSHOTS_26_3.md) · [枪包作者 Wiki 补遗](wiki/GUNPACK_26_3.md) · [1.2.0 开发版变更清单](CHANGELOG_26_3_R1.md#120-r1)
 
@@ -59,7 +59,9 @@
 |---|---|
 | ![同一面远墙，爆炸已发生但表面补光关闭](../build-reports/visual/44626162782-reimagined-act-tacz_surface_rpg_off.png) | ![爆点两旁墙地受光，Reimagined 彩光开启](../build-reports/visual/44626162782-reimagined-act-tacz_surface_rpg_on.png) |
 
-**两张都引爆了。** 这是客户端短暂照亮附近不透明方块表面的画法：没有光源方块，不改变刷怪、伤害、致盲或天空光；在没有接收面的空中不会出现灯球。**保留枪包原有镭射光束，只去掉额外画的落点**，不为镭射或曳光布灯。[原包 AK 与 RPG 的全部八张开／关原图](investigations/SURFACE_LIGHT_26_3.md#实际游戏帧不是效果图)。
+**两张都引爆了。** 图中量的是附近墙地的客户端补光：没有光源方块，不改变刷怪、伤害、致盲或天空光；在没有接收面的空中不会出现灯球。**保留枪包原有镭射光束，只去掉额外画的落点**，不为镭射或曳光布灯。[原包 AK 与 RPG 的全部八张开／关原图](investigations/SURFACE_LIGHT_26_3.md#实际游戏帧不是效果图)。
+
+**盔甲架也会亮吗？** 用后续的实体补光构建，在暗处近距离对比木架和头盔，再看普通挂板上的物品。展示柜与发光挂板里的物品本来就全亮，不应跟着忽明忽暗。模组物件要使用世界渲染提供的光照才会有同样变化。[实拍：相同绿宝石挂板受光、柜内保持全亮](investigations/SURFACE_LIGHT_26_3.md#实体装备和陈列物)。
 
 ### 地上远处的枪为什么变成图标？
 

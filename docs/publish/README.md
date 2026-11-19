@@ -33,6 +33,7 @@ Unofficial Fabric port of Timeless & Classics Guns: Zero. MC 26.3 development: g
 | White-hot through the XL50 / XL50 白热镜 | [热源](../../build-reports/visual/44244608846-tacz_lens_classic_hot.png) · [挡墙](../../build-reports/visual/44244608846-tacz_lens_classic_wall.png) | 经典变焦；第二张 **Target behind a wall / 遮挡对照**。 |
 | Muzzle light: off / on · 枪口墙地补光 | [Off](../../build-reports/visual/44626162782-reimagined-act-tacz_surface_ak_off.png) / [On](../../build-reports/visual/44626162782-reimagined-act-tacz_surface_ak_on.png) | 分两张上传，标题分别标 Off、On；两次都单发，Reimagined r5.9.3 / ACT 128。 |
 | Impact light: off / on · 爆点墙地补光 | [Off](../../build-reports/visual/44626162782-reimagined-act-tacz_surface_rpg_off.png) / [On](../../build-reports/visual/44626162782-reimagined-act-tacz_surface_rpg_on.png) | 两次火箭都命中约 30 格外的墙；环境同上。不要称为镭射照明。 |
+| One flash, two displays / 普通挂板与全亮展示柜 | [关](../../build-reports/visual/44639006524-reimagined-act-tacz_surface_objects_off.png) / [开](../../build-reports/visual/44639006524-reimagined-act-tacz_surface_objects_on.png) | 两次单发，盔甲架、铁盔、挂板和柜背板受光；柜内同款绿宝石始终全亮。Reimagined ACT 128；青色掉落物为测试贴图。 |
 | Distant drops without a pack LOD / 无低模的掉落物 | [3D](../../build-reports/visual/44627993715-tacz_dropped_guns_off.png) / [Slot icon](../../build-reports/visual/44627993715-tacz_dropped_guns_on.png) | 对照用：16 件掉落物；**cyan test-pack icon / 青色为夹具槽位图**。不作为默认包宣传封面。 |
 
 外站正文用指向**固定公开提交**的图片和图册 URL，不粘贴 `../`、临时 Actions 下载地址或有期限的附件。站内编辑器不支持外链图片时，下载表里的原 PNG 上传至 Gallery，保留标题、光影和开关条件。不要另做效果图或把测试标记抹掉。默认枪包资产署名 **TACZ Dev Team / CC BY-NC-ND 4.0**；不把截图或第三方光影宣称为本项目原创素材。

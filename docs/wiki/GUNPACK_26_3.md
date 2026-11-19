@@ -43,7 +43,7 @@
 1. **枪焰**：`scale` 改焰的大小；配件显式 `flash_hider` 按比例缩放，不是一个「消焰器必定完全熄灭」的开关。未写倍率时消音回退与显式零不同。`first_person_flash` / `third_person_flash` 可分设；显式 `null` 关闭对应层，别用缺省代替关闭。
 2. **烟和动画特效**：`smoke_scale`、`initial_speed_scale`、`smoke_particle_count` 与烟的方向控制独立于焰；客户端关 `RenderMuzzleSmoke` 不关焰。自定义定义放 `assets/<命名空间>/particle_definitions/`，可由动画 `particle_effects`、定位组与 `pre_effect_script` 触发。世界烟与手部粒子分开，支持的对端可看到跟踪角色的事件。效果组件、Molang、材质和预算见[26.3 的实际实现与限制](../investigations/SNOWSTORM_RUNTIME_26_3.md)、[SBM 上游的定义示例][particle]。不用安装 SBM 的 1.21.1 JAR，也不要假设每个 Bedrock 扩展都受支持。
 3. **第一人称曝光**：`renew` 的 `flash_light_level`（默认 15，零为不补光）影响短暂的枪／手曝光，消焰、视角配置仍生效。`LegacyMuzzleLight` 是玩家**默认关**的旧包估算开关；它只为符合条件的旧贴图火焰或省略整段声明的爆炸发射器估算，不替显式 `muzzle_flash: null` 或普通无焰枪造粒子。
-4. **场景表面**：`MuzzleSurfaceLight` 和 `ExplosionSurfaceLight` 是另两个**客户端配置**，不属于 display JSON，默认关闭。前者作用在发射处附近的墙地，后者取已收到的真实爆炸中心；不改变世界光照或 `renew` 曝光寿命。不额外画镭射落点。[两套后端的单发原图](../investigations/SURFACE_LIGHT_26_3.md#实际游戏帧不是效果图)与[配件倍率的测试图](../investigations/MUZZLE_ATTACHMENTS_26_3.md#像素与证据边界)用途不同。
+4. **场景表面**：`MuzzleSurfaceLight` 和 `ExplosionSurfaceLight` 是另两个**客户端配置**，不属于 display JSON，默认关闭。前者作用在发射处，后者取已收到的真实爆炸中心。较新 26.3 构建除墙地外也处理[使用世界光照的实体、装备与陈列物](../investigations/SURFACE_LIGHT_26_3.md#实体装备和陈列物)，原本全亮的部分不再叠亮；不改变世界光照或 `renew` 曝光寿命。不额外画镭射落点。[两套后端的单发原图](../investigations/SURFACE_LIGHT_26_3.md#实际游戏帧不是效果图)与[配件倍率的测试图](../investigations/MUZZLE_ATTACHMENTS_26_3.md#像素与证据边界)用途不同。
 
 ## 配件、瞄具、脚本还看哪里？
 

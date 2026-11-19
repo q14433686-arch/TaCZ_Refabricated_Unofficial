@@ -4,7 +4,7 @@
 
 **Minecraft 26.3 · Fabric Loader 0.19.5+ · Java 25+ · Fabric API（本构建 0.160.7+26.3）· Forge Config API Port 26.3.0+**
 
-**开发／试玩记录，不是已发布文件的更新公告。** [#122](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/122) 合入 1.2 特性，[#123](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/123) 将**模组**版本改为 `1.2.0+fabric.26.3.R1`，该次升号没有给默认包、依赖或其他版本线一起改号。同号的 [#124 试玩构建 `a14e06e3`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/124#issuecomment-7024035841) 另含下表最后三项。已发布的 `1.1.8+fabric.26.3.R1-hotfix3` 仍是旧文件。[玩家指南](PLAYER_GUIDE_26_3.md) · [实机图册](SCREENSHOTS_26_3.md) · [枪包 Wiki 补遗](wiki/GUNPACK_26_3.md)。
+**开发／试玩记录，不是已发布文件的更新公告。** [#122](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/122) 合入 1.2 特性，[#123](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/123) 将**模组**版本改为 `1.2.0+fabric.26.3.R1`，该次升号没有给默认包、依赖或其他版本线一起改号。同号的 [#124 试玩构建 `a14e06e3`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/124#issuecomment-7024035841) 另含下表最后三项的早期形态；盔甲架与陈列物补光在其后同号的 [#124 `a28882da` 构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44640438182/job/135969809591) 验证。已发布的 `1.1.8+fabric.26.3.R1-hotfix3` 仍是旧文件。[玩家指南](PLAYER_GUIDE_26_3.md) · [实机图册](SCREENSHOTS_26_3.md) · [枪包 Wiki 补遗](wiki/GUNPACK_26_3.md)。
 
 | 玩家的变化（相对旧 26.3 文件） | 范围与依据 |
 |---|---|
@@ -18,7 +18,7 @@
 | 服主工具与升级：`/tacz debug pegboard` 可在空地生成同款／异款陈列；内置包按版本与内容指纹再导出，已有目录先备份。只迁移未改过的旧玻璃默认列表；旋转放置的 B 型双格工作台模板保留根方块实体。 | [管理员命令、备份与旋转模板的实测边界](investigations/PORT_GAPS_26_3_VALIDATION.md)。陈列小场景的提取计时不等于整帧 FPS。 |
 | **#124 · 专用台配方**：不同枪包的同名 `recipe_filters` 不再互盖，只写黑名单在传到客机后不会屏蔽所有制作页；普通配方不合并、不绕过服主禁用项。 | [过滤与诊断](investigations/ORDINARY_CRAFTING_26_3.md#原版合成在但客机查不到默认包的制作配方)：分别看枪械／配件／弹药台的制作页，不用用途页总数代替。 |
 | **#124 · 地上的枪**：无可用作者低模时，默认从 8 格起用槽位图代表真实掉落物；`0` 含近处，`-1` 关闭，没有图标保留 3D。原 3D 路径不再提交模型没写的面，有效零 UV 面保留。 | [3D／图标与条件](investigations/DROPPED_GUN_LOD_26_3.md)。不隐藏物品，不改展示框、手持或服务端，不承诺固定帧率增益。 |
-| **#124 · 实验补光**：`MuzzleSurfaceLight` 从枪口向前和两侧照墙地；`ExplosionSurfaceLight` 从实际爆点而非发射者照附近表面；`LegacyMuzzleLight` 单独为合条件旧枪估算曝光。三项默认关闭。移除额外镭射落点，保留原光束与原 `renew` 枪／手曝光。 | [单发开／关原图、过期与遮挡](investigations/SURFACE_LIGHT_26_3.md)。普通 Vulkan、Iris 测试光影和 Reimagined 的指定场景已跑；不改变方块光、刷怪、伤害或致盲。 |
+| **#124 · 实验补光**：`MuzzleSurfaceLight` 从枪口向前和两侧照墙地，后续构建也照亮邻近盔甲架、装备与普通陈列物，保留全亮物品；`ExplosionSurfaceLight` 从实际爆点而非发射者照附近表面；`LegacyMuzzleLight` 单独为合条件旧枪估算曝光。三项默认关闭。移除额外镭射落点，保留原光束与原 `renew` 枪／手曝光。 | [单发开／关原图、过期与遮挡](investigations/SURFACE_LIGHT_26_3.md)。普通 Vulkan、Iris 测试光影和 Reimagined 的指定场景已跑；不改变方块光、刷怪、伤害或致盲。 |
 
 ## 1.1.8 R1-hotfix3（以下为当时的变更记录）
 

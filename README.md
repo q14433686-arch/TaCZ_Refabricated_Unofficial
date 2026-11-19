@@ -22,9 +22,9 @@
 |---|---|
 | ![QR-24 持枪与改装进度](build-reports/visual/44417531060-tacz_default_refit.png) | ![引爆瞬间照亮爆点附近的墙地](build-reports/visual/44626162782-reimagined-act-tacz_surface_rpg_on.png) |
 
-**下载要分清：**下表链接的是已发布文件。要复现本页最新的工作台、掉落物和补光，请用 [PR #124 试玩记录里的 `a14e06e3` 测试包](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/124#issuecomment-7024035841)，解压 Artifacts 的 ZIP，核对 JAR 文件名；也可[从对应源码构建](#9-从源码构建)。同是 1.2.0 R1 的较早构建不含全部改动。测试产物有保留期限，旧 Release 不会随源码升级。
+**下载要分清：**下表是已发布文件。复现本页的工作台、掉落枪和实体补光，请用 [PR #124 的 `a28882da` 测试 ZIP](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44640438182/artifacts/14587040861)，解压取 JAR；也可[从对应源码构建](#9-从源码构建)。`a14e06e3` 只有墙地补光，没有盔甲架和展品这一层。测试产物有保留期限，版本字符串相同不代表内容相同。
 
-本分支当前源码版本为 **`1.2.0+fabric.26.3.R1`**。26.3 从这一版重新以 R1 计数。以 `0.7.0-forge1.1.8-hotfix` 为基线，已移入上游 **1.2.0-hotfix 的部分能力**，不声明完整 1.2.0 枪包兼容，也不需要安装 1.21.1 的 SimpleBedrockModel。[早期玩家验收台账](docs/investigations/FABRIC_120_PLAYER_CHECKLIST.md) · [移植账本](docs/investigations/FABRIC_120_PORT_26_3.md) · [三条旧线的平行移植指南](docs/lineage/26.3-backports/README.md)。
+本分支当前源码版本为 **`1.2.0+fabric.26.3.R1`**。26.3 从这一版重新以 R1 计数。以 `0.7.0-forge1.1.8-hotfix` 为基线，已移入上游 **1.2.0-hotfix 的部分能力**，不声明完整 1.2.0 枪包兼容，也不需要安装 1.21.1 的 SimpleBedrockModel。[26.3 移植现状与剩余差异](docs/investigations/PORT_STATUS_26_3_R1.md) · [早期玩家验收台账](docs/investigations/FABRIC_120_PLAYER_CHECKLIST.md) · [移植账本](docs/investigations/FABRIC_120_PORT_26_3.md) · [三条旧线的平行移植指南](docs/lineage/26.3-backports/README.md)。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [CurseForge](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated)
@@ -163,7 +163,7 @@ authored 对齐（实机验证待补）；其余内容不变。
   世界语境有近距全模豁免与顶点预算保护。依赖外置 TML 的枪包在本 mod 下
   视为依赖满足（`provides: ["taczmeshloader"]`）。范围、配置与已知边界见
   [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md)）；
-- **实验性近场光效（默认关闭）**：客户端「渲染」中可分别开启枪口墙地补光、旧枪包击发曝光和爆点墙地补光；RPG 发射和远处爆点分开。只画在邻近的不透明整块表面，不放光源方块，不额外绘制镭射落点或全屏闪白。[配置、公式与多人预算](docs/investigations/SURFACE_LIGHT_26_3.md)。
+- **实验性近场光效（默认关闭）**：客户端「渲染」中可分别开启枪口墙地补光、旧枪包击发曝光和爆点墙地补光；RPG 发射和远处爆点分开。除不透明整面地形外，附近的盔甲架、装备、普通展品和架体也可受光；原本全亮的内容保持原样。不放光源方块，不额外绘制镭射落点或全屏闪白。[配置、公式与多人预算](docs/investigations/SURFACE_LIGHT_26_3.md)。
 - **无 LOD 的掉落枪**：默认从 8 格起用该枪包的 `slot` 图标，不隐藏掉落物。有作者低模时沿用原选模，没有图标则保留 3D。近处堆枪也卡可把客户端 `DroppedGunSpriteDistance` 设为 `0`；`-1` 关闭图标回退。见[选路、实测方法与取舍](docs/investigations/DROPPED_GUN_LOD_26_3.md)；
 - 若干可选模组的兼容接线。
 

@@ -31,3 +31,5 @@ REI 的服务器 SET 数量和 TaCZ 的 `pack displays` 总数都不能说明枪
 - **复测方法：** 服主和客机都换同一修复构建，重启服务器再重新进服，不必删除枪包。空手打开枪械台、配件台、弹药台，或在 REI 按 R 查 AK47、ACOG TA31、9mm **的制作页**。若仍缺，提供对应一项的 ID 和两行客户端日志即可：`[TaCZ Workbench Sync]` 的 `tacz namespace: received …, decoded …` 是服务器下发和成功解码的条数；`[TACZ Recipe Viewer]` 的 `distinct tacz workbench recipes displayed` 是按工作台筛选后注册到 REI 的不同 `tacz:` 制作配方数。每一阶段都单列三类路径：原装包未改动时是 `gun=70, attachments=107, ammo=25`；总数还可能含 `misc/` 等其他配方。这些是命名空间统计，不把所有 `tacz:` ID 都当作一定来自原装包。收到就是零时先看服务端的包是否加载；收到但没显示时再查相关台的过滤器、页签及附加包规则。
 
 [修前回归（只加测试，未改实现）](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44579673619/job/135756602328)：两种包序分别丢了默认规则或附加包规则；只带黑名单的服务端对象经同一 Gson 往返后，客机错误拒绝了 `tacz:gun/ak47`。这复现了反馈的症状，不等于知道该私服具体用了哪份过滤器。
+
+**从“列出配方”到“结算成功”**：[26.3 R1 专服结算记录](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44640438182/job/135969809591) 用生存测试玩家和实际菜单分别为 70 枪、107 配件、25 弹药备足材料；逐条比对扣除与世界产物的数量和组件。每条另试少一份料，无扣料／无产物。覆盖的是默认 202 条专用台配方，不是客户端点了 202 次，也不代表私服上的第三方数据一律正确。

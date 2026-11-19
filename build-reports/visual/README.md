@@ -1,6 +1,6 @@
 # 游戏截图档案 · 26.3
 
-[先看带图题的玩家图册](../../docs/SCREENSHOTS_26_3.md) · [操作方法](../../docs/PLAYER_GUIDE_26_3.md)。以下是本次整理时保留在本目录的 **233 张 PNG**。每个链接打开一张图；数字链接是采集它的 Actions 运行，不是下载地址。
+[先看带图题的玩家图册](../../docs/SCREENSHOTS_26_3.md) · [操作方法](../../docs/PLAYER_GUIDE_26_3.md)。以下是本次整理时保留在本目录的 **237 张 PNG**。每个链接打开一张图；数字链接是采集它的 Actions 运行，不是下载地址。
 
 档案包含普通游戏画面、测试包夹具、同机位对照、历史失败和少量裁剪图。它们并非都适合当项目宣传图，也不意味着每个运行都通过；具体结论以各组的验证记录为准。
 
@@ -156,22 +156,24 @@ night_body 只照枪手，night_stock 含原包枪焰，strip / reference 是校
 
 </details>
 
-## 枪口与爆点的墙地补光
+## 枪口与爆点：墙地、实体和展架
 
-两组均为真实击发原帧；off / on 指表面补光而不是有没有开火。AK 近墙，RPG 远处爆点；另有不启用光影的 Vulkan 对照。 [专题记录](../../docs/investigations/SURFACE_LIGHT_26_3.md)。
+墙地与物体均为真实击发原帧；off / on 指表面补光而不是有没有开火。AK 近墙，RPG 远处爆点；另有不启用光影的 Vulkan 对照。 [专题记录](../../docs/investigations/SURFACE_LIGHT_26_3.md)。
 
 <details>
-<summary>展开本组 8 张图</summary>
+<summary>展开本组 12 张图</summary>
 
 
 - [44626162782](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44626162782) · Reimagined ACT 128：[AK 近墙 · 关](44626162782-reimagined-act-tacz_surface_ak_off.png) · [AK 近墙 · 开](44626162782-reimagined-act-tacz_surface_ak_on.png) · [RPG 爆点 · 关](44626162782-reimagined-act-tacz_surface_rpg_off.png) · [RPG 爆点 · 开](44626162782-reimagined-act-tacz_surface_rpg_on.png)
 - [44626162907](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44626162907)：[AK 近墙 · 关](44626162907-tacz_surface_ak_off.png) · [AK 近墙 · 开](44626162907-tacz_surface_ak_on.png) · [RPG 爆点 · 关](44626162907-tacz_surface_rpg_off.png) · [RPG 爆点 · 开](44626162907-tacz_surface_rpg_on.png)
+- [44639006524 · ACT 128 作业](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44639006524/job/135965003368)：[实体／展架 · 关](44639006524-reimagined-act-tacz_surface_objects_off.png) · [实体／展架 · 开](44639006524-reimagined-act-tacz_surface_objects_on.png)
+- [44640438182 · 无光影](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44640438182/job/135969809591)：[实体／展架 · 关](44640438182-tacz_surface_objects_off.png) · [实体／展架 · 开](44640438182-tacz_surface_objects_on.png)
 
 </details>
 
 ## 无作者低模的掉落枪
 
-同一堆掉落物，off 为 3D，on 为测试包青色 slot 图。当前开发构建 a14e06e3。 [专题记录](../../docs/investigations/DROPPED_GUN_LOD_26_3.md)。
+同一堆掉落物，off 为 3D，on 为测试包青色 slot 图。取景构建 a14e06e3。 [专题记录](../../docs/investigations/DROPPED_GUN_LOD_26_3.md)。
 
 <details>
 <summary>展开本组 2 张图</summary>

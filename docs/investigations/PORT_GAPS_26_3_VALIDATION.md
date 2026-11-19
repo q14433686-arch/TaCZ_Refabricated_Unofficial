@@ -2,7 +2,7 @@
 
 [11 月 18 日审计](PORT_GAPS_26X_2026_11_18.md)描述的是 **`f6678ba` 的生产代码**。本文单独记录后续工作，不把最初的缺口清单改写成发布说明，也不把 `compileJava` 成功解释为画面通过。仅涉及 `26.3_tacz-1.2.X` 的工作分支；没有回移到普通 26.3，也没有发布新版本。
 
-**后续复查：** [默认枪焰配件倍率](MUZZLE_ATTACHMENTS_26_3.md)；[真实 Reimagined 彩光、SVD 阴影与本轮旧移植复核](REIMAGINED_26_3.md)。下列早期简化光影的数字不替代实际 shader pack 的像素对照。
+**后续复查：** [#124 现行 R1 的功能状态、确认差异与未测清单](PORT_STATUS_26_3_R1.md)； [默认枪焰配件倍率](MUZZLE_ATTACHMENTS_26_3.md)；[真实 Reimagined 彩光、SVD 阴影与本轮旧移植复核](REIMAGINED_26_3.md)。下列早期简化光影的数字不替代实际 shader pack 的像素对照。
 
 **本页原验收在同一代码提交上完整通过：[`81f474e`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/commit/81f474e28f1e76c0ea0eeb056b58f36424841dc3)。** [完整构建、JUnit、专服、嵌套 MAE 与普通 Mesa 客户端][final-mesa]、[Iris/Sodium 启用回归光影][final-iris]、[PAL][final-pal]、[Controllable][final-pad]、[JEI 与 REI 两个独立作业][final-viewers]、[编译][final-compile]均通过。下文较早的失败保留其原提交与原因，不是当前代码的状态。
 

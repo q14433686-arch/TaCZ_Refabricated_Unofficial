@@ -42,6 +42,10 @@
 | 爆点 · 无光影 Vulkan | [RPG OFF](../build-reports/visual/44626162907-tacz_surface_rpg_off.png) | [RPG ON](../build-reports/visual/44626162907-tacz_surface_rpg_on.png) |
 | 枪口 · Reimagined r5.9.3，ACT 128 | ![暗处近墙单发，枪口补光关](../build-reports/visual/44626162782-reimagined-act-tacz_surface_ak_off.png) | ![同场景前方及两侧受光](../build-reports/visual/44626162782-reimagined-act-tacz_surface_ak_on.png) |
 | 爆点 · Reimagined r5.9.3，ACT 128 | ![远处实际引爆，爆点补光关](../build-reports/visual/44626162782-reimagined-act-tacz_surface_rpg_off.png) | ![远墙与地面随爆点短暂亮起](../build-reports/visual/44626162782-reimagined-act-tacz_surface_rpg_on.png) |
+| 实体与陈列物 · 无光影 Vulkan | [Objects OFF](../build-reports/visual/44640438182-tacz_surface_objects_off.png) | [Objects ON](../build-reports/visual/44640438182-tacz_surface_objects_on.png) |
+| 实体与陈列物 · Reimagined r5.9.3，ACT 128 | [Objects OFF](../build-reports/visual/44639006524-reimagined-act-tacz_surface_objects_off.png) | [Objects ON](../build-reports/visual/44639006524-reimagined-act-tacz_surface_objects_on.png) |
+
+最后两组看木架、铁盔、雕像，以及左边柜子和右边普通挂板上的同款绿宝石。柜里的本来就全亮；青色方片是掉落物测试贴图。[逐物体测量](investigations/SURFACE_LIGHT_26_3.md#实体装备和陈列物)。
 
 ## 第三人称与地上的枪
 
