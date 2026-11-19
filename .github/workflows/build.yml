@@ -105,7 +105,7 @@ jobs:
           set -o pipefail
           ./gradlew --init-script scripts/ci-central.init.gradle build --console=plain --stacktrace --no-daemon 2>&1 | tee "$RUNNER_TEMP/tacz-build.log"
 
-      - name: Verify server smoke and nested MAE
+      - name: Verify server smoke, packaged version and nested MAE
         run: |
           grep -F 'PORT_CATALOG: server loaded 229 indexes' build/run/gameTest/logs/latest.log
           grep -F 'PORT_ACTION: six default Lua reloads conserved' build/run/gameTest/logs/latest.log
@@ -115,12 +115,18 @@ jobs:
           import json, zipfile
           from pathlib import Path
           jar, = [p for p in Path('build/libs').glob('*.jar') if not p.name.endswith('-sources.jar')]
+          props = dict(line.split('=', 1) for line in Path('gradle.properties').read_text().splitlines()
+                       if line.strip() and not line.lstrip().startswith('#'))
+          expected = '{archives_base_name}-{minecraft_version}-{mod_version}.jar'.format_map(props)
+          assert jar.name == expected, (jar.name, expected)
           with zipfile.ZipFile(jar) as z:
+              metadata = json.loads(z.read('fabric.mod.json'))
+              assert metadata['version'] == props['mod_version'], (metadata['version'], props['mod_version'])
               deps = [n for n in z.namelist() if n.startswith('META-INF/jars/mae-')]
               assert deps == ['META-INF/jars/mae-1.1.4.jar'], deps
-              assert [j['file'] for j in json.loads(z.read('fabric.mod.json'))['jars']].count(deps[0]) == 1
+              assert [j['file'] for j in metadata['jars']].count(deps[0]) == 1
               assert not any('/guns/test/' in n or n.endswith('tacz-port-smoke.zip') for n in z.namelist())
-              print('::notice::' + jar.name + ' contains one registered ' + deps[0] + '; server overlay smoke passed')
+              print(f"::notice::{jar.name}: fabric.mod.json version={metadata['version']}; one registered {deps[0]}; server overlay smoke passed")
           PY
 
       - name: Install software Vulkan WSI for client smoke
