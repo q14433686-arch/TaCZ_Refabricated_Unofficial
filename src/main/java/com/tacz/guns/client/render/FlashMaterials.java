@@ -5,6 +5,7 @@ import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
 import com.tacz.guns.client.render.scope.ScopeMaskTextureHandle;
 import com.tacz.guns.client.render.scope.ScopePipelinePrewarm;
 import com.tacz.guns.compat.iris.IrisCompat;
+import net.minecraft.client.renderer.BindGroupLayouts;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.*;
 import net.minecraft.resources.Identifier;
@@ -46,6 +47,9 @@ public final class FlashMaterials {
         return TYPES.computeIfAbsent(new Key(new Pass(layer, clipped), texture, uvOffset), key -> {
             var setup = RenderSetup.builder(PIPELINES.computeIfAbsent(key.pass, FlashMaterials::pipeline))
                     .withTexture("Sampler0", texture).useLightmap().sortOnUpload();
+            // Iris's synthesized ENTITY program samples UV1 even for emissive surfaces.
+            // Bind the actual neutral overlay texel, never an unrelated or unbound sampler.
+            if (layer == Layer.SURFACE) setup.useOverlay();
             if (clipped) setup.withTexture(ScopeBodyRenderTypes.maskSamplerName(), ScopeMaskTextureHandle.ID);
             if (layer == Layer.SWIRL) setup.setTextureTransform(new TextureTransform.OffsetTextureTransform(uvOffset, uvOffset));
             return RenderType.create("tacz_muzzle_" + layer.name().toLowerCase(java.util.Locale.ROOT), setup.createRenderSetup());
@@ -59,9 +63,11 @@ public final class FlashMaterials {
                 .withLocation(Identifier.parse("tacz:pipeline/muzzle_" + name))
                 .withVertexShader(shader).withFragmentShader(shader).withCull(false)
                 .withShaderDefine("ALPHA_CUTOUT", pass.layer == Layer.SURFACE ? .001f : .1f).withShaderDefine("EMISSIVE")
-                .withShaderDefine("NO_OVERLAY").withShaderDefine("NO_CARDINAL_LIGHTING")
+                .withShaderDefine("NO_CARDINAL_LIGHTING")
                 .withColorTargetState(new ColorTargetState(pass.layer == Layer.STRIP ? BlendFunction.TRANSLUCENT : BlendFunction.ADDITIVE));
-        if (pass.layer == Layer.SURFACE) b.withDepthStencilState(new DepthStencilState(DepthStencilState.DEFAULT.depthTest(), false))
+        if (pass.layer != Layer.SURFACE) b.withShaderDefine("NO_OVERLAY");
+        if (pass.layer == Layer.SURFACE) b.withBindGroupLayout(BindGroupLayouts.SAMPLER1)
+                .withDepthStencilState(new DepthStencilState(DepthStencilState.DEFAULT.depthTest(), false))
                 .withColorTargetState(new ColorTargetState(new BlendFunction(BlendFactor.SRC_ALPHA, BlendFactor.ONE, BlendFactor.ZERO, BlendFactor.ONE)));
         if (pass.layer == Layer.SWIRL) b.withShaderDefine("APPLY_TEXTURE_MATRIX");
         if (pass.layer == Layer.REFLECTION) b.withDepthStencilState(new DepthStencilState(CompareOp.EQUAL, false));
