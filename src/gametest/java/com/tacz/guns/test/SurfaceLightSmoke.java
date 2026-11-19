@@ -104,7 +104,7 @@ public final class SurfaceLightSmoke {
             });
             muzzleFrames(ctx,world,origin);
             if (measureLoad) {
-                ctx.runOnClient(mc->{SurfaceLights.clear();position(mc,origin,false);previousTick=-1;replay=true;});
+                ctx.runOnClient(mc->{overlapControl(origin);SurfaceLights.clear();position(mc,origin,false);previousTick=-1;replay=true;});
                 for (boolean enable : new boolean[]{false,true,true,false}) timing(ctx,enable);
             }
             ctx.runOnClient(mc->{replay=false;SurfaceLights.clear();RenderConfig.MUZZLE_SURFACE_LIGHT.set(true);});
@@ -204,13 +204,25 @@ public final class SurfaceLightSmoke {
                     origin.getZ()+(behind?PARTITION+1.5:1.0)+(i/4)*.05),0,0);
         }
     }
+    private static void overlapControl(BlockPos origin) {
+        SurfaceLights.clear();
+        var before=SurfaceLights.diagnostics();
+        for (int i=0;i<3;i++) {
+            var cow=actors[i];
+            cow.snapTo(Vec3.atCenterOf(origin.south(1)).add(i==2?3:i*.10,-cow.getEyeHeight()+.12,-.65),0,0);
+            ReimaginedShotControl.taczTest$shot(new GunFirePostEvent(cow,rifle,LogicalSide.CLIENT));
+            var d=SurfaceLights.diagnostics();
+            if (d.active()!=(i==2?2:1) || d.coincident()-before.coincident()!=(i==0?0:1)) throw new AssertionError("Coincident vs separated muzzles: "+d);
+        }
+        GunMod.LOGGER.info("PORT_SURFACE: two aligned muzzles in one air cell share one footprint; a third 3 blocks away retains its own");
+    }
     private static void timing(ClientGameTestContext ctx, boolean enable) {
         ctx.runOnClient(mc->RenderConfig.MUZZLE_SURFACE_LIGHT.set(enable));ctx.waitTicks(10);
         var before=ctx.computeOnClient(mc->SurfaceLights.diagnostics());
         var t=frameTimes(ctx);
         var d=ctx.computeOnClient(mc->SurfaceLights.diagnostics());
         if(d.active()>2 || (d.projections()>before.projections())!=enable) throw new AssertionError("Muzzle budget/control: "+d);
-        GunMod.LOGGER.info("PORT_SURFACE: 16 sources/600 RPM, spill={}, 64 renderFrame samples median/p95/p99={} / {} / {} us, SurfaceLights.submit p95={} us, admitted projections={}",enable,t.frame[32]/1000,t.frame[60]/1000,t.frame[63]/1000,t.submit[60]/1000,d.projections()-before.projections());
+        GunMod.LOGGER.info("PORT_SURFACE: 16 sources/600 RPM, spill={}, 64 renderFrame samples median/p95/p99={} / {} / {} us, SurfaceLights.submit p95={} us, admitted projections={}, overlapping offers={}",enable,t.frame[32]/1000,t.frame[60]/1000,t.frame[63]/1000,t.submit[60]/1000,d.projections()-before.projections(),d.coincident()-before.coincident());
     }
     private record Timings(long[] frame,long[] submit) {}
     private static Timings frameTimes(ClientGameTestContext ctx) {

@@ -77,7 +77,7 @@ fi
 # Require both material paths, not just a generic "rendered" message. Frame data stays in the job artifact.
 if [[ -z ${TACZ_SMOKE_VIEWER:-} && ${TACZ_SMOKE_CONTROLLER:-} != true ]]; then
     surface_frames
-    for marker in 'spill=false, 64' 'spill=true, 64'; do grep -Fq "$marker" "$run/logs/latest.log"; done
+    for marker in 'spill=false, 64' 'spill=true, 64' 'third 3 blocks away retains its own'; do grep -Fq "$marker" "$run/logs/latest.log"; done
     # Geometry counts (deferred replay) and live frame samples are different measurements.
     grep -Fq 'new cyan slot pixels in the pile' "$run/logs/latest.log"
     # Keep all paired samples in one Checks notice (GitHub caps notices per step).

@@ -14,6 +14,7 @@ import me.xjqsh.lrtactical.entity.StunGrenadeEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundExplodePacket;
 import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
@@ -43,10 +44,10 @@ public final class SurfaceLights {
     private static @Nullable ClientLevel level;
     private static long buildTick;
     private static int builds, muzzleBuilds;
-    private static long muzzleEvents, explosionEvents, stunEvents, projections;
-    public record Diagnostics(int active, long muzzles, long explosions, long stuns, long projections) {}
+    private static long muzzleEvents, explosionEvents, stunEvents, projections, coincident;
+    public record Diagnostics(int active, long muzzles, long explosions, long stuns, long projections, long coincident) {}
     public static Diagnostics diagnostics() {
-        return new Diagnostics(pulses.size(), muzzleEvents, explosionEvents, stunEvents, projections);
+        return new Diagnostics(pulses.size(), muzzleEvents, explosionEvents, stunEvents, projections, coincident);
     }
 
     private record Ray(Vec3 origin, Vec3 delta) {}
@@ -159,9 +160,27 @@ public final class SurfaceLights {
         offer(new Pulse(pos,null,Vec3.ZERO,6,WHITE,.76f,45,175,-1,false));
     }
     private static boolean nearBlast(Vec3 pos) { return pos.isFinite() && pos.distanceToSqr(camera())<BLAST_DISTANCE_SQR; }
+    /** Drawing the same broad muzzle footprint twice both washes it out and shades the
+     * screen twice. Only coalesce tightly aligned muzzles in the SAME empty cells. Separate
+     * shooters, opposite directions and occluding walls still get independent projections. */
+    private static boolean coincidentMuzzles(Pulse a,Pulse b) {
+        if (a.eye==null || b.eye==null || a.pos.distanceToSqr(b.pos)>=1 || a.eye.distanceToSqr(b.eye)>=1
+                || a.bias.dot(b.bias)<.966*SpillField.MUZZLE_BIAS*SpillField.MUZZLE_BIAS) return false;
+        var source=BlockPos.containing(a.pos); var eye=BlockPos.containing(a.eye);
+        return source.equals(BlockPos.containing(b.pos)) && eye.equals(BlockPos.containing(b.eye))
+                && level.getBlockState(source).isAir() && level.getBlockState(eye).isAir();
+    }
     private static void offer(Pulse pulse) {
         long now=GunTime.nowMillis();
         pulses.removeIf(p -> p.expired(now) || (p.eye!=null && pulse.eye!=null && p.owner==pulse.owner));
+        if (pulse.eye!=null) for (var it=pulses.iterator();it.hasNext();) {
+            var p=it.next();
+            if (!coincidentMuzzles(p,pulse)) continue;
+            coincident++;
+            if (!pulse.local && (p.local || (p.patches==null ? p.strength : p.intensity(now))>=pulse.strength)) return;
+            it.remove(); // the newer/brighter or first-person source owns this footprint
+            break;
+        }
         // Gunfire is frequent and its near-wall footprints can fill the screen. Limit it
         // separately so four automatic weapons cannot also starve a rarer detonation.
         int liveMuzzles = 0;
@@ -183,6 +202,7 @@ public final class SurfaceLights {
         if (tick!=buildTick) { buildTick=tick; builds=muzzleBuilds=0; }
         pulses.removeIf(p -> p.expired(now) || !(p.eye==null ? RenderConfig.EXPLOSION_SURFACE_LIGHT.get()
                 : RenderConfig.MUZZLE_SURFACE_LIGHT.get() && !RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()));
+        if (pulses.isEmpty()) return;
         var draws=new ArrayList<Draw>(MAX_PULSES);
         var mc=Minecraft.getInstance();
         var state=mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
