@@ -33,6 +33,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.animal.cow.Cow;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -73,12 +74,13 @@ public final class SurfaceLightSmoke {
         var saved = world.getServer().computeOnServer(s -> world.getConnection().getServerPlayer().getMainHandItem().copy());
         var facing = ctx.computeOnClient(mc -> new float[]{mc.player.getYRot(),mc.player.getXRot()});
         BlockPos origin=ctx.computeOnClient(mc->BlockPos.containing(mc.player.getEyePosition()));
+        var concrete=Blocks.CONCRETE.pick(DyeColor.GRAY);
         var old=world.getServer().computeOnServer(s -> {
             var p=world.getConnection().getServerPlayer(); var level=p.level(); p.setItemInHand(InteractionHand.MAIN_HAND,ItemStack.EMPTY);
             var states=new LinkedHashMap<BlockPos,BlockState>();
             for(int x=-SIDE;x<=SIDE;x++) for(int y=-2;y<=5;y++) for(int z=-3;z<=BACK;z++) {
                 var pos=origin.offset(x,y,z);
-                var block = Math.abs(x)==SIDE || y==-2 || y==5 || z==-3 || z==BACK || z==PARTITION ? Blocks.GRAY_CONCRETE : Blocks.AIR;
+                var block = Math.abs(x)==SIDE || y==-2 || y==5 || z==-3 || z==BACK || z==PARTITION ? concrete : Blocks.AIR;
                 var prev=level.getBlockState(pos);
                 if (prev.is(block) && z!=PARTITION) continue;
                 states.put(pos,prev); level.setBlock(pos,block.defaultBlockState(),Block.UPDATE_ALL);
@@ -87,7 +89,7 @@ public final class SurfaceLightSmoke {
         });
         try {
             ctx.getInput().lookAt(0,0);
-            ctx.waitFor(mc->mc.player.getMainHandItem().isEmpty() && mc.level.getBlockState(origin.south(BACK)).is(Blocks.GRAY_CONCRETE));
+            ctx.waitFor(mc->mc.player.getMainHandItem().isEmpty() && mc.level.getBlockState(origin.south(BACK)).is(concrete));
             world.getConnection().waitForChunksRender(); ctx.waitTicks(22);
             ctx.runOnClient(mc->{
                 setup(mc,origin); mc.options.bobView().set(false); RenderConfig.MUZZLE_SURFACE_LIGHT.set(false);
