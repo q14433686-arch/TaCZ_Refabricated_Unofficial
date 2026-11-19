@@ -1,5 +1,4 @@
 name: compile-check
-
 # 编译验证闭环（v4）：
 # 依赖下载与编译在 GitHub Actions（外网畅通）执行；
 # arena/** 分支上，编译日志通过 GitHub Contents API 写回本分支
@@ -9,10 +8,9 @@ name: compile-check
 # v4（2026-08-31）：补主分支盲区 —— 此前只有 arena/** 触发，PR 合并进
 # 26.2(main) 等主分支的合并 commit 从来没人编译过。现在主分支 push 与 PR 也编译，
 # 但【只有 arena/** 才回推日志】（主分支不能被 CI 提交污染，状态看 Actions 即可）。
-
 permissions:
   contents: write
-
+  pull-requests: read
 on:
   push:
     branches:
@@ -28,38 +26,63 @@ on:
     paths-ignore:
       - 'build-reports/**'
   workflow_dispatch:
-
 concurrency:
   # 同一分支的过期 run 直接取消，省配额（push 连发时只编最新的）
   group: compile-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   compile:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '25'
-
       - uses: gradle/actions/setup-gradle@v4
-
       - name: compileJava
         run: |
           mkdir -p build-reports
           echo "commit: ${{ github.sha }}" > build-reports/compile-java.log
-          ./gradlew compileJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
-
+          ./gradlew --init-script scripts/ci-central.init.gradle compileJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
+      - name: Record camera hurt bytecode for version-port diagnostics
+        run: |
+          JAR=$(find .gradle "$HOME/.gradle" -name '*26.3*.jar' -path '*minecraft-merged*' | head -1)
+          if [ -n "$JAR" ]; then
+            javap -c -p -classpath "$JAR" net.minecraft.client.renderer.GameRenderer | sed -n '/void bobHurt(/,/^  [a-z]/p' >> build-reports/compile-java.log
+            # Diagnose the non-Iris translucent thermal replay against the actual pinned API.
+            javap -p -classpath "$JAR" net.minecraft.client.renderer.feature.phase.TranslucentFeatureRenderPhase 'net.minecraft.client.renderer.feature.ModelFeatureRenderer$Submit' net.minecraft.client.renderer.rendertype.RenderType net.minecraft.client.renderer.rendertype.RenderSetup 'net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding' >> build-reports/compile-java.log
+            # The 26.3 OIT set differs from the snapshots. Keep the pinned API for the two-sided light path.
+            javap -p -classpath "$JAR" net.minecraft.client.renderer.oit.OitPipelineSet 'net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder' >> build-reports/compile-java.log
+            javap -p -classpath "$JAR" net.minecraft.client.renderer.RenderPipelines | grep -E 'ENTITY.*SNIPPET|OIT_ENTITY' >> build-reports/compile-java.log
+            javap -c -p -classpath "$JAR" net.minecraft.client.renderer.SubmitNodeCollection > /tmp/tacz-submit-bytecode.txt
+            python3 - <<'PY' >> build-reports/compile-java.log
+          from pathlib import Path
+          lines=Path('/tmp/tacz-submit-bytecode.txt').read_text().splitlines()
+          for i,line in enumerate(lines):
+              if 'FeatureRenderPhase.submit:' in line:
+                  print('\n'.join(lines[max(0,i-8):i+3]))
+          PY
+          fi
       - name: Push compile log back via contents API
         # 只在 arena/** 的 push 上回推 —— 主分支与 PR 不产生 ci-log commit
         if: always() && github.event_name == 'push' && startsWith(github.ref_name, 'arena/')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # An open PR is testing this exact head. A bot log commit would replace its
+          # head (and its checks) even though it changes no code. Still compile both
+          # the push and the PR; only suppress the optional repository write-back.
+          if ! pr=$(gh api --method GET "repos/$GITHUB_REPOSITORY/pulls" -f state=open \
+              -f head="$GITHUB_REPOSITORY_OWNER:$GITHUB_REF_NAME" --jq '.[0].number // empty'); then
+            echo '::warning::Unable to check for an open PR; leaving the branch unchanged.'
+            exit 0
+          fi
+          if [[ -n "$pr" ]]; then
+            echo "::notice::Compile result for PR #$pr is in Actions; keeping its tested head unchanged."
+            exit 0
+          fi
           # 日志可能很大，只保留头 200 行 + 尾 800 行
           LOG=build-reports/compile-java.log
           LINES=$(wc -l < "$LOG")

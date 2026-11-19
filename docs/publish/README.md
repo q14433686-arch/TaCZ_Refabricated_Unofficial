@@ -16,7 +16,7 @@
 Unofficial Fabric port of TaCZ (Timeless & Classics Guns: Zero). MC 26.3 development: display racks, ammo storage and per-account HUDs. Separate builds for 26.2, 26.1.2 and 1.21.11. Built-in TML; partial LRTactical support. 非官方社区移植。
 ```
 
-**Website** 指向 [26.3 开发版介绍与版本选择](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3#readme)。默认分支 `26.2(main)` 的 README 属于 26.2；不要用 26.3 的版本表覆盖它。若在旧线首页引用，只需写：「[26.3 开发版](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3#readme)包含挂板、弹药库与账号准星；各 MC 版本单独构建，请按文件标注选择。」
+**Website** 建议填 [26.3 开发版介绍与版本选择](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3#readme)。默认分支 `26.2(main)` 的 README 属于 26.2；不要用 26.3 的版本表覆盖它。若在旧线首页引用，只需写：「[26.3 开发版](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3#readme)包含挂板、弹药库与账号准星；各 MC 版本单独构建，请按文件标注选择。」
 
 本目录文案**依据各站官方规则原文撰写**，来源：
 
