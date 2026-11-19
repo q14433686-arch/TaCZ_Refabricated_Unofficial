@@ -1,13 +1,5 @@
-# Review both language hovers and the matched 64-item scenes on the first passing full client.
-44432265461	smoke	tacz_hover_en_us_scope_xm157
-44432265461	smoke	tacz_hover_en_us_scope_mk5hd
-44432265461	smoke	tacz_hover_en_us_less_flash
-44432265461	smoke	tacz_hover_en_us_more_flash
-44432265461	smoke	tacz_hover_en_us_gun_display_case
-44432265461	smoke	tacz_hover_zh_cn_scope_xm157
-44432265461	smoke	tacz_hover_zh_cn_scope_mk5hd
-44432265461	smoke	tacz_hover_zh_cn_less_flash
-44432265461	smoke	tacz_hover_zh_cn_more_flash
-44432265461	smoke	tacz_hover_zh_cn_gun_display_case
-44432265461	smoke	tacz_rack_load_same
-44432265461	smoke	tacz_rack_load_different
+# Investigate the mesh-only triplet and first hand-material render failure, not successful controls from other paths.
+44433542086	smoke	tacz_mesh_empty
+44433542086	smoke	tacz_mesh_ghost
+44433542086	smoke	tacz_mesh_placed
+44433542106	iris	tacz_material_dark_energy_swirl

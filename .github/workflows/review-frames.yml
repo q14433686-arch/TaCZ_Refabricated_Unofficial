@@ -35,7 +35,19 @@ jobs:
                   assert meta['event']=='push' and meta['head_branch']==os.environ['GITHUB_REF_NAME'] and meta['conclusion'] in ('success','failure')
                   assert meta['path']=='.github/workflows/'+('build.yml' if kind=='smoke' else 'iris-smoke.yml' if kind=='iris' else 'viewer-smoke.yml')
                   artifact = kind+'-'+meta['head_sha']; root = Path(tmp)/artifact
-                  if not root.exists(): subprocess.run(['gh','run','download',run,'-n',artifact,'-D',str(root)],check=True)
+                  if not root.exists():
+                      subprocess.run(['gh','run','download',run,'-n',artifact,'-D',str(root)],check=True)
+                      if meta['conclusion'] == 'failure' and kind == 'iris':
+                          log, = root.rglob('clientGameTest/logs/latest.log')
+                          lines = log.read_text(errors='replace').splitlines()
+                          last = max((i for i,s in enumerate(lines) if ' PORT_' in s),default=0)
+                          # Surface the call site of the *first* renderer error, not only the secondary frame-in-use crash.
+                          errors = [i for i in range(last,len(lines)) if '/ERROR]' in lines[i] or lines[i].startswith('Caused by:')]
+                          for i in errors[:4]:
+                              trace = [m.group(1) for s in lines[i+1:i+45] if (m := re.match(r'\s*at (?:knot//)?([\w.$]+)\(',s))]
+                              print('::notice::' + (lines[i] + ' | ' + ' > '.join(trace[:22]))[:2600].replace('%','%25'))
+                          frames = sorted(p.stem for p in root.rglob('*_tacz_hand_material_*.png'))
+                          print('::notice::Captured hand material frames: ' + ', '.join(frames)[:1500])
                   pictures = list(root.rglob('*.png'))
                   matches = [p for p in pictures if p.name.endswith(frame+'.png')]
                   if len(matches)!=1: raise ValueError(f'{frame}: expected 1 file, found {len(matches)}; available: {[p.name for p in pictures][:20]}')

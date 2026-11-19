@@ -44,12 +44,20 @@
 
 同一提交的[完整普通客户端、专服、构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44432265461/job/135252327768)也通过，不再停在展示交互或世界粒子。它在真实生存背包中逐个悬停六件物品，en_us 和 zh_cn 都检查应有的条件行只出现一次、无能力项不冒出该行；在已打开的创造搜索中完成一次新的资源同步，翻页选择 `reload_smoke` 后只剩目标物品，点“全部”恢复排序后的内容。两种 64 件／16 板场景都见齐所有板、独立采集 CPU 提取时间并清场；随后关世界、重进同一份存档也通过。
 
-## 还要以实际消费者判定的项目
+**悬停原帧：** [XM157 英文测距与火控](../../build-reports/visual/44432265461-tacz_hover_en_us_scope_xm157.png)、[MK5HD 中文弹容计数](../../build-reports/visual/44432265461-tacz_hover_zh_cn_scope_mk5hd.png)、[减少火光／增加烟雾](../../build-reports/visual/44432265461-tacz_hover_en_us_less_flash.png)、[增加火光／减少烟雾](../../build-reports/visual/44432265461-tacz_hover_zh_cn_more_flash.png)、[中文柜子说明](../../build-reports/visual/44432265461-tacz_hover_zh_cn_gun_display_case.png)。同次运行还通过了标准 8x 没有这些能力行的负对照。客户端在重载前后也检查了 variant、slot-adapter 全集及逐 ID 反查；不是靠翻译键存在作结论。
 
-- **输入与展示：** 用提示所显示的 Interact（非枪物品用原版使用键）放入。`ae8f1d9` 的[普通客户端][rack-failure]在等待生存手变空时超时；`043fba5` 已捕获原因：客户端和服务端均未收到 use，当前 GUI 是原版 `FriendsListConfirmScreen`，默认 O 与好友列表冲突。改新默认 K，保留用户已有绑定；不退回直接改 BE 来变绿。分别检查方块白名单、按键派发、两端潜行状态、客户端预测、服务端库存、拐角第二面和普通物品的不透明／半透明。
-- **粒子与曳光：** 六种材质不能合并为“有东西提交过”。要有同纹理、两种背板、cutout 对 alpha/blend 的像素对照；手／世界、镜内／外、俯仰／roll、普通／Iris 各自有边界。[旧 Iris 基准](../../build-reports/visual/44425974217-tacz_amg10_particle_baseline_2.png)和[注入后](../../build-reports/visual/44425974217-tacz_amg10_particle_2.png)是 **失败样本**（zoom 2 的中心正对照为零）。碰撞碎屑按实际 `BulletHoleOption` 的子调用区分于服务端另外发送的熔岩；单纯收包不是效果数量证明。曳光要在玩家开火后同一实体的多个真实世界帧看模型位置，不只看保存的四元数。
-- **菜单和 API：** 对六件物品真实悬停（两种语言），对照应该有／不该有的行。创造栏四类物品按 namespace 及 sort，在打开的界面重载后再查；公开 variant、slot-adapter 全集应和逐 ID 查询对应。不能只数翻译键。
-- **§3 取舍：** 保留测距 1,024 格、标记倍率 32、模拟 600 tick 及实体寿命上限；超预算或不可达不画，不能用解除上限来追求源码相似。普通发光骨骼的环境 sky 与面法线是两件事，需与方向光和遮挡对照，不能用准星满亮代替。格线遮挡、PAL 离屏/再入镜和大场景 CPU/GPU 性能仍需分开测。转换器对不可证等价的条件仍须报出，不静默改包。
+**64 件物品的观测，不是 FPS 测评：** 同一 Mesa 软渲染作业、同一位置放 16 块板，每板 4 件；等最后一个槽位同步、区块渲染就绪，预热 20 tick 后收集 30 tick。下列是每次单块 BE 调用 `extractRenderState` 的 CPU 时间，取自该作业的[原始日志复核](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44433542077)。没有把 GPU、提交、材质烘焙总耗时或游戏整帧算在内。
+
+| 场景 | 单板调用次数 | 中位数 | p95 |
+|---|---:|---:|---:|
+| [64 件同款](../../build-reports/visual/44432265461-tacz_rack_load_same.png) | 1,568 | 1 μs | 4 μs |
+| [64 件不同款](../../build-reports/visual/44432265461-tacz_rack_load_different.png) | 784 | 3 μs | 9 μs |
+
+## 尚不能外推的部分
+
+- **输入与展示：** `ae8f1d9` 的[超时][rack-failure]后来在 `043fba5` 定位到原版好友 GUI 吞掉 O（两端均未收到 use）。新默认 K 和旧 `options.txt` 的手动改绑说明见 README。已过的是生存模式的指定板／柜和烘焙物品，不是每种第三方特殊渲染器或用户现存的所有键位组合。
+- **粒子与曳光：** 世界六材质、玩家开火跨帧、0/5 碎屑和本测试光影的三档准镜有独立证据。手部六材质、侧倾画面、其它光影包不能只从世界渲染推断；[旧版正对照为零的原帧](../../build-reports/visual/44425974217-tacz_amg10_particle_2.png)也不能作通过证据。
+- **近似实现与预算：** 保留测距 1,024 格、标记倍率 32、模拟 600 tick 及实体寿命上限；超预算或不可达不画。普通发光骨骼的环境 sky 与面法线是两件事，仍需非准星骨骼的方向光画面对照。约束通道的数值/复位不是所有 ADS 动作的手部姿态证明。PAL 玩家离屏／再入镜、第三方大包与 GPU 性能也不能由 16 板的 CPU 样本推出。转换器遇不可证等价的条件仍报出，不静默改包。
 - **外部组合：** Sable/Simulated、独立 EMI 插件、Accelerated Rendering 都没有在本轮获得可验证的 26.3 运行组合；AR 仍是禁用，不写成已修。未找到可验证组合不等于不存在。KubeJS 不把目标 Fabric 上游已注释的事件投递算作已运行能力。其它 26.X 线的欠账保留在原审计。
 
 [pad]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44427465994/job/135236056454
