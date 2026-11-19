@@ -4,6 +4,7 @@ import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.client.render.scope.ScopePipRenderer;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.Minecraft;
@@ -30,8 +31,13 @@ enum DroppedGunSprite implements SpecialModelRenderer<Identifier> {
         if (context != ItemDisplayContext.GROUND || !(owner instanceof ItemEntity drop)
                 || !(BuiltinItemRendererRegistry.INSTANCE.get(stack.getItem()) instanceof GunItemRendererWrapper)) return null;
         int distance = RenderConfig.DROPPED_GUN_SPRITE_DISTANCE.get();
-        if (distance < 0 || Minecraft.getInstance().gameRenderer.mainCamera().position().distanceToSqr(drop.position())
-                < (double) distance * distance) return null;
+        if (distance < 0) return null;
+        if (distance > 0) {
+            // Match the existing world-mesh detail gates: an 8x scope makes the same drop
+            // look much closer. PIP reuses the extracted item; deciding at draw time is too late.
+            double radius = (double) distance * ScopePipRenderer.currentDetailZoom();
+            if (Minecraft.getInstance().gameRenderer.mainCamera().position().distanceToSqr(drop.position()) < radius * radius) return null;
+        }
         return TimelessAPI.getGunDisplay(stack).map(GunDisplayInstance::getMissingLodDropTexture).orElse(null);
     }
 

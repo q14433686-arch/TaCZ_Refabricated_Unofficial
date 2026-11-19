@@ -36,6 +36,8 @@ import java.util.UUID;
  * replay of vanilla's item-entity renderer; never wrap or time that replay in the frame sample. */
 final class DroppedGunSmoke {
     private static final Identifier AK = Identifier.parse("tacz:ak47"), DISPLAY = Identifier.parse("port_test:drop_no_lod");
+    private static final Identifier NO_SLOT = Identifier.parse("port_test:hand_materials");
+    private static final Identifier AUTHORED = Identifier.parse("tacz:ak47_display");
     private static final Identifier SLOT = Identifier.parse("port_test:textures/gun/rack_mesh.png");
     private static final int DEFAULT = RenderConfig.DEFAULT_DROPPED_GUN_SPRITE_DISTANCE;
     private static final int FRAMES = 32;
@@ -64,7 +66,9 @@ final class DroppedGunSmoke {
                 });
             });
             // Warm high explicitly for the baseline; don't mistake the existing async placeholder for a fast model.
-            ctx.waitFor(mc -> TimelessAPI.getGunDisplay(DISPLAY, AK).orElseThrow().getExternalModel(false) != null);
+            ctx.waitFor(mc -> TimelessAPI.getGunDisplay(DISPLAY, AK).orElseThrow().getExternalModel(false) != null
+                    && TimelessAPI.getGunDisplay(NO_SLOT, AK).orElseThrow().getExternalModel(false) != null
+                    && TimelessAPI.getGunDisplay(AUTHORED, AK).orElseThrow().getExternalModel(true) != null);
             if (!Boolean.getBoolean("tacz.test.iris")) {
                 scene(ctx, world, 3, 1);
                 scene(ctx, world, 12, 1);
@@ -144,7 +148,7 @@ final class DroppedGunSmoke {
     private static void checkDisplays() {
         if (!SLOT.equals(TimelessAPI.getGunDisplay(DISPLAY, AK).orElseThrow().getMissingLodDropTexture())
                 || TimelessAPI.getGunDisplay(Identifier.parse("port_test:rack_mesh"), AK).orElseThrow().getMissingLodDropTexture() != null
-                || TimelessAPI.getGunDisplay(Identifier.parse("port_test:hand_materials"), AK).orElseThrow().getMissingLodDropTexture() != null)
+                || TimelessAPI.getGunDisplay(NO_SLOT, AK).orElseThrow().getMissingLodDropTexture() != null)
             throw new AssertionError("Missing slot, no LOD and authored LOD must be distinct");
         for (String lod : List.of("{}", "{\"model\":\"port_test:missing\",\"texture\":\"port_test:gun/rack_mesh\"}",
                 "{\"model\":\"port_test:rack_mesh\",\"texture\":\"port_test:missing\"}")) {
@@ -159,6 +163,19 @@ final class DroppedGunSmoke {
     }
 
     private static void checkContexts(Minecraft mc, ItemEntity drop) {
+        // Same underlying gun at cutoff 0: the actual stack display decides, not a gun-ID cache.
+        for (var id : List.of(DISPLAY, AUTHORED, NO_SLOT)) {
+            var stack = drop.getItem().copy();
+            ((IGun)stack.getItem()).setGunDisplayId(stack, id);
+            var state = new ItemStackRenderState();
+            mc.getItemModelResolver().updateForNonLiving(state, stack, ItemDisplayContext.GROUND, drop);
+            var out = new CountingCollector();
+            state.submit(new PoseStack(), out, 0x900070, OverlayTexture.NO_OVERLAY, 0);
+            out.flush();
+            if (id.equals(DISPLAY) ? out.sprites != 1 || out.vertices.n != 4 || out.vertices.light != 0x900070
+                    || out.vertices.overlay != OverlayTexture.NO_OVERLAY : out.sprites != 0 || out.vertices.n <= 4)
+                throw new AssertionError("Wrong display/light/overlay for " + id + ": " + out);
+        }
         for (var context : List.of(ItemDisplayContext.GUI, ItemDisplayContext.FIXED,
                 ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, ItemDisplayContext.GROUND)) {
             var state = new ItemStackRenderState();
@@ -204,12 +221,13 @@ final class DroppedGunSmoke {
     }
 
     private static final class Counter implements VertexConsumer {
-        int n;
+        int n, light, overlay;
         public VertexConsumer addVertex(float x, float y, float z) { n++; return this; }
         public VertexConsumer setColor(int r, int g, int b, int a) { return this; }
+        public VertexConsumer setColor(int argb) { return this; }
         public VertexConsumer setUv(float u, float v) { return this; }
-        public VertexConsumer setUv1(int u, int v) { return this; }
-        public VertexConsumer setUv2(int u, int v) { return this; }
+        public VertexConsumer setUv1(int u, int v) { overlay = v << 16 | u; return this; }
+        public VertexConsumer setUv2(int u, int v) { light = v << 16 | u; return this; }
         public VertexConsumer setUv3(float u, float v) { return this; }
         public VertexConsumer setNormal(float x, float y, float z) { return this; }
         public VertexConsumer setLineWidth(float w) { return this; }
