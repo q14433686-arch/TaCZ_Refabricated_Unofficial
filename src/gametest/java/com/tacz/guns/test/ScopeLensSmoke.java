@@ -86,7 +86,7 @@ final class ScopeLensSmoke {
             var bare = capture(ctx, "classic_bare");
             flags(ctx, true, false, false, false);
             var optical = capture(ctx, "classic_optical");
-            assertOptics(bare, optical);
+            assertOptics(bare, optical, 0);
             flags(ctx, true, true, false, false);
             var hot = capture(ctx, "classic_hot");
             wall(ctx, world, scene, true);
@@ -108,7 +108,7 @@ final class ScopeLensSmoke {
             var pipBare = capture(ctx, "pip_bare");
             flags(ctx, true, false, true, false);
             var pipOptics = capture(ctx, "pip_optical");
-            assertOptics(pipBare, pipOptics);
+            assertOptics(pipBare, pipOptics, (int)Math.ceil(zoom));
             assertZoom(zoom, wide, bare, optical, pipBare, pipOptics);
             flags(ctx, true, true, true, false);
             var pipHot = capture(ctx, "pip_hot");
@@ -300,21 +300,40 @@ final class ScopeLensSmoke {
                 unit, widths[0], widths[1], widths[2], widths[3]);
     }
 
-    private static void assertOptics(BufferedImage bare, BufferedImage optical) {
+    private static void assertOptics(BufferedImage bare, BufferedImage optical, int sourcePixel) {
         int w=bare.getWidth(), h=bare.getHeight(), radius=h/8;
         int red=0, resultRed=0, kept=0, darkened=0;
+        int core=0, coreKept=0, shiftedLeft=0, shiftedRight=0;
         for (int y=h/2-radius; y<h/2+radius; y++) for (int x=w/2-radius+1; x<w/2+radius; x++) {
             int a=bare.getRGB(x,y), b=optical.getRGB(x,y);
             if (stripe(a)) red++;
             if (stripe(b)) resultRed++;
             if (stripe(a) && stripe(b)) kept++;
+            if (sourcePixel>0 && stripe(a)) {
+                // At 6x a single edge texel in the 1x scene covers six screen pixels.
+                // Keep the actual stripe interior, excluding one such texel plus the
+                // thresholded boundary pixel; do not compare two unrelated subpixel edges.
+                boolean solid=true;
+                for (int dx=-sourcePixel-1; dx<=sourcePixel+1 && solid; dx++) solid=stripe(bare.getRGB(x+dx,y));
+                if (solid) {
+                    core++; if (stripe(b)) coreKept++;
+                    // Both deliberately shifted optical samples must fail the same test.
+                    if (stripe(optical.getRGB(x-3*sourcePixel,y))) shiftedLeft++;
+                    if (stripe(optical.getRGB(x+3*sourcePixel,y))) shiftedRight++;
+                }
+            }
             if (max(a)-min(a)>24 && max(a)-max(b)>6 && max(b)>max(a)*.5) darkened++;
         }
         // Display graphics are now restored *after* the optical scene tint. Additional
         // red reticle pixels are legitimate; only the scene's original stripe must survive.
-        // Magnification is independently checked using contiguous stripe widths above.
-        if (red<20 || kept<.88*red || darkened<150)
-            throw new AssertionError("XL50 optics: shared stripe="+kept+", bare="+red+", optical="+resultRed+", darkened="+darkened);
+        // Do not change the classic pass, exterior, tint, wall, thermal or 1x/6x tests.
+        // In PIP also bound the change in *whole* stripe width, not just its bright core.
+        boolean aligned=sourcePixel==0 ? kept>=.88*red : core>=.5*red && coreKept>=.98*core
+                && Math.max(shiftedLeft,shiftedRight)<.98*core
+                && Math.abs(stripeWidth(bare)-stripeWidth(optical))<=sourcePixel+2;
+        if (red<20 || !aligned || darkened<150)
+            throw new AssertionError("XL50 optics: shared stripe="+kept+", bare="+red+", optical="+resultRed+", darkened="+darkened
+                    +", core="+coreKept+"/"+core+", shifted="+shiftedLeft+"/"+shiftedRight+", widths="+stripeWidth(bare)+"/"+stripeWidth(optical));
         assertExterior(bare, optical);
     }
 
