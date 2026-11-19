@@ -6,7 +6,9 @@
 44456705144	iris	tacz_lens_pip_optical
 44457885522	reimagined-act	tacz_amg10_particle_1
 44457885522	reimagined-act	tacz_amg10_particle_2
-# Native tuner, actually rendered by the Mesa client (not concept art).
-44464116067	smoke	tacz_view_tuning_idle
-44464116067	smoke	tacz_view_tuning_moved
-44464116067	smoke	tacz_view_tuning_designer
+# HUD profiles / spread, from the final plain Mesa run. Earlier tuner frames are already saved in build-reports/visual/.
+44469134375	smoke	tacz_view_tuning_colors
+44469134375	smoke	tacz_view_tuning_box_stand
+44469134375	smoke	tacz_view_tuning_box_sneak
+44469134375	smoke	tacz_view_tuning_dot_spread
+44469134375	smoke	tacz_view_tuning_preset_ring
