@@ -29,6 +29,7 @@ public final class UnshadedVertices {
 
     private record Flat(VertexConsumer out, Normal n) implements VertexConsumer {
         @Override public VertexConsumer addVertex(float x, float y, float z) { out.addVertex(x,y,z); return this; }
+        @Override public VertexConsumer setColor(int argb) { out.setColor(argb); return this; }
         @Override public VertexConsumer setColor(int r, int g, int b, int a) { out.setColor(r,g,b,a); return this; }
         @Override public VertexConsumer setUv(float u, float v) { out.setUv(u,v); return this; }
         @Override public VertexConsumer setUv1(int u, int v) { out.setUv1(u,v); return this; }

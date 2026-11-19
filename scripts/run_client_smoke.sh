@@ -57,7 +57,9 @@ if [[ -z ${TACZ_SMOKE_VIEWER:-} && ${TACZ_SMOKE_CONTROLLER:-} != true ]]; then
     for backing in dark light; do
         grep -Fq "PORT_HAND_MATERIALS: $backing six visible" "$run/logs/latest.log"
     done
-    grep -Fq 'PORT_BONE_LIGHT: yaw=125' "$run/logs/latest.log"
+    for angle in 35 125; do
+        grep -Fq "PORT_BONE_LIGHT: yaw=$angle plain" "$run/logs/latest.log"
+    done
     grep -Fq 'PORT_CONSTRAINT: ADS pixels' "$run/logs/latest.log"
     grep -Fq 'PORT_BILLBOARD: pitched' "$run/logs/latest.log"
     grep -E 'PORT_HAND_MATERIALS:|PORT_BILLBOARD:|PORT_CONSTRAINT:|PORT_BONE_LIGHT:' "$run/logs/latest.log" | sed 's/^/::notice::/'
