@@ -52,7 +52,7 @@ public final class SurfaceLights {
 
     private record Ray(Vec3 origin, Vec3 delta) {}
     private record Anchor(Identifier gun, Identifier display, boolean first, long frame, Ray ray) {}
-    private record Draw(List<SurfaceProjection.Patch> patches, int rgb, float strength, double bias) {}
+    record Draw(List<SurfaceProjection.Patch> patches, int rgb, float strength, double bias) {}
     private static final class Pulse {
         final Vec3 pos, eye, bias;
         final double range;
@@ -61,6 +61,7 @@ public final class SurfaceLights {
         final boolean local;
         final long born;
         List<SurfaceProjection.Patch> patches;
+        @Nullable SpillField field;
         long start, builtTick;
         boolean refreshCrater;
         Pulse(Vec3 pos, @Nullable Vec3 eye, Vec3 bias, double range, int rgb, float strength, int hold, int duration, int owner, boolean local) {
@@ -195,14 +196,16 @@ public final class SurfaceLights {
         pulses.add(pulse);
     }
 
-    public static void submit(SubmitNodeCollector out, Vec3 camera) {
-        if (pulses.isEmpty()) return;
-        if (!ready() || ScopePipRenderer.isInsideScopeLevelRender() || IrisCompat.isRenderShadow()) return;
+    /** Take one clock sample for this main world submission, BEFORE vanilla consumes the
+     * extracted entity lights. Terrain and objects must see the same first and last frame. */
+    static @Nullable WorldFlashFrame prepare(Vec3 camera) {
+        if (pulses.isEmpty() || !ready() || ScopePipRenderer.isInsideScopeLevelRender() || IrisCompat.isRenderShadow()) return null;
         long now=GunTime.nowMillis(), tick=level.getGameTime();
         if (tick!=buildTick) { buildTick=tick; builds=muzzleBuilds=0; }
         pulses.removeIf(p -> p.expired(now) || !(p.eye==null ? RenderConfig.EXPLOSION_SURFACE_LIGHT.get()
                 : RenderConfig.MUZZLE_SURFACE_LIGHT.get() && !RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()));
-        if (pulses.isEmpty()) return;
+        if (pulses.isEmpty()) return null;
+        var sources = new ArrayList<WorldFlashFrame.Source>(MAX_PULSES);
         var draws=new ArrayList<Draw>(MAX_PULSES);
         var mc=Minecraft.getInstance();
         var state=mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
@@ -216,18 +219,29 @@ public final class SurfaceLights {
                 if (p.eye!=null) muzzleBuilds++;
                 builds++; projections++;
                 var origin=p.eye==null?p.pos:SurfaceProjection.visibleOrigin(level,p.eye,p.pos);
-                p.patches=SurfaceProjection.scatter(level,origin,p.bias,p.range,camera,
+                var source = SurfaceProjection.airSide(level, origin);
+                p.field = source == null ? null : new SpillField(source, p.bias, p.range);
+                p.patches=p.field==null ? List.of() : SurfaceProjection.scatter(level,p.field,camera,
                         p.eye==null ? SurfaceProjection.BLAST_RAYS : SurfaceProjection.MUZZLE_RAYS);
                 p.builtTick=tick;
                 if (firstBuild) p.start=now; else p.refreshCrater=false; // never restart the envelope
             }
-            if (p.patches!=null && !p.patches.isEmpty()) {
+            if (p.field == null) continue;
+            float strength = p.intensity(now);
+            sources.add(new WorldFlashFrame.Source(p.field, strength, p.rgb));
+            if (!p.patches.isEmpty()) {
                 double far=p.pos.distanceTo(camera)+p.range/(p.eye==null ? 1 : 1-SpillField.MUZZLE_BIAS);
                 double bias=.002+Math.min(.09,.85*far*pixelSlope);
-                draws.add(new Draw(p.patches,p.rgb,p.intensity(now),bias));
+                draws.add(new Draw(p.patches,p.rgb,strength,bias));
             }
         }
-        if (draws.isEmpty()) return;
+        return sources.isEmpty() ? null : new WorldFlashFrame(level, sources, draws);
+    }
+
+    public static void submit(SubmitNodeCollector out, Vec3 camera) {
+        var frame = WorldFlashFrame.current();
+        if (frame == null || frame.draws.isEmpty()) return;
+        var draws = frame.draws;
         out.submitCustomGeometry(new PoseStack(),FlashMaterials.surface(),(pose,vertices) -> {
             for (var draw:draws) for (var patch:draw.patches) patch.draw(pose,vertices,camera,draw.rgb,draw.strength,draw.bias);
         });

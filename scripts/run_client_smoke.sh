@@ -52,7 +52,9 @@ surface_frames() {
     for marker in 'live AK wall left/right' 'tracked RPG7 enabled=false' 'tracked RPG7 enabled=true' 'live RPG7 wall +/-5 blocks' 'server LR frag'; do
         grep -Fq "$marker" "$run/logs/latest.log"
     done
-    for frame in ak_off ak_on muzzle_behind muzzle_expired rpg_off rpg_on blast_expired blast_behind; do
+    grep -Fq 'PORT_RECEIVER: complete' "$run/logs/latest.log"
+    printf '::notice::PORT_RECEIVER: %s\n' "$(sed -n 's/.*PORT_RECEIVER: //p' "$run/logs/latest.log" | paste -sd ';' -)"
+    for frame in objects_off objects_on objects_expired objects_blocked_rest objects_blocked ak_off ak_on muzzle_behind muzzle_expired rpg_off rpg_on blast_expired blast_behind; do
         test -s "$run/screenshots/tacz_surface_${frame}.png"
     done
     printf '::notice::PORT_SURFACE: %s\n' "$(sed -n 's/.*PORT_SURFACE: //p' "$run/logs/latest.log" | paste -sd ';' -)"

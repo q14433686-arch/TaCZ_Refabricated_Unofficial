@@ -65,7 +65,8 @@ public final class SurfaceLightSmoke {
     private static long[] samples, submitSamples;
     private static long collectStart, collectNs;
     public static void beginCollect() { if (samples!=null) collectStart=System.nanoTime(); }
-    public static void endCollect() { if (samples!=null) collectNs+=System.nanoTime()-collectStart; SurfaceLightFrames.afterCollection(); }
+    public static void finishTiming() { if (samples!=null) collectNs+=System.nanoTime()-collectStart; }
+    public static void endCollect() { finishTiming(); SurfaceLightFrames.afterCollection(); }
     private static int n;
 
     static void run(ClientGameTestContext ctx, TestSingleplayerContext world, boolean measureLoad) {
@@ -114,6 +115,7 @@ public final class SurfaceLightSmoke {
             ctx.waitFor(mc->mc.level.getBlockState(origin.south(PARTITION)).isAir());
             world.getConnection().waitForChunksRender(); ctx.waitTicks(12);
             blastFrames(ctx,world,origin);
+            ObjectLightSmoke.run(ctx, world, origin);
             packets(ctx,world);
         } finally {
             ctx.runOnClient(mc->{ SurfaceLightFrames.clear();samples=submitSamples=null;replay=false;Arrays.fill(actors,null);rifle=null;NativeMuzzleEffects.clear();
@@ -136,7 +138,7 @@ public final class SurfaceLightSmoke {
         Region[] points={Region.wall(new Vec3(eye.x+1.8,eye.y+.75,wall)),Region.wall(new Vec3(eye.x-1.8,eye.y+.75,wall)),
                 Region.floor(new Vec3(eye.x+1.35,origin.getY()-1,wall-.95))};
         var rest=SurfaceLightFrames.still(ctx,"muzzle_rest");
-        var off=fireLocal(ctx,world,false); var on=fireLocal(ctx,world,true);
+        var off=fireLocal(ctx,world,false,"ak"); var on=fireLocal(ctx,world,true,"ak");
         ctx.waitFor(mc->SurfaceLights.diagnostics().active()==0); ctx.waitTicks(20); ctx.getInput().lookAt(0,0);ctx.waitTicks(4);
         var expired=SurfaceLightFrames.still(ctx,"muzzle_expired");
         var spread=on.deltas(off,points,.16); var residue=expired.deltas(rest,points,.16);
@@ -149,9 +151,9 @@ public final class SurfaceLightSmoke {
         GunMod.LOGGER.info("PORT_SURFACE: live AK wall left/right + forward floor mean red ON-OFF={}, expired={}, behind wall={}",Arrays.toString(spread),Arrays.toString(residue),Arrays.toString(leak));
         checkSamples("live AK wall left/right + forward floor",spread,10,residue,leak);
     }
-    private static Frame fireLocal(ClientGameTestContext ctx,TestSingleplayerContext world,boolean enabled) {
+    static Frame fireLocal(ClientGameTestContext ctx,TestSingleplayerContext world,boolean enabled,String label) {
         ctx.getInput().lookAt(0,0);ctx.waitTicks(12);
-        ctx.runOnClient(mc->{RenderConfig.MUZZLE_SURFACE_LIGHT.set(enabled);SurfaceLightFrames.arm("ak_"+(enabled?"on":"off"),Trigger.SHOT);localShots=0;});
+        ctx.runOnClient(mc->{RenderConfig.MUZZLE_SURFACE_LIGHT.set(enabled);SurfaceLightFrames.arm(label+"_"+(enabled?"on":"off"),Trigger.SHOT);localShots=0;});
         int ammo=world.getServer().computeOnServer(s->{var g=world.getConnection().getServerPlayer().getMainHandItem();return ((IGun)g.getItem()).getCurrentAmmoCount(g);});
         ctx.getInput().holdKey(ShootKey.SHOOT_KEY);
         try {ctx.waitFor(mc->localShots>0);} finally {ctx.getInput().releaseKey(ShootKey.SHOOT_KEY);}
@@ -222,7 +224,7 @@ public final class SurfaceLightSmoke {
         var t=frameTimes(ctx);
         var d=ctx.computeOnClient(mc->SurfaceLights.diagnostics());
         if(d.active()>2 || (d.projections()>before.projections())!=enable) throw new AssertionError("Muzzle budget/control: "+d);
-        GunMod.LOGGER.info("PORT_SURFACE: 16 sources/600 RPM, spill={}, 64 renderFrame samples median/p95/p99={} / {} / {} us, SurfaceLights.submit p95={} us, admitted projections={}, overlapping offers={}",enable,t.frame[32]/1000,t.frame[60]/1000,t.frame[63]/1000,t.submit[60]/1000,d.projections()-before.projections(),d.coincident()-before.coincident());
+        GunMod.LOGGER.info("PORT_SURFACE: 16 sources/600 RPM, spill={}, 64 renderFrame samples median/p95/p99={} / {} / {} us, prepare + terrain submit p95={} us, admitted projections={}, overlapping offers={}",enable,t.frame[32]/1000,t.frame[60]/1000,t.frame[63]/1000,t.submit[60]/1000,d.projections()-before.projections(),d.coincident()-before.coincident());
     }
     private record Timings(long[] frame,long[] submit) {}
     private static Timings frameTimes(ClientGameTestContext ctx) {

@@ -40,7 +40,7 @@ final class SurfaceProjection {
         return values.toArray(Offset[]::new);
     }
 
-    private static BlockHitResult clip(ClientLevel world, Vec3 from, Vec3 to) {
+    static BlockHitResult clip(ClientLevel world, Vec3 from, Vec3 to) {
         return world.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, CollisionContext.empty()));
     }
 
@@ -51,7 +51,7 @@ final class SurfaceProjection {
 
     /** Block impacts commonly lie exactly on a grid plane, even when floor(center) is AIR.
      * Give grazing rays an air-side origin. Don't search out of a wall or move toward the camera. */
-    private static @Nullable Vec3 airSide(ClientLevel world, Vec3 center) {
+    static @Nullable Vec3 airSide(ClientLevel world, Vec3 center) {
         var cell = BlockPos.containing(center);
         if (world.getBlockState(cell).isSolidRender()) {
             Direction side = null;
@@ -73,10 +73,8 @@ final class SurfaceProjection {
         return center;
     }
 
-    static List<Patch> scatter(ClientLevel world, Vec3 origin, Vec3 bias, double radius, Vec3 camera, int rayBudget) {
-        var source = airSide(world,origin);
-        if (source == null) return List.of();
-        var field = new SpillField(source,bias,radius);
+    static List<Patch> scatter(ClientLevel world, SpillField field, Vec3 camera, int rayBudget) {
+        var source = field.source();
         var center = field.boundingCenter();
         var base = BlockPos.containing(center);
         double limit = Math.pow(field.boundingRadius() + Math.sqrt(3), 2);

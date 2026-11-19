@@ -40,7 +40,8 @@ public final class FlashMaterials {
     public static RenderType reflection(Identifier texture) { return type(Layer.REFLECTION, texture, false, 0); }
 
     /** A soft receiver decal in the world pass; keep terrain depth and destination alpha. */
-    public static RenderType surface() { return type(Layer.SURFACE, SURFACE_TEXTURE, false, 0); }
+    public static RenderType surface() { return surface(SURFACE_TEXTURE); }
+    public static RenderType surface(Identifier albedo) { return type(Layer.SURFACE, albedo, false, 0); }
     private static final Identifier SURFACE_TEXTURE = Identifier.parse("tacz:textures/effect/surface_white.png");
 
     private static RenderType type(Layer layer, Identifier texture, boolean clipped, int uvOffset) {

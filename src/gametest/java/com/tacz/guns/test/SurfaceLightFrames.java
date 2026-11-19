@@ -48,18 +48,23 @@ final class SurfaceLightFrames {
     record Frame(BufferedImage image, View view) {
         /** Compare the same piece of terrain, not the held gun, crosshair, explosion sprite
          * or a fixed screen rectangle that moves off the receiver when the camera recoils. */
-        int meanRed(Region region, double extent) {
-            int w=image.getWidth(),h=image.getHeight(),sum=0;
+        int rgb(Vec3 point) {
+            int w=image.getWidth(), h=image.getHeight();
+            var p=view.rotation.transformDirection(point.subtract(view.camera).toVector3f());
+            if (!(p.z < -.1)) throw new AssertionError("Receiver behind observer: "+point);
+            int x=(int)(w*.5f*(1-view.fx*p.x/p.z)), y=(int)(h*.5f*(1+view.fy*p.y/p.z));
+            if (x<0 || y<0 || x>=w || y>=h) throw new AssertionError("Receiver outside frame: "+point+" -> "+x+","+y+" in "+w+"x"+h);
+            return image.getRGB(x,y);
+        }
+        int meanRed(Region region, double extent) { return mean(region, extent, 16); }
+        int mean(Region region, double extent, int shift) {
+            int sum=0;
             for (int j=-4;j<=4;j++) for (int i=-4;i<=4;i++) {
                 // Sample on the plane itself. A square screen ROI at grazing incidence
                 // could include the far wall or the sky rather than just the floor.
                 double v=j*extent/4;
                 var point=region.center.add(i*extent/4,region.horizontal ? 0 : v,region.horizontal ? v : 0);
-                var p=view.rotation.transformDirection(point.subtract(view.camera).toVector3f());
-                if (!(p.z < -.1)) throw new AssertionError("Receiver behind observer: "+point);
-                int x=(int)(w*.5f*(1-view.fx*p.x/p.z)), y=(int)(h*.5f*(1+view.fy*p.y/p.z));
-                if (x<0 || y<0 || x>=w || y>=h) throw new AssertionError("Receiver outside frame: "+point+" -> "+x+","+y+" in "+w+"x"+h);
-                sum+=image.getRGB(x,y)>>16&255;
+                sum+=rgb(point)>>shift&255;
             }
             return sum/81;
         }
