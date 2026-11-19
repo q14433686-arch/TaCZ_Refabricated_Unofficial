@@ -43,6 +43,11 @@ public class RenderCrosshairEvent {
      * 当玩家手上拿着枪时，播放特定动画、或瞄准时需要隐藏准心
      */
     public static void onRenderOverlay(GuiGraphicsExtractor guiGraphics, Window window) {
+        onRenderOverlay(guiGraphics, window, Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true));
+    }
+
+    /** Use the HUD extraction's own frame time, which need not equal the client's advancing timer. */
+    public static void onRenderOverlay(GuiGraphicsExtractor guiGraphics, Window window, float partialTick) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
             return;
@@ -71,7 +76,7 @@ public class RenderCrosshairEvent {
         IClientPlayerGunOperator playerGunOperator = IClientPlayerGunOperator.fromLocalPlayer(player);
         TimelessAPI.getGunDisplay(stack).ifPresent(gunIndex -> {
             // 瞄准快要完成时，取消准心渲染
-            if (playerGunOperator.getClientAimingProgress(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true)) > 0.9) {
+            if (playerGunOperator.getClientAimingProgress(partialTick) > 0.9) {
                 // 枪包可以强制显示准星
                 boolean forceShow = gunIndex.isShowCrosshair();
                 // 越肩视角可以强制显示准星

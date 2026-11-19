@@ -117,6 +117,11 @@ final class ViewTuningSmoke {
             int designer = assertHud(frame(ctx, "hip"), scale, 57, 15, 15);
             ctx.getInput().holdKey(AimKey.AIM_KEY);
             ctx.waitFor(mc -> IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(1) > .99f);
+            ctx.runOnClient(mc -> {
+                var display = com.tacz.guns.api.TimelessAPI.getGunDisplay(mc.player.getMainHandItem()).orElseThrow();
+                check(!display.isShowCrosshair() && !com.tacz.guns.compat.shouldersurfing.ShoulderSurfingCompat.showCrosshair(),
+                        "ADS negative control requires a gun/camera without a forced crosshair");
+            });
             assertHud(frame(ctx, "ads"), scale, 0, 0, 0);
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
             ctx.waitFor(mc -> IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(1) < .01f);
