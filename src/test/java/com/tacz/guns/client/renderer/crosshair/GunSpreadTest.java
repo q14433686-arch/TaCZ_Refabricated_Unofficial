@@ -32,8 +32,9 @@ class GunSpreadTest {
         assertEquals(0, GunSpread.pixels(5, Float.POSITIVE_INFINITY, 240, 100));
         assertEquals(0, GunSpread.pixels(-2, 1, 240, 100));
         assertEquals(80, GunSpread.pixels(Float.MAX_VALUE, 3, 240, 200));
-        assertEquals(4, GunSpread.pixels(2, 1, 240, 100));
-        assertEquals(8, GunSpread.pixels(2, 2, 240, 100));
-        assertEquals(12, GunSpread.pixels(2, 2, 240, 150));
+        assertEquals(4.1346f, GunSpread.pixels(2, 1, 240, 100), .0001f);
+        assertEquals(8.2692f, GunSpread.pixels(2, 2, 240, 100), .0001f);
+        assertEquals(12.4038f, GunSpread.pixels(2, 2, 240, 150), .0001f);
+        assertEquals(0f, GunSpread.pixels(2, 2, 240, 0));
     }
 }

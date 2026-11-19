@@ -1,126 +1,171 @@
 package com.tacz.guns.client.renderer.crosshair;
 
 import com.tacz.guns.GunMod;
+import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
+import com.tacz.guns.api.event.common.GunFirePostEvent;
 import com.tacz.guns.client.tuning.TuningValues;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.config.client.ViewTuningConfig;
+import com.tacz.guns.config.client.ViewTuningConfig.Dimension;
 import com.tacz.guns.config.client.ViewTuningConfig.Measure;
 import com.tacz.guns.config.client.ViewTuningConfig.Mode;
 import com.tacz.guns.config.client.ViewTuningConfig.Shape;
 import com.tacz.guns.config.client.ViewTuningConfig.TextureCenter;
+import com.tacz.guns.util.time.GunTime;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 
-/** Shared by the HUD (after its visibility checks) and the settings preview. Does not draw hit markers or scope reticles. */
+/** HUD and editor share one floating-point origin. Hit markers and optics have separate renderers. */
 public final class GunCrosshair {
     private static final Identifier CUSTOM_PNG = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "textures/crosshair/custom.png");
 
-    public static void draw(GuiGraphicsExtractor gui, int x, int y, TuningValues values) {
-        draw(gui, x, y, values, Integer.MAX_VALUE);
+    public static void onLocalFire(GunFirePostEvent event) {
+        if (!event.getLogicalSide().isClient()) return;
+        var player = Minecraft.getInstance().player;
+        // Tracking packets can post this event for OTHER players. A dry/cancelled shot doesn't post it at all.
+        if (player != null && event.getShooter() == player && ViewTuningConfig.DYNAMIC.get()) {
+            IClientPlayerGunOperator.fromLocalPlayer(player).getDataHolder().hudShotEnvelope
+                    .fire(GunTime.nowMillis(), Measure.RECOVERY.option.get());
+        }
     }
 
-    /** Only the editor passes a size limit. Shrink very large previews to fit, never magnify small ones. */
-    public static void draw(GuiGraphicsExtractor gui, int x, int y, TuningValues values, int fitRadius) {
-        int opacity = values.get(Measure.OPACITY.option);
+    public static void draw(GuiGraphicsExtractor gui, float x, float y, TuningValues values) {
+        draw(gui, x, y, values, Integer.MAX_VALUE, 0);
+    }
+
+    /** Only the editor supplies a fit limit and an optional preview-only shot. */
+    public static void draw(GuiGraphicsExtractor gui, float x, float y, TuningValues v, int fitRadius, float previewShot) {
+        int opacity = v.get(Measure.OPACITY.option);
         if (opacity == 0) return;
-        int color = opacity << 24 | values.get(ViewTuningConfig.RGB);
-        Mode mode = values.get(ViewTuningConfig.MODE);
-        int spread = values.get(ViewTuningConfig.DYNAMIC) ? GunSpread.radius(Minecraft.getInstance(), values.get(Measure.SPREAD_SCALE.option)) : 0;
-        int aspect = values.get(Measure.ASPECT.option), dot = values.get(Measure.DOT_SIZE.option);
+        int color = opacity << 24 | v.get(ViewTuningConfig.RGB);
+        boolean dynamic = v.get(ViewTuningConfig.DYNAMIC);
+        float spread = 0;
+        if (dynamic) {
+            var mc = Minecraft.getInstance();
+            float shot = mc.player == null ? 0 : IClientPlayerGunOperator.fromLocalPlayer(mc.player)
+                    .getDataHolder().hudShotEnvelope.sample(GunTime.nowMillis());
+            spread = GunSpread.radius(mc, v.get(Measure.SPREAD_SCALE.option)) + Math.max(shot, previewShot) * dim(v, Dimension.KICK);
+        }
         gui.pose().pushMatrix();
         gui.pose().translate(x, y);
-        if (mode != Mode.DESIGNER) {
-            var preset = values.get(RenderConfig.CROSSHAIR_TYPE);
-            boolean dotPreset = mode == Mode.PRESET && preset == CrosshairType.DOT_1;
-            int grow = dotPreset ? 0 : 2 * spread;
-            int size = values.get(Measure.SIZE.option), w = size + grow, h = scaled(size, aspect) + grow;
-            int diameter = Math.max(dot, 1);
-            int extent = (Math.max(Math.max(w, h), diameter) + 1) / 2;
-            if (dotPreset && spread > 0) extent = Math.max(extent, spread + (diameter + 1) / 2 + 2);
-            fit(gui, extent, fitRadius);
-            Identifier texture = mode == Mode.PNG ? CUSTOM_PNG : CrosshairType.getTextureLocation(preset);
-            TextureCenter center = mode == Mode.PRESET && preset == CrosshairType.EMPTY ? TextureCenter.ORIGINAL : values.get(ViewTuningConfig.TEXTURE_CENTER);
-            texture(gui, texture, w, h, center, diameter, color);
-            if (dotPreset && spread > 0) {
-                // The default preset is a tiny dot. Keep it pinned; resizing that texture alone can
-                // quantize two quite different spreads to exactly the same on-screen dot.
-                int core = center == TextureCenter.DOT ? diameter : 1;
-                lines(gui, Shape.CROSS, -core / 2 - spread, core - core / 2 + spread, 2, 2, 1, 0, color, false);
+        float aspect = v.get(Measure.ASPECT.option) / 100f;
+        if (v.get(ViewTuningConfig.MODE) == Mode.DESIGNER) designer(gui, v, aspect, spread, dynamic, color, fitRadius);
+        else image(gui, v, aspect, spread, dynamic, color, fitRadius);
+        gui.pose().popMatrix();
+    }
+
+    private static float dim(TuningValues v, Dimension d) { return v.get(d.option).floatValue(); }
+
+    private static void designer(GuiGraphicsExtractor gui, TuningValues v, float aspect, float spread, boolean dynamic, int color, int fitRadius) {
+        Shape shape = v.get(ViewTuningConfig.SHAPE);
+        float t = dim(v, Dimension.THICKNESS), dot = dim(v, Dimension.DOT_SIZE);
+        dot = v.get(ViewTuningConfig.DOT) ? (dot == 0 ? t : dot) : 0;
+        int black = color & 0xFF000000;
+        boolean outline = v.get(ViewTuningConfig.OUTLINE);
+        if (shape == Shape.RING) {
+            // Radius measures the clear hole; changing stroke or dot size does not move its boundary.
+            float radius = dim(v, Dimension.RADIUS), ix = radius + spread, iy = radius * aspect + spread;
+            float ox = ix + t, oy = iy + t;
+            fit(gui, Math.max(Math.max(ox, oy), dot / 2) + 1, fitRadius);
+            if (outline) {
+                RingBand.draw(gui, ox, oy, ox + 1, oy + 1, black);
+                RingBand.draw(gui, Math.max(0, ix - 1), Math.max(0, iy - 1), ix, iy, black);
             }
+            RingBand.draw(gui, ix, iy, ox, oy, color);
         } else {
-            int t = values.get(Measure.THICKNESS.option), gap = values.get(Measure.GAP.option) + spread;
-            int len = values.get(Measure.LENGTH.option), vertical = scaled(len, aspect);
-            dot = values.get(ViewTuningConfig.DOT) ? (dot == 0 ? t : dot) : 0;
-            Shape shape = values.get(ViewTuningConfig.SHAPE);
-            if (len == 0 && dot > 0 && spread > 0) {
-                // A designer made of just a point gets the same spread cue. A truly empty style stays empty.
-                shape = Shape.CROSS;
-                len = vertical = 2;
-                t = 1;
+            float len = dim(v, Dimension.LENGTH), vertical = len * aspect;
+            if (len == 0 && dot > 0 && dynamic) {
+                shape = Shape.CROSS; len = vertical = 2; t = 1;
             }
-            int core = Math.max(t, dot), low = -core / 2 - gap, high = core - core / 2 + gap;
-            fit(gui, high + Math.max(len, vertical) + 1, fitRadius);
-            if (values.get(ViewTuningConfig.OUTLINE)) lines(gui, shape, low, high, len, vertical, t, dot, opacity << 24, true);
-            lines(gui, shape, low, high, len, vertical, t, dot, color, false);
+            // Negative gap pulls arms into the central core. Stop at the axis, never swap the arms.
+            float inner = Math.max(0, Math.max(t, dot) / 2 + dim(v, Dimension.GAP)) + spread;
+            fit(gui, Math.max(dot / 2, inner + Math.max(len, vertical)) + 1, fitRadius);
+            if (len > 0) {
+                if (outline) lines(gui, shape, inner, len, vertical, t, black, true);
+                lines(gui, shape, inner, len, vertical, t, color, false);
+            }
+        }
+        if (dot > 0) {
+            if (outline) part(gui, -dot / 2, -dot / 2, dot, dot, black, true);
+            part(gui, -dot / 2, -dot / 2, dot, dot, color, false);
+        }
+    }
+
+    private static void image(GuiGraphicsExtractor gui, TuningValues v, float aspect, float spread, boolean dynamic, int color, int fitRadius) {
+        boolean preset = v.get(ViewTuningConfig.MODE) == Mode.PRESET;
+        var type = v.get(RenderConfig.CROSSHAIR_TYPE);
+        if (preset && type == CrosshairType.EMPTY) return;
+        boolean dotPreset = preset && type == CrosshairType.DOT_1;
+        float size = dim(v, Dimension.SIZE), dot = dim(v, Dimension.DOT_SIZE);
+        if (dot == 0) dot = 1;
+        float grow = dotPreset ? 0 : 2 * spread, w = size + grow, h = size * aspect + grow;
+        TextureCenter center = v.get(ViewTuningConfig.TEXTURE_CENTER);
+        float core = center == TextureCenter.DOT ? dot : center == TextureCenter.CLEAR ? 0 : 1;
+        float inner = core / 2 + spread;
+        float extent = Math.max(Math.max(w, h), core) / 2;
+        fit(gui, dotPreset && dynamic ? Math.max(extent, inner + 2) : extent, fitRadius);
+        texture(gui, preset ? CrosshairType.getTextureLocation(type) : CUSTOM_PNG, w, h, center, color);
+        if (center == TextureCenter.DOT) part(gui, -dot / 2, -dot / 2, dot, dot, color, false);
+        if (dotPreset && dynamic) lines(gui, Shape.CROSS, inner, 2, 2, 1, color, false);
+    }
+
+    private static void fit(GuiGraphicsExtractor gui, float extent, int available) {
+        if (extent > available) gui.pose().scale(available / extent, available / extent);
+    }
+
+    private static void lines(GuiGraphicsExtractor gui, Shape shape, float inner, float len, float vertical, float t, int color, boolean border) {
+        if (shape == Shape.BOX) {
+            float x = inner + len, y = inner + vertical, stroke = Math.min(t, Math.min(x, y));
+            if (border) {
+                frame(gui, -x - 1, -y - 1, 2*x + 2, 2*y + 2, 1, color);
+                frame(gui, -x + stroke, -y + stroke, 2*(x - stroke), 2*(y - stroke), 1, color);
+            } else frame(gui, -x, -y, 2*x, 2*y, stroke, color);
+        } else {
+            part(gui, -inner - len, -t / 2, len, t, color, border);
+            part(gui, inner, -t / 2, len, t, color, border);
+            if (shape == Shape.CROSS) part(gui, -t / 2, -inner - vertical, t, vertical, color, border);
+            if (shape != Shape.SIDES) part(gui, -t / 2, inner, t, vertical, color, border);
+        }
+    }
+
+    private static void part(GuiGraphicsExtractor gui, float x, float y, float w, float h, int color, boolean border) {
+        if (border) frame(gui, x - 1, y - 1, w + 2, h + 2, 1, color);
+        else rect(gui, x, y, w, h, color);
+    }
+
+    private static void frame(GuiGraphicsExtractor gui, float x, float y, float w, float h, float stroke, int color) {
+        if (w <= 0 || h <= 0) return;
+        if (2 * stroke >= Math.min(w, h)) { rect(gui, x, y, w, h, color); return; }
+        // Four non-overlapping bands: translucent corners have the same opacity as their sides.
+        rect(gui, x, y, w, stroke, color);
+        rect(gui, x, y + h - stroke, w, stroke, color);
+        rect(gui, x, y + stroke, stroke, h - 2*stroke, color);
+        rect(gui, x + w - stroke, y + stroke, stroke, h - 2*stroke, color);
+    }
+
+    private static void rect(GuiGraphicsExtractor gui, float x, float y, float w, float h, int color) {
+        gui.pose().pushMatrix();
+        gui.pose().translate(x, y).scale(w, h);
+        gui.fill(0, 0, 1, 1, color);
+        gui.pose().popMatrix();
+    }
+
+    private static void texture(GuiGraphicsExtractor gui, Identifier tex, float w, float h, TextureCenter center, int color) {
+        // The full UV square is exactly [-w/2,w/2] x [-h/2,h/2] for ANY fractional dimensions.
+        gui.pose().pushMatrix();
+        gui.pose().scale(w / 16, h / 16);
+        if (center == TextureCenter.ORIGINAL) tile(gui, tex, 0, 0, 16, 16, color);
+        else {
+            tile(gui, tex, 0, 0, 16, 6, color); tile(gui, tex, 0, 10, 16, 6, color);
+            tile(gui, tex, 0, 6, 6, 4, color); tile(gui, tex, 10, 6, 6, 4, color);
         }
         gui.pose().popMatrix();
     }
 
-    private static int scaled(int n, int percent) { return n == 0 ? 0 : Math.max(1, (n * percent + 50) / 100); }
-
-    private static void fit(GuiGraphicsExtractor gui, int radius, int available) {
-        if (radius > available) gui.pose().scale((float) available / radius, (float) available / radius);
-    }
-
-    private static void lines(GuiGraphicsExtractor gui, Shape shape, int low, int high, int len, int vertical, int t, int dot, int color, boolean border) {
-        int start = -t / 2;
-        if (len > 0 && shape == Shape.BOX) {
-            int x = low - len, y = low - vertical, w = high - low + 2 * len, h = high - low + 2 * vertical;
-            // Four non-overlapping bands, so translucent corners don't become darker.
-            int stroke = Math.min(t, Math.min(w, h) / 2);
-            if (border) {
-                gui.outline(x - 1, y - 1, w + 2, h + 2, color);
-                if (w > 2 * stroke && h > 2 * stroke) gui.outline(x + stroke, y + stroke, w - 2 * stroke, h - 2 * stroke, color);
-            } else {
-                gui.fill(x, y, x + w, y + stroke, color);
-                gui.fill(x, y + h - stroke, x + w, y + h, color);
-                gui.fill(x, y + stroke, x + stroke, y + h - stroke, color);
-                gui.fill(x + w - stroke, y + stroke, x + w, y + h - stroke, color);
-            }
-        } else if (len > 0) {
-            part(gui, low - len, start, len, t, color, border);
-            part(gui, high, start, len, t, color, border);
-            if (shape == Shape.CROSS) part(gui, start, low - vertical, t, vertical, color, border);
-            if (shape != Shape.SIDES) part(gui, start, high, t, vertical, color, border);
-        }
-        if (dot > 0) part(gui, -dot / 2, -dot / 2, dot, dot, color, border);
-    }
-
-    private static void part(GuiGraphicsExtractor gui, int x, int y, int w, int h, int color, boolean border) {
-        if (border) gui.outline(x - 1, y - 1, w + 2, h + 2, color);
-        else gui.fill(x, y, x + w, y + h, color);
-    }
-
-    private static void texture(GuiGraphicsExtractor gui, Identifier tex, int w, int h, TextureCenter center, int dot, int color) {
-        int x = -w / 2, y = -h / 2;
-        if (center == TextureCenter.ORIGINAL) {
-            gui.blit(RenderPipelines.GUI_TEXTURED, tex, x, y, 0, 0, w, h, 16, 16, 16, 16, color);
-            return;
-        }
-        // Omit the center UV square, not a background-colored fill (the world must show through it).
-        // Use normalized sixteenths for both legacy textures and arbitrary-resolution resource-pack PNGs.
-        int left = w * 6 / 16, right = w - left, top = h * 6 / 16, bottom = h - top;
-        if (top > 0) {
-            gui.blit(RenderPipelines.GUI_TEXTURED, tex, x, y, 0, 0, w, top, 16, 6, 16, 16, color);
-            gui.blit(RenderPipelines.GUI_TEXTURED, tex, x, y + bottom, 0, 10, w, top, 16, 6, 16, 16, color);
-        }
-        if (left > 0) {
-            gui.blit(RenderPipelines.GUI_TEXTURED, tex, x, y + top, 0, 6, left, bottom - top, 6, 4, 16, 16, color);
-            gui.blit(RenderPipelines.GUI_TEXTURED, tex, x + right, y + top, 10, 6, left, bottom - top, 6, 4, 16, 16, color);
-        }
-        if (center == TextureCenter.DOT) part(gui, -dot / 2, -dot / 2, dot, dot, color, false);
+    private static void tile(GuiGraphicsExtractor gui, Identifier tex, int u, int v, int w, int h, int color) {
+        gui.blit(RenderPipelines.GUI_TEXTURED, tex, u - 8, v - 8, u, v, w, h, w, h, 16, 16, color);
     }
 
     private GunCrosshair() { }

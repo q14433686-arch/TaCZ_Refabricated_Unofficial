@@ -22,6 +22,7 @@ import com.tacz.guns.client.render.scope.ScopePipRenderer;
 import com.tacz.guns.client.renderer.block.GunSmithTableRenderer;
 import com.tacz.guns.client.renderer.block.StatueRenderer;
 import com.tacz.guns.client.renderer.block.TargetRenderer;
+import com.tacz.guns.client.renderer.crosshair.GunCrosshair;
 import com.tacz.guns.client.renderer.feature.TaczFeatureRenderers;
 import com.tacz.guns.client.renderer.item.AmmoBoxStatueProperty;
 import com.tacz.guns.client.renderer.item.TaczDynamicItemModel;
@@ -122,6 +123,7 @@ public class TaCZFabricClient implements ClientModInitializer {
         ViewportEvent.FOV.register(CameraSetupEvent::applyScopeMagnification);
         ViewportEvent.FOV.register(CameraSetupEvent::applyGunModelFovModifying);
         GunFirePostEvent.EVENT.register(CameraSetupEvent::initialCameraRecoilPost);
+        GunFirePostEvent.EVENT.register(GunCrosshair::onLocalFire);
         ViewportEvent.CAMERA.register(CameraSetupEvent::applyCameraRecoil);
         ComputeFovModifierEvent.CALLBACK.register(CameraSetupEvent::onComputeMovementFov);
 

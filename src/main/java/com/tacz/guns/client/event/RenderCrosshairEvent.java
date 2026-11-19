@@ -121,7 +121,9 @@ public class RenderCrosshairEvent {
         }
         // The editor has its own preview. Never draw it twice (especially with partial opacity).
         if (Minecraft.getInstance().gui.screen() instanceof ViewTuningScreen editor && editor.isCrosshairTab()) return;
-        GunCrosshair.draw(graphics, window.getGuiScaledWidth() / 2, window.getGuiScaledHeight() / 2, TuningValues.visible());
+        // The GUI ortho projection uses framebuffer dimensions / scale, *not* ceil(gui dimensions).
+        float divisor = 2f * window.getGuiScale();
+        GunCrosshair.draw(graphics, window.getWidth() / divisor, window.getHeight() / divisor, TuningValues.visible());
     }
 
     private static void renderHitMarker(GuiGraphicsExtractor graphics, Window window) {

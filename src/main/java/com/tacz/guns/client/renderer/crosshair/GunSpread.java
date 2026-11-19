@@ -17,9 +17,9 @@ import java.util.Map;
 final class GunSpread {
     private GunSpread() {}
 
-    static int radius(Minecraft mc, int scalePercent) {
+    static float radius(Minecraft mc, int scalePercent) {
         var player = mc.player;
-        if (player == null) return 0;
+        if (player == null || scalePercent == 0) return 0;
         var stack = player.getMainHandItem();
         if (!(stack.getItem() instanceof IGun gun)) return 0;
         var data = TimelessAPI.getClientGunIndex(gun.getGunId(stack)).map(index -> index.getGunData()).orElse(null);
@@ -35,7 +35,7 @@ final class GunSpread {
         if (heat != null) spread = withHeat(spread, heat, gun.getHeatAmount(stack));
         var camera = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
         if (!camera.initialized) return 0;
-        return pixels(spread, camera.projectionMatrix.m11(), mc.getWindow().getGuiScaledHeight(), scalePercent);
+        return pixels(spread, camera.projectionMatrix.m11(), (float) mc.getWindow().getHeight() / mc.getWindow().getGuiScale(), scalePercent);
     }
 
     static float baseSpread(@Nullable Map<InaccuracyType, Float> base, InaccuracyType stance, @Nullable GunFireModeAdjustData adjust) {
@@ -51,10 +51,10 @@ final class GunSpread {
         return spread * Mth.lerp(fraction, heat.getMinInaccuracy(), heat.getMaxInaccuracy());
     }
 
-    static int pixels(float spread, float projectionY, int height, int scalePercent) {
+    static float pixels(float spread, float projectionY, float height, int scalePercent) {
         // Vanilla Projectile's triangular uncertainty is expressed in direction-vector units. Project its
         // lateral scale through the world (not hand or scope) projection; this isn't a predicted hit point.
         double radius = spread * .0172275 * projectionY * height * .5 * scalePercent / 100;
-        return Double.isFinite(radius) ? (int) Math.round(Math.clamp(radius, 0, height / 3d)) : 0;
+        return Double.isFinite(radius) ? (float) Math.clamp(radius, 0, height / 3d) : 0;
     }
 }

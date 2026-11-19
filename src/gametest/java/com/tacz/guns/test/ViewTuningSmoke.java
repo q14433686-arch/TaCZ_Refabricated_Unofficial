@@ -17,6 +17,7 @@ import com.tacz.guns.compat.shouldersurfing.ShoulderSurfingCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.config.client.ViewTuningConfig;
 import com.tacz.guns.config.client.ViewTuningConfig.Axis;
+import com.tacz.guns.config.client.ViewTuningConfig.Dimension;
 import com.tacz.guns.config.client.ViewTuningConfig.Measure;
 import com.tacz.guns.config.client.ViewTuningConfig.Mode;
 import com.tacz.guns.resource.pojo.data.gun.InaccuracyType;
@@ -79,6 +80,7 @@ final class ViewTuningSmoke {
             var backup = new TuningValues.Draft();
             for (Axis axis : Axis.values()) remember(backup, axis.option);
             for (Measure measure : Measure.values()) remember(backup, measure.option);
+            for (Dimension d : Dimension.values()) remember(backup, d.option);
             for (var option : List.of(ViewTuningConfig.MODE, ViewTuningConfig.RGB, ViewTuningConfig.DOT,
                     ViewTuningConfig.OUTLINE, ViewTuningConfig.SHAPE, ViewTuningConfig.TEXTURE_CENTER,
                     ViewTuningConfig.DYNAMIC, RenderConfig.CROSSHAIR_TYPE)) remember(backup, option);
@@ -128,7 +130,14 @@ final class ViewTuningSmoke {
             ctx.clickScreenButton(UI + "crosshair");
             ctx.clickScreenButton(UI + "mode.preset");
             ctx.clickScreenButton(UI + "page.geometry");
-            ctx.runOnClient(mc -> slider(mc, "thickness", 2d / 7));
+            ctx.runOnClient(mc -> {
+                slider(mc, "thickness", 1); var t = field(mc, "thickness");
+                check(t.getValue().equals("32.00"), "Slider did not cover the widened range");
+                for (String bad : List.of(".001", "NaN", "-1", "32.01")) {
+                    t.setValue(bad); check(!saveButton(mc).active, "Invalid thickness accepted: " + bad);
+                }
+                t.setValue("3.00"); check(saveButton(mc).active, "Valid thickness rejected");
+            });
             ctx.clickScreenButton(UI + "page.color");
             ctx.runOnClient(mc -> {
                 var rgb = field(mc, "rgb"); rgb.setValue("#XY0101");
@@ -153,7 +162,7 @@ final class ViewTuningSmoke {
                     check(Objects.equals(file.get(Axis.X.option.getPath()), .237d)
                             && Objects.equals(file.get(ViewTuningConfig.MODE.getPath()), "DESIGNER")
                             && Objects.equals(file.get(ViewTuningConfig.RGB.getPath()), 0xFF00FF)
-                            && Objects.equals(file.get(Measure.THICKNESS.option.getPath()), 3), "Tuning not persisted to " + path);
+                            && Objects.equals(file.get(Dimension.THICKNESS.option.getPath()), 3d), "Tuning not persisted to " + path);
                 }
             });
             ctx.setScreen(() -> null); ctx.waitTicks(8);
@@ -179,7 +188,7 @@ final class ViewTuningSmoke {
             paste(ctx, hudCode); // restore static and the original proportions before sampling the full-UV PNG
             ctx.clickScreenButton(UI + "page.style"); ctx.clickScreenButton(UI + "mode.designer");
             ctx.clickScreenButton(UI + "page.geometry");
-            ctx.runOnClient(mc -> slider(mc, "size", (32d - 4) / (64 - 4)));
+            ctx.runOnClient(mc -> field(mc, "size").setValue("32"));
             diskMode = null;
             ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null);
             awaitDiskReload(ctx, Mode.PNG);
@@ -188,7 +197,7 @@ final class ViewTuningSmoke {
             ctx.getInput().pressKey(key); ctx.waitForScreen(ViewTuningScreen.class);
             ctx.clickScreenButton(UI + "crosshair"); ctx.clickScreenButton(UI + "page.geometry");
             ctx.clickScreenButton(UI + "center.original"); ctx.clickScreenButton(UI + "center.clear");
-            ctx.runOnClient(mc -> { slider(mc, "aspect", 125d/175); slider(mc, "dot_size", 4d/12); });
+            ctx.runOnClient(mc -> { field(mc, "aspect").setValue("150"); field(mc, "dot_size").setValue("4"); });
             diskMode = null;
             ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); awaitDiskReload(ctx, Mode.PNG);
             // 32x48: six columns, except the middle 12 rows. The replacement center is 4x4, not stretched.
@@ -232,13 +241,15 @@ final class ViewTuningSmoke {
     private static String profileRoundTrips(ClientGameTestContext ctx, String position) {
         ctx.clickScreenButton(UI + "page.share");
         String hud = copy(ctx);
-        check(hud.startsWith("TACZ-HUD1:DESIGNER,"), "Wrong HUD share: " + hud);
+        check(hud.startsWith("TACZ-HUD2:DESIGNER,"), "Wrong HUD share: " + hud);
         ctx.clickScreenButton(UI + "reset_hud");
         String neutral = copy(ctx);
-        for (String bad : List.of(position, hud.replace("HUD1", "HUD2"), hud + ",1", hud.substring(0, hud.lastIndexOf(',') + 1) + "201", "x".repeat(257))) {
+        for (String bad : List.of(position, hud.replace("HUD2", "HUD3"), hud + ",1", hud.replace(",3.00,100,", ",3.001,100,"), hud.substring(0, hud.lastIndexOf(',') + 1) + "1501", "x".repeat(257))) {
             paste(ctx, bad);
             check(copy(ctx).equals(neutral), "Invalid code partially applied to HUD: " + bad);
         }
+        paste(ctx, "TACZ-HUD1:DESIGNER,DOT_1,BOX,ORIGINAL,5,FF00FF,16,4,2,3,150,5,255,100");
+        check(copy(ctx).equals("TACZ-HUD2:DESIGNER,DOT_1,BOX,ORIGINAL,5,FF00FF,16.00,4.00,2.00,3.00,150,5.00,255,100,6.00,3.00,300"), "HUD1 migration lost values");
         paste(ctx, hud);
         check(copy(ctx).equals(hud), "HUD round trip lost values");
         ctx.clickScreenButton(UI + "model");
@@ -265,7 +276,7 @@ final class ViewTuningSmoke {
         for (String shape : List.of("cross", "t", "sides")) ctx.clickScreenButton(UI + "shape." + shape);
         ctx.clickScreenButton(UI + "motion.static");
         ctx.clickScreenButton(UI + "page.geometry");
-        ctx.runOnClient(mc -> { slider(mc, "aspect", 125d/175); slider(mc, "dot_size", 5d/12); });
+        ctx.runOnClient(mc -> { field(mc, "aspect").setValue("150"); field(mc, "dot_size").setValue("5"); });
         ctx.clickScreenButton(UI + "page.share");
         String dynamic = copy(ctx);
         ctx.clickScreenButton(UI + "reset_hud"); paste(ctx, dynamic);
@@ -273,10 +284,10 @@ final class ViewTuningSmoke {
         diskMode = null;
         ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); awaitDiskReload(ctx, Mode.DESIGNER);
         ctx.waitFor(mc -> mc.player.onGround() && mc.player.getPose() == Pose.STANDING && !mc.isPaused());
-        int stand = boxFrame(ctx, "stand", scale, InaccuracyType.STAND);
+        double stand = boxFrame(ctx, "stand", scale, InaccuracyType.STAND);
         ctx.getInput().holdKey(o -> o.keyShift);
         ctx.waitFor(mc -> mc.player.getPose() == Pose.CROUCHING);
-        int sneak = boxFrame(ctx, "sneak", scale, InaccuracyType.SNEAK);
+        double sneak = boxFrame(ctx, "sneak", scale, InaccuracyType.SNEAK);
         ctx.getInput().releaseKey(o -> o.keyShift);
         ctx.waitFor(mc -> mc.player.getPose() == Pose.STANDING);
         check(stand > sneak && sneak > 0, "Box did not contract with AK stance: " + stand + "/" + sneak);
@@ -297,20 +308,20 @@ final class ViewTuningSmoke {
         GunMod.LOGGER.info("PORT_HUD_PROFILES: AK stand/sneak/zero-cache radii={}/{}/0 GUI px; box proportions, fixed dot, HSV and separate clipboard round trips passed", stand, sneak);
     }
 
-    private static int boxFrame(ClientGameTestContext ctx, String name, int scale, InaccuracyType stance) {
+    private static double boxFrame(ClientGameTestContext ctx, String name, int scale, InaccuracyType stance) {
         ctx.waitTicks(4);
-        int r = projectedRadius(ctx, stance);
+        double r = projectedRadius(ctx, stance);
         // Base box 17x21, outline stroke 3 and a separate 5x5 center. Only the gap may grow.
-        int w = 17 + 2 * r, h = 21 + 2 * r;
+        double w = 17 + 2 * r, h = 21 + 2 * r;
         assertHud(frame(ctx, "box_" + name), scale, 6 * (w + h - 6) + 25, w, h);
         return r;
     }
 
-    private static int projectedRadius(ClientGameTestContext ctx, InaccuracyType stance) {
+    private static double projectedRadius(ClientGameTestContext ctx, InaccuracyType stance) {
         return ctx.computeOnClient(mc -> {
             float uncertainty = IGunOperator.fromLivingEntity(mc.player).getCacheProperty().getCache(GunProperties.INACCURACY).get(stance);
             float projection = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.projectionMatrix.m11();
-            return (int) Math.round(uncertainty * .0172275 * projection * mc.getWindow().getGuiScaledHeight() / 2);
+            return uncertainty * .0172275 * projection * mc.getWindow().getHeight() / (2 * mc.getWindow().getGuiScale());
         });
     }
 
@@ -323,7 +334,7 @@ final class ViewTuningSmoke {
         diskMode = null;
         ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); awaitDiskReload(ctx, Mode.PRESET);
         ctx.waitTicks(4);
-        int r = projectedRadius(ctx, InaccuracyType.STAND);
+        double r = projectedRadius(ctx, InaccuracyType.STAND);
         assertHud(frame(ctx, "dot_spread"), scale, 16 + 4 * 2, 8 + 2 * r, 8 + 2 * r);
 
         // Exercise a real shipped image, not a second procedural lookalike or just the custom PNG slot.
@@ -397,13 +408,13 @@ final class ViewTuningSmoke {
         return new Ink(count, x0, y0, x1, y1);
     }
 
-    private static int assertHud(BufferedImage image, int scale, int area, int width, int height) {
+    private static int assertHud(BufferedImage image, int scale, double area, double width, double height) {
         int cx = image.getWidth()/2, cy = image.getHeight()/2;
         Ink ink = ink(image, 38 * scale);
         int count = ink.count, x0 = ink.x0, x1 = ink.x1, y0 = ink.y0, y1 = ink.y1;
         if (area == 0) check(count == 0, "HUD reticle escaped its visibility gate: " + count);
         else {
-            int expected = area * scale * scale;
+            double expected = area * scale * scale;
             check(Math.abs(count-expected) <= Math.max(2, expected/12) && Math.abs(x1-x0+1-width*scale) <= 1
                     && Math.abs(y1-y0+1-height*scale) <= 1 && Math.abs(x0+x1-2*cx) <= 3*scale
                     && Math.abs(y0+y1-2*cy) <= 3*scale, "Wrong centered reticle: " + count + "/" + expected

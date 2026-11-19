@@ -5,7 +5,7 @@ import net.minecraftforge.common.ForgeConfigSpec;
 /** Player-local presentation only. The existing render.CrosshairType remains the preset selector. */
 public final class ViewTuningConfig {
     public enum Mode { PRESET, DESIGNER, PNG }
-    public enum Shape { CROSS, T, SIDES, BOX }
+    public enum Shape { CROSS, T, SIDES, BOX, RING }
     public enum TextureCenter { ORIGINAL, CLEAR, DOT }
 
     public enum Axis {
@@ -18,10 +18,8 @@ public final class ViewTuningConfig {
     }
 
     public enum Measure {
-        SIZE("TextureSize", 16, 4, 64), LENGTH("ArmLength", 4, 0, 24),
-        GAP("Gap", 2, 0, 16), THICKNESS("Thickness", 1, 1, 8), OPACITY("Opacity", 230, 0, 255),
-        ASPECT("VerticalPercent", 100, 25, 200), DOT_SIZE("DotSize", 0, 0, 12),
-        SPREAD_SCALE("SpreadPercent", 100, 25, 200);
+        OPACITY("Opacity", 230, 0, 255), ASPECT("VerticalPercent", 100, 10, 400),
+        SPREAD_SCALE("SpreadPercent", 100, 0, 400), RECOVERY("ShotRecoveryMs", 300, 80, 1500);
 
         private final String key;
         private final int initial;
@@ -29,6 +27,25 @@ public final class ViewTuningConfig {
         public ForgeConfigSpec.IntValue option;
 
         Measure(String key, int initial, int min, int max) {
+            this.key = key;
+            this.initial = initial;
+            this.min = min;
+            this.max = max;
+        }
+    }
+
+    /** Geometry in GUI pixels. Keep the original TOML paths: FCAP DoubleValue also reads legacy integers. */
+    public enum Dimension {
+        SIZE("TextureSize", 16, .10, 128), LENGTH("ArmLength", 4, 0, 96),
+        GAP("Gap", 2, -32, 96), THICKNESS("Thickness", 1, .05, 32), DOT_SIZE("DotSize", 0, 0, 48),
+        RADIUS("RingInnerRadius", 6, 0, 128), KICK("ShotExpansion", 3, .25, 32);
+
+        private final String key;
+        private final double initial;
+        public final double min, max;
+        public ForgeConfigSpec.DoubleValue option;
+
+        Dimension(String key, double initial, double min, double max) {
             this.key = key;
             this.initial = initial;
             this.min = min;
@@ -54,10 +71,13 @@ public final class ViewTuningConfig {
         SHAPE = builder.defineEnum("LineShape", Shape.CROSS);
         TEXTURE_CENTER = builder.comment("CLEAR or DOT removes the central quarter of the image (width and height).")
                 .defineEnum("TextureCenter", TextureCenter.ORIGINAL);
-        DYNAMIC = builder.comment("Expand the HUD using client-visible gun spread. Does not change projectile behavior.")
+        DYNAMIC = builder.comment("Open the HUD on each local shot, in addition to client-visible spread. SpreadPercent=0 keeps only shot feedback. Visual only.")
                 .define("FollowGunSpread", false);
         for (Measure measure : Measure.values()) {
             measure.option = builder.defineInRange(measure.key, measure.initial, measure.min, measure.max);
+        }
+        for (Dimension d : Dimension.values()) {
+            d.option = builder.defineInRange(d.key, d.initial, d.min, d.max);
         }
         RGB = builder.comment("24-bit RGB tint; white leaves texture colors unchanged.").defineInRange("ColorRGB", 0xFFFFFF, 0, 0xFFFFFF);
         DOT = builder.define("CenterDot", true);

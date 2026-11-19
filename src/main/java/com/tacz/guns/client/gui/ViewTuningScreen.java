@@ -1,5 +1,6 @@
 package com.tacz.guns.client.gui;
 
+import com.tacz.guns.client.gameplay.ShotEnvelope;
 import com.tacz.guns.client.renderer.crosshair.CrosshairType;
 import com.tacz.guns.client.renderer.crosshair.GunCrosshair;
 import com.tacz.guns.client.tuning.TuningValues;
@@ -7,6 +8,7 @@ import com.tacz.guns.client.tuning.TuningShare;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.config.client.ViewTuningConfig;
 import com.tacz.guns.config.client.ViewTuningConfig.Axis;
+import com.tacz.guns.config.client.ViewTuningConfig.Dimension;
 import com.tacz.guns.config.client.ViewTuningConfig.Measure;
 import com.tacz.guns.config.client.ViewTuningConfig.Mode;
 import com.tacz.guns.config.client.ViewTuningConfig.Shape;
@@ -23,6 +25,7 @@ import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Util;
 import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 
 import javax.annotation.Nullable;
@@ -37,7 +40,9 @@ import java.util.regex.Pattern;
 /** Native, optional-mod-independent live editor. Keep the singleplayer pause; the hand pass still extracts each frame. */
 public final class ViewTuningScreen extends Screen {
     private static final int X = 8, W = 168, HALF = (W - 2) / 2, H = 18;
-    private static final Pattern DECIMAL = Pattern.compile("[+-]?(?:[0-9]+(?:[.,][0-9]{0,3})?|[.,][0-9]{1,3})");
+    private static final Pattern INTEGER = Pattern.compile("[+-]?[0-9]+");
+    private static final Pattern HUNDREDTHS = Pattern.compile("[+-]?(?:[0-9]+(?:[.,][0-9]{0,2})?|[.,][0-9]{1,2})");
+    private static final Pattern THOUSANDTHS = Pattern.compile("[+-]?(?:[0-9]+(?:[.,][0-9]{0,3})?|[.,][0-9]{1,3})");
     private enum Page { STYLE, GEOMETRY, COLOR, SHARE }
     private Page page = Page.STYLE;
     private String shareStatus;
@@ -47,6 +52,8 @@ public final class ViewTuningScreen extends Screen {
     private final List<Button> needsValid = new ArrayList<>();
     private boolean crosshairTab;
     private int top;
+    // Deliberately independent of the paused game clock and the real player's shot state.
+    private final ShotEnvelope previewShots = new ShotEnvelope();
 
     static Component label(String key, Object... args) {
         return Component.translatable("gui.tacz.view_tuning." + key, args);
@@ -113,31 +120,37 @@ public final class ViewTuningScreen extends Screen {
     }
 
     private void addAxis(Axis axis, int y) {
-        double value = draft.get(axis.option);
-        int units = (int) Math.round(value * 1000);
-        Component name = label("axis." + axis.name().toLowerCase(Locale.ROOT));
+        addNumber(y, label("axis." + key(axis)), axis.min, axis.max, draft.get(axis.option), 3, true,
+                label("axis_range", axis.min, axis.max), n -> draft.set(axis.option, n / 1000d));
+    }
+
+    /** The slider and field edit the same fixed-point units. A narrow thumb cannot select every hundredth. */
+    private void addNumber(int y, Component name, double min, double max, double current, int places,
+                           boolean enabled, Component help, IntConsumer change) {
+        int factor = places == 3 ? 1000 : places == 2 ? 100 : 1;
+        var pattern = places == 3 ? THOUSANDTHS : places == 2 ? HUNDREDTHS : INTEGER;
+        var format = "%." + places + "f";
         EditBox box = new EditBox(font, X + W - 47, y, 47, H, name);
         box.setMaxLength(14);
-        box.setValue(formatAxis(units));
-        Tooltip range = Tooltip.create(label("axis_range", axis.min, axis.max));
-        box.setTooltip(range);
-        Slider slider = addRenderableWidget(new Slider(X, y, W - 50, name, axis.min * 1000, axis.max * 1000,
-                units, false, n -> box.setValue(formatAxis(n))));
-        slider.setTooltip(range);
+        box.setValue(String.format(Locale.ROOT, format, current));
+        var slider = addRenderableWidget(new Slider(X, y, W - 50, name,
+                (int) Math.round(min * factor), (int) Math.round(max * factor), (int) Math.round(current * factor),
+                n -> box.setValue(String.format(Locale.ROOT, format, n / (double) factor))));
         addRenderableWidget(box);
+        slider.active = box.active = enabled;
+        box.setEditable(enabled);
+        box.setTooltip(Tooltip.create(help)); slider.setTooltip(Tooltip.create(help));
         box.setResponder(text -> {
-            double number = DECIMAL.matcher(text).matches() ? Double.parseDouble(text.replace(',', '.')) : Double.NaN;
-            boolean valid = number >= axis.min && number <= axis.max;
+            double number = pattern.matcher(text).matches() ? Double.parseDouble(text.replace(',', '.')) : Double.NaN;
+            boolean valid = number >= min && number <= max;
             validate(box, valid);
             if (valid) {
-                int n = (int) Math.round(number * 1000);
-                draft.set(axis.option, n / 1000d);
-                slider.sync(n); // Move the thumb without firing the text responder again.
+                int n = (int) Math.round(number * factor);
+                change.accept(n);
+                slider.sync(n);
             }
         });
     }
-
-    private static String formatAxis(int units) { return String.format(Locale.ROOT, "%.3f", units / 1000d); }
 
     private void initCrosshair() {
         for (Page p : Page.values()) {
@@ -151,49 +164,62 @@ public final class ViewTuningScreen extends Screen {
         Mode mode = draft.get(ViewTuningConfig.MODE);
         switch (page) {
             case STYLE -> {
-                button(X, row(0), W, label("mode." + key(mode)), () -> {
+                needsValid.add(button(X, row(0), W, label("mode." + key(mode)), () -> {
                     draft.set(ViewTuningConfig.MODE, next(mode));
                     rebuildWidgets();
-                });
+                }));
                 if (mode == Mode.PRESET) {
                     button(X, row(1), 20, Component.literal("<"), () -> cyclePreset(-1)).setTooltip(Tooltip.create(label("previous")));
                     button(X + W - 20, row(1), 20, Component.literal(">"), () -> cyclePreset(1)).setTooltip(Tooltip.create(label("next")));
                 } else if (mode == Mode.DESIGNER) {
                     Shape shape = draft.get(ViewTuningConfig.SHAPE);
-                    button(X, row(1), W, label("shape." + key(shape)), () -> {
+                    needsValid.add(button(X, row(1), W, label("shape." + key(shape)), () -> {
                         draft.set(ViewTuningConfig.SHAPE, next(shape));
                         rebuildWidgets();
-                    });
+                    }));
                 }
                 boolean dynamic = draft.get(ViewTuningConfig.DYNAMIC);
-                button(X, row(2), W, label(dynamic ? "motion.dynamic" : "motion.static"), () -> {
+                var motion = button(X, row(2), W, label(dynamic ? "motion.dynamic" : "motion.static"), () -> {
+                    previewShots.clear();
                     draft.set(ViewTuningConfig.DYNAMIC, !dynamic);
                     rebuildWidgets();
-                }).setTooltip(Tooltip.create(label("spread_hint")));
-                addMeasure(Measure.SPREAD_SCALE, 3).active = dynamic;
+                });
+                needsValid.add(motion); motion.setTooltip(Tooltip.create(label("spread_hint")));
+                addMeasure(Measure.SPREAD_SCALE, 3, dynamic);
+                if (dynamic) {
+                    addDimension(Dimension.KICK, 4, true);
+                    addMeasure(Measure.RECOVERY, 5, true);
+                    int r = previewRadius();
+                    if (r > 20) {
+                        int w = Math.min(2 * r, 108);
+                        button(previewX(r) - w / 2, height / 2 + r + 2, w, label("preview_shot"),
+                                () -> previewShots.fire(Util.getMillis(), draft.get(Measure.RECOVERY.option)));
+                    }
+                }
             }
             case GEOMETRY -> {
                 boolean lines = mode == Mode.DESIGNER;
-                addMeasure(lines ? Measure.LENGTH : Measure.SIZE, 0);
-                addMeasure(Measure.ASPECT, 1).active = !lines || draft.get(ViewTuningConfig.SHAPE) != Shape.SIDES;
+                boolean ring = lines && draft.get(ViewTuningConfig.SHAPE) == Shape.RING;
+                addDimension(ring ? Dimension.RADIUS : lines ? Dimension.LENGTH : Dimension.SIZE, 0, true);
+                addMeasure(Measure.ASPECT, 1, !lines || draft.get(ViewTuningConfig.SHAPE) != Shape.SIDES);
                 if (lines) {
-                    addMeasure(Measure.GAP, 2);
-                    addMeasure(Measure.THICKNESS, 3);
+                    if (!ring) addDimension(Dimension.GAP, 2, true);
+                    addDimension(Dimension.THICKNESS, 3, true);
                     toggle(X, ViewTuningConfig.DOT, "dot");
                     toggle(X + HALF + 2, ViewTuningConfig.OUTLINE, "outline");
-                    addMeasure(Measure.DOT_SIZE, 5).active = draft.get(ViewTuningConfig.DOT);
+                    addDimension(Dimension.DOT_SIZE, 5, draft.get(ViewTuningConfig.DOT));
                 } else {
                     TextureCenter center = draft.get(ViewTuningConfig.TEXTURE_CENTER);
-                    button(X, row(2), W, label("center." + key(center)), () -> {
+                    needsValid.add(button(X, row(2), W, label("center." + key(center)), () -> {
                         draft.set(ViewTuningConfig.TEXTURE_CENTER, next(center));
                         rebuildWidgets();
-                    });
-                    addMeasure(Measure.DOT_SIZE, 3).active = center == TextureCenter.DOT;
+                    }));
+                    addDimension(Dimension.DOT_SIZE, 3, center == TextureCenter.DOT);
                 }
             }
             case COLOR -> {
                 new TuningColorPicker(font, X, row(0), W, draft, this::addRenderableWidget, this::validate);
-                addMeasure(Measure.OPACITY, 5);
+                addMeasure(Measure.OPACITY, 5, true);
             }
             case SHARE -> shareButtons(row(0));
         }
@@ -205,12 +231,20 @@ public final class ViewTuningScreen extends Screen {
         return all[(e.ordinal() + 1) % all.length];
     }
 
-    private Slider addMeasure(Measure measure, int index) {
-        Slider slider = addRenderableWidget(new Slider(X, row(index), W, label(key(measure)),
-                measure.min, measure.max, draft.get(measure.option), true, n -> draft.set(measure.option, n)));
-        if (measure == Measure.DOT_SIZE) slider.setTooltip(Tooltip.create(label("dot_size_hint")));
-        return slider;
+    private void addMeasure(Measure m, int index, boolean enabled) {
+        addNumber(row(index), label(key(m)), m.min, m.max, draft.get(m.option), 0, enabled,
+                label("int_range", m.min, m.max), n -> draft.set(m.option, n));
     }
+
+    private void addDimension(Dimension d, int index, boolean enabled) {
+        var help = Component.empty().append(label("geometry_range", d.min, d.max));
+        if (d == Dimension.DOT_SIZE) help.append(" ").append(label("dot_size_hint"));
+        addNumber(row(index), label(key(d)), d.min, d.max, draft.get(d.option), 2, enabled,
+                help, n -> draft.set(d.option, n / 100d));
+    }
+
+    private int previewRadius() { return Math.min(80, (width - X - W - 18) / 2); }
+    private int previewX(int r) { return Math.max(width / 2, X + W + 8 + r); }
 
     private void shareButtons(int y) {
         var group = crosshairTab ? TuningShare.CROSSHAIR : TuningShare.POSITION;
@@ -227,10 +261,10 @@ public final class ViewTuningScreen extends Screen {
     }
 
     private void toggle(int x, BooleanValue option, String key) {
-        button(x, row(4), HALF, toggleLabel(key, option), () -> {
+        needsValid.add(button(x, row(4), HALF, toggleLabel(key, option), () -> {
             draft.set(option, !draft.get(option));
             rebuildWidgets();
-        });
+        }));
     }
 
     private Component toggleLabel(String key, BooleanValue option) {
@@ -257,6 +291,8 @@ public final class ViewTuningScreen extends Screen {
             draft.reset(ViewTuningConfig.MODE);
             draft.reset(RenderConfig.CROSSHAIR_TYPE);
             for (Measure measure : Measure.values()) draft.reset(measure.option);
+            for (Dimension d : Dimension.values()) draft.reset(d.option);
+            previewShots.clear();
             draft.reset(ViewTuningConfig.RGB);
             draft.reset(ViewTuningConfig.DOT);
             draft.reset(ViewTuningConfig.OUTLINE);
@@ -280,10 +316,11 @@ public final class ViewTuningScreen extends Screen {
             switch (page) {
                 case STYLE -> {
                     if (mode == Mode.PRESET) gui.centeredText(font, draft.get(RenderConfig.CROSSHAIR_TYPE).name(), X + W / 2, row(1) + 5, -1);
-                    hint(gui, label(mode == Mode.PNG ? "png_hint" : "spread_hint"), row(4));
+                    if (!draft.get(ViewTuningConfig.DYNAMIC)) hint(gui, label(mode == Mode.PNG ? "png_hint" : "spread_hint"), row(4));
                 }
                 case GEOMETRY -> {
                     if (mode != Mode.DESIGNER) hint(gui, label("center_hint"), row(4));
+                    else if (draft.get(ViewTuningConfig.SHAPE) == Shape.RING) hint(gui, label("ring_hint"), row(2) + 4);
                 }
                 case COLOR -> {
                     gui.text(font, label("rgb"), X + 2, row(4) + 5, -1, false);
@@ -294,13 +331,13 @@ public final class ViewTuningScreen extends Screen {
                     status(gui, row(1) + 4);
                 }
             }
-            int r = Math.min(80, (width - X - W - 18) / 2);
-            int cx = Math.max(width / 2, X + W + 8 + r), cy = height / 2;
+            int r = previewRadius();
+            int cx = previewX(r), cy = height / 2;
             if (r > 4) {
                 gui.fill(cx - r, cy - r, cx, cy + r, 0xFF35414B);
                 gui.fill(cx, cy - r, cx + r, cy + r, 0xFF8D999E);
                 gui.centeredText(font, label("preview"), cx, cy - r - 12, -1);
-                GunCrosshair.draw(gui, cx, cy, draft, r - 3);
+                GunCrosshair.draw(gui, cx, cy, draft, r - 3, previewShots.sample(Util.getMillis()));
             }
         } else {
             hint(gui, label("model_hint"), top + 102);
@@ -326,15 +363,13 @@ public final class ViewTuningScreen extends Screen {
     private static final class Slider extends AbstractSliderButton {
         private final Component name;
         private final int min, max;
-        private final boolean displayNumber;
         private final IntConsumer change;
 
-        Slider(int x, int y, int width, Component name, int min, int max, int current, boolean displayNumber, IntConsumer change) {
+        Slider(int x, int y, int width, Component name, int min, int max, int current, IntConsumer change) {
             super(x, y, width, H, name, 0);
             this.name = name;
             this.min = min;
             this.max = max;
-            this.displayNumber = displayNumber;
             this.change = change;
             sync(current);
         }
@@ -342,6 +377,6 @@ public final class ViewTuningScreen extends Screen {
         private void sync(int n) { value = (n - min) / (double) (max - min); updateMessage(); }
         private int number() { return min + (int) Math.round(value * (max - min)); }
         @Override protected void applyValue() { change.accept(number()); }
-        @Override protected void updateMessage() { setMessage(displayNumber ? label("value", name, number()) : name); }
+        @Override protected void updateMessage() { setMessage(name); }
     }
 }

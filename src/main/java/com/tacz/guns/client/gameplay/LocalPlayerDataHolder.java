@@ -70,10 +70,12 @@ public class LocalPlayerDataHolder {
         }
         return cachedAmmo;
     }
+    public final ShotEnvelope hudShotEnvelope = new ShotEnvelope();
     final ClientActionTasks shots = new ClientActionTasks();
     final ClientActionTasks draws = new ClientActionTasks();
     public boolean hasPendingShoot() { return shots.pending(); }
     public void cancelPendingActions() {
+        hudShotEnvelope.clear();
         cachedAmmoGun = null;
         shots.cancelAll();
         draws.cancelAll();
