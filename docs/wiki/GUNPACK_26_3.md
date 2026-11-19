@@ -8,6 +8,8 @@
 - `overlays.entries` 按 **Minecraft 版本**选择，后面的匹配层优先于较早层，覆盖层优先于包根。服务器安装或重载枪包后，客机按收到的完整数据重建索引；这不把服务器私有的模型、脚本当客户端资源分发。两端使用匹配的包和模组构建。
 - 遇到旧配方或物品数据，可用管理员命令 `/tacz convert universal "Example Pack.zip" check` **只生成报告**；需要时把 `check` 改成 `export`。产物在 `tacz-converted/`，不会改写原包或替你安装。先在备份实例测试，不要同时加载原件与导出件。见[导出范围、冲突及不支持项](../GUNPACK_CONVERSION_26_3.md)。
 
+- 另一个容易混淆的是**内置资源再导出**：启用自动导出时，模组版本或内置源资源指纹变化会刷新导出目录；原有目录先备份到实例 `tacz_backup/<目录名>/`。这是内置资源的更新机制，不是 `convert universal` 的目标 `tacz-converted/`，也不是给第三方包解密。自己的包请另建目录并保留备份。
+
 ## 配方过滤：为什么服主看得到，客机却空白？
 
 上游的[工作台配方][recipe]定义**做什么**；[配方过滤器][filter]定义**哪张台能列它**。匹配的是配方完整 ID（例如 `tacz:gun/ak47`），不是物品注册名。26.3 默认包可参照[实际配方](../../src/main/resources/assets/tacz/custom/tacz_default_gun/data/tacz/recipe/gun/ak47.json)和[默认台的过滤器](../../src/main/resources/assets/tacz/custom/tacz_default_gun/data/tacz/recipe_filters/default.json)。原版工作台的配方书不读这个过滤器。

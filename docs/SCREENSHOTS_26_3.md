@@ -1,6 +1,6 @@
 # 26.3 实机图册 · In-game gallery
 
-这些画面来自运行 Minecraft 的 Fabric 测试客户端，不是效果图。**展示的是 26.3 开发线，不是旧 Release 的功能表。** 不同功能有各自的取景版本；早期帧右下角仍有当时的 `1.1.8` 字样。下表的链接打开仓库内原图，不用下载、登录或解压 CI 工件。
+这些画面来自运行 Minecraft 的 Fabric 测试客户端，不是效果图。**展示的是 26.3 开发线，不是旧 Release 的功能表。** 不同功能有各自的取景版本；早期帧仍有当时的 `1.1.8` 字样或不同的按键提示；当前新实例默认用 K 持枪交互。下表的链接打开仓库内原图，不用下载、登录或解压 CI 工件。
 
 [玩家操作指南](PLAYER_GUIDE_26_3.md) · [本次开发构建的变更](CHANGELOG_26_3_R1.md#120-r1) · [全部留存截图，按主题展开（含对照和诊断）](../build-reports/visual/README.md)
 
@@ -14,6 +14,8 @@
 | 两种弹药库存 / Inside ammo storage | [弹药库菜单](../build-reports/visual/44363012970-tacz_ammo_storage_frame.png) | 两堆外观相似、数据不同的 12g 分开记录；上方显示容量及种类。 |
 | 挂板与连柜 / Pegboard and display case | [展示墙](../build-reports/visual/44417531060-tacz_display_wall.png)；直板：[空](../build-reports/visual/44425974348-tacz_rack_empty.png) → [预览](../build-reports/visual/44425974348-tacz_rack_ghost.png) → [放入](../build-reports/visual/44425974348-tacz_rack_placed.png)；柜：[空](../build-reports/visual/44425974348-tacz_case_empty.png) → [预览](../build-reports/visual/44425974348-tacz_case_ghost.png) → [放入](../build-reports/visual/44425974348-tacz_case_placed.png) | 中间帧可透过物品看见背板；最后一帧才实际占格。拍的是解锁的柜子。 |
 | 转角、普通物品与高模 / Corner and item previews | [折角预览](../build-reports/visual/44430716200-tacz_corner_ghost.png) / [实物](../build-reports/visual/44430716200-tacz_corner_placed.png)；[绿宝石](../build-reports/visual/44430716200-tacz_vanilla_quad_ghost.png)；[测试网格预览](../build-reports/visual/44434717131-tacz_mesh_ghost.png) / [实物](../build-reports/visual/44434717131-tacz_mesh_placed.png) | 比较同一格、同一视角；青色的纯网格是测试展品，不是随包武器。 |
+
+**服主测试场景（不是生存配方）：** [64 件同款陈列](../build-reports/visual/44432265461-tacz_rack_load_same.png) / [64 件异款陈列](../build-reports/visual/44432265461-tacz_rack_load_different.png)。两图是管理员命令在空地生成的 16 块挂板，不是性能排行榜。
 
 ## 自己的视角与准星
 
@@ -32,7 +34,7 @@
 | 枪口焰与离开的烟 / Flash and detached smoke | [第一人称](../build-reports/visual/44350306969-tacz_muzzle_first.png) / [F5](../build-reports/visual/44350306969-tacz_muzzle_f5.png) / [关闭烟](../build-reports/visual/44350306969-tacz_muzzle_smoke_off.png)；[原包 Reimagined 夜间枪焰](../build-reports/visual/44455729177-reimagined-act-tacz_reimagined_night_stock.png) | 夜图为了抓到默认短寿命贴图，测试反复触发击发曝光；不是单发照亮墙面的证据。 |
 | 试验服的配件与粒子对照 / Pack-authored particle tests | [裸枪开火](../build-reports/visual/44449218152-tacz_muzzle_marker_bare_on.png) / [装 RC1](../build-reports/visual/44449218152-tacz_muzzle_marker_rc1_on.png) · [Snowstorm 动画粒子](../build-reports/visual/44430716200-tacz_snowstorm_runtime.png) · 曳光[转身前](../build-reports/visual/44429872551-tacz_fired_tracer_before_turn.png) / [转身后](../build-reports/visual/44429872551-tacz_fired_tracer_after_turn.png) | 紫色方片是测试包的尺寸标记，不是 RC1 会把火焰染紫。材质、镜内裁剪及运动的其余对照见下方完整档案。 |
 
-**枪口补光与爆点补光 / Surface light off and on.** 左右两列都实际开火。AK 看前墙左右与前方地面；RPG 看约 29.5 格外爆点旁的墙地，不是枪口或爆炸粒子本身。无光影和 Reimagined 是**两套独立场景**；两个选项默认关闭。[场景、设置与测试提交](investigations/SURFACE_LIGHT_26_3.md)。
+**枪口补光与爆点补光 / Surface light off and on.** 左右两列都实际开火。AK 看前墙左右与前方地面；RPG 看约 29.5 格外爆点旁的墙地，不是枪口或爆炸粒子本身。无光影与 Reimagined 的画面是**分别运行游戏采集**的；两个选项默认关闭。[场景、设置与测试提交](investigations/SURFACE_LIGHT_26_3.md)。
 
 | 场景 / Scene | 关 / Off | 开 / On |
 |---|---|---|
