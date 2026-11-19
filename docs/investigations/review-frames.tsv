@@ -1,8 +1,9 @@
-# Real-time first-person and remote impact frames used to diagnose the floor receiver on fc7afa39.
-44624294920	smoke	tacz_surface_ak_off
-44624294920	smoke	tacz_surface_ak_on
-44624294920	smoke	tacz_surface_empty
-44624294920	smoke	tacz_surface_muzzle_behind
-44624294817	iris	tacz_surface_rpg_off
-44624294817	iris	tacz_surface_rpg_on
-44624294817	iris	tacz_surface_range_rest
+# a2f53dda: first real rendered frame after each funded local shot / tracked server hit. No frozen time.
+44626162907	smoke	tacz_surface_ak_off
+44626162907	smoke	tacz_surface_ak_on
+44626162907	smoke	tacz_surface_rpg_off
+44626162907	smoke	tacz_surface_rpg_on
+44626162782	reimagined-act	tacz_surface_ak_off
+44626162782	reimagined-act	tacz_surface_ak_on
+44626162782	reimagined-act	tacz_surface_rpg_off
+44626162782	reimagined-act	tacz_surface_rpg_on
