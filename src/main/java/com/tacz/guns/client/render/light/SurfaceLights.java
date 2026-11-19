@@ -36,7 +36,7 @@ import java.util.Map;
 /** Bounded per-observer eye candy, not a light engine. Spawn only on successful shots or
  * existing client detonation notifications; rendering a gun (or replaying a PIP) never fires it. */
 public final class SurfaceLights {
-    private static final int MAX_PULSES = 4, MAX_BEAMS = 4, MAX_ANCHORS = 16;
+    private static final int MAX_PULSES = 4, MAX_MUZZLES = 2, MAX_BEAMS = 4, MAX_ANCHORS = 16;
     private static final double NEAR_SQR = 24*24;
     private static final int WARM = 0xffbd85, BLAST = 0xffcc90, WHITE = 0xf4f5ff;
     private static final List<Pulse> pulses = new ArrayList<>(MAX_PULSES);
@@ -44,7 +44,7 @@ public final class SurfaceLights {
     private static final Map<Integer, Beam> beams = new HashMap<>();
     private static @Nullable ClientLevel level;
     private static long buildTick, laserFrame;
-    private static int builds;
+    private static int builds, muzzleBuilds;
     private static List<Draw> dots = List.of();
     private static long muzzleEvents, explosionEvents, stunEvents, projections;
     public record Diagnostics(int active, int beamHits, long muzzles, long explosions, long stuns, long projections) {}
@@ -73,7 +73,7 @@ public final class SurfaceLights {
     }
 
     public static void clear() {
-        level=null; pulses.clear(); anchors.clear(); beams.clear(); dots=List.of(); laserFrame=buildTick=Long.MIN_VALUE; builds=0;
+        level=null; pulses.clear(); anchors.clear(); beams.clear(); dots=List.of(); laserFrame=buildTick=Long.MIN_VALUE; builds=muzzleBuilds=0;
     }
     private static boolean ready() {
         var current = Minecraft.getInstance().level;
@@ -171,9 +171,14 @@ public final class SurfaceLights {
     private static void offer(Pulse pulse) {
         long now=GunTime.nowMillis();
         pulses.removeIf(p -> p.expired(now) || (p.owner>=0 && p.owner==pulse.owner));
-        if (pulses.size()>=MAX_PULSES) {
+        // Gunfire is frequent and its near-wall footprints can fill the screen. Limit it
+        // separately so four automatic weapons cannot also starve a rarer detonation.
+        int liveMuzzles = 0;
+        for (var p : pulses) if (p.eye != null) liveMuzzles++;
+        boolean muzzleFull = pulse.eye != null && liveMuzzles >= MAX_MUZZLES;
+        if (muzzleFull || pulses.size()>=MAX_PULSES) {
             Pulse farthest=null; double distance=pulse.local ? -1 : pulse.pos.distanceToSqr(camera());
-            for (var p:pulses) if (!p.local && p.pos.distanceToSqr(camera())>distance) { farthest=p; distance=p.pos.distanceToSqr(camera()); }
+            for (var p:pulses) if ((!muzzleFull || p.eye!=null) && !p.local && p.pos.distanceToSqr(camera())>distance) { farthest=p; distance=p.pos.distanceToSqr(camera()); }
             if (farthest==null) return;
             pulses.remove(farthest);
         }
@@ -184,13 +189,14 @@ public final class SurfaceLights {
         if (pulses.isEmpty() && beams.isEmpty()) return;
         if (!ready() || ScopePipRenderer.isInsideScopeLevelRender() || IrisCompat.isRenderShadow()) return;
         long now=GunTime.nowMillis(), tick=level.getGameTime(), frame=ScopePipRenderer.frameNumber();
-        if (tick!=buildTick) { buildTick=tick; builds=0; }
+        if (tick!=buildTick) { buildTick=tick; builds=muzzleBuilds=0; }
         pulses.removeIf(p -> p.expired(now) || !(p.eye==null ? RenderConfig.EXPLOSION_SURFACE_LIGHT.get()
                 : RenderConfig.MUZZLE_SURFACE_LIGHT.get() && !RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()));
         var draws=new ArrayList<Draw>(MAX_PULSES+MAX_BEAMS);
         for (var p:pulses) {
             if (p.patches==null) {
-                if (builds>=MAX_PULSES) continue;
+                if (builds>=MAX_PULSES || (p.eye!=null && muzzleBuilds>=MAX_MUZZLES)) continue;
+                if (p.eye!=null) muzzleBuilds++;
                 builds++; projections++;
                 var origin=p.eye==null?p.pos:SurfaceProjection.visibleOrigin(level,p.eye,p.pos);
                 p.patches=SurfaceProjection.scatter(level,origin,p.range); p.start=now;

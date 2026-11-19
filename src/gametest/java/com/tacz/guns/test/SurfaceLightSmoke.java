@@ -110,7 +110,7 @@ public final class SurfaceLightSmoke {
                 var state=ctx.computeOnClient(mc->SurfaceLights.diagnostics());
                 failures.append(" packets: ").append(e.getMessage()).append(" ").append(state);
             }
-            try { laser(ctx,world); } catch(AssertionError e) { failures.append(" laser: ").append(e.getMessage()); }
+            try { laser(ctx,world,origin); } catch(AssertionError e) { failures.append(" laser: ").append(e.getMessage()); }
             if (!failures.isEmpty()) throw new AssertionError("Near-field controls:"+failures);
         } finally {
             ctx.runOnClient(mc->{ sampleTime=-1;samples=null;replay=false; Arrays.fill(actors,null);rifle=null;NativeMuzzleEffects.clear();
@@ -139,14 +139,15 @@ public final class SurfaceLightSmoke {
             if (owner!=null && owner.getUUID().equals(watchedShooter)) serverHit=e.getHitResult().getLocation();
         });
         RenderTickEvent.EVENT.register(e->{
-            if (!replay || e.phase!=RenderTickEvent.Phase.START) return;
+            if (e.phase!=RenderTickEvent.Phase.START) return;
+            if (samples!=null && n<samples.length) samples[n++]=mc.getFrameTimeNs();
+            if (!replay) return;
             long tick=mc.level.getGameTime();
             if (previousTick!=tick) {
                 previousTick=tick;
                 for(int i=(int)(tick&1);i<actors.length;i+=2)
                     ReimaginedShotControl.taczTest$shot(new GunFirePostEvent(actors[i],rifle,LogicalSide.CLIENT));
             }
-            if (samples!=null && n<samples.length) samples[n++]=mc.getFrameTimeNs();
         });
     }
     private static void position(Minecraft mc, BlockPos origin, boolean behind) {
@@ -171,10 +172,14 @@ public final class SurfaceLightSmoke {
     private static void timing(ClientGameTestContext ctx, boolean enable) {
         ctx.runOnClient(mc->RenderConfig.MUZZLE_SURFACE_LIGHT.set(enable));ctx.waitTicks(10);
         var before=ctx.computeOnClient(mc->SurfaceLights.diagnostics());
+        var t=frameTimes(ctx);
+        var d=ctx.computeOnClient(mc->SurfaceLights.diagnostics());
+        if(d.active()>2 || (d.projections()>before.projections())!=enable) throw new AssertionError("Muzzle budget/control: "+d);
+        GunMod.LOGGER.info("PORT_SURFACE: 16 sources/600 RPM, spill={}, 64 renderFrame samples median/p95/p99={} / {} / {} us, admitted projections={}",enable,t[32]/1000,t[60]/1000,t[63]/1000,d.projections()-before.projections());
+    }
+    private static long[] frameTimes(ClientGameTestContext ctx) {
         ctx.runOnClient(mc->{n=0;samples=new long[64];});ctx.waitFor(mc->n==samples.length);
-        ctx.runOnClient(mc->{var t=samples;samples=null;Arrays.sort(t);var d=SurfaceLights.diagnostics();
-            if(d.active()>4 || (d.projections()>before.projections())!=enable) throw new AssertionError("Pulse budget/control: "+d);
-            GunMod.LOGGER.info("PORT_SURFACE: 16 sources/600 RPM, spill={}, 64 renderFrame samples median/p95/p99={} / {} / {} us, admitted projections={}",enable,t[32]/1000,t[60]/1000,t[63]/1000,d.projections()-before.projections());});
+        return ctx.computeOnClient(mc->{var t=samples;samples=null;Arrays.sort(t);return t;});
     }
     /** A funded shot by a tracked remote holder. Check the received explosion coordinates against
      * the actual projectile/block hit on the server, not an explosion predicted at launch. */
@@ -230,7 +235,7 @@ public final class SurfaceLightSmoke {
         ctx.waitFor(mc->SurfaceLights.diagnostics().stuns()==before.stuns()+1,100);
         GunMod.LOGGER.info("PORT_SURFACE: server LR frag -> 1 blast, LR stun -> 1 white pulse, 0 unrelated FLASH pulses");
     }
-    private static void laser(ClientGameTestContext ctx,TestSingleplayerContext world) {
+    private static void laser(ClientGameTestContext ctx,TestSingleplayerContext world,BlockPos origin) {
         world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer();p.setItemInHand(InteractionHand.MAIN_HAND,GunItemBuilder.create().setId(M4).setAmmoCount(5).putAttachment(AttachmentType.LASER,NGAL).build());p.inventoryMenu.broadcastChanges();});
         ctx.waitFor(mc->{var stack=mc.player.getMainHandItem();return stack.getItem() instanceof IGun gun && NGAL.equals(gun.getAttachmentId(stack,AttachmentType.LASER));});
         ctx.waitTicks(26);var off=frame(ctx,"laser_off");ctx.runOnClient(mc->RenderConfig.LASER_IMPACT_SPOT.set(true));
@@ -243,9 +248,24 @@ public final class SurfaceLightSmoke {
             if(cb>30 && cb-ca>25) added++;
         }
         if (added<6) throw new AssertionError("No colored NGAL impact in wall frame: "+added);
+        // Same beam, hand and camera in both conditions. Neither screenshot nor tracking
+        // setup is part of the frame timing. One held laser is not a four-player benchmark.
+        for (boolean enable : new boolean[]{false,true}) {
+            ctx.runOnClient(mc->RenderConfig.LASER_IMPACT_SPOT.set(enable));ctx.waitTicks(8);
+            var t=frameTimes(ctx);
+            GunMod.LOGGER.info("PORT_SURFACE: 1 held NGAL, spot={}, 64 renderFrame samples median/p95/p99={} / {} / {} us",enable,t[32]/1000,t[60]/1000,t[63]/1000);
+        }
+        world.getServer().runOnServer(s->{var level=world.getConnection().getServerPlayer().level();
+            for(int x=-4;x<=4;x++) for(int y=-2;y<=2;y++) level.setBlock(origin.offset(x,y,3),Blocks.GLASS.defaultBlockState(),Block.UPDATE_ALL);
+        });
+        ctx.waitFor(mc->mc.level.getBlockState(origin.south(3)).is(Blocks.GLASS) && SurfaceLights.diagnostics().beamHits()==0,60);
+        world.getServer().runOnServer(s->{var level=world.getConnection().getServerPlayer().level();
+            for(int x=-4;x<=4;x++) for(int y=-2;y<=2;y++) level.setBlock(origin.offset(x,y,3),Blocks.COAL_BLOCK.defaultBlockState(),Block.UPDATE_ALL);
+        });
+        ctx.waitFor(mc->SurfaceLights.diagnostics().beamHits()>0,60);
         world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer();p.setItemInHand(InteractionHand.MAIN_HAND,ItemStack.EMPTY);p.inventoryMenu.broadcastChanges();});
         ctx.waitFor(mc->mc.player.getMainHandItem().isEmpty() && SurfaceLights.diagnostics().beamHits()==0,60);
-        GunMod.LOGGER.info("PORT_SURFACE: held NGAL cyan wall spot: {} added cyan pixels with beam in both frames; no spot after unequip",added);
+        GunMod.LOGGER.info("PORT_SURFACE: held NGAL cyan wall spot: {} added cyan pixels with beam in both frames; no painted glass, spot restored on coal and cleared on unequip",added);
     }
     private SurfaceLightSmoke() {}
 }
