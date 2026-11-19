@@ -16,7 +16,7 @@ import java.util.Set;
 /**
  * Injects a dormant TACZ scope-mask branch into Iris HAND fragment shaders before they are linked.
  *
- * <p>【作用域：只碰 HAND 程序 —— 开光影后世界透明案的 TACZ 侧修复】
+ * <p>【作用域：手部材质及镜内裁火光所需的一个自发光程序 —— 开光影后世界透明案的 TACZ 侧修复】
  * 本注入曾经作用于 Iris 链接的<b>所有</b> fragment 程序（地形/实体/天空/阴影……）。
  * 实测结论（2026-09，多名玩家，Apple M4 + 任意 shaderpack）：只要 TACZ 在场，
  * 开光影后地形/世界即透明，移除 TACZ 即恢复 —— 而被注入的程序在日志里全部编译通过，
@@ -24,7 +24,8 @@ import java.util.Set;
  * 也就是说：注入体对世界程序<b>零语义贡献</b>，却改变了它们的源码文本。
  * 自本修订起，只对 Iris 的 HAND 系程序（ShaderKey {@code HAND_*}：第一人称手部/
  * 枪械/瞄具管线，以及 pack 缺失对应程序时 Iris 合成的 fallback 程序）做注入；
- * 世界程序保持与原生 Iris<b>逐字节一致</b>，连 dormant 的 uniform 写入都不再有
+ * 裁剪的自发光枪焰另需 {@code entities_eyes_trans}，仅放行这个具体 key。
+ * 地形、天空、阴影等程序仍与原生 Iris<b>逐字节一致</b>，不增加 uniform
  * （{@code IrisScopeMaskState} 查不到 uniform location 会直接跳过）。
  *
  * <p>瞄具裁剪不受影响：全部 scope 管线（{@code tacz:pipeline/scope_*_clipped}）
@@ -102,8 +103,11 @@ public abstract class IrisShaderCreatorMixin {
             tacz$maybeSummarize();
             return;
         }
+        // Emissive muzzle draws (including scope-clipped ones) resolve to this exact Iris
+        // entity key. Keep terrain, shadow, deferred, and all other world programs untouched.
         boolean hand = tacz$isHandProgram(programName);
-        if (!legacyAll && !hand) {
+        boolean muzzle = "entities_eyes_trans".equalsIgnoreCase(programName);
+        if (!legacyAll && !hand && !muzzle) {
             tacz$tally(SKIP_WORLD);
             tacz$logDecision(programName, "skipped (not a HAND program; left byte-identical)");
             tacz$maybeSummarize();
@@ -112,7 +116,9 @@ public abstract class IrisShaderCreatorMixin {
         String patched = tacz$injectScopeMask(source, programName);
         if (patched == source) {
             tacz$tally(SKIP_NO_MAIN);
-        } else if (!legacyAll || hand) {
+        } else if (muzzle) {
+            tacz$tally(INJECTED_MUZZLE);
+        } else if (hand) {
             tacz$tally(INJECTED_HAND);
         } else {
             tacz$tally(INJECTED_ALL);
@@ -122,7 +128,7 @@ public abstract class IrisShaderCreatorMixin {
         }
         tacz$logDecision(programName, patched == source
                 ? "skipped (no verifiable 'void main() {' found; fail-closed)"
-                : (legacyAll && !hand ? "INJECTED (ALL policy)" : "INJECTED (HAND program)"));
+                : (muzzle ? "INJECTED (clipped emissive)" : hand ? "INJECTED (HAND program)" : "INJECTED (ALL policy)"));
         tacz$maybeSummarize();
     }
 
@@ -145,7 +151,8 @@ public abstract class IrisShaderCreatorMixin {
     /** 拦截到的 FRAGMENT createShader 调用总数（hook 存活证明）。 */
     private static final int SAW_FRAGMENT = 5;
     /** 管线构建只发生在渲染线程；计数纯诊断，近似即可。 */
-    private static final long[] TACZ_TALLY = new long[6];
+    private static final int INJECTED_MUZZLE = 6;
+    private static final long[] TACZ_TALLY = new long[7];
     private static boolean tacz$warnedNoHand;
     private static long tacz$lastSummaryMs;
     /** 每个 program 名只告警一次（名是有限集，跨重建复用，不会无界增长）。 */
@@ -167,11 +174,11 @@ public abstract class IrisShaderCreatorMixin {
             return;
         }
         tacz$lastSummaryMs = now;
-        GunMod.LOGGER.info("[TACZ Scope] Iris scope-mask injection so far: {} HAND program(s) patched, "
+        GunMod.LOGGER.info("[TACZ Scope] Iris scope-mask injection so far: {} HAND and {} emissive program(s) patched, "
                         + "{} world program(s) left byte-identical to stock Iris "
                         + "({} config-skipped, {} no-verifiable-main skipped, {} legacy-ALL injected; "
                         + "saw {} fragment shader(s)).",
-                TACZ_TALLY[INJECTED_HAND], TACZ_TALLY[SKIP_WORLD],
+                TACZ_TALLY[INJECTED_HAND], TACZ_TALLY[INJECTED_MUZZLE], TACZ_TALLY[SKIP_WORLD],
                 TACZ_TALLY[SKIP_CONFIG], TACZ_TALLY[SKIP_NO_MAIN], TACZ_TALLY[INJECTED_ALL],
                 TACZ_TALLY[SAW_FRAGMENT]);
         // HAND_CUTOUT 每局必存在（scope 管线每局都钉上去）；完整管线（≥20 程序）

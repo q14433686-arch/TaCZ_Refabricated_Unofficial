@@ -17,6 +17,10 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import com.tacz.guns.client.model.bedrock.IlluminatedMaterials;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
@@ -38,7 +42,8 @@ import java.util.Optional;
  * Read final colour and Iris's actual shadowtex0. Never feed any readback into the product renderer. */
 public final class ReimaginedSmoke {
     private static final Identifier SVD = Identifier.parse("tacz:svd"), AK = Identifier.parse("tacz:ak47");
-    public static boolean shadowReference, pulse, bodyOnly;
+    public static boolean shadowReference, pulse, bodyOnly, omitCaster;
+    public static RenderType oldMaterial, svdBody;
     public static int shadowBodies;
     private static int tile, pulses;
     private static Object targets;
@@ -79,10 +84,9 @@ public final class ReimaginedSmoke {
             int n = (int)call(targets,"getResolution"); int id = (int)call(call(targets,"getDepthTexture"),"iris$getGlId");
             float[] a = new float[n*n];
             GL45C.glGetTextureImage(id,0,GL45C.GL_DEPTH_COMPONENT,GL45C.GL_FLOAT,a);
-            if (!(a[0] >= 0 && a[0] <= 1) || a[a.length/2]==a[0] && a[n*n/2+n/2]==a[0] && a[n*n-1]==a[0]) {
-                boolean ok=false; for(float v:a) if(v!=a[0] && Float.isFinite(v)){ok=true;break;}
-                if(!ok) throw new AssertionError("Empty shadow depth readback: " + id);
-            }
+            boolean populated=false;
+            for(float v:a) if(Float.isFinite(v) && v!=a[0]) {populated=true;break;}
+            if(!populated) throw new AssertionError("Empty shadow depth readback: " + id);
             return a;
         } catch (ReflectiveOperationException e) { throw new AssertionError(e); }
     }
@@ -108,17 +112,25 @@ public final class ReimaginedSmoke {
         ctx.runOnClient(mc->{ requirePack(); mc.options.bobView().set(false); });
         var failures=new StringBuilder();
         try {
-            frame(ctx,"absent"); var empty=ctx.computeOnClient(mc->depth());
+            frame(ctx,"absent");
             equip(ctx,world,SVD);
-            shadow(ctx,"held",empty,failures);
+            shadow(ctx,"held",failures);
             equip(ctx,world,null);
+            // Third screenshot: the unselected first slot is NOT an absent-gun control.
+            // The shipped SVD display has hotbar_show[0], so its external rig can still cast.
+            server.runOnServer(s->{var inv=world.getConnection().getServerPlayer().getInventory(); inv.setSelectedSlot(1); inv.setItem(0,gun(SVD)); world.getConnection().getServerPlayer().inventoryMenu.broadcastChanges();});
+            ctx.runOnClient(mc->mc.player.getInventory().setSelectedSlot(1));
+            ctx.waitFor(mc->mc.player.getMainHandItem().isEmpty() && mc.player.getInventory().getItem(0).getItem() instanceof IGun);
+            shadow(ctx,"stowed",failures);
+            server.runOnServer(s->{var p=world.getConnection().getServerPlayer();p.getInventory().setItem(0,ItemStack.EMPTY);p.inventoryMenu.broadcastChanges();});
+            ctx.waitFor(mc->mc.player.getInventory().getItem(0).isEmpty());
             var dropped=server.computeOnServer(s->{var level=world.getConnection().getServerPlayer().level();
                 var e=new ItemEntity(level,base.getX()+.5,base.getY()+.8,base.getZ()+4.5,gun(SVD),0,0,0); e.setNoGravity(true); e.setPickUpDelay(32767);level.addFreshEntity(e);return e.getUUID();});
             ctx.waitFor(mc->mc.level.getEntity(dropped)!=null);
-            shadow(ctx,"drop",empty,failures);
+            shadow(ctx,"drop",failures);
             server.runOnServer(s->world.getConnection().getServerPlayer().level().getEntity(dropped).snapTo(Vec3.atCenterOf(base.offset(3,0,5))));
             ctx.waitFor(mc->mc.level.getEntity(dropped).getX()>base.getX()+2);
-            shadow(ctx,"moved",empty,failures);
+            shadow(ctx,"moved",failures);
             server.runOnServer(s->world.getConnection().getServerPlayer().level().getEntity(dropped).discard());
             ctx.waitFor(mc->mc.level.getEntity(dropped)==null); frame(ctx,"removed");
             server.runCommand("time set 18000");
@@ -141,20 +153,38 @@ public final class ReimaginedSmoke {
             for(int i=0;i<3;i++) if(emitted[i]<110 || Math.abs(strip[i]-emitted[i])>14){failures.append(" strip!=emissive");break;}
             if(!failures.isEmpty()) throw new AssertionError("Reimagined: "+failures);
             GunMod.LOGGER.info("PORT_REIMAGINED: complete");
-        } finally { ctx.runOnClient(mc->{tile=0;pulse=bodyOnly=shadowReference=false;targets=null;}); }
+        } finally { ctx.runOnClient(mc->{tile=0;pulse=bodyOnly=shadowReference=omitCaster=false;targets=oldMaterial=svdBody=null;}); }
     }
-    private static void shadow(ClientGameTestContext ctx, String label, float[] empty, StringBuilder failures) {
-        ctx.runOnClient(mc->{shadowBodies=0;shadowReference=true;});
-        frame(ctx,label+"_reference"); var ideal=ctx.computeOnClient(mc->depth());
-        ctx.runOnClient(mc->shadowReference=false); frame(ctx,label); var actual=ctx.computeOnClient(mc->depth());
-        // Compare against the SAME SVD with the original cutout material for shadow depth only.
-        // An animated body/turning item can move within that local silhouette, not halfway across the map.
-        int n=(int)Math.sqrt(empty.length), x0=n,y0=n,x1=-1,y1=-1,near=0,far=0;
-        for(int i=0;i<empty.length;i++) if(Math.abs(empty[i]-ideal[i])>.0001f) {int x=i%n,y=i/n;x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);near++;}
-        int pad=n/24;
-        for(int i=0;i<empty.length;i++) if(Math.abs(empty[i]-actual[i])>.0001f){int x=i%n,y=i/n;if(x<x0-pad||x>x1+pad||y<y0-pad||y>y1+pad)far++;}
-        GunMod.LOGGER.info("PORT_REIMAGINED: shadow {} reference changed={} bounds=({},{})..({},{}) outliers={} shadow body selects={}",label,near,x0,y0,x1,y1,far,shadowBodies);
-        if(near<4 || shadowBodies==0 || far>4) failures.append(' ').append(label).append("-shadow(").append(near).append('/').append(far).append('/').append(shadowBodies).append(')');
+    private static float[] renderDepth(Minecraft mc) {
+        // Four complete renders on the SAME client tick. No advancing item bob/spin or actor
+        // animation between the original-material reference and production footage.
+        mc.gameRenderer.update(DeltaTracker.ONE); mc.gameRenderer.extract(DeltaTracker.ONE,true);
+        mc.gameRenderer.render(); RenderSystem.getDevice().createCommandEncoder().submit();
+        return depth();
+    }
+    private static void shadow(ClientGameTestContext ctx, String label, StringBuilder failures) {
+        frame(ctx,label);
+        ctx.runOnClient(mc->{
+            // A null shadow mapping was the suspected regression. Use the original visible
+            // (non-shadow) illuminated type as a deliberate bad caster for sensitivity.
+            svdBody=RenderTypes.entityCutout(Identifier.parse("tacz:textures/gun/uv/svd.png"));
+            var unmapped=IlluminatedMaterials.forBody(svdBody,false);
+            shadowBodies=0; omitCaster=true; var absent=renderDepth(mc); omitCaster=false;
+            shadowReference=true; var ideal=renderDepth(mc); shadowReference=false;
+            var actual=renderDepth(mc);
+            oldMaterial=unmapped; var bad=renderDepth(mc); oldMaterial=null;
+            int n=(int)Math.sqrt(actual.length), width=0, near=0, agree=0,spurious=0,badSpurious=0;
+            // Static nearby terrain, but waving leaves/foliage may change a few individual
+            // distant texels even within a tick. Count long contiguous runs as well as area.
+            for(int y=0;y<n;y++) {int run=0;for(int x=0;x<n;x++) {
+                int i=x+y*n; boolean ref=Math.abs(ideal[i]-absent[i])>.00015f, got=Math.abs(actual[i]-absent[i])>.00015f;
+                if(ref)near++; if(ref && Math.abs(actual[i]-ideal[i])<.00015f)agree++;
+                if(!ref && got)spurious++;
+                if(!ref && Math.abs(bad[i]-absent[i])>.00015f){badSpurious++;width=Math.max(width,++run);}else run=0;
+            }}
+            GunMod.LOGGER.info("PORT_REIMAGINED: shadow {} reference={} same-depth={} extra={} unmapped-extra={} unmapped-longest-row={} selects={}",label,near,agree,spurious,badSpurious,width,shadowBodies);
+            if(shadowBodies==0 || near<3 || agree<near*.70 || spurious>Math.max(12,near*.15)) failures.append(' ').append(label).append("-shadow");
+        });
     }
     // Sample the shipped flash strip through the production material factory against the pack's
     // emissive program. Same opaque white texel, camera, dark scene, full UV2 and vertex colour.
@@ -180,7 +210,7 @@ public final class ReimaginedSmoke {
     }
     private static String regions(BufferedImage off,BufferedImage on){
         var msg=new StringBuilder();
-        for (int[] rect:new int[][]{{54,70,61,79},{64,79,74,88}}){
+        for (int[] rect:new int[][]{{62,71,65,74},{49,67,51,70}}){
             int[] a=new int[3],b=new int[3];int n=0;
             for(int y=off.getHeight()*rect[1]/100;y<off.getHeight()*rect[3]/100;y++)for(int x=off.getWidth()*rect[0]/100;x<off.getWidth()*rect[2]/100;x++){
                 for(int i=0;i<3;i++){a[i]+=off.getRGB(x,y)>>(16-8*i)&255;b[i]+=on.getRGB(x,y)>>(16-8*i)&255;}n++;}

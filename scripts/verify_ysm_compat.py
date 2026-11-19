@@ -79,9 +79,12 @@ class YsmContractChecks(unittest.TestCase):
         # Event<Callback> with CALLBACK.invoker().post(...).
         for name in ("GunFireEvent", "GunMeleeEvent", "GunReloadEvent"):
             source = code(JAVA / f"com/tacz/guns/api/event/common/{name}.java")
-            self.assertIn("EventFactory.createArrayBacked", source, name)
-            full = read(JAVA / f"com/tacz/guns/api/event/common/{name}.java")
-            self.assertIn("public static final Event<Callback> CALLBACK", full, name)
+            factory = "createWithPhases" if name == "GunFireEvent" else "createArrayBacked"
+            self.assertIn("public static final Event<Callback> CALLBACK = EventFactory." + factory, source, name)
+            self.assertIn("callback.post(event)", source, name)
+            packet = "ServerMessage" + name.removesuffix("Event")
+            delivery = code(JAVA / f"com/tacz/guns/network/message/event/{packet}.java")
+            self.assertIn(name + ".CALLBACK.invoker().post(", delivery, packet)
         fire = code(JAVA / "com/tacz/guns/api/event/common/GunFireEvent.java")
         self.assertIn("public LivingEntity getShooter()", fire)
         reload_event = code(JAVA / "com/tacz/guns/api/event/common/GunReloadEvent.java")

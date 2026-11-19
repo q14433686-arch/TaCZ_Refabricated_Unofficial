@@ -34,17 +34,33 @@ public final class IlluminatedMaterials {
     /** Unknown/specialised materials are owned by their caller. Never strip a custom sampler,
      * reticle mask, texture transform, depth test or layering transform by guessing from its texture. */
     public static RenderType forBody(RenderType original, boolean hand) {
-        var setup = ((ThermalRenderTypeAccessor)(Object)original).tacz$thermalSetup();
+        // A self-lit bone still casts the same silhouette, with the same UV/alpha coverage.
+        // Iris re-submits the external model in light space and has a separate program map
+        // for shadows. Use the original, already shadow-mapped material for that pass only.
+        if (!hand && IrisCompat.isRenderShadow()) return original;
+        Identifier texture = texture(original);
+        Body body = classify(original, texture);
+        if (body == null) return original;
+        return TYPES.computeIfAbsent(new Key(new Pass(body, hand), texture, original.outline().isPresent()), IlluminatedMaterials::create);
+    }
+
+    private static Identifier texture(RenderType type) {
+        var setup = ((ThermalRenderTypeAccessor)(Object)type).tacz$thermalSetup();
         var binding = ((ThermalRenderSetupAccessor)(Object)setup).tacz$thermalTextures().get("Sampler0");
-        if (!(binding instanceof ThermalTextureBindingAccessor sampler)) return original;
-        Identifier texture = sampler.tacz$thermalTexture();
+        return binding instanceof ThermalTextureBindingAccessor sampler ? sampler.tacz$thermalTexture() : null;
+    }
+    private static Body classify(RenderType original, Identifier texture) {
+        if (texture == null) return null;
         boolean outline = original.outline().isPresent();
-        Body body;
-        if (original.pipeline() == RenderPipelines.ENTITY_CUTOUT && original == RenderTypes.entityCutout(texture, outline)) body = Body.CUTOUT;
-        else if (original.pipeline() == RenderPipelines.ENTITY_TRANSLUCENT && original == RenderTypes.entityTranslucent(texture, outline)) body = Body.TRANSLUCENT;
-        else if (ScopeBodyRenderTypes.isClippedBody(original, texture)) body = Body.CLIPPED;
-        else return original;
-        return TYPES.computeIfAbsent(new Key(new Pass(body, hand), texture, outline), IlluminatedMaterials::create);
+        if (original.pipeline() == RenderPipelines.ENTITY_CUTOUT && original == RenderTypes.entityCutout(texture, outline)) return Body.CUTOUT;
+        if (original.pipeline() == RenderPipelines.ENTITY_TRANSLUCENT && original == RenderTypes.entityTranslucent(texture, outline)) return Body.TRANSLUCENT;
+        return ScopeBodyRenderTypes.isClippedBody(original, texture) ? Body.CLIPPED : null;
+    }
+
+    /** Recognize body albedo only. Optics, overlays and particles must not acquire reflected light. */
+    public static Identifier bodyTexture(RenderType type) {
+        var texture = texture(type);
+        return classify(type, texture) == null ? null : texture;
     }
 
     /** The preview collector changes cutout to translucent. Keep the illuminated variant there too. */

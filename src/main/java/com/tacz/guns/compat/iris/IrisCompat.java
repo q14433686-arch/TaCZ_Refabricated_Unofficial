@@ -212,6 +212,11 @@ public final class IrisCompat {
         tryAssignPipeline(pipeline, hand ? "HAND" : emissive ? "EMISSIVE_ENTITIES" : "ENTITIES");
     }
 
+    /** Self-emitting colours use the pack's emissive program in either view. HAND is normally lit. */
+    public static void assignEmissivePipeline(RenderPipeline pipeline) {
+        tryAssignPipeline(pipeline, "EMISSIVE_ENTITIES");
+    }
+
     public static void assignRackOutlinePipeline(RenderPipeline pipeline) {
         tryAssignPipeline(pipeline, "LINES");
     }

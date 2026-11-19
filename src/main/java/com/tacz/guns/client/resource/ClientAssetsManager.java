@@ -133,6 +133,7 @@ public enum ClientAssetsManager {
                         com.tacz.guns.client.render.scope.ScopePipRenderer.invalidateLensResources();
                         com.tacz.guns.client.particle.NativeMuzzleEffects.clear();
                         com.tacz.guns.client.model.bedrock.IlluminatedMaterials.clearTextures();
+                        com.tacz.guns.client.render.FlashMaterials.clearTextures();
                         ClientIndexManager.reload();
                     }, gameExecutor);
                 }

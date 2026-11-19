@@ -7,6 +7,7 @@ import com.mojang.math.Axis;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.client.particle.MuzzleAttachment;
 import com.tacz.guns.client.particle.NativeMuzzleEffects;
+import com.tacz.guns.client.render.FlashMaterials;
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.IFunctionalSubmitter;
 import com.tacz.guns.client.model.SlotModel;
@@ -137,9 +138,8 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
                     com.tacz.guns.client.render.scope.ScopeMaskGeometry.isEmpty(),
                     com.tacz.guns.client.render.scope.ScopeMaskTextureHandle.syncToMaskTarget());
         }
-        RenderType flashQuadType = flashMaskReady
-                ? com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.flashTranslucent(muzzleFlash.getTexture())
-                : RenderTypes.entityTranslucent(muzzleFlash.getTexture());
+        RenderType flashQuadType = FlashMaterials.legacyStrip(muzzleFlash.getTexture(), flashMaskReady);
+        RenderType glowType = FlashMaterials.swirl(muzzleFlash.getTexture(), flashMaskReady, flashMaskReady ? 0 : 1);
 
         context.add(collector -> {
             PoseStack backgroundPose = new PoseStack();
@@ -162,9 +162,6 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
             // 大面片从未失手。26.2 把 swirl 折叠回通用 entity shader（core/entity +
             // APPLY_TEXTURE_MATRIX），我们的 scope_body 就是它的逐字节拷贝，于是直接
             // 立一条 mask 版 swirl 管线（ADDITIVE 观感不变 + 镜内 discard）。
-            RenderType glowType = flashMaskReady
-                    ? com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.flashSwirlClipped(muzzleFlash.getTexture())
-                    : RenderTypes.energySwirl(muzzleFlash.getTexture(), 1, 1);
             collector.submitCustomGeometry(glowPose, glowType,
                     (pose, buffer) -> MUZZLE_FLASH_MODEL.renderToBuffer(
                             glowPose, buffer, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F));

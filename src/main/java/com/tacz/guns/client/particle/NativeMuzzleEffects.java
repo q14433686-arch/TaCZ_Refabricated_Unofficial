@@ -12,6 +12,7 @@ import com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitio
 import com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager;
 import com.tacz.guns.client.model.IFunctionalSubmitter;
 import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
+import com.tacz.guns.client.render.FlashMaterials;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.util.time.GunTime;
@@ -171,7 +172,7 @@ public final class NativeMuzzleEffects {
         if (!Float.isFinite(size) || size > 32) return true;
         pose.rotate(com.mojang.math.Axis.ZP.rotationDegrees(shot.rotation));
         boolean clipped = first && ScopeBodyRenderTypes.maskReadyForViewmodel(true);
-        RenderType type = clipped ? ScopeBodyRenderTypes.flashSwirlClipped(FLASH_TEXTURE) : RenderTypes.energySwirl(FLASH_TEXTURE, 0, 0);
+        RenderType type = FlashMaterials.swirl(FLASH_TEXTURE, clipped, 0);
         float u = shot.frame / 18f;
         context.add(out -> quad(out, pose, type, size, size, u, u + 1f/18, 0xffffffff, 15728880));
         if (first) firstFlashSubmits++; else thirdFlashSubmits++;
@@ -190,8 +191,7 @@ public final class NativeMuzzleEffects {
         }
         if (id.equals(FLASH)) {
             if (!RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) {
-                var type = first && ScopeBodyRenderTypes.maskReadyForViewmodel(true)
-                        ? ScopeBodyRenderTypes.flashSwirlClipped(FLASH_TEXTURE) : RenderTypes.energySwirl(FLASH_TEXTURE, 0, 0);
+                var type = FlashMaterials.swirl(FLASH_TEXTURE, first && ScopeBodyRenderTypes.maskReadyForViewmodel(true), 0);
                 quad(collector, copy(pose), type, .45f, .45f, 4f/18, 5f/18, 0xffffffff, 15728880);
             }
             return true;

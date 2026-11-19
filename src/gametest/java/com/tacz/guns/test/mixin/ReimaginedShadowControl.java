@@ -13,6 +13,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 abstract class ReimaginedShadowControl {
     @Inject(method="forBody",at=@At("HEAD"),cancellable=true)
     private static void reference(RenderType body, boolean hand, CallbackInfoReturnable<RenderType> ci) {
-        if(ReimaginedSmoke.shadowReference && IrisCompat.isRenderShadow()) { ReimaginedSmoke.shadowBodies++; ci.setReturnValue(body); }
+        if (!IrisCompat.isRenderShadow()) return;
+        if (ReimaginedSmoke.shadowReference) { ReimaginedSmoke.shadowBodies++; ci.setReturnValue(body); }
+        else if (ReimaginedSmoke.oldMaterial != null && body == ReimaginedSmoke.svdBody) ci.setReturnValue(ReimaginedSmoke.oldMaterial);
     }
 }

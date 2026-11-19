@@ -337,7 +337,7 @@ public class RenderConfig {
                 .define("EnableScopeThermal", true);
         IRIS_SCOPE_MASK_INJECTION = builder
                 .comment("Which Iris shader programs receive the TACZ scope-mask clip branch.",
-                        "HAND_ONLY (default): only gbuffers_hand programs; world programs stay byte-identical to stock Iris.",
+                        "HAND_ONLY (default): hand programs and the emissive entity variant used by clipped flashes; terrain and shadow programs are untouched.",
                         "ALL: legacy behaviour (every program). OFF: never inject (scope is not clipped under shader packs).",
                         "Takes effect after the shader pipeline is rebuilt (toggle or reload the pack).")
                 .defineEnum("IrisScopeMaskInjection", IrisScopeMaskInjection.HAND_ONLY);

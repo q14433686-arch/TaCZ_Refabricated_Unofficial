@@ -24,7 +24,7 @@ public final class SnowstormMaterials {
         return switch (desc.getMaterial()) {
             case PARTICLES_OPAQUE -> clipped ? ScopeBodyRenderTypes.clipped(texture) : RenderTypes.entityCutout(texture);
             case PARTICLES_ALPHA, PARTICLES_BLEND -> clipped ? ScopeBodyRenderTypes.flashTranslucent(texture) : RenderTypes.entityTranslucent(texture);
-            case ENERGY_SWIRL -> clipped ? ScopeBodyRenderTypes.swirlClipped(texture, 1) : RenderTypes.energySwirl(texture, 1, 1);
+            case ENERGY_SWIRL -> com.tacz.guns.client.render.FlashMaterials.swirl(texture, clipped, 1);
             case PARTICLES_ADD, PARTICLES_EMISSIVE -> TYPES.computeIfAbsent(
                     new Key(new Pass(desc.getMaterial() == ParticleDescription.Material.PARTICLES_EMISSIVE, clipped, hand || clipped), texture), key -> {
                 var setup = RenderSetup.builder(PIPELINES.computeIfAbsent(key.pass, SnowstormMaterials::pipeline))
@@ -49,7 +49,8 @@ public final class SnowstormMaterials {
         else builder.withShaderDefine("PER_FACE_LIGHTING").withDepthStencilState(new DepthStencilState(DepthStencilState.DEFAULT.depthTest(), false));
         if (pass.clipped) builder.withShaderDefine("SCOPE_MASK").withBindGroupLayout(ScopeBodyRenderTypes.maskSamplerLayout());
         var pipeline = builder.build();
-        IrisCompat.assignEntityPipeline(pipeline, pass.hand, pass.emissive);
+        if (pass.emissive) IrisCompat.assignEmissivePipeline(pipeline);
+        else IrisCompat.assignEntityPipeline(pipeline, pass.hand, false);
         ScopePipelinePrewarm.touch(pipeline);
         return pipeline;
     }

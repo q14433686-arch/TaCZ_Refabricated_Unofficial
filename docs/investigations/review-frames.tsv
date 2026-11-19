@@ -1,9 +1,13 @@
-# Same-code muzzle raster controls: an authored long-lived magenta marker, not the random 20 ms stock strip.
-44449218116	smoke	tacz_muzzle_marker_bare_off
-44449218116	smoke	tacz_muzzle_marker_bare_on
-44449218116	smoke	tacz_muzzle_marker_rc1_off
-44449218116	smoke	tacz_muzzle_marker_rc1_on
-44449218152	iris	tacz_muzzle_marker_bare_off
-44449218152	iris	tacz_muzzle_marker_bare_on
-44449218152	iris	tacz_muzzle_marker_rc1_off
-44449218152	iris	tacz_muzzle_marker_rc1_on
+# Completed Reimagined r5.9.3 pre-fix controls (untouched screenshots).
+44454814995	reimagined-off	tacz_reimagined_drop
+44454814995	reimagined-off	tacz_reimagined_drop_reference
+44454814995	reimagined-off	tacz_reimagined_night_body
+44454814995	reimagined-off	tacz_reimagined_night_off
+44454814995	reimagined-off	tacz_reimagined_night_strip
+44454814995	reimagined-off	tacz_reimagined_night_reference
+44454814995	reimagined-act	tacz_reimagined_held
+44454814995	reimagined-act	tacz_reimagined_night_off
+44454814995	reimagined-act	tacz_reimagined_night_body
+44454814995	reimagined-act	tacz_reimagined_night_stock
+44454814995	reimagined-act	tacz_reimagined_night_strip
+44454814995	reimagined-act	tacz_reimagined_night_reference

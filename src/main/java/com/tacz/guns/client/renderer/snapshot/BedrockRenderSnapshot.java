@@ -13,6 +13,8 @@ import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.bedrock.IlluminatedMaterials;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import com.tacz.guns.util.IlluminatedLights;
+import com.tacz.guns.client.render.ViewmodelFlash;
+import com.tacz.guns.client.render.FlashMaterials;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -109,19 +111,25 @@ public final class BedrockRenderSnapshot {
         RenderType illuminated = firstUnshaded < 0 ? body : IlluminatedMaterials.forBody(body, hand);
         if (illuminated == body) {
             submitRange(collector, identity, body, 0, drawCommands.size());
-            return;
-        }
-        RenderType current = body;
-        int start = 0;
-        for (int i = firstUnshaded; i < drawCommands.size(); i++) {
-            RenderType next = drawCommands.get(i).unshaded() ? illuminated : body;
-            if (next != current) {
-                if (i > start) submitRange(collector, identity, current, start, i);
-                current = next;
-                start = i;
+        } else {
+            RenderType current = body;
+            int start = 0;
+            for (int i = firstUnshaded; i < drawCommands.size(); i++) {
+                RenderType next = drawCommands.get(i).unshaded() ? illuminated : body;
+                if (next != current) {
+                    if (i > start) submitRange(collector, identity, current, start, i);
+                    current = next;
+                    start = i;
+                }
             }
+            submitRange(collector, identity, current, start, drawCommands.size());
         }
-        submitRange(collector, identity, current, start, drawCommands.size());
+        float gain = hand ? ViewmodelFlash.gain() : 0;
+        if (gain > 0) {
+            var texture = IlluminatedMaterials.bodyTexture(body);
+            if (texture != null) collector.order(1).submitCustomGeometry(identity, FlashMaterials.reflection(texture),
+                    (entry, out) -> write(out, 0, drawCommands.size(), gain, true));
+        }
     }
 
     private void submitRange(SubmitNodeCollector collector, PoseStack identity, RenderType type, int start, int end) {
@@ -131,16 +139,19 @@ public final class BedrockRenderSnapshot {
     /** Explicit single-material replay (e.g. the final reticle pass). */
     public void write(VertexConsumer consumer) { write(consumer, 0, drawCommands.size()); }
 
-    private void write(VertexConsumer consumer, int start, int end) {
+    private void write(VertexConsumer consumer, int start, int end) { write(consumer, start, end, 1, false); }
+
+    private void write(VertexConsumer consumer, int start, int end, float gain, boolean reflected) {
         PoseStack poseStack = new PoseStack();
         for (int i = start; i < end; i++) {
             DrawCommand command = drawCommands.get(i);
+            if (reflected && command.unshaded()) continue; // already self-lit, not a second lamp
             PoseStack.Pose pose = poseStack.last();
             pose.pose().set(command.pose());
             pose.normal().set(command.normal());
             for (BedrockCube cube : command.cubes()) {
                 cube.compile(pose, consumer, command.light(), command.overlay(),
-                        command.red(), command.green(), command.blue(), command.alpha());
+                        command.red() * gain, command.green() * gain, command.blue() * gain, command.alpha());
             }
         }
     }
