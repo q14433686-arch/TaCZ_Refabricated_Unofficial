@@ -103,7 +103,7 @@ jobs:
       - name: Full build
         run: |
           set -o pipefail
-          ./gradlew build --console=plain --stacktrace --no-daemon 2>&1 | tee "$RUNNER_TEMP/tacz-build.log"
+          ./gradlew --init-script scripts/ci-central.init.gradle build --console=plain --stacktrace --no-daemon 2>&1 | tee "$RUNNER_TEMP/tacz-build.log"
 
       - name: Verify server smoke and nested MAE
         run: |

@@ -44,7 +44,7 @@ jobs:
         run: |
           mkdir -p build-reports
           echo "commit: ${{ github.sha }}" > build-reports/compile-java.log
-          ./gradlew compileJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
+          ./gradlew --init-script scripts/ci-central.init.gradle compileJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
       - name: Record camera hurt bytecode for version-port diagnostics
         run: |
           JAR=$(find .gradle "$HOME/.gradle" -name '*26.3*.jar' -path '*minecraft-merged*' | head -1)
