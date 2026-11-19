@@ -96,7 +96,11 @@ public final class WorldFlashFrame {
             rackRays--;
             if (visible(s, p.relative(normal,.012), self, normal)) { best = gain; rgb = s.rgb; }
         }
-        return Math.round((rgb>>16 & 255)*best)<<16 | Math.round((rgb>>8 & 255)*best)<<8 | Math.round((rgb & 255)*best);
+        // The colour attribute modulates the rack's actual atlas texels. Convert the
+        // linear gain to a display-space multiplier, like the object light column above;
+        // using linear gain again here crushes dark albedo (notably the open case back).
+        float diffuse = (float)Math.sqrt(best);
+        return Math.round((rgb>>16 & 255)*diffuse)<<16 | Math.round((rgb>>8 & 255)*diffuse)<<8 | Math.round((rgb & 255)*diffuse);
     }
     private static boolean facing(Source s,double x,double y,double z,@Nullable Direction face) {
         if (face == null) return true;

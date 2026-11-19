@@ -3,7 +3,7 @@ package com.tacz.guns.test;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.render.scope.ScopePipRenderer;
 import com.tacz.guns.compat.iris.IrisCompat;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.state.level.LevelRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.world.entity.EntityTypes;
@@ -28,18 +28,22 @@ public final class ReceiverInputs {
         if (!label.startsWith("objects_")) return;
         current=new int[6];Arrays.fill(current,-1);frames.put(label,current);
     }
-    static void collected() {
-        if (current==null) return;
-        var state=Minecraft.getInstance().gameRenderer.gameRenderState().levelRenderState;
+    static void collected() { current=null; }
+    private static boolean observing() {
+        return current!=null && SurfaceLightFrames.triggered() && !ScopePipRenderer.isInsideScopeLevelRender() && !IrisCompat.isRenderShadow();
+    }
+    /** Vanilla clears both lists BEFORE Fabric COLLECT_SUBMITS. Observe from inside
+     * submitFeatures as vanilla begins submitting entities, with the scoped light applied. */
+    public static void submit(LevelRenderState state) {
+        if (!observing()) return;
         for (var e:state.entityRenderStates) {
             int i=e.entityType==EntityTypes.COW ? 0 : e.entityType==EntityTypes.ARMOR_STAND ? 1 : e.entityType==EntityTypes.ITEM ? 2 : -1;
             if (i>=0 && entities[i].distanceToSqr(e.x,e.y,e.z)<.09) current[i]=e.lightCoords;
         }
         for (var b:state.blockEntityRenderStates) if (statue.equals(b.blockPos)) current[3]=b.lightCoords;
-        current=null;
     }
     public static void rack(BlockPos pos,int light) {
-        if(current==null || !SurfaceLightFrames.triggered() || ScopePipRenderer.isInsideScopeLevelRender() || IrisCompat.isRenderShadow()) return;
+        if (!observing()) return;
         if (board.equals(pos)) current[4]=light;
         if (cabinet.equals(pos)) current[5]=light;
     }
