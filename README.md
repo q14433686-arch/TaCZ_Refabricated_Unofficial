@@ -155,6 +155,7 @@ authored 对齐（实机验证待补）；其余内容不变。
   世界语境有近距全模豁免与顶点预算保护。依赖外置 TML 的枪包在本 mod 下
   视为依赖满足（`provides: ["taczmeshloader"]`）。范围、配置与已知边界见
   [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md)）；
+- **实验性近场光效（默认关闭）**：客户端「渲染」中可分别开启镭射命中光斑、枪口近场散射、旧枪包击发曝光和爆炸近场散射。只投影到近处不透明方块表面，不放光源方块；RPG 发射和爆点分开，LR 震撼弹不会因补光多糊一层白屏。[配置、公式与多人预算](docs/investigations/SURFACE_LIGHT_26_3.md)。
 - **无 LOD 的掉落枪**：默认从 8 格起用该枪包的 `slot` 图标，不隐藏掉落物。有作者低模时沿用原选模，没有图标则保留 3D。近处堆枪也卡可把客户端 `DroppedGunSpriteDistance` 设为 `0`；`-1` 关闭图标回退。见[选路、实测方法与取舍](docs/investigations/DROPPED_GUN_LOD_26_3.md)；
 - 若干可选模组的兼容接线。
 

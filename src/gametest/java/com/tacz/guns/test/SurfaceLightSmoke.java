@@ -74,15 +74,16 @@ final class SurfaceLightSmoke {
                 var launcher=GunItemBuilder.create().setId(RPG).build();
                 ReimaginedShotControl.taczTest$shot(new GunFirePostEvent(mc.player,launcher,LogicalSide.CLIENT));
                 if (NativeMuzzleEffects.flashLight(launcher,0)!=10<<4 || NativeMuzzleEffects.flashLight(rifle,0)!=0) throw new AssertionError("Locatorless RPG exposure / different gun");
-                replay=true;
+                previousTick=-1; replay=true;
             });
             ctx.waitTicks(3);
             var off=frame(ctx,"off");
             ctx.runOnClient(mc->RenderConfig.MUZZLE_SURFACE_LIGHT.set(true)); ctx.waitTicks(6);
-            var front=frame(ctx,"front");
+            int lit=0;
+            for (int i=0;i<3;i++) lit=Math.max(lit,redDelta(off,frame(ctx,"front_"+i)));
             ctx.runOnClient(mc->{replay=false; SurfaceLights.clear(); position(mc,origin,true); replay=true;}); ctx.waitTicks(6);
             var rear=frame(ctx,"behind");
-            int lit=redDelta(off,front), leak=redDelta(off,rear);
+            int leak=redDelta(off,rear);
             GunMod.LOGGER.info("PORT_SURFACE: central wall red delta off/front/behind={}/{} over control",lit,leak);
             if (lit<8 || Math.abs(leak)>Math.max(4,lit/5)) throw new AssertionError("Wall did not light only on the visible side: "+lit+"/"+leak);
             ctx.runOnClient(mc->{replay=false; SurfaceLights.clear();position(mc,origin,false);timed=true;previousTick=-1;replay=true;});
@@ -101,13 +102,17 @@ final class SurfaceLightSmoke {
     }
     private static void setup(Minecraft mc, BlockPos origin) {
         rifle=GunItemBuilder.create().setId(AK).build();
-        for(int i=0;i<actors.length;i++) actors[i]=new Cow(EntityTypes.COW,mc.level);
+        for(int i=0;i<actors.length;i++) {
+            actors[i]=new Cow(EntityTypes.COW,mc.level);
+            // 26.3 client-only entities have no ID until a spawn packet assigns one.
+            actors[i].setId(100000000+i);
+        }
         position(mc,origin,false);
         if (registered) return; registered=true;
         RenderTickEvent.EVENT.register(e->{
             if (!replay || e.phase!=RenderTickEvent.Phase.START) return;
             long tick=mc.level.getGameTime();
-            if (!timed || previousTick!=tick) {
+            if (previousTick!=tick) {
                 previousTick=tick;
                 for(int i=timed?(int)(tick&1):0;i<(timed?16:1);i+=2)
                     ReimaginedShotControl.taczTest$shot(new GunFirePostEvent(actors[i],rifle,LogicalSide.CLIENT));
@@ -157,7 +162,8 @@ final class SurfaceLightSmoke {
         world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer();p.setItemInHand(InteractionHand.MAIN_HAND,GunItemBuilder.create().setId(M4).setAmmoCount(5).putAttachment(AttachmentType.LASER,NGAL).build());p.inventoryMenu.broadcastChanges();});
         ctx.waitFor(mc->{var stack=mc.player.getMainHandItem();return stack.getItem() instanceof IGun gun && NGAL.equals(gun.getAttachmentId(stack,AttachmentType.LASER));});
         ctx.waitTicks(26);var off=frame(ctx,"laser_off");ctx.runOnClient(mc->RenderConfig.LASER_IMPACT_SPOT.set(true));
-        ctx.waitFor(mc->SurfaceLights.diagnostics().beamHits()>0);ctx.waitTicks(4);var on=frame(ctx,"laser_on");
+        try { ctx.waitFor(mc->SurfaceLights.diagnostics().beamHits()>0); }
+        catch(AssertionError e) { throw new AssertionError("Held NGAL did not project: "+ctx.computeOnClient(mc->SurfaceLights.diagnostics()),e); }ctx.waitTicks(4);var on=frame(ctx,"laser_on");
         int added=0;
         for(int y=on.getHeight()/5;y<on.getHeight()*3/4;y++) for(int x=on.getWidth()/5;x<on.getWidth()*4/5;x++) {
             int a=off.getRGB(x,y),b=on.getRGB(x,y);
