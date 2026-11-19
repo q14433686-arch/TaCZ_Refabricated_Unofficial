@@ -94,7 +94,10 @@ public final class SurfaceLightSmoke {
             ctx.runOnClient(mc->{SurfaceLights.clear();position(mc,origin,false);previousTick=-1;replay=true;});
             timing(ctx,false); timing(ctx,true);
             ctx.runOnClient(mc->{replay=false;SurfaceLights.clear();});
-            try { packets(ctx,world); } catch(AssertionError e) { failures.append(" packets: ").append(e.getMessage()).append(" ").append(ctx.computeOnClient(mc->SurfaceLights.diagnostics())); }
+            try { packets(ctx,world); } catch(AssertionError e) {
+                var state=ctx.computeOnClient(mc->SurfaceLights.diagnostics());
+                failures.append(" packets: ").append(e.getMessage()).append(" ").append(state);
+            }
             try { laser(ctx,world); } catch(AssertionError e) { failures.append(" laser: ").append(e.getMessage()); }
             if (!failures.isEmpty()) throw new AssertionError("Near-field controls:"+failures);
         } finally {

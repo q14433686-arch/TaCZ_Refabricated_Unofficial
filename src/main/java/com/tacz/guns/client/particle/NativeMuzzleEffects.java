@@ -130,7 +130,8 @@ public final class NativeMuzzleEffects {
             var id = gun.getGunId(stack);
             var index = TimelessAPI.getCommonGunIndex(id).orElse(null);
             if (index == null) return;
-            var explosion = index.getBulletData().getExplosionData();
+            var bullet = index.getBulletData();
+            var explosion = bullet == null ? null : bullet.getExplosionData();
             int light = LegacyShotLight.level(flash, display.omitsMuzzleFlash(), index.getType(), explosion != null && explosion.isExplode(), MuzzleAttachment.of(stack), first);
             if (light > 0) {
                 if (first) legacyExposure = new LegacyExposure(id, gun.getGunDisplayId(stack), light, GunTime.nowMillis());
