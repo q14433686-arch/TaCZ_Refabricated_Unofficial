@@ -2,13 +2,13 @@
 44457885522	iris	tacz_lens_pip_bare
 44457885522	iris	tacz_lens_pip_optical
 44457885522	iris	tacz_lens_pip_1x
-44456705144	iris	tacz_lens_pip_bare
-44456705144	iris	tacz_lens_pip_optical
 44457885522	reimagined-act	tacz_amg10_particle_1
 44457885522	reimagined-act	tacz_amg10_particle_2
-# HUD profiles / spread, from the final plain Mesa run. Earlier tuner frames are already saved in build-reports/visual/.
-44469134375	smoke	tacz_view_tuning_colors
-44469134375	smoke	tacz_view_tuning_box_stand
-44469134375	smoke	tacz_view_tuning_box_sneak
-44469134375	smoke	tacz_view_tuning_dot_spread
-44469134375	smoke	tacz_view_tuning_preset_ring
+# Native center/precision and local burst controls, from the passing Iris client job (other matrix jobs need no HUD screenshots).
+44473615039	iris	tacz_view_tuning_native_axes_odd
+44473615039	iris	tacz_view_tuning_ring_editor
+44473615039	iris	tacz_view_tuning_ring_rest
+44473615039	iris	tacz_view_tuning_ring_ellipse
+44473615039	iris	tacz_view_tuning_burst_rest
+44473615039	iris	tacz_view_tuning_burst_open
+44473615039	iris	tacz_view_tuning_burst_return

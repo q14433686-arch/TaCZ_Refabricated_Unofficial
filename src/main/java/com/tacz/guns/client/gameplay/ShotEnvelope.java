@@ -2,6 +2,7 @@ package com.tacz.guns.client.gameplay;
 
 /** Cosmetic displacement in units of one shot. Sampling never advances it: HUD, editor and FPS agree. */
 public final class ShotEnvelope {
+    public static final int MAX_SHOTS = 3;
     private static final int RISE_MS = 65;
     private long last = -1;
     private int recovery;
@@ -11,7 +12,7 @@ public final class ShotEnvelope {
         start = sample(now);
         // Even a burst faster than the attack phase adds impulses, without a discontinuity on the new frame.
         float remaining = last >= 0 && now >= last && now - last < RISE_MS ? peak : start;
-        peak = Math.min(3, remaining + 1);
+        peak = Math.min(MAX_SHOTS, remaining + 1);
         recovery = Math.max(1, recoveryMs);
         last = now;
     }

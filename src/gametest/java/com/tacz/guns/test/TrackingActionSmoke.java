@@ -2,6 +2,7 @@ package com.tacz.guns.test;
 
 import cn.sh1rocu.tacz.TaCZFabric;
 import com.tacz.guns.GunMod;
+import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ReloadState;
 import com.tacz.guns.api.entity.ShootResult;
@@ -12,7 +13,10 @@ import com.tacz.guns.api.event.common.GunFirePostEvent;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.api.item.gun.FireMode;
+import com.tacz.guns.config.client.ViewTuningConfig;
 import com.tacz.guns.network.message.event.ServerMessageGunActionPost;
+import com.tacz.guns.util.time.GunTime;
+import net.minecraft.client.Minecraft;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -46,7 +50,12 @@ final class TrackingActionSmoke {
             var stack = e.getGunItemStack();
             if (!(stack.getItem() instanceof IGun gun) || gun.getCurrentAmmoCount(stack) != 1)
                 throw new AssertionError("Observer received a pre-debit stack");
-            (e.getLogicalSide().isClient() ? clientPosts : serverPosts).incrementAndGet();
+            if (e.getLogicalSide().isClient()) {
+                var local = IClientPlayerGunOperator.fromLocalPlayer(Minecraft.getInstance().player);
+                if (local.getDataHolder().hudShotEnvelope.sample(GunTime.nowMillis() + 65) != 0)
+                    throw new AssertionError("Remote tracked shot moved the observing player's crosshair");
+                clientPosts.incrementAndGet();
+            } else serverPosts.incrementAndGet();
         });
         GunFinishReloadEvent.EVENT.register(e -> {
             if (e.getLogicalSide().isClient() && e.getEntity() != null && e.getEntity().getUUID().equals(watched))
@@ -70,6 +79,11 @@ final class TrackingActionSmoke {
         watched = mob.getUUID();
         clientPre.set(0); serverPosts.set(0); clientPosts.set(0); clientFinishes.set(0);
         var type = ServerMessageGunActionPost.TYPE;
+        boolean wasDynamic = context.computeOnClient(mc -> {
+            boolean old = ViewTuningConfig.DYNAMIC.get(); ViewTuningConfig.DYNAMIC.set(true);
+            IClientPlayerGunOperator.fromLocalPlayer(mc.player).getDataHolder().hudShotEnvelope.clear();
+            return old;
+        });
         try {
             world.getConnection().waitForClientboundEntityUpdates(EntityTypes.COW);
             context.waitFor(mc -> mc.level.getEntity(watched) instanceof Cow);
@@ -112,6 +126,7 @@ final class TrackingActionSmoke {
             GunMod.LOGGER.info("PORT_ACTION: tracking client observed settled fire/reload once; legacy pre remained with post channel withdrawn");
         } finally {
             watched = null;
+            context.runOnClient(mc -> ViewTuningConfig.DYNAMIC.set(wasDynamic));
             server.runOnServer(s -> mob.discard());
         }
     }

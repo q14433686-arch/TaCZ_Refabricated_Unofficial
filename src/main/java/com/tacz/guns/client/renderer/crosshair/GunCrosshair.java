@@ -3,6 +3,7 @@ package com.tacz.guns.client.renderer.crosshair;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.event.common.GunFirePostEvent;
+import com.tacz.guns.client.gameplay.ShotEnvelope;
 import com.tacz.guns.client.tuning.TuningValues;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.config.client.ViewTuningConfig;
@@ -41,24 +42,28 @@ public final class GunCrosshair {
         if (opacity == 0) return;
         int color = opacity << 24 | v.get(ViewTuningConfig.RGB);
         boolean dynamic = v.get(ViewTuningConfig.DYNAMIC);
-        float spread = 0;
+        float spread = 0, reserve = 0;
         if (dynamic) {
             var mc = Minecraft.getInstance();
             float shot = mc.player == null ? 0 : IClientPlayerGunOperator.fromLocalPlayer(mc.player)
                     .getDataHolder().hudShotEnvelope.sample(GunTime.nowMillis());
-            spread = GunSpread.radius(mc, v.get(Measure.SPREAD_SCALE.option)) + Math.max(shot, previewShot) * dim(v, Dimension.KICK);
+            float kick = dim(v, Dimension.KICK), level = Math.max(shot, previewShot);
+            spread = GunSpread.radius(mc, v.get(Measure.SPREAD_SCALE.option)) + level * kick;
+            // Reserve the full excursion when fitting the editor. Otherwise large shapes stay pressed
+            // against the card edge and the center dot appears to shrink instead of the gap opening.
+            if (fitRadius != Integer.MAX_VALUE) reserve = (ShotEnvelope.MAX_SHOTS - level) * kick;
         }
         gui.pose().pushMatrix();
         gui.pose().translate(x, y);
         float aspect = v.get(Measure.ASPECT.option) / 100f;
-        if (v.get(ViewTuningConfig.MODE) == Mode.DESIGNER) designer(gui, v, aspect, spread, dynamic, color, fitRadius);
-        else image(gui, v, aspect, spread, dynamic, color, fitRadius);
+        if (v.get(ViewTuningConfig.MODE) == Mode.DESIGNER) designer(gui, v, aspect, spread, reserve, dynamic, color, fitRadius);
+        else image(gui, v, aspect, spread, reserve, dynamic, color, fitRadius);
         gui.pose().popMatrix();
     }
 
     private static float dim(TuningValues v, Dimension d) { return v.get(d.option).floatValue(); }
 
-    private static void designer(GuiGraphicsExtractor gui, TuningValues v, float aspect, float spread, boolean dynamic, int color, int fitRadius) {
+    private static void designer(GuiGraphicsExtractor gui, TuningValues v, float aspect, float spread, float reserve, boolean dynamic, int color, int fitRadius) {
         Shape shape = v.get(ViewTuningConfig.SHAPE);
         float t = dim(v, Dimension.THICKNESS), dot = dim(v, Dimension.DOT_SIZE);
         dot = v.get(ViewTuningConfig.DOT) ? (dot == 0 ? t : dot) : 0;
@@ -68,7 +73,7 @@ public final class GunCrosshair {
             // Radius measures the clear hole; changing stroke or dot size does not move its boundary.
             float radius = dim(v, Dimension.RADIUS), ix = radius + spread, iy = radius * aspect + spread;
             float ox = ix + t, oy = iy + t;
-            fit(gui, Math.max(Math.max(ox, oy), dot / 2) + 1, fitRadius);
+            fit(gui, Math.max(Math.max(ox, oy) + reserve, dot / 2) + 1, fitRadius);
             if (outline) {
                 RingBand.draw(gui, ox, oy, ox + 1, oy + 1, black);
                 RingBand.draw(gui, Math.max(0, ix - 1), Math.max(0, iy - 1), ix, iy, black);
@@ -81,7 +86,7 @@ public final class GunCrosshair {
             }
             // Negative gap pulls arms into the central core. Stop at the axis, never swap the arms.
             float inner = Math.max(0, Math.max(t, dot) / 2 + dim(v, Dimension.GAP)) + spread;
-            fit(gui, Math.max(dot / 2, inner + Math.max(len, vertical)) + 1, fitRadius);
+            fit(gui, Math.max(dot / 2, inner + reserve + Math.max(len, vertical)) + 1, fitRadius);
             if (len > 0) {
                 if (outline) lines(gui, shape, inner, len, vertical, t, black, true);
                 lines(gui, shape, inner, len, vertical, t, color, false);
@@ -93,7 +98,7 @@ public final class GunCrosshair {
         }
     }
 
-    private static void image(GuiGraphicsExtractor gui, TuningValues v, float aspect, float spread, boolean dynamic, int color, int fitRadius) {
+    private static void image(GuiGraphicsExtractor gui, TuningValues v, float aspect, float spread, float reserve, boolean dynamic, int color, int fitRadius) {
         boolean preset = v.get(ViewTuningConfig.MODE) == Mode.PRESET;
         var type = v.get(RenderConfig.CROSSHAIR_TYPE);
         if (preset && type == CrosshairType.EMPTY) return;
@@ -105,8 +110,8 @@ public final class GunCrosshair {
         // The authored DOT_1 center covers 10 of its 128 texels; don't bury ticks inside a large preset.
         float core = center == TextureCenter.DOT ? dot : center == TextureCenter.ORIGINAL && dotPreset ? Math.max(w, h) * (10f / 128) : 0;
         float inner = core / 2 + spread;
-        float extent = Math.max(Math.max(w, h), core) / 2;
-        fit(gui, dotPreset && dynamic ? Math.max(extent, inner + 2) : extent, fitRadius);
+        float extent = Math.max(Math.max(w, h) / 2 + (dotPreset ? 0 : reserve), core / 2);
+        fit(gui, dotPreset && dynamic ? Math.max(extent, inner + reserve + 2) : extent, fitRadius);
         texture(gui, preset ? CrosshairType.getTextureLocation(type) : CUSTOM_PNG, w, h, center, color);
         if (center == TextureCenter.DOT) part(gui, -dot / 2, -dot / 2, dot, dot, color, false);
         if (dotPreset && dynamic) lines(gui, Shape.CROSS, inner, 2, 2, 1, color, false);
