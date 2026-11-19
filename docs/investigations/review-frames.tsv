@@ -1,9 +1,5 @@
-# PAL re-entry and signed-constraint controls. Original frames from the same b49d4e9 source.
-44438204138	pal	tacz_pal_remote_rifle
-44438204138	pal	tacz_pal_remote_pistol
-44438204095	smoke	tacz_constraint_ads_positive
-44438204095	smoke	tacz_constraint_ads_zero
-44438204095	smoke	tacz_constraint_ads_negative
-44438204109	iris	tacz_constraint_ads_positive
-44438204109	iris	tacz_constraint_ads_zero
-44438204109	iris	tacz_constraint_ads_negative
+# Failed two-sided light control and the PAL re-entry test with the measured support arm.
+44441481899	smoke	tacz_bone_light_35_plain
+44441481899	smoke	tacz_bone_light_35_glow
+44440040072	pal	tacz_pal_remote_rifle
+44440040072	pal	tacz_pal_remote_pistol

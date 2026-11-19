@@ -56,8 +56,8 @@ final class SnowstormMaterialSmoke {
                 var prefix = "tacz_material_" + (dark ? "dark_" : "light_");
                 var base = read(ctx.takeScreenshot(prefix + "control"));
                 if (dark) {
-                    BoneLightSmoke.run(ctx, base);
                     ParticlePassSmoke.run(ctx, base);
+                    BoneLightSmoke.run(ctx, base);
                     SnowstormSmoke.checkRuntimePulse(ctx, base);
                 }
                 var images = new HashMap<String,BufferedImage>();
