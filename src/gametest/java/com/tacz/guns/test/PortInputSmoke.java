@@ -51,8 +51,18 @@ final class PortInputSmoke {
             ctx.getInput().releaseKey(AimKey.AIM_KEY); ctx.waitFor(mc -> !op(mc).isAim());
             ctx.getInput().pressMouse(4); ctx.waitForScreen(GunRefitScreen.class);
             ctx.getInput().pressMouse(4); ctx.waitFor(mc -> mc.gui.screen() == null);
-            ctx.waitFor(mc -> op(mc).getDataHolder().clientAimingProgress == 0 && com.tacz.guns.util.InputExtraCheck.isInGame());
-            ctx.getInput().pressMouse(5); ctx.waitFor(mc -> count(mc)==2 && op(mc).getDataHolder().autoReloadSuppressed);
+            // Client ADS can already be zero while the server is still lowering the gun or drawing it.
+            world.getServer().waitFor(s -> {
+                var p = world.getConnection().getServerPlayer(); var state = com.tacz.guns.api.entity.IGunOperator.fromLivingEntity(p);
+                var data = state.getDataHolder();
+                return !data.isAiming && data.aimingProgress == 0 && data.currentGunItem != null && data.currentGunItem.get() == p.getMainHandItem()
+                        && state.getSynDrawCoolDown() == 0;
+            });
+            ctx.waitFor(mc -> !op(mc).getDataHolder().clientStateLock && op(mc).getDataHolder().clientAimingProgress == 0
+                    && com.tacz.guns.api.entity.IGunOperator.fromLivingEntity(mc.player).getSynDrawCoolDown() == 0 && com.tacz.guns.util.InputExtraCheck.isInGame());
+            ctx.getInput().pressMouse(5);
+            try { ctx.waitFor(mc -> count(mc)==2 && op(mc).getDataHolder().autoReloadSuppressed); }
+            catch(AssertionError failure){throw new AssertionError(ctx.computeOnClient(mc -> "Rebound unload: client magazine="+count(mc)+", suppressed="+op(mc).getDataHolder().autoReloadSuppressed+", lock="+op(mc).getDataHolder().clientStateLock),failure);}
             world.getServer().runOnServer(s -> {
                 var stack = world.getConnection().getServerPlayer().getMainHandItem();
                 if (!(stack.getItem() instanceof IGun gun) || gun.getCurrentAmmoCount(stack) != 2)

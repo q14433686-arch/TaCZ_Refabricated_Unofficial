@@ -11,8 +11,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ParticleEngine.class)
 abstract class SurfaceFragmentObserver {
+    @Inject(method = "createParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)Lnet/minecraft/client/particle/Particle;", at = @At("HEAD"))
+    private void begin(ParticleOptions options, double x, double y, double z, double vx, double vy, double vz, CallbackInfoReturnable<Particle> ci) {
+        SurfaceFragmentSmoke.begin(options);
+    }
     @Inject(method = "createParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)Lnet/minecraft/client/particle/Particle;", at = @At("RETURN"))
     private void created(ParticleOptions options, double x, double y, double z, double vx, double vy, double vz, CallbackInfoReturnable<Particle> ci) {
-        if (ci.getReturnValue() != null) SurfaceFragmentSmoke.created(options);
+        SurfaceFragmentSmoke.created(options, ci.getReturnValue() != null);
     }
 }

@@ -90,6 +90,32 @@ public class DisplayRackSmoke {
     }
 
     @GameTest
+    public void placeRotatedWorkbenchTemplate(GameTestHelper helper) {
+        var level = helper.getLevel();
+        // Keep the 2x1 source and the destinations inside the same test's 3x3 footprint.
+        var origin = helper.absolutePos(BlockPos.ZERO);
+        var table = (com.tacz.guns.block.AbstractGunSmithTableBlock) ModBlocks.WORKBENCH_211;
+        var facing = com.tacz.guns.block.AbstractGunSmithTableBlock.FACING;
+        var foot = table.defaultBlockState().setValue(facing, Direction.EAST);
+        level.setBlock(origin,foot,Block.UPDATE_ALL);
+        var id = Identifier.parse("port_test:template_copy");
+        ((com.tacz.guns.block.entity.GunSmithTableBlockEntity)level.getBlockEntity(origin)).setId(id);
+        var template = new net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate();
+        template.fillFromWorld(level,origin,new net.minecraft.core.Vec3i(2,1,1),false,List.of());
+        for (var rotation: List.of(net.minecraft.world.level.block.Rotation.CLOCKWISE_90,net.minecraft.world.level.block.Rotation.CLOCKWISE_180)) {
+            var dest = origin.offset(1,1,1); var settings = new net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings().setRotation(rotation);
+            helper.assertTrue(template.placeInWorld(level,dest,dest,settings,level.getRandom(),Block.UPDATE_ALL), "Template placement failed");
+            var actual = level.getBlockState(dest); var head = dest.relative(rotation.rotate(Direction.EAST));
+            helper.assertTrue(actual==foot.setValue(facing,rotation.rotate(Direction.EAST)) && table.getCompanionState(actual)==level.getBlockState(head)
+                    && dest.equals(table.getRootPos(head,level.getBlockState(head))),"Rotated bench halves disconnected: "+rotation);
+            helper.assertTrue(level.getBlockEntity(dest) instanceof com.tacz.guns.block.entity.GunSmithTableBlockEntity be && id.equals(be.getId())
+                    && level.getBlockEntity(head)==null,"Rotated template lost/duplicated bench identity");
+            level.removeBlock(head,false); level.removeBlock(dest,false);
+        }
+        helper.succeed();
+    }
+
+    @GameTest
     public void dyeLootAndCornerMirror(GameTestHelper helper) {
         var level = helper.getLevel();
         for (var item : List.of(ModItems.GUN_PEGBOARD, ModItems.GLOW_GUN_PEGBOARD)) {

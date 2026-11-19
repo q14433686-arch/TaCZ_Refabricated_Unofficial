@@ -26,6 +26,20 @@ import java.nio.file.Path;
 
 /** Render the same cell before, during and after a real survival block interaction. */
 final class RackPreviewSmoke {
+    private static volatile BlockPos target;
+    private static volatile String clientUse, serverUse;
+    private static boolean listening;
+    private static void observeUse() {
+        if (listening) return;
+        listening = true;
+        net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.register((p,level,hand,hit)->{
+            if (hit.getBlockPos().equals(target)) {
+                String info = hand+" shift="+p.isShiftKeyDown()+" inRange="+p.isWithinBlockInteractionRange(target,0)+" mayInteract="+level.mayInteract(p,target);
+                if (level.isClientSide()) clientUse=info; else serverUse=info;
+            }
+            return net.minecraft.world.InteractionResult.PASS;
+        });
+    }
     static void run(ClientGameTestContext ctx, TestSingleplayerContext world, Identifier id) {
         var pos = ctx.computeOnClient(mc -> mc.player.blockPosition().south(2).above());
         var saved = world.getServer().computeOnServer(s -> world.getConnection().getServerPlayer().getMainHandItem().copy());
@@ -64,11 +78,31 @@ final class RackPreviewSmoke {
             equip(world, ItemStack.EMPTY);
             ctx.waitFor(mc -> mc.player.getMainHandItem().isEmpty());
             checkCell(ctx, world, pos, gun, "case");
+
+            // A perpendicular neighbour folds the board: from the original camera the NORTH plate
+            // is now its *secondary* face (slots 16..31), not another straight-board control.
+            var board = ModBlocks.GUN_PEGBOARD.defaultBlockState();
+            var facing = com.tacz.guns.block.GunPegboardBlock.FACING;
+            world.getServer().runOnServer(s -> {
+                var level = world.getConnection().getServerPlayer().level();
+                ((DisplayRackBlockEntity)level.getBlockEntity(pos)).clearContent();
+                if (!level.isEmptyBlock(pos.east())) throw new AssertionError("Corner needs an empty neighbour");
+                level.setBlock(pos,board.setValue(facing,net.minecraft.core.Direction.EAST),Block.UPDATE_ALL);
+                level.setBlock(pos.east(),board.setValue(facing,net.minecraft.core.Direction.NORTH),Block.UPDATE_ALL);
+            });
+            ctx.waitFor(mc -> com.tacz.guns.block.GunPegboardSlotHelper.hasCorner(mc.level.getBlockState(pos)));
+            equip(world,ItemStack.EMPTY);ctx.waitFor(mc->mc.player.getMainHandItem().isEmpty());
+            checkCell(ctx,world,pos,gun,"corner");
+            world.getServer().runOnServer(s->((DisplayRackBlockEntity)world.getConnection().getServerPlayer().level().getBlockEntity(pos)).clearContent());
+            equip(world,ItemStack.EMPTY);ctx.waitFor(mc->mc.player.getMainHandItem().isEmpty());
+            checkCell(ctx,world,pos,new ItemStack(Items.EMERALD),"vanilla_quad");
         } finally {
             ctx.getInput().releaseShift();
             world.getServer().runOnServer(s -> {
                 var p = world.getConnection().getServerPlayer();
                 if (p.level().getBlockEntity(pos) instanceof DisplayRackBlockEntity rack) rack.clearContent();
+                if (p.level().getBlockState(pos).is(ModBlocks.GUN_PEGBOARD) && p.level().getBlockState(pos.east()).is(ModBlocks.GUN_PEGBOARD))
+                    p.level().removeBlock(pos.east(),false);
                 p.level().removeBlock(pos, false);
                 if (creative) p.setGameMode(GameType.CREATIVE);
             });
@@ -82,6 +116,7 @@ final class RackPreviewSmoke {
         equip(world, item.copy());
         ctx.waitFor(mc -> ItemStack.isSameItemSameComponents(item, mc.player.getMainHandItem()));
         int slot = requireSlot(ctx, pos, true, "aimed " + name);
+        if (name.equals("corner") && slot < DisplayRackBlockEntity.SLOTS_PER_FACE) throw new AssertionError("Wrong corner face: "+slot);
         ctx.waitTicks(10);
         var ghost = ctx.takeScreenshot("tacz_" + name + "_ghost");
         ctx.getInput().holdShift();
@@ -98,9 +133,17 @@ final class RackPreviewSmoke {
                 throw new AssertionError("Rendering a preview mutated the rack or hand");
         });
         // The same bound Interact action shown above the display, not a direct BlockState/BE call.
+        ctx.runOnClient(mc -> {
+            observeUse(); clientUse=serverUse="not dispatched"; target=pos;
+            if (!com.tacz.guns.util.InputExtraCheck.isInGame() || !com.tacz.guns.config.util.InteractKeyConfigRead.canInteractBlock(mc.level.getBlockState(pos)))
+                throw new AssertionError("Rack input preconditions: inGame="+com.tacz.guns.util.InputExtraCheck.isInGame()+", allow="+com.tacz.guns.config.util.InteractKeyConfigRead.canInteractBlock(mc.level.getBlockState(pos)));
+        });
+        world.getServer().waitFor(s->!world.getConnection().getServerPlayer().isShiftKeyDown());
         if (item.getItem() instanceof IGun) ctx.getInput().pressKey(com.tacz.guns.client.input.InteractKey.INTERACT_KEY);
-        else ctx.getInput().pressMouse(1);
-        world.getServer().waitFor(s -> world.getConnection().getServerPlayer().getMainHandItem().isEmpty());
+        else ctx.getInput().pressKey(o -> o.keyUse);
+        try { ctx.waitFor(mc -> mc.player.getMainHandItem().isEmpty()); }
+        catch (AssertionError ex) { throw new AssertionError(name+" use: client="+clientUse+", server="+serverUse+", screen="+ctx.computeOnClient(mc->String.valueOf(mc.gui.screen())),ex); }
+        finally { target=null; }
         world.getServer().runOnServer(s -> {
             var p = world.getConnection().getServerPlayer();
             var rack = (DisplayRackBlockEntity)p.level().getBlockEntity(pos);

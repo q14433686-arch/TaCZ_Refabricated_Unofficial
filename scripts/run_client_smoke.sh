@@ -64,7 +64,7 @@ if [[ -n ${TACZ_SMOKE_VIEWER:-} ]]; then
     test -s "$(find "$run/screenshots" -name "*tacz_viewer_$TACZ_SMOKE_VIEWER.png" -print -quit)"
     exit
 fi
-for frame in tacz_{rack,case}_{empty,ghost,placed} tacz_hand_filter_{empty,cleared} tacz_held_default_gun tacz_held_variant tacz_default_refit tacz_range_readout tacz_display_wall tacz_xm157_{entity,control,restored,occluded} \
+for frame in tacz_{rack,case,corner,vanilla_quad}_{empty,ghost,placed} tacz_hover_{en_us,zh_cn}_{scope_xm157,scope_mk5hd,scope_standard_8x,less_flash,more_flash,gun_display_case} tacz_hand_filter_{empty,cleared} tacz_held_default_gun tacz_held_variant tacz_default_refit tacz_range_readout tacz_display_wall tacz_xm157_{entity,control,restored,occluded} \
         tacz_lens_pip_1x tacz_lens_{classic,pip}_{bare,optical,hot,wall,restored,tagged}; do
     test -s "$(find "$run/screenshots" -name "*${frame}.png" -print -quit)"
 done
@@ -101,6 +101,6 @@ printf '::notice::%s\n' "$(grep -F 'PORT_CONFIG:' "$run/logs/latest.log")"
 grep -Fq 'PORT_CORE:' "$run/logs/latest.log"
 printf '::notice::%s\n' "$(grep -F 'PORT_CORE:' "$run/logs/latest.log")"
 
-for marker in PORT_RACK_PREVIEW: PORT_MATERIALS:; do
+for marker in PORT_RACK_PREVIEW: PORT_MATERIALS: PORT_FRAGMENTS: PORT_HOVER: PORT_RACK_LOAD:; do
     grep -F "$marker" "$run/logs/latest.log" | sed 's/^/::notice::/'
 done
