@@ -1,13 +1,8 @@
-# Post-fix Reimagined r5.9.3 stock night controls and daylight SVD.
-44455729177	reimagined-off	tacz_reimagined_drop
-44455729177	reimagined-off	tacz_reimagined_removed
-44455729177	reimagined-off	tacz_reimagined_night_off
-44455729177	reimagined-off	tacz_reimagined_night_body
-44455729177	reimagined-off	tacz_reimagined_night_stock
-44455729177	reimagined-off	tacz_reimagined_night_strip
-44455729177	reimagined-act	tacz_reimagined_stowed
-44455729177	reimagined-act	tacz_reimagined_night_off
-44455729177	reimagined-act	tacz_reimagined_night_body
-44455729177	reimagined-act	tacz_reimagined_night_stock
-44455729177	reimagined-act	tacz_reimagined_night_strip
-44455729177	reimagined-act	tacz_reimagined_night_reference
+# PIP calibration: inspect the failing and preceding green frames, plus real-pack positive and negative optical controls.
+44457885522	iris	tacz_lens_pip_bare
+44457885522	iris	tacz_lens_pip_optical
+44457885522	iris	tacz_lens_pip_1x
+44456705144	iris	tacz_lens_pip_bare
+44456705144	iris	tacz_lens_pip_optical
+44457885522	reimagined-act	tacz_amg10_particle_1
+44457885522	reimagined-act	tacz_amg10_particle_2
