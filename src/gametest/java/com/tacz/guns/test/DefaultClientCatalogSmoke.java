@@ -31,7 +31,7 @@ final class DefaultClientCatalogSmoke {
         variants.forEach(e -> { if (TimelessAPI.getClientAttachmentVariantIndex(e.getKey()).orElseThrow() != e.getValue()) throw new AssertionError(e); });
         TimelessAPI.getAllClientSlotAdapterIndex().forEach(e -> { if (TimelessAPI.getClientSlotAdapterIndex(e.getKey()).orElseThrow() != e.getValue()) throw new AssertionError(e); });
         var range = TimelessAPI.getClientAttachmentIndex(Identifier.parse("tacz:scope_xm157")).orElseThrow();
-        var counter = TimelessAPI.getClientAttachmentIndex(Identifier.parse("tacz:scope_standard_8x")).orElseThrow();
+        var counter = TimelessAPI.getClientAttachmentIndex(Identifier.parse("tacz:scope_mk5hd")).orElseThrow();
         if (!range.hasRangefinder() || !range.hasImpactPrediction() || !counter.hasAmmoCounter() || counter.hasRangefinder())
             throw new AssertionError("Incorrect optic capability hints");
         var rifle = com.tacz.guns.api.item.gun.AbstractGunItem.fillItemCategory(com.tacz.guns.api.item.GunTabType.RIFLE);

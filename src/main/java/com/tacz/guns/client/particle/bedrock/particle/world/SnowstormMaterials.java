@@ -24,7 +24,7 @@ public final class SnowstormMaterials {
         return switch (desc.getMaterial()) {
             case PARTICLES_OPAQUE -> clipped ? ScopeBodyRenderTypes.clipped(texture) : RenderTypes.entityCutout(texture);
             case PARTICLES_ALPHA, PARTICLES_BLEND -> clipped ? ScopeBodyRenderTypes.flashTranslucent(texture) : RenderTypes.entityTranslucent(texture);
-            case ENERGY_SWIRL -> clipped ? ScopeBodyRenderTypes.flashSwirlClipped(texture) : RenderTypes.energySwirl(texture, 1, 1);
+            case ENERGY_SWIRL -> clipped ? ScopeBodyRenderTypes.swirlClipped(texture, 1) : RenderTypes.energySwirl(texture, 1, 1);
             case PARTICLES_ADD, PARTICLES_EMISSIVE -> TYPES.computeIfAbsent(
                     new Key(new Pass(desc.getMaterial() == ParticleDescription.Material.PARTICLES_EMISSIVE, clipped), texture), key -> {
                 var setup = RenderSetup.builder(PIPELINES.computeIfAbsent(key.pass, SnowstormMaterials::pipeline))

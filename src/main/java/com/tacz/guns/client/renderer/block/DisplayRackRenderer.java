@@ -51,15 +51,19 @@ public class DisplayRackRenderer<T extends DisplayRackBlockEntity> implements Bl
 
     /** Use the same hit-to-cell and item eligibility rules as placement, without changing the BE or hand. */
     public static int previewSlot(DisplayRackBlockEntity rack, net.minecraft.world.entity.player.Player player, net.minecraft.world.phys.HitResult target) {
-        if (player == null || player.isSpectator() || player.isShiftKeyDown()
+        if (player == null || !player.isAlive() || !player.mayBuild() || player.isSpectator() || player.isShiftKeyDown()
                 || !(target instanceof net.minecraft.world.phys.BlockHitResult hit) || target.getType() != net.minecraft.world.phys.HitResult.Type.BLOCK
                 || !rack.getBlockPos().equals(hit.getBlockPos()) || !com.tacz.guns.config.util.GunPegboardItemConfigRead.canPlace(player.getMainHandItem())) return -1;
         var state = rack.getBlockState();
         int slot;
         if (state.getBlock() instanceof com.tacz.guns.block.GunDisplayCaseBlock) {
-            if (state.getValue(com.tacz.guns.block.GunDisplayCaseBlock.LOCKED)) return -1;
+            if (player.getMainHandItem().is(state.getBlock().asItem()) || state.getValue(com.tacz.guns.block.GunDisplayCaseBlock.LOCKED)) return -1;
             slot = com.tacz.guns.block.GunDisplayCaseSlotHelper.getSlot(state, rack.getBlockPos(), hit.getLocation());
-        } else slot = com.tacz.guns.block.GunPegboardSlotHelper.getSlot(state, rack.getBlockPos(), hit.getLocation());
+        } else {
+            var held = player.getMainHandItem();
+            if (held.is(net.minecraft.world.item.Items.DEBUG_STICK) || held.getItem() instanceof com.tacz.guns.item.GunPegboardItem) return -1;
+            slot = com.tacz.guns.block.GunPegboardSlotHelper.getSlot(state, rack.getBlockPos(), hit.getLocation());
+        }
         return slot >= 0 && rack.getItem(slot).isEmpty() ? slot : -1;
     }
 

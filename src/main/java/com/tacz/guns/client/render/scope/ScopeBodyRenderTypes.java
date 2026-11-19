@@ -394,7 +394,8 @@ public final class ScopeBodyRenderTypes {
     private static final Map<Identifier, RenderType> RETICLE_EMISSIVE_CACHE = new HashMap<>();
     private static final Map<Identifier, RenderType> EMISSIVE_CACHE = new HashMap<>();
     private static final Map<Identifier, RenderType> FLASH_TRANSLUCENT_CACHE = new HashMap<>();
-    private static final Map<Identifier, RenderType> FLASH_SWIRL_CACHE = new HashMap<>();
+    private record Swirl(Identifier texture, float offset) {}
+    private static final Map<Swirl, RenderType> FLASH_SWIRL_CACHE = new HashMap<>();
     private static final Map<Identifier, RenderType> FINAL_RING_CACHE = new HashMap<>();
 
     private ScopeBodyRenderTypes() {
@@ -506,13 +507,17 @@ public final class ScopeBodyRenderTypes {
      * <p>调用方须先过 {@link #maskReadyForViewmodel}。 </p>
      */
     public static RenderType flashSwirlClipped(Identifier texture) {
+        return swirlClipped(texture, 0);
+    }
+
+    public static RenderType swirlClipped(Identifier texture, float offset) {
         ensureIrisCompatibility();
-        return FLASH_SWIRL_CACHE.computeIfAbsent(texture,
+        return FLASH_SWIRL_CACHE.computeIfAbsent(new Swirl(texture, offset),
                 tex -> RenderType.create("tacz_scope_flash_swirl_clipped",
                         RenderSetup.builder(FLASH_SWIRL_CLIPPED_PIPELINE)
-                                .withTexture("Sampler0", tex)
+                                .withTexture("Sampler0", tex.texture())
                                 .withTexture(MASK_SAMPLER, ScopeMaskTextureHandle.ID)
-                                .setTextureTransform(new TextureTransform.OffsetTextureTransform(0.0F, 0.0F))
+                                .setTextureTransform(new TextureTransform.OffsetTextureTransform(tex.offset(), tex.offset()))
                                 .useLightmap()
                                 .useOverlay()
                                 .sortOnUpload()

@@ -153,9 +153,9 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                     Vector3f offset = bullet.getFirstPersonRenderOffset();
                     if (offset == null) {
                         offset = new Vector3f(globalMuzzleOffset);
-                        bullet.setFirstPersonCameraRotation(camera.rotation());
                         bullet.setCameraXRot(camera.xRot());
                         bullet.setCameraYRot(camera.yRot());
+                        bullet.setFirstPersonCameraRotation(camera.rotation());
                         bullet.setFirstPersonRenderOffset(offset);
                         offsetInitialized = true;
                     }

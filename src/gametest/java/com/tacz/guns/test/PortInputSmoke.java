@@ -46,6 +46,7 @@ final class PortInputSmoke {
             ctx.getInput().releaseKey(AimKey.AIM_KEY); ctx.waitFor(mc -> !op(mc).isAim());
             ctx.getInput().pressMouse(4); ctx.waitForScreen(GunRefitScreen.class);
             ctx.getInput().pressMouse(4); ctx.waitFor(mc -> mc.gui.screen() == null);
+            ctx.waitFor(mc -> op(mc).getDataHolder().clientAimingProgress == 0 && com.tacz.guns.util.InputExtraCheck.isInGame());
             ctx.getInput().pressMouse(5); ctx.waitFor(mc -> count(mc)==2 && op(mc).getDataHolder().autoReloadSuppressed);
             ctx.runOnClient(mc -> { GunInputHandler.UNLOAD_KEY.setKey(InputConstants.UNKNOWN); KeyMapping.resetMapping(); });
             ctx.waitTicks(30);
