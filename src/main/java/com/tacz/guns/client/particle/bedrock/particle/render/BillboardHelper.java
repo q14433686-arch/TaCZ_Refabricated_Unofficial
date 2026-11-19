@@ -143,16 +143,7 @@ public final class BillboardHelper {
                 axisX.set(1, 0, 0);
                 axisY.set(0, 1, 0);
             }
-            case ROTATE_Y, LOOKAT_Y -> {
-                // Upright in world space. Use the horizontal camera-right axis (yaw only) and
-                // world up, transformed to view coordinates; do not pitch the sprite toward the eye.
-                cameraRotation.transformDirection(axisY.set(0, 1, 0)).normalize();
-                // Roll tilts the view projection of world up. Derive right without the unstable
-                // look-at cross product at a vertical pitch.
-                float h = (float) Math.hypot(axisY.x, axisY.y);
-                if (h > 1e-5f) axisX.set(axisY.y / h, -axisY.x / h, 0);
-                else axisX.set(1, 0, 0);
-            }
+            case ROTATE_Y, LOOKAT_Y -> uprightAxes(axisX, axisY, cameraRotation);
             case LOOKAT_DIRECTION -> {
                 transformDirection(TEMP_DIR, velPose, velX, velY, velZ);
                 float velLen = TEMP_DIR.length();
@@ -204,6 +195,14 @@ public final class BillboardHelper {
                 axisX.normalize();axisY.normalize();
             }
         }
+    }
+
+    /** World up expressed in view coordinates; roll rotates both projected axes, pitch foreshortens Y. */
+    static void uprightAxes(Vector3f right, Vector3f up, Matrix4f worldToView) {
+        worldToView.transformDirection(up.set(0, 1, 0)).normalize();
+        float horizontal = (float) Math.hypot(up.x, up.y);
+        if (horizontal > 1e-5f) right.set(up.y / horizontal, -up.x / horizontal, 0);
+        else right.set(1, 0, 0);
     }
 
     /**

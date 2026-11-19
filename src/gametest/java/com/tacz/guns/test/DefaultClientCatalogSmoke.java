@@ -43,6 +43,7 @@ final class DefaultClientCatalogSmoke {
                 .map(s -> ((com.tacz.guns.api.item.nbt.BlockItemDataAccessor)s.getItem()).getBlockId(s)).toList());
     }
     private static void checkOrder(java.util.List<Identifier> ids) {
+        if (ids.stream().noneMatch(id -> id.getNamespace().equals("port_test"))) throw new AssertionError("Missing second pack: " + ids);
         if (!ids.getFirst().getNamespace().equals("tacz")) throw new AssertionError("Default pack not first: " + ids);
         String prev = "tacz";
         for (var id : ids) {

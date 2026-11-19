@@ -183,21 +183,7 @@ public final class IrisCompat {
             return false;
         }
         try {
-            Class<?> irisApiClass = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
-            Object instance = irisApiClass.getMethod("getInstance").invoke(null);
-            int minor = (Integer) irisApiClass.getMethod("getMinorApiRevision").invoke(instance);
-            if (minor < 3) {
-                if (!loggedScopePipelineAssign) {
-                    loggedScopePipelineAssign = true;
-                    GunMod.LOGGER.warn("[TACZ Scope] Iris API revision {} has no assignPipeline support; scope mask will fall back under shaders.", minor);
-                }
-                return false;
-            }
-            Class<?> irisProgramClass = Class.forName("net.irisshaders.iris.api.v0.IrisProgram");
-            @SuppressWarnings({"unchecked", "rawtypes"})
-            Object handProgram = Enum.valueOf((Class<? extends Enum>) irisProgramClass.asSubclass(Enum.class), "HAND");
-            irisApiClass.getMethod("assignPipeline", RenderPipeline.class, irisProgramClass)
-                    .invoke(instance, pipeline, handProgram);
+            if (!assignProgram(pipeline, "HAND")) return false;
             scopePipelineAssignSuccesses++;
             scopePipelinesAssigned = scopePipelineAssignSuccesses >= 2;
             if (!loggedScopePipelineAssign) {
@@ -218,6 +204,29 @@ public final class IrisCompat {
             }
             return false;
         }
+    }
+
+    /** Standalone entity-vertex Snowstorm passes are not vanilla RenderPipelines. Do not count
+     * these registrations towards the optical mask readiness gate, or assign any vanilla pipeline. */
+    public static void assignParticlePipeline(RenderPipeline pipeline, boolean hand, boolean emissive) {
+        if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) return;
+        String program = hand ? "HAND" : emissive ? "EMISSIVE_ENTITIES" : "ENTITIES";
+        try {
+            if (!assignProgram(pipeline, program)) GunMod.LOGGER.warn("Iris cannot assign particle pipeline {}", pipeline.getLocation());
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            GunMod.LOGGER.warn("Cannot assign {} to Iris {}", pipeline.getLocation(), program, e);
+        }
+    }
+
+    private static boolean assignProgram(RenderPipeline pipeline, String program) throws ReflectiveOperationException {
+        Class<?> api = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
+        Object instance = api.getMethod("getInstance").invoke(null);
+        if ((Integer) api.getMethod("getMinorApiRevision").invoke(instance) < 3) return false;
+        Class<?> programs = Class.forName("net.irisshaders.iris.api.v0.IrisProgram");
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        Object selected = Enum.valueOf((Class<? extends Enum>) programs.asSubclass(Enum.class), program);
+        api.getMethod("assignPipeline", RenderPipeline.class, programs).invoke(instance, pipeline, selected);
+        return true;
     }
 
     // 【已移除 · 2026-09-08】assignCommonEntityPipelinesToHandIfNeeded()：

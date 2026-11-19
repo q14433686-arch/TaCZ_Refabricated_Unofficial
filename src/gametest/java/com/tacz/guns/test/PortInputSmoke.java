@@ -27,7 +27,12 @@ final class PortInputSmoke {
         var old = ctx.computeOnClient(mc -> mappings.stream().map(KeyMappingHelper::getBoundKeyOf).toList());
         boolean hold = ctx.computeOnClient(mc -> KeyConfig.HOLD_TO_AIM.get());
         boolean filter = ctx.computeOnClient(mc -> RenderConfig.AUTO_SELECT_GUN_SMITH_TABLE_FILTER.get());
-        var saved = world.getServer().computeOnServer(s -> world.getConnection().getServerPlayer().getMainHandItem().copy());
+        var saved = world.getServer().computeOnServer(s -> {
+            var inv = world.getConnection().getServerPlayer().getInventory();
+            var slots = new ArrayList<ItemStack>();
+            for (int i = 0; i < inv.getContainerSize(); i++) slots.add(inv.getItem(i).copy());
+            return slots;
+        });
         try {
             ctx.runOnClient(mc -> {
                 AimKey.AIM_KEY.setKey(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_J));
@@ -51,6 +56,14 @@ final class PortInputSmoke {
             ctx.runOnClient(mc -> { GunInputHandler.UNLOAD_KEY.setKey(InputConstants.UNKNOWN); KeyMapping.resetMapping(); });
             ctx.waitTicks(30);
             ctx.getInput().holdAlt(); ctx.getInput().pressMouse(5); ctx.getInput().releaseAlt(); ctx.waitFor(mc -> count(mc)==1);
+            equip(world, GunItemBuilder.create().setId(Identifier.parse("tacz:ak47")).setAmmoCount(1).setAmmoInBarrel(true).build());
+            world.getServer().runOnServer(s -> {
+                var p = world.getConnection().getServerPlayer();
+                p.getInventory().setItem(12, AmmoItemBuilder.create().setId(Identifier.parse("tacz:762x39")).setCount(8).build());
+                p.inventoryMenu.broadcastChanges();
+            });
+            ctx.waitFor(mc -> mc.player.getMainHandItem().getItem() instanceof IGun g && g.getGunId(mc.player.getMainHandItem()).equals(Identifier.parse("tacz:ak47")));
+            ctx.waitTicks(40); ctx.getInput().pressMouse(5); ctx.waitFor(mc -> count(mc) > 1, 200);
             // The hand filter applies only to TaCZ items. Use a genuine ammo stack with no matching recipe.
             equip(world, AmmoItemBuilder.create().setId(Identifier.parse("port_test:no_matching_ammo")).build());
             ctx.waitFor(mc -> mc.player.getMainHandItem().getItem() instanceof IAmmo);
@@ -68,7 +81,9 @@ final class PortInputSmoke {
             ctx.getInput().releaseKey(AimKey.AIM_KEY); ctx.getInput().releaseAlt(); ctx.setScreen(() -> null);
             ctx.runOnClient(mc -> { for(int i=0;i<mappings.size();i++) mappings.get(i).setKey(old.get(i)); KeyMapping.resetMapping();
                 KeyConfig.HOLD_TO_AIM.set(hold); RenderConfig.AUTO_SELECT_GUN_SMITH_TABLE_FILTER.set(filter); });
-            equip(world,saved);
+            world.getServer().runOnServer(s -> {var p = world.getConnection().getServerPlayer();
+                for (int i = 0; i < saved.size(); ++i) p.getInventory().setItem(i,saved.get(i));
+                p.inventoryMenu.broadcastChanges(); });
         }
     }
     private static void equip(TestSingleplayerContext world, ItemStack stack) {

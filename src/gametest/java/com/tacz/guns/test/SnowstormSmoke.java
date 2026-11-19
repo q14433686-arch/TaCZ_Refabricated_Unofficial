@@ -68,6 +68,21 @@ final class SnowstormSmoke {
             if(Math.abs(a.eval("math.sin(90) + math.pow(2,3)")-9)>1e-6)throw new AssertionError("Molang math failed");
             for(int i=0;i<20;i++){first.tick(.05f);second.tick(.05f);}
             if(!first.isFinished()||!second.isFinished())throw new AssertionError("Emitter/particle lifetime not collected");
+            // The child runtime_probe emits variable.count particles (zero in its fresh environment).
+            // Its pre-effect must instead see and update the top-level initializer's parent value.
+            var rt=WorldEmitterManager.getInstance();rt.clear();
+            var nested=JsonParser.parseString(DEFINITION).getAsJsonObject();
+            var effect=nested.getAsJsonObject("particle_effect");
+            effect.getAsJsonObject("components").add("minecraft:emitter_lifetime_events",JsonParser.parseString("{\"creation_event\":\"child\"}"));
+            effect.add("events", JsonParser.parseString("""
+                {"child":{"particle_effect":{"effect":"port_acceptance:runtime_probe","type":"emitter",
+                "pre_effect_expression":"variable.count = variable.count + 3;"}}}
+                """));
+            var parent=rt.addEmitter(mc.level,new Matrix4f(),Vec3.ZERO,new ParticleEffectDeserializer().parse(nested,compiler),"variable.count = 2;");
+            if(parent==null || rt.emitterCount()!=2 || parent.getMolang().eval("variable.count")!=5)throw new AssertionError("Nested expression did not use parent context");
+            rt.tick();
+            if(parent.getParticleCount()!=5 || rt.particleCount()!=5)throw new AssertionError("Nested expression leaked into child: parent="+parent.getParticleCount()+", total="+rt.particleCount());
+            rt.clear();
             var camera=mc.gameRenderer.mainCamera();var pos=camera.position().add(mc.player.getLookAngle().scale(2));
             WorldEmitterManager.getInstance().addEmitter(mc.level,new Matrix4f().translation((float)pos.x,(float)pos.y,(float)pos.z),Vec3.ZERO,def,"variable.count = 4;");
         });
@@ -86,6 +101,7 @@ final class SnowstormSmoke {
         }catch(java.io.IOException e){throw new java.io.UncheckedIOException(e);}
         ctx.waitTicks(25);
         if(ctx.computeOnClient(mc->WorldEmitterManager.getInstance().emitterCount())!=0)throw new AssertionError("Snowstorm retained expired emitters");
+        SnowstormMaterialSmoke.run(ctx, world);
         GunMod.LOGGER.info("PORT_SNOWSTORM: compiled Molang math, isolated variables, pre-effect count, lifetimes and real render geometry passed");
     }
 }

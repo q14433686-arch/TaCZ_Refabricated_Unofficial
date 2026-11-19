@@ -227,6 +227,7 @@ public class TaCZFabricClient implements ClientModInitializer {
 
         GunInputHandler.registerEvents();
         ClientTickEvents.END_CLIENT_TICK.register(AimKey::cancelAim);
+        ClientTickEvents.END_CLIENT_TICK.register(CrawlKey::cancelLostHold);
         ClientTickEvents.START_CLIENT_TICK.register(AimKey::onAimHoldingPreInput);
         ClientTickEvents.END_CLIENT_TICK.register(AimKey::onAimHoldingPreInput);
 

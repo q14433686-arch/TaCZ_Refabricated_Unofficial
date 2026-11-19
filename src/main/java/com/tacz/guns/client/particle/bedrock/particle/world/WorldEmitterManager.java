@@ -134,7 +134,7 @@ public final class WorldEmitterManager {
     private void submitEmitter(SubmitNodeCollector collector,Active a,Vec3 camera,boolean hand,int inheritedLight){
             var emitter=a.emitter;var definition=emitter.getDefinition();var desc=definition.getDescription();
             boolean clipped=a.first && com.tacz.guns.client.render.scope.ScopeParticleClipping.ready(hand);
-            RenderType type=SnowstormMaterials.type(desc,clipped);
+            RenderType type=SnowstormMaterials.type(desc,clipped,hand);
             // Rotate the actual camera's world Y into view space; includes pitch and roll in all passes.
             var viewRotation = new Matrix4f().rotation(new org.joml.Quaternionf(Minecraft.getInstance().gameRenderer.mainCamera().rotation()).conjugate());
             var billboard=definition.findComponent(ParticleAppearanceBillboard.class);

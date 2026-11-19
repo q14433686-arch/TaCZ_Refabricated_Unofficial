@@ -97,6 +97,15 @@ public final class EventExecutor {
     private static void executeParticleEffect(ParticleEffectEvent effect, EventContext ctx) {
         if (ctx.level == null || ctx.position == null) return;
 
+        // SBM 2.6.3 evaluates this in the firing environment *before* resolving the child,
+        // even for a missing optional definition. A bad expression must not kill the parent.
+        if (effect.compiledPreEffect() != null) {
+            try {
+                effect.compiledPreEffect().evaluate(ctx.molang.getContext());
+            } catch (RuntimeException ex) {
+                GunMod.LOGGER.warn("Cannot evaluate nested pre-effect expression for {}", effect.effect(), ex);
+            }
+        }
         Identifier effectId = Identifier.tryParse(effect.effect());
         if (effectId == null) return;
         ParticleEffectDefinition childDef = ParticleDefinitionLoader.getInstance().getDefinition(effectId);
@@ -105,8 +114,6 @@ public final class EventExecutor {
             return;
         }
 
-        // Nested events run this expression in the firing environment, not the child's fresh one.
-        if (effect.compiledPreEffect() != null) effect.compiledPreEffect().evaluate(ctx.molang.getContext());
         WorldEmitterManager.getInstance().addEmitter(ctx.level,
                 new org.joml.Matrix4f().translation((float)ctx.position.x,(float)ctx.position.y,(float)ctx.position.z),
                 Vec3.ZERO,childDef,null,

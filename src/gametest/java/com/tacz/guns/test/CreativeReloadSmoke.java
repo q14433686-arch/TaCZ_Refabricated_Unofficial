@@ -44,6 +44,8 @@ final class CreativeReloadSmoke {
                 tabs.setSelectedTab(rifle);
                 assertFiltered(screen, "port_test");
             });
+            // Three packs fit at once. With namespace ordering the new fourth pack is on the next page.
+            context.clickScreenButton("▼");
             context.clickScreenButton("reload_smoke");
             context.runOnClient(mc -> {
                 if (screen.getMenu().items.size() != 1 || !hasId(screen.getMenu().items.getFirst(), PROBE))

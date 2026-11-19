@@ -26,6 +26,12 @@ public class CrawlKey {
         controllerDown = down;
         if (released) releaseIfNotHeld();
     }
+    // Vanilla can clear all key mappings on focus/screen changes without issuing physical releases.
+    public static void cancelLostHold(Minecraft mc) {
+        if (KeyConfig.HOLD_TO_CRAWL.get() && mc.player instanceof IClientPlayerGunOperator op && op.isCrawl()
+                && (!isInGame() || (!CRAWL_KEY.isDown() && !controllerDown))) op.crawl(false);
+    }
+
     static void releaseIfNotHeld() {
         if (!controllerDown && !CRAWL_KEY.isDown()) onCrawlControllerPress(false);
     }
