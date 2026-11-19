@@ -10,7 +10,8 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import com.tacz.guns.client.model.bedrock.BedrockCube;
 import com.tacz.guns.client.model.bedrock.BedrockModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
-import com.tacz.guns.client.model.bedrock.UnshadedVertices;
+import com.tacz.guns.client.model.bedrock.IlluminatedMaterials;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import com.tacz.guns.util.IlluminatedLights;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.joml.Matrix3f;
@@ -33,12 +34,13 @@ public final class BedrockRenderSnapshot {
     private final List<IFunctionalSubmitter.SubmitTask> functionalTasks;
     private final int skippedFunctionalNodeCount;
 
-    private BedrockRenderSnapshot(List<DrawCommand> drawCommands,
-                                  List<IFunctionalSubmitter.SubmitTask> functionalTasks,
-                                  int skippedFunctionalNodeCount) {
-        this.drawCommands = List.copyOf(drawCommands);
-        this.functionalTasks = List.copyOf(functionalTasks);
-        this.skippedFunctionalNodeCount = skippedFunctionalNodeCount;
+    private final int firstUnshaded;
+
+    private BedrockRenderSnapshot(Builder builder) {
+        this.drawCommands = List.copyOf(builder.commands);
+        this.functionalTasks = List.copyOf(builder.functionalTasks);
+        this.skippedFunctionalNodeCount = builder.skippedFunctionalNodes;
+        this.firstUnshaded = builder.firstUnshaded;
     }
 
     public static BedrockRenderSnapshot capture(BedrockModel model,
@@ -55,7 +57,7 @@ public final class BedrockRenderSnapshot {
         for (BedrockPart part : model.getShouldRender()) {
             builder.capturePart(part, working, light, false);
         }
-        return new BedrockRenderSnapshot(builder.commands, builder.functionalTasks, builder.skippedFunctionalNodes);
+        return new BedrockRenderSnapshot(builder);
     }
 
     /**
@@ -81,7 +83,7 @@ public final class BedrockRenderSnapshot {
         boolean glowing = false;
         for (BedrockPart p = root; p != null; p = p.getParent()) glowing |= p.illuminated;
         builder.captureGeometry(root, working, glowing ? IlluminatedLights.resolve(light) : light, glowing);
-        return new BedrockRenderSnapshot(builder.commands, builder.functionalTasks, builder.skippedFunctionalNodes);
+        return new BedrockRenderSnapshot(builder);
     }
 
     public boolean isEmpty() {
@@ -99,16 +101,45 @@ public final class BedrockRenderSnapshot {
         }
     }
 
-    public void write(VertexConsumer consumer) {
+    /** Capture the material decision now. Use one submission for consecutive commands with the
+     * same material, and never look up mutable bone state in a deferred draw. */
+    public void submitGeometry(SubmitNodeCollector collector, RenderType body, boolean hand) {
+        if (drawCommands.isEmpty()) return;
+        PoseStack identity = new PoseStack(); // command poses already contain the root transform
+        RenderType illuminated = firstUnshaded < 0 ? body : IlluminatedMaterials.forBody(body, hand);
+        if (illuminated == body) {
+            submitRange(collector, identity, body, 0, drawCommands.size());
+            return;
+        }
+        RenderType current = body;
+        int start = 0;
+        for (int i = firstUnshaded; i < drawCommands.size(); i++) {
+            RenderType next = drawCommands.get(i).unshaded() ? illuminated : body;
+            if (next != current) {
+                if (i > start) submitRange(collector, identity, current, start, i);
+                current = next;
+                start = i;
+            }
+        }
+        submitRange(collector, identity, current, start, drawCommands.size());
+    }
+
+    private void submitRange(SubmitNodeCollector collector, PoseStack identity, RenderType type, int start, int end) {
+        collector.submitCustomGeometry(identity, type, (entry, out) -> write(out, start, end));
+    }
+
+    /** Explicit single-material replay (e.g. the final reticle pass). */
+    public void write(VertexConsumer consumer) { write(consumer, 0, drawCommands.size()); }
+
+    private void write(VertexConsumer consumer, int start, int end) {
         PoseStack poseStack = new PoseStack();
-        VertexConsumer unshaded = null;
-        for (DrawCommand command : this.drawCommands) {
+        for (int i = start; i < end; i++) {
+            DrawCommand command = drawCommands.get(i);
             PoseStack.Pose pose = poseStack.last();
             pose.pose().set(command.pose());
             pose.normal().set(command.normal());
-            if (command.unshaded() && unshaded == null) unshaded = UnshadedVertices.wrap(consumer);
             for (BedrockCube cube : command.cubes()) {
-                cube.compile(pose, command.unshaded() ? unshaded : consumer, command.light(), command.overlay(),
+                cube.compile(pose, consumer, command.light(), command.overlay(),
                         command.red(), command.green(), command.blue(), command.alpha());
             }
         }
@@ -152,6 +183,7 @@ public final class BedrockRenderSnapshot {
         private final List<DrawCommand> commands = new ArrayList<>();
         private final List<IFunctionalSubmitter.SubmitTask> functionalTasks = new ArrayList<>();
         private int skippedFunctionalNodes;
+        private int firstUnshaded = -1;
 
         private Builder(ItemDisplayContext displayContext,
                         int overlay,
@@ -177,6 +209,7 @@ public final class BedrockRenderSnapshot {
                 return;
             }
             if (!part.cubes.isEmpty()) {
+                if (unshaded && firstUnshaded < 0) firstUnshaded = commands.size();
                 PoseStack.Pose current = poseStack.last();
                 this.commands.add(new DrawCommand(
                         current.pose(), current.normal(), part.cubes,

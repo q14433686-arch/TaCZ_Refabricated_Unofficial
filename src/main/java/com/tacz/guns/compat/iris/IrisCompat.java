@@ -206,9 +206,9 @@ public final class IrisCompat {
         }
     }
 
-    /** Standalone entity-vertex Snowstorm passes are not vanilla RenderPipelines. Do not count
-     * these registrations towards the optical mask readiness gate, or assign any vanilla pipeline. */
-    public static void assignParticlePipeline(RenderPipeline pipeline, boolean hand, boolean emissive) {
+    /** Custom entity-vertex materials (particles and illuminated bones). Do not count these
+     * registrations towards optical mask readiness or reassign any vanilla pipeline. */
+    public static void assignEntityPipeline(RenderPipeline pipeline, boolean hand, boolean emissive) {
         tryAssignPipeline(pipeline, hand ? "HAND" : emissive ? "EMISSIVE_ENTITIES" : "ENTITIES");
     }
 

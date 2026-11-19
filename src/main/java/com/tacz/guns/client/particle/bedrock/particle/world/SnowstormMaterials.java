@@ -49,7 +49,7 @@ public final class SnowstormMaterials {
         else builder.withShaderDefine("PER_FACE_LIGHTING").withDepthStencilState(new DepthStencilState(DepthStencilState.DEFAULT.depthTest(), false));
         if (pass.clipped) builder.withShaderDefine("SCOPE_MASK").withBindGroupLayout(ScopeBodyRenderTypes.maskSamplerLayout());
         var pipeline = builder.build();
-        IrisCompat.assignParticlePipeline(pipeline, pass.hand, pass.emissive);
+        IrisCompat.assignEntityPipeline(pipeline, pass.hand, pass.emissive);
         ScopePipelinePrewarm.touch(pipeline);
         return pipeline;
     }

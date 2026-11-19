@@ -23,7 +23,7 @@ import java.awt.image.BufferedImage;
  * World collector, shader and colour buffer are real; no reticle renderer is involved. */
 final class BoneLightSmoke {
     private static final Identifier TEXTURE = Identifier.parse("port_test:textures/gun/rack_mesh.png");
-    private static boolean registered;
+    private static boolean registered, translucent;
     private static BedrockModel drawing;
     private static Vec3 position;
     private static int angle, submits;
@@ -49,7 +49,9 @@ final class BoneLightSmoke {
             var pose = new PoseStack();
             pose.translate(p.x,p.y,p.z);
             pose.rotate(Axis.YP.rotationDegrees(angle)); pose.rotate(Axis.XP.rotationDegrees(28));
-            drawing.submit(pose, ItemDisplayContext.FIXED, view.submitNodeCollector(), RenderTypes.entityCutout(TEXTURE),
+            if (translucent) pose.scale(-1, 1, 1); // reverse winding; texture/vertex alpha stay opaque
+            var body = translucent ? RenderTypes.entityTranslucent(TEXTURE) : RenderTypes.entityCutout(TEXTURE);
+            drawing.submit(pose, ItemDisplayContext.FIXED, view.submitNodeCollector(), body,
                     IlluminatedLights.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
             submits++;
         });
@@ -63,23 +65,29 @@ final class BoneLightSmoke {
                 register();
                 position = mc.gameRenderer.mainCamera().position().add(mc.player.getLookAngle().scale(2.1));
             });
-            for (int yaw : new int[]{35,125}) {
-                int[] a = sample(ctx, wall, plain, yaw, "plain");
-                int[] b = sample(ctx, wall, glow, yaw, "glow");
-                // The authored Iris gbuffers_entities passes gl_Color through: it cannot
-                // establish a directional difference. Vanilla's plain control MUST show one.
-                if ((!iris && a[1] - a[0] < 12) || b[1] - b[0] > 5 || b[0] < a[1] - 5)
-                    throw new AssertionError("Face light " + yaw + ": plain G10/90=" + a[0] + "/" + a[1] + ", glowing=" + b[0] + "/" + b[1]);
-                GunMod.LOGGER.info("PORT_BONE_LIGHT: yaw={} plain G10/90={}/{}, illuminated child={}/{} ({} / {} pixels); iris={}",
-                        yaw, a[0], a[1], b[0], b[1], a[2], b[2], iris);
+            for (boolean mirror : new boolean[]{false, true}) {
+                String pass = mirror ? "translucent_mirror" : "cutout";
+                for (int yaw : new int[]{35, 125}) {
+                    int[] a = sample(ctx, wall, plain, yaw, mirror, "plain");
+                    int[] b = sample(ctx, wall, glow, yaw, mirror, "glow");
+                    // The authored Iris shader passes vertex colour through. Vanilla's negative
+                    // control MUST actually vary; both paths must preserve the visible cube.
+                    if ((!iris && a[1] - a[0] < 12) || b[1] - b[0] > 5 || b[0] < a[1] - 5
+                            || Math.abs(b[2] - a[2]) > .15 * a[2]) {
+                        throw new AssertionError("Face light " + pass + " " + yaw + ": plain="
+                                + java.util.Arrays.toString(a) + ", glowing=" + java.util.Arrays.toString(b));
+                    }
+                    GunMod.LOGGER.info("PORT_BONE_LIGHT: {} yaw={} plain G10/90={}/{}, illuminated child={}/{} ({} / {} pixels); iris={}",
+                            pass, yaw, a[0], a[1], b[0], b[1], a[2], b[2], iris);
+                }
             }
         } finally { ctx.runOnClient(mc -> { drawing = null; position = null; }); }
     }
 
-    private static int[] sample(ClientGameTestContext ctx, BufferedImage base, BedrockModel model, int yaw, String name) {
-        ctx.runOnClient(mc -> { angle = yaw; drawing = model; submits = 0; });
+    private static int[] sample(ClientGameTestContext ctx, BufferedImage base, BedrockModel model, int yaw, boolean mirror, String name) {
+        ctx.runOnClient(mc -> { translucent = mirror; angle = yaw; drawing = model; submits = 0; });
         ctx.waitFor(mc -> submits >= 3);
-        var frame = SnowstormMaterialSmoke.read(ctx.takeScreenshot("tacz_bone_light_" + yaw + "_" + name));
+        var frame = SnowstormMaterialSmoke.read(ctx.takeScreenshot("tacz_bone_light_" + (mirror ? "mirror_" : "") + yaw + "_" + name));
         int[] histogram = new int[256]; int count = 0;
         int cx = frame.getWidth()/2, cy = frame.getHeight()/2;
         for (int y = cy-65; y < cy+65; y++) for (int x = cx-65; x < cx+65; x++) {

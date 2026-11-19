@@ -1,5 +1,13 @@
-# Failed two-sided light control and the PAL re-entry test with the measured support arm.
-44441481899	smoke	tacz_bone_light_35_plain
-44441481899	smoke	tacz_bone_light_35_glow
-44440040072	pal	tacz_pal_remote_rifle
-44440040072	pal	tacz_pal_remote_pistol
+# Two world depth-overlap controls. Keep the ordinary single-material and empty-wall samples to reproduce the light response.
+44442691518	smoke	tacz_material_dark_control
+44442691518	smoke	tacz_particle_pass_rear
+44442691518	smoke	tacz_particle_pass_add_full
+44442691518	smoke	tacz_particle_pass_add_dark
+44442691518	smoke	tacz_particle_pass_emissive_full
+44442691518	smoke	tacz_particle_pass_emissive_dark
+44442691518	smoke	tacz_particle_pass_add_rear
+44442691518	smoke	tacz_particle_pass_emissive_rear
+44442691213	iris	tacz_material_dark_control
+44442691213	iris	tacz_particle_pass_rear
+44442691213	iris	tacz_particle_pass_add_rear
+44442691213	iris	tacz_particle_pass_emissive_rear

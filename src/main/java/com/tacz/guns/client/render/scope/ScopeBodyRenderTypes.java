@@ -416,6 +416,10 @@ public final class ScopeBodyRenderTypes {
                 tex -> create("tacz_scope_final_ocular_ring", FINAL_OCULAR_RING_PIPELINE, tex, false));
     }
 
+    public static boolean isClippedBody(RenderType type, Identifier texture) {
+        return BODY_CACHE.get(texture) == type;
+    }
+
     public static RenderType clipped(Identifier texture) {
         ensureIrisCompatibility();
         return BODY_CACHE.computeIfAbsent(texture,

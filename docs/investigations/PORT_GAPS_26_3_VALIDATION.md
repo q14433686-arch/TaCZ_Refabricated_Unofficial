@@ -101,15 +101,19 @@
 
 ## 普通发光骨骼，不用准星代测
 
-`9ac8d64` 的顶点转发器少了 26.3 要求的 packed-color 重载，未通过编译；`3f8aeb8` 的 Full build（含 JUnit）和专服通过。[同一提交的 PAL 作业](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44440040072/job/135278303144)将角色移到第一人称物品左侧，侧身取样。原包的步枪／手枪 `hold_upper` 右臂通道相同，但支撑手不同：在真正的 `PlayerModel.setupAnim` 结束时，这两次入镜的**左臂 z 坐标相差 4.00 个模型单位、滚转相差 0.338 弧度**。不仅是控制器换了 clip 名。
+`9ac8d64` 的顶点转发器少了 26.3 要求的 packed-color 重载，未通过编译；`3f8aeb8` 的 Full build（含 JUnit）和专服通过。[同一提交的 PAL 作业](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44440040072/job/135278303144)将角色移到第一人称物品左侧，侧身取样。原包的步枪／手枪 `hold_upper` 右臂通道相同，但支撑手不同：在真正的 `PlayerModel.setupAnim` 结束时，这两次入镜的**左臂 z 坐标相差 4.00 个模型单位、滚转相差 0.338 弧度**。[步枪入镜](../../build-reports/visual/44440040072-tacz_pal_remote_rifle.png)和[手枪再入镜](../../build-reports/visual/44440040072-tacz_pal_remote_pistol.png)现在都能在本地第一人称物品左侧看清角色的支撑手，不仅是控制器换了 clip 名。
 
 `3f8aeb8` 的普通 `_illuminated` 立方体在提取时沿骨骼树传递发光标记，写顶点时采用 26.3 当前光照条目的主光方向，不把“输入 packed light 刚好全亮”误当发光标记。保留原材质、透明度、掩码、深度与原来的环境 sky 选项。校准夹具给**普通和发光两者同样的满亮 lightmap**，只在父骨骼名字上有无后缀，比较子立方体转向 35° 与 125° 的青色各面。[`3f8aeb8` 的 Iris](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44440040071/job/135278413865)两种模型在两种朝向的 G 通道 q10/q90 均为 244/244：此回归光影直接输出纹理乘顶点色，普通对照本身不做法线光照，所以**不能**据此称方向光对照已过。[普通作业](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44440040228/job/135278303704)在客户端步骤的前两秒退出，只有空的 `tacz-vulkan.log`、没有游戏日志；具体 WSI 错误未取到，不是画面失败或通过。后续捕获 `vulkaninfo` 的 stderr，不跳过设备/窗口表面门槛。
 
 `cb50c35` 的[普通作业](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44440883621/job/135281169510)又在更早的 Full build 阶段缺少 ASM 的 `org.ow2:ow2:1.5.1` 父 POM。原镜像仅随客户端 Gradle 命令传入，未覆盖 CI 的首次 `build` / `compileJava`；将同一份限定坐标的 init script 也传给这两个 CI 步骤。不改变玩家的构建仓库或依赖版本。
 
-[`88cb2c3` 的 Mesa 客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44441481899/job/135283115485)终于到达同一画面对照，**失败**：35° 普通子骨骼 G10/G90 = **98/208**，发光子骨骼 = **98/98**，各面一致却全是暗面；没有到第二个朝向。26.3 实体 cutout 在 `PER_FACE_LIGHTING` 下按 `gl_FrontFacing` 选择正或负点积，单一朝光法线不能保证两面都亮。不能靠放宽亮度门槛验收。
+[`88cb2c3` 的 Mesa 客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44441481899/job/135283115485)终于到达同一画面对照，**失败**：35° [普通子骨骼](../../build-reports/visual/44441481899-tacz_bone_light_35_plain.png) G10/G90 = **98/208**，[发光子骨骼](../../build-reports/visual/44441481899-tacz_bone_light_35_glow.png) = **98/98**，各面一致却全是暗面；没有到第二个朝向。26.3 实体 cutout 在 `PER_FACE_LIGHTING` 下按 `gl_FrontFacing` 选择正或负点积，单一朝光法线不能保证两面都亮。不能靠放宽亮度门槛验收。
 
 上一轮 `cb50c35` 的 [PAL](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44440883638/job/135281235952) 和 [Iris](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44440883614/job/135281245553) 未进游戏（Loom 依赖注解/Cadix 解析失败）；手柄、两个 viewer 与编译已过。CI 改为仅把实际 Central URL 指向同坐标的 Central 镜像，保留 Fabric/插件与各 mod 仓库、ASM 父子优先顺序及玩家构建不变。
+
+`1686095` 普通客户端再次测到同样的 98/208 对 98/98。这次[先测世界粒子](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44442691518/job/135287185794)，深度/光照/UV 断言返回后才进骨骼测试；作业总结果仍为失败。[同一提交的 Iris 完整作业](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44442691213/job/135287184608)成功：后方绿片单画／先画 add／先画 emissive 的增量绿通道为 **225 / 225 / 0**。UV2 暗／亮时，两种前片增量蓝通道均为 **201 / 201**，符合这套不采 lightmap 的测试光影，不是普通光照响应。三个实际 RenderSetup（世界、手部、镜片裁剪）的深度状态与 UV 矩阵单独核对；固定 (1,1) 平移不是时间滚动。
+
+为修正骨骼暗面，通用快照不再伪造法线或拦截 Lighting UBO：只为带标记的连续几何选无方向光的实体材质，保留 UV2、原始几何法线、贴图、cutout/半透明、镜片外掩码。普通节点仍用原材质，未知自定义材质不猜测替换。另加反绕序的半透明材质对照。该实现须以新作业判定，不借用上一版数据。
 
 ## 尚不能外推的部分
 

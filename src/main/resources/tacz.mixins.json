@@ -29,7 +29,6 @@
     "client.FirstPersonHandsAndItemsMixin",
     "client.FirstPersonHandsAndItemsRendererMixin",
     "client.LanguageMixin",
-    "client.LightingMixin",
     "client.LocalPlayerMixin",
     "client.LevelRendererWorldPassMixin",
     "client.PreparedFrameAccessor",

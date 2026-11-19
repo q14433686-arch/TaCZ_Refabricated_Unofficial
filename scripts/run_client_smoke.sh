@@ -58,7 +58,9 @@ if [[ -z ${TACZ_SMOKE_VIEWER:-} && ${TACZ_SMOKE_CONTROLLER:-} != true ]]; then
         grep -Fq "PORT_HAND_MATERIALS: $backing six visible" "$run/logs/latest.log"
     done
     for angle in 35 125; do
-        grep -Fq "PORT_BONE_LIGHT: yaw=$angle plain" "$run/logs/latest.log"
+        for body in cutout translucent_mirror; do
+            grep -Fq "PORT_BONE_LIGHT: $body yaw=$angle plain" "$run/logs/latest.log"
+        done
     done
     for sample in add_rear emissive_rear; do
         test -s "$(find "$run/screenshots" -name "*tacz_particle_pass_${sample}.png" -print -quit)"

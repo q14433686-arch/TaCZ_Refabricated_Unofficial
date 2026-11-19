@@ -849,8 +849,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         if (ringSnapshot.isEmpty()) {
             return;
         }
-        collector.submitCustomGeometry(new PoseStack(), renderType,
-                (entryPose, consumer) -> ringSnapshot.write(consumer));
+        ringSnapshot.submitGeometry(collector, renderType, transformType != null && transformType.firstPerson());
         // 【光影 + PIP 遮光环半透明修复】光影下 PIP 的合成排在 LevelRenderer#render
         // 返回处 = 手持之【后】，上面这份正常提交会被合成整片盖掉（露出放大的世界，
         // 对着光源时目视为「遮光环变半透明」）。此时再排一份快照到
