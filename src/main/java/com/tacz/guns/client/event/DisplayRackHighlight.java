@@ -8,7 +8,15 @@ import net.fabricmc.fabric.api.client.rendering.v1.RenderStateDataKey;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
+import com.mojang.renderpearl.api.pipeline.ColorTargetState;
+import com.mojang.renderpearl.api.pipeline.CompareOp;
+import com.mojang.renderpearl.api.pipeline.DepthStencilState;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.tacz.guns.compat.iris.IrisCompat;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.rendertype.RenderSetup;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.resources.Identifier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
@@ -22,6 +30,18 @@ import java.util.List;
 public final class DisplayRackHighlight {
     private record Cell(AABB box, int color) {}
     private static final RenderStateDataKey<List<Cell>> CELLS = RenderStateDataKey.create(() -> "tacz display cells");
+
+    private static class Material {
+        static final RenderType LINES = create();
+        private static RenderType create() {
+            var pipeline = RenderPipeline.builder(RenderPipelines.LINES_SNIPPET)
+                    .withLocation(Identifier.parse("tacz:pipeline/rack_cell_outline"))
+                    .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
+                    .withColorTargetState(ColorTargetState.DEFAULT).build();
+            IrisCompat.assignRackOutlinePipeline(pipeline);
+            return RenderType.create("tacz_rack_cell_outline", RenderSetup.builder(pipeline).createRenderSetup());
+        }
+    }
 
     public static void register() {
         LevelExtractionEvents.AFTER_BLOCK_OUTLINE_EXTRACTION.register((context, target) -> {
@@ -52,15 +72,10 @@ public final class DisplayRackHighlight {
                 var pos = outline.pos();
                 pose.pushPose();
                 pose.translate(pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z);
-                for (var cell : cells) {
-                    var shape = Shapes.create(cell.box);
-                    // A stored model can cover the very cell the player is selecting. Vanilla's
-                    // secondary outline draws the depth-hidden part, the normal pass the visible part.
-                    // Both are native line pipelines (also mapped by Iris); only the picked rack qualifies.
-                    var out = context.submitNodeCollector();
-                    out.submitShapeOutline(pose, shape, RenderTypes.secondaryBlockOutline(), cell.color, 1f, false);
-                    out.submitShapeOutline(pose, shape, RenderTypes.lines(), cell.color, 1f, false);
-                }
+                // The picked rack is already visibility/range checked by vanilla's block pick.
+                // Do not let a stored item's depth hide the edges of its own selected cell.
+                var out = context.submitNodeCollector().order(1);
+                for (var cell : cells) out.submitShapeOutline(pose, Shapes.create(cell.box), Material.LINES, cell.color, 1f, false);
                 pose.popPose();
             }
             return true;

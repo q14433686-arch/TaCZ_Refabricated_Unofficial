@@ -23,6 +23,14 @@
 
 [同一提交的 Iris/Sodium + 实际启用的测试光影][iris] **通过**。改绑卸弹前同时等服务端 ADS 归零、切枪完成和本地锁解除后，独立卸弹、Alt 卸弹各自的服务端弹匣断言以及裸侧键正常换弹通过。改绑侧键的检视触发了动画粒子。AMG10 两个需裁剪倍率的中心未检出注入色，sight-only 倍率正对照重新可见。六材质世界夹具在深浅背景通过出像素和 alpha/blend 对 cutout 的对照；父/子表达式、8 次服务端碰撞至客户端碎屑、固定相机快照的直接模型提交也通过。XL50 实测 classic / PIP 恢复了 **2,787 / 2,438** 个热像像素。这些是集成环境的结果，不外推到所有光影包、手部六材质、真枪口跨世界帧或玩家机器。
 
+从[正对照基准](../../build-reports/visual/44428762277-tacz_amg10_particle_baseline_2.png)和[注入后原帧](../../build-reports/visual/44428762277-tacz_amg10_particle_2.png)复算，zoom 2 中心有 **125 个**新增洋红像素。深色煤块上的 [cutout](../../build-reports/visual/44428762277-tacz_material_dark_particles_opaque.png) 是实心色块，[alpha](../../build-reports/visual/44428762277-tacz_material_dark_particles_alpha.png) 和 [blend](../../build-reports/visual/44428762277-tacz_material_dark_particles_blend.png) 均透出分级底色；按测试中心窗口，alpha 与 blend 相差 243 像素，与 cutout 相差 5,197 像素。亮色背板上的 alpha 对空墙相差 5,226 像素。add、emissive、swirl 在这张静止纹理上外观相近：出现并非三者在任意照明/纹理滚动下都等价。
+
+## `13efe7b`：定位格线，而不是放入失败
+
+[普通客户端][outline-fail]已从新默认 K 经原版 use，在生存模式将单件带配件物品放入挂板，服务端库存和客户端同步断言均通过。随后才失败：直板在同一机位从黄变红时，加入原版 `secondaryBlockOutline` 仍只覆盖 **73/174** 个参考边线像素，未达到 80% 门槛。两条原版线的组合不能当成目标的无深度测试格线。Full build 和专服步骤（包括版本变化才重导出、实际 ZIP 内保留用户编辑）已通过。
+
+[光影客户端][trace-world]在同一提交测到一次游戏内绑定开火、服务端弹匣少一发、同一曳光在 **20 个不同游戏刻**提交模型，转头前后相对初始枪口/相机快照的位置匹配，随后石头命中发出五个普通碎屑。不是只调用 renderer 或读取缓存字段。8 个独立碰撞对照也通过。REI 和 Controllable 作业通过；本次 JEI 作业在下载 Maven 父 POM 时收到 HTTP 429，未进入游戏。
+
 ## 还要以实际消费者判定的项目
 
 - **输入与展示：** 用提示所显示的 Interact（非枪物品用原版使用键）放入。`ae8f1d9` 的[普通客户端][rack-failure]在等待生存手变空时超时；`043fba5` 已捕获原因：客户端和服务端均未收到 use，当前 GUI 是原版 `FriendsListConfirmScreen`，默认 O 与好友列表冲突。改新默认 K，保留用户已有绑定；不退回直接改 BE 来变绿。分别检查方块白名单、按键派发、两端潜行状态、客户端预测、服务端库存、拐角第二面和普通物品的不透明／半透明。
@@ -38,3 +46,5 @@
 [server]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44428762294/job/135240376511
 [viewers]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44428762236
 [iris]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44428762277/job/135240376445
+[outline-fail]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44429872717/job/135244203544
+[trace-world]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44429872551/job/135244203201

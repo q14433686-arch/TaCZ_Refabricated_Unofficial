@@ -209,10 +209,17 @@ public final class IrisCompat {
     /** Standalone entity-vertex Snowstorm passes are not vanilla RenderPipelines. Do not count
      * these registrations towards the optical mask readiness gate, or assign any vanilla pipeline. */
     public static void assignParticlePipeline(RenderPipeline pipeline, boolean hand, boolean emissive) {
+        tryAssignPipeline(pipeline, hand ? "HAND" : emissive ? "EMISSIVE_ENTITIES" : "ENTITIES");
+    }
+
+    public static void assignRackOutlinePipeline(RenderPipeline pipeline) {
+        tryAssignPipeline(pipeline, "LINES");
+    }
+
+    private static void tryAssignPipeline(RenderPipeline pipeline, String program) {
         if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) return;
-        String program = hand ? "HAND" : emissive ? "EMISSIVE_ENTITIES" : "ENTITIES";
         try {
-            if (!assignProgram(pipeline, program)) GunMod.LOGGER.warn("Iris cannot assign particle pipeline {}", pipeline.getLocation());
+            if (!assignProgram(pipeline, program)) GunMod.LOGGER.warn("Iris cannot assign {} to {}", pipeline.getLocation(), program);
         } catch (ReflectiveOperationException | RuntimeException e) {
             GunMod.LOGGER.warn("Cannot assign {} to Iris {}", pipeline.getLocation(), program, e);
         }

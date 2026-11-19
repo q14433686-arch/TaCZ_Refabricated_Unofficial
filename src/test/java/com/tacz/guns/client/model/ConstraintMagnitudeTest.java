@@ -6,6 +6,26 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ConstraintMagnitudeTest {
+    @Test void rootConstraintRetainsBothPivotAndRotation() {
+        var pojo = new com.google.gson.Gson().fromJson("""
+                {"format_version":"1.12.0","minecraft:geometry":[{"description":{
+                "identifier":"geometry.root_test","texture_width":16,"texture_height":16,
+                "visible_bounds_offset":[0,0,0],"visible_bounds_width":1,"visible_bounds_height":1},
+                "bones":[{"name":"constraint","pivot":[4,8,2],"rotation":[0,-10,0]}]}]}
+                """, com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO.class);
+        var model = new BedrockAnimatedModel(pojo, com.tacz.guns.client.resource.pojo.model.BedrockVersion.NEW);
+        var c = model.getConstraintObject();
+        var rotation = new ConstraintRotateListener(c);
+        rotation.update(rotation.initialValue(), false);
+        assertEquals(10f, c.rotationConstraint.y, 1e-4f);
+        var translation = new ConstraintTranslateListener(c);
+        translation.update(translation.initialValue(), false);
+        assertArrayEquals(new float[]{4,8,2}, new float[]{c.translationConstraint.x,c.translationConstraint.y,c.translationConstraint.z}, 1e-4f);
+        model.cleanAnimationTransform();
+        assertEquals(0, c.rotationConstraint.length());
+        assertEquals(0, c.translationConstraint.length());
+    }
+
     @Test void signedChannelsBlendByMagnitudeAndReset() {
         var c=new ConstraintObject(); c.node=new BedrockPart("constraint");
         var r=new ConstraintRotateListener(c); var t=new ConstraintTranslateListener(c);
