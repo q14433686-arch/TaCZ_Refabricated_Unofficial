@@ -3,6 +3,7 @@ package com.tacz.guns.test;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.tacz.guns.GunMod;
+import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.client.gui.ViewTuningScreen;
 import com.tacz.guns.client.input.AimKey;
@@ -10,11 +11,16 @@ import com.tacz.guns.client.input.GunInputHandler;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.client.tuning.TuningValues;
 import com.tacz.guns.client.tuning.ViewmodelPosition;
+import com.tacz.guns.compat.shouldersurfing.ShoulderSurfingCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.config.client.ViewTuningConfig;
 import com.tacz.guns.config.client.ViewTuningConfig.Axis;
 import com.tacz.guns.config.client.ViewTuningConfig.Measure;
 import com.tacz.guns.config.client.ViewTuningConfig.Mode;
+import com.tacz.guns.util.InputExtraCheck;
+import fuzs.forgeconfigapiport.fabric.api.v5.ModConfigEvents;
+import fuzs.forgeconfigapiport.fabric.impl.config.ForgeConfigApiPortConfig;
+import fuzs.forgeconfigapiport.fabric.impl.config.ModConfigValues;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.loader.api.FabricLoader;
@@ -29,6 +35,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
+import net.neoforged.fml.config.ModConfig;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -39,6 +46,24 @@ import java.util.Objects;
 /** Paused live hand, native widgets, disk readback and final HUD pixels with both Mesa and Iris. */
 final class ViewTuningSmoke {
     private static final String UI = "gui.tacz.view_tuning.";
+
+    // FCAP save fires a synchronous notification, then the (default-on) NightConfig file watcher
+    // installs a fresh config on its own thread. Don't let that disk re-read undo the NEXT test's
+    // intentionally memory-only keybind settings. Observe the real callback, not a wall-clock sleep.
+    private static volatile Mode diskMode;
+    static {
+        ModConfigEvents.reloading(GunMod.MOD_ID).register(config -> {
+            if (config.getType() == ModConfig.Type.CLIENT && Thread.currentThread() != Minecraft.getInstance().getRunningThread()) {
+                diskMode = ViewTuningConfig.MODE.get();
+            }
+        });
+    }
+
+    private static void awaitDiskReload(ClientGameTestContext ctx, Mode mode) {
+        if (!ForgeConfigApiPortConfig.getConfigValue(ModConfigValues.DISABLE_CONFIG_WATCHER)) {
+            ctx.waitFor(mc -> diskMode == mode && ViewTuningConfig.MODE.get() == mode);
+        }
+    }
 
     static void run(ClientGameTestContext ctx) {
         var key = GunInputHandler.VIEW_TUNING_KEY;
@@ -100,7 +125,9 @@ final class ViewTuningSmoke {
                 slider(mc, "opacity", 1); slider(mc, "thickness", 2d / 7);
             });
             frame(ctx, "designer");
+            diskMode = null;
             ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(PauseScreen.class);
+            awaitDiskReload(ctx, Mode.DESIGNER);
             ctx.runOnClient(mc -> {
                 var path = FabricLoader.getInstance().getConfigDir().resolve("tacz-client.toml");
                 try (var file = CommentedFileConfig.builder(path).build()) {
@@ -118,8 +145,8 @@ final class ViewTuningSmoke {
             ctx.getInput().holdKey(AimKey.AIM_KEY);
             ctx.waitFor(mc -> IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(1) > .99f);
             ctx.runOnClient(mc -> {
-                var display = com.tacz.guns.api.TimelessAPI.getGunDisplay(mc.player.getMainHandItem()).orElseThrow();
-                check(!display.isShowCrosshair() && !com.tacz.guns.compat.shouldersurfing.ShoulderSurfingCompat.showCrosshair(),
+                var display = TimelessAPI.getGunDisplay(mc.player.getMainHandItem()).orElseThrow();
+                check(!display.isShowCrosshair() && !ShoulderSurfingCompat.showCrosshair(),
                         "ADS negative control requires a gun/camera without a forced crosshair");
             });
             assertHud(frame(ctx, "ads"), scale, 0, 0, 0);
@@ -131,7 +158,9 @@ final class ViewTuningSmoke {
             ctx.getInput().pressKey(key); ctx.waitForScreen(ViewTuningScreen.class); // rebound, not the Cloth config key
             ctx.clickScreenButton(UI + "crosshair"); ctx.clickScreenButton(UI + "mode.designer");
             ctx.runOnClient(mc -> slider(mc, "size", (32d - 4) / (64 - 4)));
+            diskMode = null;
             ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null);
+            awaitDiskReload(ctx, Mode.PNG);
             // The test resource pack overrides the slot with a 32x32 texture, six opaque centered columns.
             int png = assertHud(frame(ctx, "png"), scale, 6 * 32, 6, 32);
             ctx.getInput().pressKey(key); ctx.waitForScreen(ViewTuningScreen.class);
@@ -145,9 +174,14 @@ final class ViewTuningSmoke {
         } finally {
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
             ctx.setScreen(() -> null);
-            ctx.runOnClient(mc -> {
+            diskMode = null;
+            Mode restored = ctx.computeOnClient(mc -> {
+                Mode mode = previous.get(ViewTuningConfig.MODE);
                 previous.save(); mc.options.setCameraType(camera); key.setKey(binding); KeyMapping.resetMapping();
+                return mode;
             });
+            awaitDiskReload(ctx, restored);
+            ctx.waitFor(mc -> !mc.isPaused() && InputExtraCheck.isInGame());
         }
     }
 
