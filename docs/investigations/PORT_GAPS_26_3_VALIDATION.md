@@ -65,6 +65,10 @@
 
 `bdd681a` 的 [Iris 手部对照](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44434717123/job/135260570748)跑到了深色六材质，但旧 q85 判据失败。对[基准](../../build-reports/visual/44434717123-tacz_hand_material_dark_control.png)复算，[alpha](../../build-reports/visual/44434717123-tacz_hand_material_dark_particles_alpha.png) 和 [blend](../../build-reports/visual/44434717123-tacz_hand_material_dark_particles_blend.png)都**只有同样的三个**新增色强值 36、76、120。最高一档分别占 55/349 和 47/325，手部遮挡的一小块使 q85 刚好落在台阶两边；[cutout](../../build-reports/visual/44434717123-tacz_hand_material_dark_particles_opaque.png) 则为 349 个同色强 127 的像素。新判据比较完整累计直方图的距离，并要求两种半透明材质相对实心对照仍有宽的强度分布；并非简单调大 0.17 的容差。
 
+`3594ef8` 的[启用光影的复测](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44436002454/job/135264924855)成功：深浅背板上手部 cutout/alpha/blend 的 q10/q95 都是 **1.0 / 0.30 / 0.30**。累计直方图距离（alpha 对 blend / 半透明对 cutout 的较小值）深色 **1.69 / 73.18**，浅色 **0.94 / 73.77**。两种相机侧倾、六种手部及世界材质、AMG10 0/0/125 和 XL50 热像恢复 **2,611 / 2,302** 像素（经典／PIP）均通过。深浅背板是背景对照，不是多方向照明或深度写入对照。
+
+同一提交的[无可选模组普通构建及客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44436002439/job/135265017304)亦通过；手部深/浅背景的 alpha 对 blend 距离为 **0.65 / 0.32**（各自对 cutout 均超过 26），不是同一份 Iris 结果。独立的 [JEI/REI 两项](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44436002559)通过。该轮 PAL 与手柄作业却未启动游戏：Gradle 无法为 Fabric Maven 的 ASM POM 解析 `org.ow2:ow2:1.5.1`，不能作为这两个可选组合的结果。CI 仅为此组 Central 坐标在解析前加入一个镜像；不替换版本，也不跳过游戏测试。
+
 ## 尚不能外推的部分
 
 - **输入与展示：** `ae8f1d9` 的[超时][rack-failure]后来在 `043fba5` 定位到原版好友 GUI 吞掉 O（两端均未收到 use）。新默认 K 和旧 `options.txt` 的手动改绑说明见 README。已过的是生存模式的指定板／柜和烘焙物品，不是每种第三方特殊渲染器或用户现存的所有键位组合。
