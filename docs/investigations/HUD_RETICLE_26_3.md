@@ -73,3 +73,11 @@ TACZ-HUD2:DESIGNER,DOT_1,LADDER,ORIGINAL,1,FF00FF,16.00,8.00,3.00,1.00,100,2.00,
 | 单独的枪械散布提示 | AK 站立、潜行、零缓存的投影半径分别约为 **13.29 / 7.38 / 0 GUI 像素**。ADS 和不允许显示的第三人称场景均没有绘出调色用的 HUD 像素。|
 
 [三连发中心裁剪对照（同倍率）](../../build-reports/visual/44475620919-hud-shot-comparison.png) · [同尺寸中心裁剪](../../build-reports/visual/44475620919-tacz_view_tuning_reported_crop.png) · [游戏内圆环编辑器](../../build-reports/visual/44475620919-tacz_view_tuning_ring_editor.png) · [圆环](../../build-reports/visual/44475620919-tacz_view_tuning_ring_rest.png) / [无点椭圆环](../../build-reports/visual/44475620919-tacz_view_tuning_ring_ellipse.png) · 三连发原帧：[开火前](../../build-reports/visual/44475620919-tacz_view_tuning_burst_rest.png) → [张开](../../build-reports/visual/44475620919-tacz_view_tuning_burst_open.png) → [回收](../../build-reports/visual/44475620919-tacz_view_tuning_burst_return.png)。
+
+### 账号、分配与阶梯（源码 `de43f82`）
+
+[完整构建／原生 Mesa 客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44482591156/job/135418163014)与 [Iris 基础着色包客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44482591124/job/135418280431)在 GUI 2× 均通过：
+
+- 同目录下两枚**测试 UUID** A→B→A 重读，分别保留各自的 XYZ、默认 HUD 和单枪覆盖；拒绝旧编辑器身份的保存，遇到未知档案版本也不覆盖原件。这不是用两枚真实账号登录私人服的测试。
+- 原生编辑器给 `rpg` 设静态圆环，给 `tacz:m320` 设阶梯。切到 M320 验证三档横线，切到 `tacz:rpg7` 验证仍是圆环；取消删除不改档，保存删除后先回到类别，再回到账号默认。
+- 账号默认**静态**、B93R 单枪覆盖**动态**：真实三连发且客户端散布固定为零时，圆环截帧外径为 **44 → 132 → 44** 物理像素。静态覆盖、取消与空击对照通过；继承层级不仅在编辑器显示，也参与本地开火事件的选择。

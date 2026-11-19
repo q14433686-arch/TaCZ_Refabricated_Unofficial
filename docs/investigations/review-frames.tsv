@@ -1,9 +1,3 @@
-# PIP calibration: inspect the failing and preceding green frames, plus real-pack positive and negative optical controls.
-44457885522	iris	tacz_lens_pip_bare
-44457885522	iris	tacz_lens_pip_optical
-44457885522	iris	tacz_lens_pip_1x
-44457885522	reimagined-act	tacz_amg10_particle_1
-44457885522	reimagined-act	tacz_amg10_particle_2
 # e2380d1 production build / plain Mesa: matching editor, viewport crop and three genuine burst frames.
 44475620919	smoke	tacz_view_tuning_reported_crop
 44475620919	smoke	tacz_view_tuning_ring_editor
@@ -12,3 +6,7 @@
 44475620919	smoke	tacz_view_tuning_burst_rest
 44475620919	smoke	tacz_view_tuning_burst_open
 44475620919	smoke	tacz_view_tuning_burst_return
+# de43f82 account HUD: one rpg category, an exact-gun override, original plain Mesa frames.
+44482591156	smoke	tacz_view_tuning_m320_rule
+44482591156	smoke	tacz_view_tuning_m320_ladder
+44482591156	smoke	tacz_view_tuning_rpg7_type
