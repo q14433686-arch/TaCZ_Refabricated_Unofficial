@@ -5,7 +5,6 @@ import cn.sh1rocu.tacz.mixin.accessor.ScreenAccessor;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.tacz.guns.GunMod;
-import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IAmmo;
 import com.tacz.guns.api.item.IAttachment;
@@ -21,16 +20,12 @@ import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
 import com.tacz.guns.client.resource.pojo.PackInfo;
 import com.tacz.guns.config.client.RenderConfig;
-import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.crafting.GunSmithTableIngredient;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
-import com.tacz.guns.init.ModRecipe;
 import com.tacz.guns.inventory.GunSmithTableMenu;
 import com.tacz.guns.network.message.ClientMessageCraft;
-import com.tacz.guns.resource.filter.RecipeFilter;
 import com.tacz.guns.resource.pojo.data.block.TabConfig;
 import com.tacz.guns.util.RenderDistance;
-import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
@@ -116,18 +111,17 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
         Map<Identifier, List<Identifier>> recipes = Maps.newLinkedHashMap();
         Map<Identifier, TabConfig> recipeKeys = Maps.newLinkedHashMap();
 
-        TimelessAPI.getCommonBlockIndex(blockId).ifPresent(blockIndex -> {
-            var tabs = blockIndex.getData().getTabs();
-            if (DefaultAssets.DEFAULT_BLOCK_ID.equals(blockId) && !SyncConfig.ENABLE_TABLE_FILTER.get()) {
-                tabs = TabConfig.DEFAULT_TABS;
-            }
-            for (TabConfig tab : tabs) {
-                recipes.put(tab.id(), Lists.newArrayList());
-                recipeKeys.put(tab.id(), tab);
-            }
-        });
-
-        List<Pair<Identifier, Identifier>> recipeIds = Lists.newArrayList();
+        var table = TimelessAPI.getCommonBlockIndex(blockId).orElse(null);
+        if (table == null) {
+            selectedType = null;
+            selectedRecipeList = null;
+            indexPage = 0;
+            return;
+        }
+        for (TabConfig tab : table.recipeTabs(blockId)) {
+            recipes.put(tab.id(), Lists.newArrayList());
+            recipeKeys.put(tab.id(), tab);
+        }
 
         // 第 12 轮修复：改用 CommonAssetsManager.get()。
         //
@@ -149,7 +143,7 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
             if (pojo == null || pojo.getResult() == null) {
                 continue;
             }
-            if (namespaces != null && !namespaces.contains(id.getNamespace())) {
+            if (!table.allowsRecipe(blockId, id) || (namespaces != null && !namespaces.contains(id.getNamespace()))) {
                 continue;
             }
             GunSmithTableRecipe recipe = new GunSmithTableRecipe(id, pojo);
@@ -167,25 +161,9 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
             }
             Identifier groupName = recipe.getResult().getGroup();
             if (recipeKeys.containsKey(groupName)) {
-                recipeIds.add(Pair.of(groupName, id));
+                recipes.get(groupName).add(id);
             }
         }
-
-        TimelessAPI.getCommonBlockIndex(menu.getBlockId()).map(blockIndex -> {
-            if (menu.getBlockId().equals(DefaultAssets.DEFAULT_BLOCK_ID) && !SyncConfig.ENABLE_TABLE_FILTER.get()) {
-                return null;
-            }
-            RecipeFilter filter = blockIndex.getFilter();
-            if (filter != null) {
-                return filter.filter(recipeIds, Pair::value);
-            }
-            return null;
-        }).orElse(recipeIds).forEach(entry -> {
-            Identifier groupName = entry.key();
-            if (recipeKeys.containsKey(groupName)) {
-                recipes.computeIfAbsent(groupName, g -> Lists.newArrayList()).add(entry.value());
-            }
-        });
 
         for (var entry : recipes.entrySet()) {
             if (!entry.getValue().isEmpty()) {

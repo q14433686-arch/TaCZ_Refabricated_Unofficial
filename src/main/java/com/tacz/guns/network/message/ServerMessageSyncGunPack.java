@@ -104,6 +104,11 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
         }
         // Ordering is intentional: viewers must observe the newly installed cache and rebuilt index.
         CommonNetworkCache.INSTANCE.fromNetwork(cache);
+        var wire = cache.getOrDefault(DataType.RECIPES, Map.of());
+        long sent = wire.keySet().stream().filter(id -> GunMod.MOD_ID.equals(id.getNamespace())).count();
+        long decoded = CommonNetworkCache.INSTANCE.tableRecipe.keySet().stream().filter(id -> GunMod.MOD_ID.equals(id.getNamespace())).count();
+        GunMod.LOGGER.info("[TaCZ Workbench Sync] {} table recipes from server; tacz namespace: {} received, {} decoded; {} workbenches",
+                wire.size(), sent, decoded, CommonNetworkCache.INSTANCE.getAllBlocks().size());
         // 通知客户端重新构建ClientIndex
         ClientIndexManager.reload();
         RecipeViewerReloadBridge.requestReload();

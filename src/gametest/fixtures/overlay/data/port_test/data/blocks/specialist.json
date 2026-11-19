@@ -1,0 +1,12 @@
+{
+  "filter": "port_test:specialist",
+  "tabs": [
+    {
+      "id": "tacz:ammo",
+      "name": "Test ammo",
+      "icon": {
+        "id": "minecraft:paper"
+      }
+    }
+  ]
+}

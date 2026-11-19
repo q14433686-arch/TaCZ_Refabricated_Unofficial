@@ -7,6 +7,7 @@ import net.minecraft.server.packs.PackLocationInfo;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.resources.IoSupplier;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -39,6 +40,13 @@ class WorkbenchFilterTest {
                 assertTrue(filter.contains(Identifier.parse(id)), id + " rejected by " + CommonAssetsManager.GSON.toJson(filter));
             assertFalse(filter.contains(Identifier.parse("addon:private/test")));
         }
+    }
+
+    @Test void invalidNonemptyWhitelistDoesNotBecomeAllowAllOnTheWire() {
+        var filter = parse("{\"whitelist\":[\"Invalid Id\"]}");
+        var id = Identifier.parse("tacz:gun/ak47");
+        assertFalse(filter.contains(id));
+        assertFalse(parse(CommonAssetsManager.GSON.toJson(filter)).contains(id));
     }
 
     @ParameterizedTest @ValueSource(booleans = {false, true})

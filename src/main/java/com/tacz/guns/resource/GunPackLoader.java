@@ -120,8 +120,8 @@ public enum GunPackLoader implements RepositorySource {
 
     static Pack.ResourcesSupplier supplier(PackMetadataSection meta, List<GunPack> packs) {
         return new Pack.ResourcesSupplier() {
-            private DelegatingPackResources resources(PackLocationInfo info, List<PackResources> layers) {
-                return new DelegatingPackResources(info.id(), false, meta, layers) {
+            private DelegatingPackResources resources(PackLocationInfo info, List<List<PackResources>> packs) {
+                return new DelegatingPackResources(info.id(), meta, packs) {
                     @Override public IoSupplier<InputStream> getRootResource(String... paths) {
                         if (paths.length == 1 && "pack.png".equals(paths[0])) {
                             Path icon = getModIcon(GunMod.MOD_ID);
@@ -137,18 +137,18 @@ public enum GunPackLoader implements RepositorySource {
             }
 
             @Override public Stream<PackResources> openResources(PackLocationInfo info, Pack.Metadata metadata) {
-                List<PackResources> layers = new ArrayList<>();
+                List<List<PackResources>> layers = new ArrayList<>();
                 try {
                     for (GunPack pack : packs) {
                         try {
-                            layers.addAll(GunPackOverlayResolver.open(pack.path, pack.name, pack.overlays));
+                            layers.add(GunPackOverlayResolver.open(pack.path, pack.name, pack.overlays));
                         } catch (IOException | RuntimeException e) {
                             GunMod.LOGGER.warn("Skipping unreadable gun pack {}: {}", pack.path, e.toString());
                         }
                     }
                     return Stream.of(resources(info, layers));
                 } catch (RuntimeException | Error e) {
-                    layers.forEach(PackResources::close);
+                    layers.forEach(pack -> pack.forEach(PackResources::close));
                     throw e;
                 }
             }

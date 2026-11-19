@@ -1,5 +1,6 @@
 package cn.sh1rocu.tacz.compat.rei;
 
+import cn.sh1rocu.tacz.compat.rei.display.GunSmithTableDisplay;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.item.GunTabType;
 import com.tacz.guns.api.item.attachment.AttachmentType;
@@ -65,7 +66,10 @@ public final class ReiPackRefresh {
         if (!removed.isEmpty()) entries.removeEntryIf(removed::contains);
         entries.addEntries(current.stream().filter(e -> !entries.alreadyContain(e)).toList());
         previousVariants = current;
-        GunMod.LOGGER.info("[TACZ Recipe Viewer] Replaced {} pack displays with {}; server crafting displays left in place.", owned.size(), newDisplays.size());
+        long tableRecipes = newDisplays.stream().filter(GunSmithTableDisplay.class::isInstance)
+                .map(d -> ((GunSmithTableDisplay) d).getRecipe().getId()).filter(id -> GunMod.MOD_ID.equals(id.getNamespace())).distinct().count();
+        GunMod.LOGGER.info("[TACZ Recipe Viewer] Replaced {} pack displays with {}; {} distinct tacz workbench recipes displayed; server crafting displays left in place.",
+                owned.size(), newDisplays.size(), tableRecipes);
         return true;
     }
 

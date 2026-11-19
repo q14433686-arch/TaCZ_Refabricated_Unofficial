@@ -1,14 +1,11 @@
 package com.tacz.guns.inventory;
 
-import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
-import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.crafting.GunSmithTableIngredient;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.ServerMessageCraft;
 import com.tacz.guns.resource.CommonAssetsManager;
-import com.tacz.guns.resource.pojo.data.block.TabConfig;
 import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import net.fabricmc.fabric.api.menu.v1.ExtendedMenuType;
@@ -87,8 +84,7 @@ public class GunSmithTableMenu extends AbstractContainerMenu {
         if (blockId == null || recipeId == null) return null;
         var table = TimelessAPI.getCommonBlockIndex(blockId).orElse(null);
         if (table == null) return null;
-        boolean unfilteredDefault = DefaultAssets.DEFAULT_BLOCK_ID.equals(blockId) && !SyncConfig.ENABLE_TABLE_FILTER.get();
-        if (!unfilteredDefault && !table.getFilter().contains(recipeId)) return null;
+        if (!table.allowsRecipe(blockId, recipeId)) return null;
 
         TableRecipe pojo = CommonAssetsManager.get().getTableRecipe(recipeId);
         if (pojo == null || pojo.getResult() == null) {
@@ -100,7 +96,7 @@ public class GunSmithTableMenu extends AbstractContainerMenu {
         // 少了这一步 getTab() 恒为 null，下面的页签校验必然失败。
         gunSmithTableRecipe.init();
 
-        var tabs = unfilteredDefault ? TabConfig.DEFAULT_TABS : table.getData().getTabs();
+        var tabs = table.recipeTabs(blockId);
         return tabs.stream().anyMatch(tab -> tab.id().equals(gunSmithTableRecipe.getTab())) ? gunSmithTableRecipe : null;
     }
 

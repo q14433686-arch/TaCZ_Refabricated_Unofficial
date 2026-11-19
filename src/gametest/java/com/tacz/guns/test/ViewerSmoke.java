@@ -2,6 +2,9 @@ package com.tacz.guns.test;
 
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.builder.AmmoItemBuilder;
+import com.tacz.guns.api.item.builder.AttachmentItemBuilder;
+import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.resource.network.CommonNetworkCache;
 import com.tacz.guns.init.ModItems;
 import net.minecraft.world.item.Items;
@@ -17,6 +20,11 @@ import javax.imageio.ImageIO;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.jetbrains.annotations.Nullable;
 
 /** Each lane installs one real viewer. Never call the TACZ registration methods directly. */
 interface ViewerSmoke {
@@ -25,11 +33,49 @@ interface ViewerSmoke {
 
     boolean forward(Identifier id);
     boolean reverse(Identifier id);
+    Set<Identifier> workbenchRecipes(Identifier table, @Nullable ItemStack outputFocus);
     void open(Identifier gun);
     boolean isOpen(Screen screen);
 
     static boolean isGun(ItemStack stack, Identifier id) {
         return stack.getItem() instanceof IGun gun && id.equals(gun.getGunId(stack));
+    }
+
+    /** A real output-focused recipe lookup, not the similarly named gun→ammo/attachment usages. */
+    private static void checkWorkbenches(ClientGameTestContext ctx, ViewerSmoke viewer, boolean reloaded) {
+        record Sample(String table, String prefix, int count, String product, ItemStack focus) {}
+        var gunTable = Identifier.parse("tacz:gun_smith_table");
+        ctx.waitFor(mc -> viewer.workbenchRecipes(gunTable, null).contains(Identifier.parse("tacz:gun/ak47")), 1200);
+        ctx.runOnClient(mc -> {
+            var cache = CommonNetworkCache.INSTANCE;
+            var samples = List.of(
+                    new Sample("gun_smith_table", "gun/", 70, "ak47", GunItemBuilder.create().setId(EXISTING).build()),
+                    new Sample("attachment_workbench", "attachments/", 107, "scope_acog_ta31", AttachmentItemBuilder.create().setId(Identifier.parse("tacz:scope_acog_ta31")).build()),
+                    new Sample("ammo_workbench", "ammo/", 25, "9mm", AmmoItemBuilder.create().setId(Identifier.parse("tacz:9mm")).build()));
+            for (var sample : samples) {
+                var tableId = Identifier.parse("tacz:" + sample.table());
+                var table = cache.getBlockIndex(tableId);
+                if (table == null || table.getData() != cache.getBlockData(tableId) || table.getFilter() != cache.getRecipeFilter(Identifier.parse("tacz:default")))
+                    throw new AssertionError("Workbench is not bound to the received data/filter: " + tableId);
+                var expected = cache.getAllTableRecipes().stream().map(Map.Entry::getKey)
+                        .filter(id -> id.getNamespace().equals("tacz") && id.getPath().startsWith(sample.prefix())).collect(Collectors.toSet());
+                var displayed = viewer.workbenchRecipes(tableId, null).stream().filter(id -> id.getNamespace().equals("tacz")).collect(Collectors.toSet());
+                if (expected.size() != sample.count() || !expected.equals(displayed))
+                    throw new AssertionError(tableId + " expected " + sample.count() + ", received " + expected + ", displayed " + displayed);
+                var recipeId = Identifier.parse("tacz:" + sample.prefix() + sample.product());
+                if (!viewer.workbenchRecipes(tableId, sample.focus()).contains(recipeId))
+                    throw new AssertionError("Output search did not find " + recipeId + " on " + tableId);
+            }
+            var ammoTable = Identifier.parse("tacz:ammo_workbench");
+            var shell = AmmoItemBuilder.create().setId(Identifier.parse("tacz:12g")).build();
+            var specialId = Identifier.parse("port_test:condition_true");
+            var defaults = viewer.workbenchRecipes(ammoTable, shell);
+            var specialist = viewer.workbenchRecipes(Identifier.parse("port_test:specialist"), shell);
+            if (cache.getTableRecipe(specialId) == null || defaults.contains(specialId) || !specialist.contains(specialId)
+                    || specialist.contains(Identifier.parse("tacz:ammo/12g")) || defaults.contains(Identifier.parse("reload_smoke:shells")) != reloaded)
+                throw new AssertionError("Third-party or blacklisted recipe misclassified: default=" + defaults + ", specialist=" + specialist);
+            GunMod.LOGGER.info("PORT_WORKBENCH_VIEWER: 70 gun, 107 attachment, 25 ammo recipes match wire IDs; three output searches and specialist blacklist passed (reloaded={})", reloaded);
+        });
     }
 
     static void run(ClientGameTestContext ctx, String viewer) {
@@ -53,10 +99,12 @@ interface ViewerSmoke {
                     .flatMap(e -> e.display().result().resolveForStacks(SlotDisplayContext.fromLevel(mc.level)).stream())
                     .anyMatch(stack -> stack.is(ModItems.GUN_SMITH_TABLE)), 300);
             if (api instanceof ReiViewerSmoke rei) rei.checkLateSync(ctx, false);
+            checkWorkbenches(ctx, api, false);
             ConversionReloadSmoke.run(ctx, world);
             world.getConnection().waitForChunksRender();
             ctx.waitFor(mc -> mc.gui.screen() == null && mc.gui.overlay() == null && api.forward(NEW) && api.reverse(NEW), 1200);
             if (api instanceof ReiViewerSmoke rei) rei.checkLateSync(ctx, true);
+            checkWorkbenches(ctx, api, true);
             Path background = ctx.takeScreenshot("tacz_world_before_" + viewer);
             // Match the normal player entry point, not an in-flight join/loading screen.
             ctx.getInput().pressKey(options -> options.keyInventory);

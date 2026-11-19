@@ -103,6 +103,9 @@ if [[ ${TACZ_SMOKE_CONTROLLER:-} == true ]]; then
     exit
 fi
 if [[ -n ${TACZ_SMOKE_VIEWER:-} ]]; then
+    for state in false true; do
+        grep -F 'PORT_WORKBENCH_VIEWER:' "$run/logs/latest.log" | grep -F "(reloaded=$state)" | sed 's/^/::notice::/'
+    done
     if [[ $TACZ_SMOKE_VIEWER == rei ]]; then grep -F 'PORT_REI_CRAFTING:' "$run/logs/latest.log" | sed 's/^/::notice::/'; fi
     grep -Fq "PORT_VIEWER: $TACZ_SMOKE_VIEWER showed the reloaded gun; both query directions changed" "$run/logs/latest.log"
     verdict=$(grep -Eo 'PORT_VIEWER: [[:digit:]]+ of [[:digit:]]+ central samples show the recipe panel against the world control' "$run/logs/latest.log")
