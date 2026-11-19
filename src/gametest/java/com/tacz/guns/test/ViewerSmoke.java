@@ -20,6 +20,7 @@ import javax.imageio.ImageIO;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,9 +60,16 @@ interface ViewerSmoke {
                     throw new AssertionError("Workbench is not bound to the received data/filter: " + tableId);
                 var expected = cache.getAllTableRecipes().stream().map(Map.Entry::getKey)
                         .filter(id -> id.getNamespace().equals("tacz") && id.getPath().startsWith(sample.prefix())).collect(Collectors.toSet());
+                if (expected.size() != sample.count()) throw new AssertionError("Wire count for " + sample.prefix() + ": " + expected.size());
+                // The gun table's misc tab also has the base mod's painting (not one of the 70 pack guns).
+                if (tableId.equals(gunTable)) expected.add(Identifier.parse("tacz:misc/blood_strike_1"));
                 var displayed = viewer.workbenchRecipes(tableId, null).stream().filter(id -> id.getNamespace().equals("tacz")).collect(Collectors.toSet());
-                if (expected.size() != sample.count() || !expected.equals(displayed))
-                    throw new AssertionError(tableId + " expected " + sample.count() + ", received " + expected + ", displayed " + displayed);
+                if (!expected.equals(displayed)) {
+                    var missing = new HashSet<>(expected);
+                    missing.removeAll(displayed);
+                    displayed.removeAll(expected);
+                    throw new AssertionError(tableId + " missing=" + missing + " unexpected=" + displayed);
+                }
                 var recipeId = Identifier.parse("tacz:" + sample.prefix() + sample.product());
                 if (!viewer.workbenchRecipes(tableId, sample.focus()).contains(recipeId))
                     throw new AssertionError("Output search did not find " + recipeId + " on " + tableId);
