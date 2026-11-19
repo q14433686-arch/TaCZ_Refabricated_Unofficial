@@ -43,6 +43,18 @@ jobs:
           TACZ_SMOKE_IRIS: 'true'
           SDL_VIDEO_FORCE_EGL: '1'
         run: xvfb-run -a -s '-screen 0 1280x1024x24 +extension GLX +render -noreset' bash -c 'glxinfo -B; bash scripts/run_client_smoke.sh'
+      - name: Report real-pack pixel and shadow measurements
+        if: always() && matrix.color != ''
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          log=Path('build/run/clientGameTest/logs/latest.log')
+          if log.exists():
+            lines=log.read_text(errors='replace').splitlines()
+            for name,keys in [('Setup',('Complementary','depth readback')),('Shadow',('shadow ',)),('Bounds',('caster bounds','translated caster','removed caster')),('Light',('ambient=','stock locator','same stock','timed exposure')),('Aperture',('PORT_SCOPE_PARTICLE:',))]:
+              data=[s.split(') ',1)[-1] for s in lines if ('PORT_REIMAGINED:' in s or 'PORT_SCOPE_PARTICLE:' in s) and any(k in s for k in keys)]
+              if data: print('::notice title='+name+'::'+' | '.join(data).replace('%','%25'))
+          PY
       - name: Summarize failures
         if: failure()
         run: |

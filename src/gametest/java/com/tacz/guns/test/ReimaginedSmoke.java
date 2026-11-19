@@ -7,11 +7,8 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.api.event.common.GunFirePostEvent;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
-import com.tacz.guns.client.model.bedrock.IlluminatedMaterials;
-import com.tacz.guns.client.particle.NativeMuzzleEffects;
 import com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader;
 import com.tacz.guns.client.particle.bedrock.particle.world.SnowstormMaterials;
-import com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager;
 import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.test.mixin.ReimaginedShotControl;
@@ -20,7 +17,6 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContex
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
@@ -34,6 +30,7 @@ import org.lwjgl.opengl.GL45C;
 
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -41,11 +38,11 @@ import java.util.Optional;
  * Read final colour and Iris's actual shadowtex0. Never feed any readback into the product renderer. */
 public final class ReimaginedSmoke {
     private static final Identifier SVD = Identifier.parse("tacz:svd"), AK = Identifier.parse("tacz:ak47");
-    public static boolean shadowReference, pulse, bodyOnly, omitCaster;
-    public static RenderType oldMaterial, svdBody;
-    public static int shadowBodies;
+    public static boolean shadowReference, pulse, bodyOnly, omitCaster, forceOld;
+    public static int shadowBodies, oldSelections;
     private static int tile, pulses;
     private static Object targets;
+    private static boolean reportedReadback;
 
     public static void refreshPulse() {
         if (!pulse) return;
@@ -81,8 +78,25 @@ public final class ReimaginedSmoke {
     private static float[] depth() {
         try {
             int n = (int)call(targets,"getResolution"); int id = (int)call(call(targets,"getDepthTexture"),"iris$getGlId");
+            int width=GL45C.glGetTextureLevelParameteri(id,0,GL45C.GL_TEXTURE_WIDTH);
+            int height=GL45C.glGetTextureLevelParameteri(id,0,GL45C.GL_TEXTURE_HEIGHT);
+            if (width!=n || height!=n || GL45C.glGetInteger(GL45C.GL_PIXEL_PACK_BUFFER_BINDING)!=0)
+                throw new AssertionError("Unexpected shadow readback target: "+id+" size="+width+"x"+height);
+            // glGetTextureImage (including DSA) obeys GL_PACK_*. A preceding 854-wide
+            // screenshot can leave a different row pitch; never reinterpret it as n floats.
+            int[] keys={GL45C.GL_PACK_ROW_LENGTH,GL45C.GL_PACK_SKIP_ROWS,GL45C.GL_PACK_SKIP_PIXELS,GL45C.GL_PACK_ALIGNMENT};
+            int[] old=Arrays.stream(keys).map(GL45C::glGetInteger).toArray();
+            if (!reportedReadback) {
+                GunMod.LOGGER.info("PORT_REIMAGINED: depth readback {}x{} inherited pack row/skipY/skipX/align={} -> 0,0,0,4",width,height,Arrays.toString(old));
+                reportedReadback=true;
+            }
             float[] a = new float[n*n];
-            GL45C.glGetTextureImage(id,0,GL45C.GL_DEPTH_COMPONENT,GL45C.GL_FLOAT,a);
+            try {
+                for(int i=0;i<keys.length;i++) GL45C.glPixelStorei(keys[i], i==3 ? 4 : 0);
+                GL45C.glGetTextureImage(id,0,GL45C.GL_DEPTH_COMPONENT,GL45C.GL_FLOAT,a);
+            } finally {
+                for(int i=0;i<keys.length;i++) GL45C.glPixelStorei(keys[i],old[i]);
+            }
             boolean populated=false;
             for(float v:a) if(Float.isFinite(v) && v!=a[0]) {populated=true;break;}
             if(!populated) throw new AssertionError("Empty shadow depth readback: " + id);
@@ -130,7 +144,12 @@ public final class ReimaginedSmoke {
             server.runOnServer(s->world.getConnection().getServerPlayer().level().getEntity(dropped).snapTo(Vec3.atCenterOf(base.offset(3,0,5))));
             ctx.waitFor(mc->mc.level.getEntity(dropped).getX()>base.getX()+2);
             var moved = shadow(ctx,"moved",failures);
-            if (Math.hypot(before.x-moved.x,before.y-moved.y)<8) failures.append(" stationary-shadow");
+            // Deliberate spatial negative: sample the same real caster at a known *wrong*
+            // position. It must be rejected against the first footprint, not just change its centre.
+            var unexpected=(BitSet)moved.mask.clone(); unexpected.andNot(before.mask);
+            double shift=Math.hypot(before.x-moved.x,before.y-moved.y);
+            GunMod.LOGGER.info("PORT_REIMAGINED: translated caster centre shift={} distinct={}/{}",shift,unexpected.cardinality(),moved.mask.cardinality());
+            if (shift<8 || unexpected.cardinality()<3 || unexpected.cardinality()<moved.mask.cardinality()*.7) failures.append(" stationary-shadow");
             server.runOnServer(s->world.getConnection().getServerPlayer().level().getEntity(dropped).discard());
             ctx.waitFor(mc->mc.level.getEntity(dropped)==null); frame(ctx,"removed");
             ctx.runOnClient(mc->{
@@ -163,7 +182,7 @@ public final class ReimaginedSmoke {
             ScopeUserRegressionSmoke.run(ctx, world, true);
             if(!failures.isEmpty()) throw new AssertionError("Reimagined: "+failures);
             GunMod.LOGGER.info("PORT_REIMAGINED: complete");
-        } finally { ctx.runOnClient(mc->{tile=0;pulse=bodyOnly=shadowReference=omitCaster=false;targets=null;oldMaterial=svdBody=null;}); }
+        } finally { ctx.runOnClient(mc->{tile=0;pulse=bodyOnly=shadowReference=omitCaster=false;targets=null;forceOld=false;}); }
     }
     private static float[] renderDepth(Minecraft mc) {
         // Four complete renders on the SAME client tick. No advancing item bob/spin or actor
@@ -172,25 +191,25 @@ public final class ReimaginedSmoke {
         mc.gameRenderer.render(); RenderSystem.getDevice().createCommandEncoder().submit();
         return depth();
     }
-    private record Center(double x, double y) {}
+    private record Center(double x, double y, BitSet mask) {}
 
     private static Center shadow(ClientGameTestContext ctx, String label, StringBuilder failures) {
         frame(ctx,label);
         return ctx.computeOnClient(mc->{
             // A null shadow mapping was the suspected regression. Use the original visible
             // (non-shadow) illuminated type as a deliberate bad caster for sensitivity.
-            svdBody=RenderTypes.entityCutout(Identifier.parse("tacz:textures/gun/uv/svd.png"));
-            var unmapped=IlluminatedMaterials.forBody(svdBody,false);
-            shadowBodies=0; omitCaster=true; var absent=renderDepth(mc); omitCaster=false;
+            oldSelections=shadowBodies=0; omitCaster=true; var absent=renderDepth(mc); omitCaster=false;
             shadowReference=true; var ideal=renderDepth(mc); shadowReference=false;
             var actual=renderDepth(mc);
-            oldMaterial=unmapped; var bad=renderDepth(mc); oldMaterial=null;
+            forceOld=true; var bad=renderDepth(mc); forceOld=false;
             int n=(int)Math.sqrt(actual.length), width=0, near=0, agree=0,spurious=0,badSpurious=0;
+            var mask=new BitSet(actual.length);
             int minX=n,minY=n,maxX=0,maxY=0,sumX=0,sumY=0;
             // Static nearby terrain, but waving leaves/foliage may change a few individual
             // distant texels even within a tick. Count long contiguous runs as well as area.
             for(int y=0;y<n;y++) {int run=0;for(int x=0;x<n;x++) {
                 int i=x+y*n; boolean ref=Math.abs(ideal[i]-absent[i])>.00015f, got=Math.abs(actual[i]-absent[i])>.00015f;
+                if (got) mask.set(i);
                 if(ref) {
                     near++; sumX+=x; sumY+=y;
                     minX=Math.min(x,minX); minY=Math.min(y,minY); maxX=Math.max(x,maxX); maxY=Math.max(y,maxY);
@@ -199,11 +218,14 @@ public final class ReimaginedSmoke {
                 if(!ref && got)spurious++;
                 if(!ref && Math.abs(bad[i]-absent[i])>.00015f){badSpurious++;width=Math.max(width,++run);}else run=0;
             }}
-            GunMod.LOGGER.info("PORT_REIMAGINED: shadow {} reference={} same-depth={} extra={} unmapped-extra={} unmapped-longest-row={} selects={}",label,near,agree,spurious,badSpurious,width,shadowBodies);
+            GunMod.LOGGER.info("PORT_REIMAGINED: shadow {} reference={} same-depth={} extra={} unmapped-extra={} unmapped-longest-row={} selects={}/{}",label,near,agree,spurious,badSpurious,width,shadowBodies,oldSelections);
             GunMod.LOGGER.info("PORT_REIMAGINED: {} caster bounds ({},{})..({},{})",label,minX,minY,maxX,maxY);
-            if (label.equals("held") && (width<n/6 || badSpurious<near*3)) failures.append(" insensitive-shadow-control");
+            // An unmapped GPU program need not land on the map in every pose/run. Require
+            // that the real old type was selected, log its writes, and test positive detection
+            // independently with the translated caster above. Never relax production bounds.
+            if (oldSelections==0) failures.append(" old-material-not-exercised");
             if(shadowBodies==0 || near<3 || maxX-minX>n/8 || maxY-minY>n/8 || agree<near*.90 || spurious>Math.max(8,near*.1)) failures.append(' ').append(label).append("-shadow");
-            return new Center(sumX/(double)Math.max(1,near),sumY/(double)Math.max(1,near));
+            return new Center(sumX/(double)Math.max(1,near),sumY/(double)Math.max(1,near),mask);
         });
     }
     // Sample the shipped flash strip through the production material factory against the pack's

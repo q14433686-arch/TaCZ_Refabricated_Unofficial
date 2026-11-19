@@ -1,5 +1,6 @@
 package com.tacz.guns.test.mixin;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.tacz.guns.client.model.bedrock.IlluminatedMaterials;
 import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.test.ReimaginedSmoke;
@@ -15,6 +16,15 @@ abstract class ReimaginedShadowControl {
     private static void reference(RenderType body, boolean hand, CallbackInfoReturnable<RenderType> ci) {
         if (!IrisCompat.isRenderShadow()) return;
         if (ReimaginedSmoke.shadowReference) { ReimaginedSmoke.shadowBodies++; ci.setReturnValue(body); }
-        else if (ReimaginedSmoke.oldMaterial != null && body == ReimaginedSmoke.svdBody) ci.setReturnValue(ReimaginedSmoke.oldMaterial);
+    }
+
+    // Disable only the new shadow-material branch, for exactly this invocation. Do not
+    // substitute a guessed SVD texture or lie to Iris about which GPU pass is running.
+    @ModifyExpressionValue(method="forBody", at=@At(value="INVOKE",target="Lcom/tacz/guns/compat/iris/IrisCompat;isRenderShadow()Z"))
+    private static boolean oldDecision(boolean shadow) { return shadow && !ReimaginedSmoke.forceOld; }
+
+    @Inject(method="forBody",at=@At("RETURN"))
+    private static void countOld(RenderType body, boolean hand, CallbackInfoReturnable<RenderType> ci) {
+        if (ReimaginedSmoke.forceOld && !hand && IrisCompat.isRenderShadow() && ci.getReturnValue()!=body) ReimaginedSmoke.oldSelections++;
     }
 }
