@@ -291,6 +291,9 @@ public class ParticleEmitterInstance {
             worldTransform.transform(tempSpawnVec.set(p.x, p.y, p.z, 1));
             p.x = tempSpawnVec.x; p.y = tempSpawnVec.y; p.z = tempSpawnVec.z;
             p.worldSpace = true;
+            if (followAnchor) {
+                p.birthAnchorX=worldTransform.m30(); p.birthAnchorY=worldTransform.m31(); p.birthAnchorZ=worldTransform.m32();
+            }
             if (!effectiveLocalRot) transformVelocityByLinearMap(p, worldTransform);
             else { p.vx *= worldScale; p.vy *= worldScale; p.vz *= worldScale; }
         } else if (fpMode) {

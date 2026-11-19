@@ -14,6 +14,8 @@ public class ParticleInstance {
     public float x, y, z;
     /** Shape-space birth position used by parametric relative_position. */
     public float originX,originY,originZ;
+    /** World translation at emission (only read for follow-anchor flash billboards). */
+    public float birthAnchorX, birthAnchorY, birthAnchorZ;
     // 速度
     public float vx, vy, vz;
     // 颜色

@@ -65,6 +65,9 @@ if [[ -z ${TACZ_SMOKE_VIEWER:-} && ${TACZ_SMOKE_CONTROLLER:-} != true ]]; then
     for sample in add_rear emissive_rear; do
         test -s "$(find "$run/screenshots" -name "*tacz_particle_pass_${sample}.png" -print -quit)"
     done
+    for sample in first F5 tracked; do grep -Fq "PORT_MUZZLE_SCALE: $sample" "$run/logs/latest.log"; done
+    grep -Fq 'PORT_MUZZLE_PIXELS:' "$run/logs/latest.log"
+    grep -E 'PORT_MUZZLE(_SCALE|_PIXELS)?:' "$run/logs/latest.log" | sed 's/^/::notice::/'
     grep -Fq 'PORT_PARTICLE_PASS: rear' "$run/logs/latest.log"
     grep -Fq 'PORT_CONSTRAINT: ADS pixels' "$run/logs/latest.log"
     grep -Fq 'PORT_BILLBOARD: pitched' "$run/logs/latest.log"
@@ -113,7 +116,7 @@ grep -Fq 'PORT_SHOT: DB-2 bare/cancel/ground/air impulses and both positions' "$
 
 grep -Fq 'PORT_MOVEMENT: empty-hand crawl, disabled exit, pose ownership and airborne ADS option passed' "$run/logs/latest.log"
 
-grep -Fq 'PORT_MUZZLE: AK47/Glock first-person, F5, tracked shooter, smoke-off flash and teardown submissions passed' "$run/logs/latest.log"
+grep -Fq 'PORT_MUZZLE: verified mounted/unmounted' "$run/logs/latest.log"
 printf '::notice::%s\n' "$(grep -F 'PORT_MUZZLE:' "$run/logs/latest.log")"
 
 grep -Fq 'PORT_FEEDBACK: back-mounted toggle, actual ordinary-hurt render hook and same-level impact delivery controls passed' "$run/logs/latest.log"

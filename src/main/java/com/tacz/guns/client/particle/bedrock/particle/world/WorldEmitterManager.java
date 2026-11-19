@@ -29,10 +29,16 @@ public final class WorldEmitterManager {
     private static final class Active {
         final ParticleEmitterInstance emitter;final Vec3 velocity;
         int owner=-1;String locator;net.minecraft.resources.Identifier gun;boolean first;
+        float locatorOffsetZ; // local blocks, reapplied after the animated bone chain
         Active(ParticleEmitterInstance emitter,Vec3 velocity){this.emitter=emitter;this.velocity=velocity;}
     }
     public void bindAnimated(ParticleEmitterInstance emitter,int owner,net.minecraft.resources.Identifier gun,String locator,boolean first,Matrix4f hand,Matrix4f world){
+        bindAnimated(emitter,owner,gun,locator,first,hand,world,0);
+    }
+    public void bindAnimated(ParticleEmitterInstance emitter,int owner,net.minecraft.resources.Identifier gun,String locator,
+                             boolean first,Matrix4f hand,Matrix4f world,float locatorOffsetZ){
         for(var a:pending)if(a.emitter==emitter){
+            a.locatorOffsetZ=locatorOffsetZ;
             a.owner=owner;a.gun=gun;a.locator=locator;a.first=first;
             emitter.getMolang().bindEntity(level.getEntity(owner));
             if(first){var fp=emitter.getDefinition().findComponent(FPEmitterLocalSpace.class);
@@ -44,12 +50,13 @@ public final class WorldEmitterManager {
     }
     public void updateAnchors(int owner,net.minecraft.resources.Identifier gun,com.tacz.guns.client.model.BedrockGunModel model,
                               PoseStack root,boolean first,SubmitNodeCollector collector,int light){
-        for(var a:all())if(a.owner==owner&&gun.equals(a.gun)){
+        for(var a:all())if(a.owner==owner&&a.first==first&&gun.equals(a.gun)){
             var node=model.getNode(a.locator);if(node==null)continue;
             var chain=new java.util.ArrayDeque<com.tacz.guns.client.model.bedrock.BedrockPart>();
             for(var n=node;n!=null;n=n.getParent())chain.push(n);
             PoseStack pose=new PoseStack();pose.last().pose().set(root.last().pose());pose.last().normal().set(root.last().normal());
             while(!chain.isEmpty())chain.pop().translateAndRotateAndScale(pose);
+            if(a.locatorOffsetZ!=0)pose.translate(0,0,a.locatorOffsetZ);
             Matrix4f world=first?com.tacz.guns.client.renderer.item.GunItemRendererWrapper.muzzleWorldPose(pose.last().pose())
                 :new Matrix4f(pose.last().pose()).translateLocal((float)Minecraft.getInstance().gameRenderer.mainCamera().position().x,
                     (float)Minecraft.getInstance().gameRenderer.mainCamera().position().y,(float)Minecraft.getInstance().gameRenderer.mainCamera().position().z);
@@ -81,6 +88,11 @@ public final class WorldEmitterManager {
         return addEmitter(world,transform,velocity,definition,script,null);
     }
     public ParticleEmitterInstance addEmitter(ClientLevel world,Matrix4f transform,Vec3 velocity,ParticleEffectDefinition definition,String script,net.minecraft.world.entity.Entity owner){
+        return addEmitter(world,transform,velocity,definition,script,owner,null);
+    }
+    public ParticleEmitterInstance addEmitter(ClientLevel world,Matrix4f transform,Vec3 velocity,ParticleEffectDefinition definition,
+                                              String script,net.minecraft.world.entity.Entity owner,
+                                              java.util.function.Consumer<ParticleMolangEnvironment> inputs){
         if(world==null||definition==null)return null;
         if(world!=level){clear();level=world;}
         if(emitterCount()>=MAX_EMITTERS||particleCount()>=MAX_TOTAL_PARTICLES||eventBudget++>=256)return null;
@@ -89,6 +101,7 @@ public final class WorldEmitterManager {
         // Pre-effect variables must exist when initialization/lifetime components are applied.
         final ParticleEmitterInstance emitter;
         try {
+            if(inputs!=null)inputs.accept(env);
             if(script!=null&&!script.isBlank())env.eval(script);
             emitter=new ParticleEmitterInstance(definition,env);
         } catch(RuntimeException ex) {
@@ -167,6 +180,11 @@ public final class WorldEmitterManager {
     }
     private static ParticleInstance snapshot(ParticleInstance p){
         var q=new ParticleInstance();q.x=p.x;q.y=p.y;q.z=p.z;q.vx=p.vx;q.vy=p.vy;q.vz=p.vz;
+        if(p.worldSpace && p.emitter.isFollowAnchor()) {
+            // Translate the frozen draw only. Simulation and detached smoke keep their world positions.
+            var anchor=p.emitter.getWorldTransform();
+            q.x+=anchor.m30()-p.birthAnchorX; q.y+=anchor.m31()-p.birthAnchorY; q.z+=anchor.m32()-p.birthAnchorZ;
+        }
         q.width=p.width;q.height=p.height;q.r=p.r;q.g=p.g;q.b=p.b;q.a=p.a;q.rotation=p.rotation;
         q.u0=p.u0;q.v0=p.v0;q.u1=p.u1;q.v1=p.v1;q.spawnScale=p.spawnScale;q.worldSpace=p.worldSpace;q.fpDetached=p.fpDetached;q.alive=p.alive;return q;
     }

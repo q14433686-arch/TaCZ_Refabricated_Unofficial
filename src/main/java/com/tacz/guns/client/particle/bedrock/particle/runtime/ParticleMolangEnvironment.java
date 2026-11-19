@@ -88,6 +88,10 @@ public class ParticleMolangEnvironment {
     /**
      * 获取此环境的 MolangContext。
      */
+    public void setVariable(String name, float value) {
+        getVariableStorage().set(name, NumberValue.of(value));
+    }
+
     public void bindEntity(net.minecraft.world.entity.Entity entity) { context.setEntity(entity); }
     public MolangContext<?> getContext() {
         return context;

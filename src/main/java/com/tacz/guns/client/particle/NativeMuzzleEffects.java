@@ -5,17 +5,15 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.event.common.GunFirePostEvent;
-import com.tacz.guns.api.item.IAttachment;
+import com.tacz.guns.client.model.GunModelConstant;
 import com.tacz.guns.api.item.IGun;
-import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader;
+import com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager;
 import com.tacz.guns.client.model.IFunctionalSubmitter;
 import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.config.client.RenderConfig;
-import com.tacz.guns.resource.modifier.custom.SilenceModifier;
-import com.tacz.guns.resource.pojo.data.attachment.AttachmentData;
 import com.tacz.guns.util.time.GunTime;
-import it.unimi.dsi.fastutil.Pair;
 import net.fabricmc.fabric.api.client.rendering.v1.RenderStateDataKey;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Minecraft;
@@ -32,8 +30,7 @@ import org.joml.Vector3f;
 
 import java.util.*;
 
-/** Native collector implementation of the two shipped muzzle definition profiles. This is NOT
- * a general Snowstorm interpreter: unknown IDs are diagnosed rather than replaced by vanilla smoke.
+/** Shot dispatcher: prefer the loaded Snowstorm definition; only the two shipped IDs have a native fallback.
  * Flash is anchored on every submit; smoke freezes the muzzle's world transform exactly once.
  * All mutable simulation runs on the client/render thread; queued geometry owns frozen matrices. */
 public final class NativeMuzzleEffects {
@@ -64,7 +61,7 @@ public final class NativeMuzzleEffects {
         long flashBorn = -1;
         boolean smoked;
         boolean customFlashed;
-        boolean smokeEnabled = true;
+        Identifier displayId;
         Shot(MuzzleEffectParameters effect, Identifier gun, boolean firstPerson, float offset) {
             this.effect = effect; this.gun = gun; this.firstPerson = firstPerson; this.offset = offset;
             born = GunTime.nowMillis();
@@ -118,28 +115,12 @@ public final class NativeMuzzleEffects {
         if (gun == null || mc.level == null) return;
         var display = TimelessAPI.getGunDisplay(stack).orElse(null);
         if (display == null || display.getMuzzleFlash() == null || !display.getMuzzleFlash().isRenew()) return;
-        ItemStack part = gun.getAttachment(stack, AttachmentType.MUZZLE);
-        if (part.isEmpty()) part = gun.getBuiltinAttachment(stack, AttachmentType.MUZZLE);
-        var attachment = IAttachment.getIAttachmentOrNull(part);
-        AttachmentData data = null;
-        float offset = 0;
-        if (attachment != null) {
-            var id = attachment.getAttachmentId(part);
-            data = TimelessAPI.getCommonGunIndex(gun.getGunId(stack))
-                    .map(index -> index.getGunData().getExclusiveAttachments().get(id)).orElse(null);
-            if (data == null) data = TimelessAPI.getCommonAttachmentIndex(id).map(index -> index.getData()).orElse(null);
-            offset = TimelessAPI.getClientAttachmentIndex(id).map(index -> index.getMuzzleFlashOffset()).orElse(0f);
-        }
-        boolean silenced = false;
-        if (data != null) {
-            var modifier = data.getModifier().get(SilenceModifier.ID);
-            silenced = modifier != null && modifier.getValue() instanceof Pair<?, ?> pair && Boolean.TRUE.equals(pair.right());
-        }
-        var effect = MuzzleEffectParameters.resolve(display.getMuzzleFlash(), data, silenced);
+        var part = MuzzleAttachment.of(stack);
+        var effect = MuzzleEffectParameters.resolve(display.getMuzzleFlash(), part.data(), part.silenced());
         boolean first = shooter == mc.player && mc.options.getCameraType().isFirstPerson();
         if (SHOTS.size() >= 128 && !SHOTS.containsKey(shooter.getId())) return;
-        Shot shot = new Shot(effect, gun.getGunId(stack), first, offset);
-        shot.smokeEnabled = data == null || (data.getSmokeHider() > 0 && data.getSmokeCountScale() > 0 && data.getSmokeSpeedScale() > 0);
+        Shot shot = new Shot(effect, gun.getGunId(stack), first, part.offsetBb());
+        shot.displayId = gun.getGunDisplayId(stack);
         SHOTS.put(shooter.getId(), shot);
     }
 
@@ -155,7 +136,8 @@ public final class NativeMuzzleEffects {
         if (!first && (context.displayContext() == null || !GunItemRendererWrapper.IS_MAIN_HAND_SUBMIT)) return true;
         Shot shot = SHOTS.get(id);
         var gun = IGun.getIGunOrNull(stack);
-        if (shot == null || gun == null || shot.firstPerson != first || !shot.gun.equals(gun.getGunId(stack))) return true;
+        if (shot == null || gun == null || shot.firstPerson != first || !shot.gun.equals(gun.getGunId(stack))
+                || !shot.displayId.equals(gun.getGunDisplayId(stack))) return true;
         long age = GunTime.nowMillis() - shot.born;
         var effect = shot.effect;
         PoseStack pose = copy(context.poseStack());
@@ -163,29 +145,26 @@ public final class NativeMuzzleEffects {
         if (!shot.smoked) {
             shot.smoked = true; // Includes disabled/missing effects: don't burst when options change later.
             Identifier definition = first ? effect.firstSmoke() : effect.thirdSmoke();
-            if (shot.smokeEnabled && RenderConfig.RENDER_MUZZLE_SMOKE.get()
-                    && !customEffect(definition,shot,pose,first,id,effect.smokeSize(),true) && supported(definition, SMOKE) && effect.smokeSize() >= 0 && effect.smokeSpeed() > 0) {
-                Matrix4f worldPose = first ? GunItemRendererWrapper.muzzleWorldPose(pose.last().pose())
-                        : new Matrix4f(pose.last().pose()).setTranslation(
-                            pose.last().pose().m30() + (float)mc.gameRenderer.mainCamera().position().x,
-                            pose.last().pose().m31() + (float)mc.gameRenderer.mainCamera().position().y,
-                            pose.last().pose().m32() + (float)mc.gameRenderer.mainCamera().position().z);
-                emitSmoke(shot, worldPose, context.light(), first ? GunItemRendererWrapper.muzzleWorldScale() : 1f);
+            if (effect.smokeEnabled() && RenderConfig.RENDER_MUZZLE_SMOKE.get()
+                    && !customEffect(definition, shot, pose, id, true) && supported(definition, SMOKE) && effect.smokeSpeed() > 0) {
+                emitSmoke(shot, worldPose(pose, first), context.light(), first ? GunItemRendererWrapper.muzzleWorldScale() : 1f);
             }
         }
         Identifier definition = first ? effect.firstFlash() : effect.thirdFlash();
-        if (!shot.customFlashed && !RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) {
-            shot.customFlashed = true;
-            if (customEffect(definition,shot,pose,first,id,effect.flashScale(),false)) return true;
+        if (!effect.hasFlash() || definition == null || RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) return true;
+        if (ParticleDefinitionLoader.getInstance().getDefinition(definition) != null) {
+            if (!shot.customFlashed) {
+                shot.customFlashed = true;
+                customEffect(definition, shot, pose, id, false);
+            }
+            return true;
         }
-        if (com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader.getInstance().getDefinition(definition)!=null) return true;
         // Starting the 20ms particle at the first locator submit guarantees the instant
         // emitter has one frame even when event handling and extraction straddle a slow frame.
         if (shot.flashBorn < 0) shot.flashBorn = GunTime.nowMillis();
         long flashAge = first ? GunTime.nowMillis() - shot.flashBorn : age;
         long lifetime = first ? 20 : 150;
-        if (age < 0 || flashAge > lifetime || effect.flashScale() <= 0 || !supported(definition, FLASH)
-                || RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) return true;
+        if (age < 0 || flashAge > lifetime || !supported(definition, FLASH)) return true;
         float size = effect.flashScale() * .45f;
         if (!Float.isFinite(size) || size > 32) return true;
         pose.rotate(com.mojang.math.Axis.ZP.rotationDegrees(shot.rotation));
@@ -202,7 +181,7 @@ public final class NativeMuzzleEffects {
         synchronizeSession();
         if (id.equals(SMOKE)) {
             if (RenderConfig.RENDER_MUZZLE_SMOKE.get()) {
-                var parameters = new MuzzleEffectParameters(null, SMOKE, null, SMOKE, 0, 0, 1, 1, 15, null);
+                var parameters = new MuzzleEffectParameters(null, SMOKE, null, SMOKE, 0, 0, true, 1, 1, 15, null);
                 emitSmoke(new Shot(parameters, id, first, 0), world, light, first ? GunItemRendererWrapper.muzzleWorldScale() : 1);
             }
             return true;
@@ -218,23 +197,30 @@ public final class NativeMuzzleEffects {
         return false;
     }
 
-    private static boolean customEffect(Identifier id,Shot shot,PoseStack pose,boolean first,int owner,float scale,boolean smoke) {
-        var definition=com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader.getInstance().getDefinition(id);
-        if(definition==null)return false;
-        if(!Float.isFinite(scale)||scale<=0)return true;
-        var mc=Minecraft.getInstance();
-        Matrix4f hand=new Matrix4f(pose.last().pose()).scale(Math.min(32,scale));
-        Matrix4f world=first?GunItemRendererWrapper.muzzleWorldPose(hand)
-                :new Matrix4f(hand).translateLocal((float)mc.gameRenderer.mainCamera().position().x,
-                        (float)mc.gameRenderer.mainCamera().position().y,(float)mc.gameRenderer.mainCamera().position().z);
-        var runtime=com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance();
-        var emitter=runtime.addEmitter(mc.level,world,Vec3.ZERO,definition,"",mc.level.getEntity(owner));
-        if(emitter!=null) {
-            runtime.bindAnimated(emitter,owner,shot.gun,
-                    com.tacz.guns.client.model.GunModelConstant.MUZZLE_FLASH_ORIGIN_NODE,first,hand,world);
-            // Admissions are deliberately separate from native geometry submission counts.
-            if(smoke)runtimeSmokeBursts++;
-            else if(first)runtimeFirstFlashes++;
+    private static Matrix4f worldPose(PoseStack pose, boolean first) {
+        if (first) return GunItemRendererWrapper.muzzleWorldPose(pose.last().pose());
+        var camera = Minecraft.getInstance().gameRenderer.mainCamera().position();
+        return new Matrix4f(pose.last().pose()).translateLocal((float)camera.x, (float)camera.y, (float)camera.z);
+    }
+
+    private static boolean customEffect(Identifier id, Shot shot, PoseStack pose, int owner, boolean smoke) {
+        var definition = ParticleDefinitionLoader.getInstance().getDefinition(id);
+        if (definition == null) return false;
+        var mc = Minecraft.getInstance();
+        boolean first = shot.firstPerson;
+        Matrix4f world = worldPose(pose, first);
+        var runtime = WorldEmitterManager.getInstance();
+        // The locator is spatial only. Multiplying it by a visual parameter changes offsets
+        // and velocities, is lost on refresh, and never supplies v.muzzle_scale to the pack.
+        var emitter = runtime.addEmitter(mc.level, world, Vec3.ZERO, definition, "", mc.level.getEntity(owner),
+                smoke ? shot.effect::bindSmoke : shot.effect::bindFlash);
+        if (emitter != null) {
+            // World smoke (including custom sustained emitters) stays at the firing position.
+            if (first || !smoke) runtime.bindAnimated(emitter, owner, shot.gun, GunModelConstant.MUZZLE_FLASH_ORIGIN_NODE,
+                    first, pose.last().pose(), world, -shot.offset / 16f);
+            emitter.setFollowAnchor(!first && !smoke);
+            if (smoke) runtimeSmokeBursts++;
+            else if (first) runtimeFirstFlashes++;
             else runtimeThirdFlashes++;
         }
         return true;
@@ -309,10 +295,17 @@ public final class NativeMuzzleEffects {
     public static int flashLight(ItemStack stack, int light) {
         var mc = Minecraft.getInstance();
         Shot shot = mc.player == null ? null : SHOTS.get(mc.player.getId());
-        if (shot == null || !shot.firstPerson || GunTime.nowMillis()-shot.born > 50 || shot.effect.flashScale() <= 0 || !FLASH.equals(shot.effect.firstFlash()) || RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) return light;
+        if (shot == null || !shot.firstPerson || !shot.effect.hasFlash() || shot.effect.firstFlash() == null
+                || !GunTime.isWithin(shot.born, 50) || RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) return light;
         var gun = IGun.getIGunOrNull(stack);
-        if (gun == null || !shot.gun.equals(gun.getGunId(stack))) return light;
-        return light & ~0xf0 | Math.max(light & 0xf0, shot.effect.flashLight()<<4);
+        if (gun == null || !shot.gun.equals(gun.getGunId(stack)) || !shot.displayId.equals(gun.getGunDisplayId(stack))) return light;
+        return withFlashLight(light, shot.effect.flashLight());
+    }
+
+    static int withFlashLight(int packed, int desired) {
+        int block = (packed >> 4) & 15;
+        int raised = Math.max(block, Math.min(desired, Math.min(12, block + 10)));
+        return (packed & ~0xf0) | raised << 4;
     }
     private static PoseStack copy(PoseStack original) {
         PoseStack p = new PoseStack(); p.last().pose().set(original.last().pose()); p.last().normal().set(original.last().normal()); return p;
