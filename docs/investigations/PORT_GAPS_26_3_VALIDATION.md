@@ -2,6 +2,8 @@
 
 [11 月 18 日审计](PORT_GAPS_26X_2026_11_18.md)描述的是 **`f6678ba` 的生产代码**。本文单独记录后续工作，不把最初的缺口清单改写成发布说明，也不把 `compileJava` 成功解释为画面通过。仅涉及 `26.3_tacz-1.2.X` 的工作分支；没有回移到普通 26.3，也没有发布新版本。
 
+**最近一次在同一代码提交上完整通过：[`81f474e`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/commit/81f474e28f1e76c0ea0eeb056b58f36424841dc3)。** [完整构建、JUnit、专服、嵌套 MAE 与普通 Mesa 客户端][final-mesa]、[Iris/Sodium 启用回归光影][final-iris]、[PAL][final-pal]、[Controllable][final-pad]、[JEI 与 REI 两个独立作业][final-viewers]、[编译][final-compile]均通过。下文较早的失败保留其原提交与原因，不是当前代码的状态。
+
 ## 按原审计找结论
 
 | 原审计 §2 | 实际验收路径 | 保留边界 |
@@ -9,7 +11,7 @@
 | ① 重绑／卸弹、⑧ 工作台空筛选 | 客户端改绑键盘和鼠标侧键；独立卸弹及 Alt 备用绑定分别改变服务端弹匣，裸换弹仍可用。空配方页点清除后恢复。 | 不是每位玩家已有 `options.txt` 都自动改键。 |
 | ② 带符号约束、③ 曳光 | 单测覆盖幅值／混合／复位；游戏内三条受控动画同时比 ADS 手部变换与原帧。同一游戏内曳光跨 20 个不同 tick 提交的位置与初始快照匹配。 | 曳光位置来自世界渲染提交，不是从截图反推服务端弹道；约束夹具不是所有枪包的动作。 |
 | ④ 展示预览、⑫ 压测命令 | 普通板、折面、柜、普通物品、纯网格外显有空／预览／实物三帧；按键与实际生存库存一并检查。命令验证权限、场地和清理，两种 64 件场景有单板提取耗时。 | 预览合成色不是 shader alpha 标定；CPU 提取时间不是整帧 FPS。 |
-| ⑤ Snowstorm、⑥ 命中碎屑 | 手部和世界六材质、俯仰／侧倾、镜内排除与镜外正对照分开做。八次服务端方块碰撞区分受客户端数量和开关约束的表面碎屑与服务端另发效果。 | 世界背板色不等于光照或深度写入；一套自编光影不能代表所有光影。 |
+| ⑤ Snowstorm、⑥ 命中碎屑 | 手部和世界六材质、俯仰／侧倾、镜内排除与镜外正对照分开做。八次服务端方块碰撞区分受客户端数量和开关约束的表面碎屑与服务端另发效果。 | 世界前后片另有深度与暗／亮 UV2 对照；不能据此推出手部也做了重叠像素测量或所有光影均相同。 |
 | ⑦ 排序、⑨ 悬停、⑩ 客户端 API | 多包排序、开着的创造搜索重载／翻页／“全部”，中英文真实背包悬停正负例，以及客户端 variant、adapter 枚举和按 ID 反查。 | 不用翻译键或物品总数代替实际显示、选择和重载断言。 |
 | ⑪ 配置与再导出 | 仅迁移原样旧玻璃列表；调序和自定义列表是负例。版本指纹变化时重新导出并在 ZIP 备份中核对原编辑。 | 执行的是同资源、不同旧清单指纹的升级夹具，不是两版发行 JAR 原地升级。 |
 
@@ -111,15 +113,37 @@
 
 上一轮 `cb50c35` 的 [PAL](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44440883638/job/135281235952) 和 [Iris](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44440883614/job/135281245553) 未进游戏（Loom 依赖注解/Cadix 解析失败）；手柄、两个 viewer 与编译已过。CI 改为仅把实际 Central URL 指向同坐标的 Central 镜像，保留 Fabric/插件与各 mod 仓库、ASM 父子优先顺序及玩家构建不变。
 
-`1686095` 普通客户端再次测到同样的 98/208 对 98/98。这次[先测世界粒子](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44442691518/job/135287185794)，深度/光照/UV 断言返回后才进骨骼测试；作业总结果仍为失败。[同一提交的 Iris 完整作业](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44442691213/job/135287184608)成功：后方绿片单画／先画 add／先画 emissive 的增量绿通道为 **225 / 225 / 0**。UV2 暗／亮时，两种前片增量蓝通道均为 **201 / 201**，符合这套不采 lightmap 的测试光影，不是普通光照响应。三个实际 RenderSetup（世界、手部、镜片裁剪）的深度状态与 UV 矩阵单独核对；固定 (1,1) 平移不是时间滚动。
+## 粒子的深度、光照与 UV 分开验证
 
-为修正骨骼暗面，通用快照不再伪造法线或拦截 Lighting UBO：只为带标记的连续几何选无方向光的实体材质，保留 UV2、原始几何法线、贴图、cutout/半透明、镜片外掩码。普通节点仍用原材质，未知自定义材质不猜测替换。另加反绕序的半透明材质对照。该实现须以新作业判定，不借用上一版数据。
+`1686095` [普通客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44442691518/job/135287185794)先测世界粒子，全部粒子断言返回后才在骨骼又测到 98/208 对 98/98；该作业总结果是失败。[同提交的 Iris 完整作业](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44442691213/job/135287184608)成功。校准在同一煤墙前，先画近处的蓝片，再画远处的绿片。每张 854×480 原帧用中心 33×33 去除准星 13×13，共 920 像素，逐像素减去本机位空墙，再算通道均值。下表四舍五入到整数。
+
+| 路径 | 只画后片 ΔG | 前片 add + 后片 ΔG | 前片 emissive + 后片 ΔG | add 暗 / 满 UV2 的 ΔB | emissive 暗 / 满 UV2 的 ΔB |
+|---|---:|---:|---:|---:|---:|
+| 普通 Mesa（[空墙](../../build-reports/visual/44442691518-tacz_material_dark_control.png)） | [232](../../build-reports/visual/44442691518-tacz_particle_pass_rear.png) | [232](../../build-reports/visual/44442691518-tacz_particle_pass_add_rear.png) | [0](../../build-reports/visual/44442691518-tacz_particle_pass_emissive_rear.png) | [19](../../build-reports/visual/44442691518-tacz_particle_pass_add_dark.png) / [201](../../build-reports/visual/44442691518-tacz_particle_pass_add_full.png) | [201](../../build-reports/visual/44442691518-tacz_particle_pass_emissive_dark.png) / [201](../../build-reports/visual/44442691518-tacz_particle_pass_emissive_full.png) |
+| Iris 回归光影（[空墙](../../build-reports/visual/44442691213-tacz_material_dark_control.png)） | [225](../../build-reports/visual/44442691213-tacz_particle_pass_rear.png) | [225](../../build-reports/visual/44442691213-tacz_particle_pass_add_rear.png) | [0](../../build-reports/visual/44442691213-tacz_particle_pass_emissive_rear.png) | 201 / 201 | 201 / 201 |
+
+两边的 add 重叠帧中央均能看见后片叠成的青色，emissive 重叠帧则只剩蓝片；不是只比较材质枚举名。普通路径的 add 随 lightmap 变化，emissive 不变；这套 Iris 光影本身不采 lightmap，不能拿它证明 add 受光。另核对世界、手部、镜片裁剪三种 **实际 RenderSetup** 的深度状态与 UV 矩阵（add/emissive 为单位矩阵，SBM swirl 为 (1,1) 固定位移，原生裁剪枪焰为零）。世界重叠校准不是手部、镜内各自的重叠像素测量，也不是时间滚动演示。
+
+## 发光骨骼的双面材质
+
+为修正骨骼暗面，通用快照不再伪造法线或拦截 Lighting UBO：只为带标记的连续几何选无方向光的实体材质，保留 UV2、原始几何法线、贴图、cutout/半透明、镜片外掩码。普通节点仍用原材质，未知自定义材质不猜测替换。立即写顶点的调用方可传两个材质各自的 consumer；旧的单 consumer 入口不能更改调用方已选的 shader。JUnit 用同一满亮 UV2 断言普通根 → 发光功能节点的子 → 普通兄弟分别写进正确的 buffer。
+
+`81f474e` 的[普通客户端][final-mesa]与[启用光影的 Iris][final-iris]同时跑完。对照中材质、UV2 和视角相同，只改父节点后缀。另把 X 取反改变面绕序，并使用实体半透明材质；纹理仍为不透明的青色，不以此标定透明度。下表是屏幕中央立方体绿色通道的第 10 / 90 百分位：
+
+| 渲染路径 | 朝向 | 普通子骨骼 G10/G90 | 发光子骨骼 G10/G90 | 入样像素（普通 / 发光） |
+|---|---:|---:|---:|---:|
+| Mesa cutout | 35° | 98/208 | **244/244** | 11,074 / 11,162 |
+| Mesa cutout | 125° | 101/244 | **244/244** | 10,554 / 10,554 |
+| Mesa 半透明材质、镜像 | 35° | 98/244 | **244/244** | 11,162 / 11,162 |
+| Mesa 半透明材质、镜像 | 125° | 98/211 | **244/244** | 10,554 / 10,554 |
+
+这次不只是“各面一致”：普通对照明显分面，而发光件没有退回此前的暗值 98，改变绕序仍然亮。Iris 四组的普通／发光都是 **244/244**，说明这些几何在该光影中可见，但光影本身不做法线对照，方向光结论来自普通客户端。同提交还复现了上一节两行粒子测量；PAL 再次测得支撑手 Δz=4.00、Δroll=0.338。
 
 ## 尚不能外推的部分
 
 - **输入与展示：** `ae8f1d9` 的[超时][rack-failure]后来在 `043fba5` 定位到原版好友 GUI 吞掉 O（两端均未收到 use）。新默认 K 和旧 `options.txt` 的手动改绑说明见 README。已过的是生存模式的指定板／柜和烘焙物品，不是每种第三方特殊渲染器或用户现存的所有键位组合。
 - **粒子与曳光：** 世界六材质、玩家开火跨帧、0/5 碎屑和本测试光影的三档准镜有独立证据。普通客户端的手部六材质与侧倾有单独对照；不能外推到任意光影包。[旧版正对照为零的原帧](../../build-reports/visual/44425974217-tacz_amg10_particle_2.png)也不能作通过证据。
-- **近似实现与预算：** 保留测距 1,024 格、标记倍率 32、模拟 600 tick 及实体寿命上限；超预算或不可达不画。普通发光骨骼的环境 sky 与面法线是两件事，仍需非准星骨骼的方向光画面对照。约束的指定 ADS 夹具和 PAL 单客户端离屏/再入镜实测见上；并非所有 ADS 动作或两人联网验收。第三方大包与 GPU 性能不能由 16 板的 CPU 样本推出。转换器遇不可证等价的条件仍报出，不静默改包。
+- **近似实现与预算：** 保留测距 1,024 格、标记倍率 32、模拟 600 tick 及实体寿命上限；超预算或不可达不画。已做非准星骨骼两朝向和反绕序画面对照；这不测量第三方光影如何解释环境 sky，也不是对每种 OIT 设置或特殊材质的测试。约束的指定 ADS 夹具和 PAL 单客户端离屏/再入镜实测见上；并非所有 ADS 动作或两人联网验收。第三方大包与 GPU 性能不能由 16 板的 CPU 样本推出。转换器遇不可证等价的条件仍报出，不静默改包。
 - **外部组合：** Sable/Simulated、独立 EMI 插件、Accelerated Rendering 都没有在本轮获得可验证的 26.3 运行组合；AR 仍是禁用，不写成已修。未找到可验证组合不等于不存在。KubeJS 不把目标 Fabric 上游已注释的事件投递算作已运行能力。其它 26.X 线的欠账保留在原审计。
 
 [pad]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44427465994/job/135236056454
@@ -133,3 +157,10 @@
 [trace-world]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44429872551/job/135244203201
 [b43-mesa]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44430716200/job/135247080971
 [b43-iris]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44430716192/job/135247080786
+
+[final-mesa]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44443513579/job/135289937996
+[final-iris]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44443513680/job/135289938691
+[final-pal]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44443513586/job/135289938132
+[final-pad]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44443513634/job/135289938491
+[final-viewers]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44443513754
+[final-compile]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44443513653/job/135289938045

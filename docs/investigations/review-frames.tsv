@@ -1,13 +1,13 @@
-# Two world depth-overlap controls. Keep the ordinary single-material and empty-wall samples to reproduce the light response.
-44442691518	smoke	tacz_material_dark_control
-44442691518	smoke	tacz_particle_pass_rear
-44442691518	smoke	tacz_particle_pass_add_full
-44442691518	smoke	tacz_particle_pass_add_dark
-44442691518	smoke	tacz_particle_pass_emissive_full
-44442691518	smoke	tacz_particle_pass_emissive_dark
-44442691518	smoke	tacz_particle_pass_add_rear
-44442691518	smoke	tacz_particle_pass_emissive_rear
-44442691213	iris	tacz_material_dark_control
-44442691213	iris	tacz_particle_pass_rear
-44442691213	iris	tacz_particle_pass_add_rear
-44442691213	iris	tacz_particle_pass_emissive_rear
+# Successful two-sided world controls, including their own empty walls. Iris numbers for all four cases are in the job log.
+44443513579	smoke	tacz_material_dark_control
+44443513579	smoke	tacz_bone_light_35_plain
+44443513579	smoke	tacz_bone_light_35_glow
+44443513579	smoke	tacz_bone_light_125_plain
+44443513579	smoke	tacz_bone_light_125_glow
+44443513579	smoke	tacz_bone_light_mirror_35_plain
+44443513579	smoke	tacz_bone_light_mirror_35_glow
+44443513579	smoke	tacz_bone_light_mirror_125_plain
+44443513579	smoke	tacz_bone_light_mirror_125_glow
+44443513680	iris	tacz_material_dark_control
+44443513680	iris	tacz_bone_light_mirror_125_plain
+44443513680	iris	tacz_bone_light_mirror_125_glow
