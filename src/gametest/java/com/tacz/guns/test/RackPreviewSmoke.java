@@ -96,6 +96,11 @@ final class RackPreviewSmoke {
             world.getServer().runOnServer(s->((DisplayRackBlockEntity)world.getConnection().getServerPlayer().level().getBlockEntity(pos)).clearContent());
             equip(world,ItemStack.EMPTY);ctx.waitFor(mc->mc.player.getMainHandItem().isEmpty());
             checkCell(ctx,world,pos,new ItemStack(Items.EMERALD),"vanilla_quad");
+            world.getServer().runOnServer(s->((DisplayRackBlockEntity)world.getConnection().getServerPlayer().level().getBlockEntity(pos)).clearContent());
+            equip(world,ItemStack.EMPTY);ctx.waitFor(mc->mc.player.getMainHandItem().isEmpty());
+            var mesh = GunItemBuilder.create().setId(id).build();
+            ((IGun)mesh.getItem()).setGunDisplayId(mesh,Identifier.parse("port_test:rack_mesh"));
+            checkCell(ctx,world,pos,mesh,"mesh");
         } finally {
             ctx.getInput().releaseShift();
             world.getServer().runOnServer(s -> {
@@ -116,6 +121,10 @@ final class RackPreviewSmoke {
         equip(world, item.copy());
         ctx.waitFor(mc -> ItemStack.isSameItemSameComponents(item, mc.player.getMainHandItem()));
         int slot = requireSlot(ctx, pos, true, "aimed " + name);
+        if (name.equals("mesh")) ctx.waitFor(mc -> {
+            var rig = com.tacz.guns.api.TimelessAPI.getGunDisplay(mc.player.getMainHandItem()).orElseThrow().getExternalModel(false);
+            return rig != null && rig.getLeft() instanceof cn.sh1rocu.tacz.compat.meshloader.model.TaczPolyMeshGunModel poly && poly.hasPolyMesh();
+        });
         if (name.equals("corner") && slot < DisplayRackBlockEntity.SLOTS_PER_FACE) throw new AssertionError("Wrong corner face: "+slot);
         ctx.waitTicks(10);
         var ghost = ctx.takeScreenshot("tacz_" + name + "_ghost");
@@ -200,10 +209,14 @@ final class RackPreviewSmoke {
         try {
             var a = ImageIO.read(empty.toFile()); var b = ImageIO.read(ghost.toFile()); var c = ImageIO.read(placed.toFile());
             if (placed.getFileName().toString().endsWith("tacz_rack_placed.png")) checkOccupiedOutline(a, c);
+            boolean mesh = placed.getFileName().toString().endsWith("tacz_mesh_placed.png");
             int between = 0, model = 0;
             // Mark only pixels in the cell that change towards, but not all the way to, the deposited model.
             for (int y = a.getHeight()/2-40; y < a.getHeight()/2+40; y++) for (int x = a.getWidth()/2-44; x < a.getWidth()/2+44; x++) {
                 int base = a.getRGB(x,y), g = b.getRGB(x,y), solid = c.getRGB(x,y), whole = delta(base,solid);
+                // The mesh-only fixture has cyan polys and no Bedrock cubes. Exclude the cell
+                // outline, item tooltip, arms, etc. from its pass condition.
+                if (mesh && Math.min(solid >> 8 & 255, solid & 255) - (solid >> 16 & 255) < 50) continue;
                 if (whole < 48) continue;
                 model++;
                 int d = delta(base,g), end = delta(g,solid);

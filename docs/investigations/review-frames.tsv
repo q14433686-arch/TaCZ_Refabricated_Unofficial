@@ -1,12 +1,13 @@
-# Investigate both failed particle controls and inspect the bound-use rack, corner and baked item.
-44430716200	smoke	tacz_snowstorm_runtime
-44430716200	smoke	tacz_rack_empty
-44430716200	smoke	tacz_rack_placed
-44430716200	smoke	tacz_corner_empty
-44430716200	smoke	tacz_corner_ghost
-44430716200	smoke	tacz_corner_placed
-44430716200	smoke	tacz_vanilla_quad_empty
-44430716200	smoke	tacz_vanilla_quad_ghost
-44430716200	smoke	tacz_vanilla_quad_placed
-44430716192	iris	tacz_amg10_particle_baseline_1
-44430716192	iris	tacz_amg10_particle_1
+# Review both language hovers and the matched 64-item scenes on the first passing full client.
+44432265461	smoke	tacz_hover_en_us_scope_xm157
+44432265461	smoke	tacz_hover_en_us_scope_mk5hd
+44432265461	smoke	tacz_hover_en_us_less_flash
+44432265461	smoke	tacz_hover_en_us_more_flash
+44432265461	smoke	tacz_hover_en_us_gun_display_case
+44432265461	smoke	tacz_hover_zh_cn_scope_xm157
+44432265461	smoke	tacz_hover_zh_cn_scope_mk5hd
+44432265461	smoke	tacz_hover_zh_cn_less_flash
+44432265461	smoke	tacz_hover_zh_cn_more_flash
+44432265461	smoke	tacz_hover_zh_cn_gun_display_case
+44432265461	smoke	tacz_rack_load_same
+44432265461	smoke	tacz_rack_load_different

@@ -44,6 +44,12 @@ jobs:
                   with source.open('rb') as png:
                       if png.read(8) != b'\x89PNG\r\n\x1a\n': raise ValueError(f'Invalid PNG: {source.name}')
                   shutil.copyfile(source, output)
+                  if frame in ('tacz_rack_load_same', 'tacz_rack_load_different'):
+                      mode = frame.rsplit('_', 1)[1]
+                      log, = root.rglob('clientGameTest/logs/latest.log')
+                      pattern = rf'PORT_RACK_LOAD: 64 {mode} items, (\d+) board extractions, CPU median=(\d+) us p95=(\d+) us'
+                      samples, median, p95 = re.search(pattern, log.read_text(errors='replace')).groups()
+                      print(f'::notice::Run {run}: 64 {mode} items; {samples} board extractions; median {median} us, p95 {p95} us')
           PY
       - name: Report frame diagnostics
         if: failure()

@@ -45,6 +45,14 @@ case ${TACZ_SMOKE_VIEWER:-} in
     *) echo 'Expected jei or rei' >&2; exit 2;;
 esac
 timeout -k 20s 10m ./gradlew "${args[@]}" runClientGameTest --console=plain --stacktrace 2>&1 | tee "$RUNNER_TEMP/tacz-client.log"
+# Require both material paths, not just a generic "rendered" message. Frame data stays in the job artifact.
+if [[ -z ${TACZ_SMOKE_VIEWER:-} && ${TACZ_SMOKE_CONTROLLER:-} != true ]]; then
+    for backing in dark light; do
+        grep -Fq "PORT_HAND_MATERIALS: $backing six visible" "$run/logs/latest.log"
+    done
+    grep -Fq 'PORT_BILLBOARD: pitched' "$run/logs/latest.log"
+    grep -E 'PORT_HAND_MATERIALS:|PORT_BILLBOARD:' "$run/logs/latest.log" | sed 's/^/::notice::/'
+fi
 if [[ ${TACZ_SMOKE_IRIS:-} == true ]]; then
     grep -Fq 'PORT_IRIS: active shader pack' "$run/logs/latest.log"
     grep -Fq 'PORT_LENS: XL50 restored' "$run/logs/latest.log"
@@ -64,7 +72,7 @@ if [[ -n ${TACZ_SMOKE_VIEWER:-} ]]; then
     test -s "$(find "$run/screenshots" -name "*tacz_viewer_$TACZ_SMOKE_VIEWER.png" -print -quit)"
     exit
 fi
-for frame in tacz_{rack,case,corner,vanilla_quad}_{empty,ghost,placed} tacz_hover_{en_us,zh_cn}_{scope_xm157,scope_mk5hd,scope_standard_8x,less_flash,more_flash,gun_display_case} tacz_hand_filter_{empty,cleared} tacz_held_default_gun tacz_held_variant tacz_default_refit tacz_range_readout tacz_display_wall tacz_xm157_{entity,control,restored,occluded} \
+for frame in tacz_{rack,case,corner,vanilla_quad,mesh}_{empty,ghost,placed} tacz_hover_{en_us,zh_cn}_{scope_xm157,scope_mk5hd,scope_standard_8x,less_flash,more_flash,gun_display_case} tacz_hand_filter_{empty,cleared} tacz_held_default_gun tacz_held_variant tacz_default_refit tacz_range_readout tacz_display_wall tacz_xm157_{entity,control,restored,occluded} \
         tacz_lens_pip_1x tacz_lens_{classic,pip}_{bare,optical,hot,wall,restored,tagged}; do
     test -s "$(find "$run/screenshots" -name "*${frame}.png" -print -quit)"
 done

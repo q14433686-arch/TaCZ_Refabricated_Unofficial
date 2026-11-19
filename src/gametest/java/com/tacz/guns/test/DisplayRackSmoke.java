@@ -90,27 +90,70 @@ public class DisplayRackSmoke {
     }
 
     @GameTest
-    public void placeRotatedWorkbenchTemplate(GameTestHelper helper) {
+    public void placeRotatedWorkbenchTemplates(GameTestHelper helper) {
         var level = helper.getLevel();
-        // Keep the 2x1 source and the destinations inside the same test's 3x3 footprint.
-        var origin = helper.absolutePos(BlockPos.ZERO);
-        var table = (com.tacz.guns.block.AbstractGunSmithTableBlock) ModBlocks.WORKBENCH_211;
+        var origin = helper.absolutePos(BlockPos.ZERO); var dest = origin.offset(1,1,1);
         var facing = com.tacz.guns.block.AbstractGunSmithTableBlock.FACING;
-        var foot = table.defaultBlockState().setValue(facing, Direction.EAST);
-        level.setBlock(origin,foot,Block.UPDATE_ALL);
-        var id = Identifier.parse("port_test:template_copy");
-        ((com.tacz.guns.block.entity.GunSmithTableBlockEntity)level.getBlockEntity(origin)).setId(id);
-        var template = new net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate();
-        template.fillFromWorld(level,origin,new net.minecraft.core.Vec3i(2,1,1),false,List.of());
-        for (var rotation: List.of(net.minecraft.world.level.block.Rotation.CLOCKWISE_90,net.minecraft.world.level.block.Rotation.CLOCKWISE_180)) {
-            var dest = origin.offset(1,1,1); var settings = new net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings().setRotation(rotation);
-            helper.assertTrue(template.placeInWorld(level,dest,dest,settings,level.getRandom(),Block.UPDATE_ALL), "Template placement failed");
-            var actual = level.getBlockState(dest); var head = dest.relative(rotation.rotate(Direction.EAST));
-            helper.assertTrue(actual==foot.setValue(facing,rotation.rotate(Direction.EAST)) && table.getCompanionState(actual)==level.getBlockState(head)
-                    && dest.equals(table.getRootPos(head,level.getBlockState(head))),"Rotated bench halves disconnected: "+rotation);
-            helper.assertTrue(level.getBlockEntity(dest) instanceof com.tacz.guns.block.entity.GunSmithTableBlockEntity be && id.equals(be.getId())
-                    && level.getBlockEntity(head)==null,"Rotated template lost/duplicated bench identity");
-            level.removeBlock(head,false); level.removeBlock(dest,false);
+        for (var block : List.of(ModBlocks.WORKBENCH_111, ModBlocks.WORKBENCH_211, ModBlocks.WORKBENCH_121)) {
+            var table = (com.tacz.guns.block.AbstractGunSmithTableBlock)block;
+            var foot = table.defaultBlockState().setValue(facing, Direction.EAST);
+            level.setBlock(origin, foot, Block.UPDATE_ALL);
+            var id = Identifier.parse("port_test:template_copy");
+            ((com.tacz.guns.block.entity.GunSmithTableBlockEntity)level.getBlockEntity(origin)).setId(id);
+            var extent = new net.minecraft.core.Vec3i(block == ModBlocks.WORKBENCH_211 ? 2 : 1, block == ModBlocks.WORKBENCH_121 ? 2 : 1, 1);
+            var template = new net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate();
+            template.fillFromWorld(level, origin, extent, false, List.of());
+            for (var rotation : List.of(net.minecraft.world.level.block.Rotation.CLOCKWISE_90,net.minecraft.world.level.block.Rotation.CLOCKWISE_180)) {
+                var settings = new net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings().setRotation(rotation);
+                helper.assertTrue(template.placeInWorld(level,dest,dest,settings,level.getRandom(),Block.UPDATE_ALL), "Template placement failed");
+                var actual = level.getBlockState(dest);
+                helper.assertTrue(actual == foot.setValue(facing,rotation.rotate(Direction.EAST)), "Wrong rotated root: " + actual);
+                var head = table.getCompanionPos(dest, actual);
+                if (head != null) {
+                    helper.assertTrue(table.getCompanionState(actual) == level.getBlockState(head) && dest.equals(table.getRootPos(head,level.getBlockState(head)))
+                            && level.getBlockEntity(head) == null, "Rotated bench halves disconnected/duplicated BE: " + actual);
+                }
+                helper.assertTrue(level.getBlockEntity(dest) instanceof com.tacz.guns.block.entity.GunSmithTableBlockEntity be && id.equals(be.getId()),
+                        "Rotated template lost bench identity");
+                if (head != null) level.removeBlock(head,false);
+                level.removeBlock(dest,false);
+            }
+            var other = table.getCompanionPos(origin,foot);
+            if (other != null) level.removeBlock(other,false);
+            level.removeBlock(origin,false);
+        }
+        helper.succeed();
+    }
+
+    @GameTest
+    public void rotatedTargetAndStatuePreserveBothHalvesAndData(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var origin = helper.absolutePos(BlockPos.ZERO); var dest = origin.offset(1,0,1);
+        var facing = com.tacz.guns.block.TargetBlock.FACING;
+        var half = com.tacz.guns.block.TargetBlock.HALF;
+        var name = Component.literal("rotation fixture");
+        var gun = com.tacz.guns.api.item.builder.GunItemBuilder.create().setId(Identifier.parse("tacz:ak47")).setAmmoCount(3).build();
+        for (var block : List.of(ModBlocks.TARGET, ModBlocks.STATUE)) {
+            var foot = block.defaultBlockState().setValue(facing,Direction.EAST);
+            level.setBlock(origin,foot,Block.UPDATE_ALL);
+            block.setPlacedBy(level,origin,foot,null,new ItemStack(block));
+            if (level.getBlockEntity(origin) instanceof com.tacz.guns.block.entity.TargetBlockEntity target) target.setCustomName(name);
+            else ((com.tacz.guns.block.entity.StatueBlockEntity)level.getBlockEntity(origin)).setGun(gun);
+            var template = new net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate();
+            template.fillFromWorld(level,origin,new net.minecraft.core.Vec3i(1,2,1),false,List.of());
+            for (var rotation : List.of(net.minecraft.world.level.block.Rotation.CLOCKWISE_90,net.minecraft.world.level.block.Rotation.CLOCKWISE_180)) {
+                var settings = new net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings().setRotation(rotation);
+                helper.assertTrue(template.placeInWorld(level,dest,dest,settings,level.getRandom(),Block.UPDATE_ALL),"Vertical fixture placement failed");
+                var expected = foot.setValue(facing,rotation.rotate(Direction.EAST));
+                helper.assertTrue(level.getBlockState(dest)==expected && level.getBlockState(dest.above())==expected.setValue(half,net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER)
+                        && level.getBlockEntity(dest.above())==null,"Bad vertical halves or duplicate BE: "+block);
+                if (block==ModBlocks.TARGET) helper.assertTrue(level.getBlockEntity(dest) instanceof com.tacz.guns.block.entity.TargetBlockEntity be
+                        && name.equals(be.getCustomName()),"Target lost name");
+                else helper.assertTrue(level.getBlockEntity(dest) instanceof com.tacz.guns.block.entity.StatueBlockEntity be
+                        && ItemStack.matches(be.getGunItem(),gun),"Statue lost stored item components");
+                level.removeBlock(dest.above(),false); level.removeBlock(dest,false);
+            }
+            level.removeBlock(origin.above(),false); level.removeBlock(origin,false);
         }
         helper.succeed();
     }

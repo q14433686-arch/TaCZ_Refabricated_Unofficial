@@ -22,7 +22,8 @@ import java.util.*;
 
 /** Same particle, texture (four authored opacity bands), camera and geometry. Only material and backing change. */
 final class SnowstormMaterialSmoke {
-    private static final String PROBE = """
+    static final List<String> MATERIALS = List.of("particles_opaque", "particles_alpha", "particles_blend", "particles_add", "particles_emissive", "energy_swirl");
+    static final String PROBE = """
         {"particle_effect":{"description":{"identifier":"port_test:material", "basic_render_parameters":{
          "material":"%s","texture":"port_test:particle/opacity_bands"}},"components":{
          "minecraft:emitter_rate_instant":{"num_particles":1},"minecraft:emitter_lifetime_once":{"active_time":0.1},
@@ -56,7 +57,7 @@ final class SnowstormMaterialSmoke {
                 var base = read(ctx.takeScreenshot(prefix + "control"));
                 if (dark) SnowstormSmoke.checkRuntimePulse(ctx, base);
                 var images = new HashMap<String,BufferedImage>();
-                for (String name : List.of("particles_opaque", "particles_alpha", "particles_blend", "particles_add", "particles_emissive", "energy_swirl")) {
+                for (String name : MATERIALS) {
                     ctx.runOnClient(mc -> {
                         var def = new ParticleEffectDeserializer().parse(JsonParser.parseString(PROBE.formatted(name)), new ParticleMolangEnvironment());
                         var p = mc.gameRenderer.mainCamera().position().add(mc.player.getLookAngle().scale(1.7));
@@ -72,13 +73,15 @@ final class SnowstormMaterialSmoke {
                 int alphaVsCutout = difference(images.get("particles_alpha"),images.get("particles_opaque"));
                 if (alphaVsCutout < 100 || alphaVsBlend > alphaVsCutout/3) throw new AssertionError(prefix+"alpha/blend="+alphaVsBlend+" alpha/cutout="+alphaVsCutout);
                 GunMod.LOGGER.info("PORT_MATERIALS: {} alpha/blend={} alpha/cutout={}; all six materials visible", prefix,alphaVsBlend,alphaVsCutout);
+                HandMaterialSmoke.run(ctx, world, dark ? "dark" : "light");
             }
+            BillboardViewSmoke.run(ctx);
         } finally {
             ctx.runOnClient(mc -> rt.clear());
             world.getServer().runOnServer(s -> {var p=world.getConnection().getServerPlayer(); wall.forEach((pos,state)->p.level().setBlock(pos,state,Block.UPDATE_ALL)); p.setItemInHand(InteractionHand.MAIN_HAND,saved);});
         }
     }
-    private static BufferedImage read(Path path) {
+    static BufferedImage read(Path path) {
         try { return ImageIO.read(path.toFile()); } catch (IOException ex) { throw new UncheckedIOException(ex); }
     }
     private static int difference(BufferedImage a, BufferedImage b) {

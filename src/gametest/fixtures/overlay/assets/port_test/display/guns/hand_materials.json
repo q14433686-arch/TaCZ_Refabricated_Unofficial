@@ -1,0 +1,5 @@
+{
+  "model": "tacz:gun/ak47_geo", "texture": "tacz:gun/uv/ak47",
+  "animation": "port_test:hand_materials", "state_machine": "tacz:ak47_state_machine",
+  "use_default_animation": "rifle"
+}
