@@ -1,5 +1,7 @@
-# First receiver pass: diagnose the dark cabinet panel and board controls before accepting pixels.
-44637664181	reimagined-act	tacz_surface_objects_off
-44637664181	reimagined-act	tacz_surface_objects_on
-44637664181	iris	tacz_surface_objects_blocked_rest
-44637664181	iris	tacz_surface_objects_blocked
+# a3847d0d: Reimagined ACT 128 passed the object frame and UV2 checks; inspect original frames.
+44639006524	reimagined-act	tacz_surface_objects_off
+44639006524	reimagined-act	tacz_surface_objects_on
+# Simple Iris: one of three distant wall/floor controls changed; identify what actually covered it.
+44639006524	iris	tacz_surface_range_rest
+44639006524	iris	tacz_surface_blast_expired
+44639006524	iris	tacz_surface_blast_behind
