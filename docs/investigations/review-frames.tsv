@@ -1,3 +1,11 @@
-# Same-branch pre-change raster references, not golden pixels across drivers.
-44417531060	smoke	tacz_display_wall
-44417531060	smoke	tacz_default_refit
+# One camera, same cell: survival board and cabinet controls. Keep the unmodified pixels.
+44425974348	smoke	tacz_rack_empty
+44425974348	smoke	tacz_rack_ghost
+44425974348	smoke	tacz_rack_placed
+44425974348	smoke	tacz_case_empty
+44425974348	smoke	tacz_case_ghost
+44425974348	smoke	tacz_case_placed
+44425974348	smoke	tacz_hand_filter_empty
+44425974348	smoke	tacz_hand_filter_cleared
+44425974217	iris	tacz_amg10_particle_baseline_2
+44425974217	iris	tacz_amg10_particle_2
