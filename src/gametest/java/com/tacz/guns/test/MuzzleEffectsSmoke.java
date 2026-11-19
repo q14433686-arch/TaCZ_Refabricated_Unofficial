@@ -35,6 +35,7 @@ final class MuzzleEffectsSmoke {
     static void run(ClientGameTestContext ctx, TestSingleplayerContext world) {
         var camera = ctx.computeOnClient(mc -> mc.options.getCameraType());
         boolean smoke = ctx.computeOnClient(mc -> RenderConfig.RENDER_MUZZLE_SMOKE.get());
+        boolean oldLight = ctx.computeOnClient(mc -> RenderConfig.LEGACY_MUZZLE_LIGHT.get());
         boolean disable = ctx.computeOnClient(mc -> RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get());
         var saved = world.getServer().computeOnServer(s -> world.getConnection().getServerPlayer().getMainHandItem().copy());
         GunFirePostEvent.EVENT.register(MuzzleQuadProbe::onShot);
@@ -84,9 +85,14 @@ final class MuzzleEffectsSmoke {
             ctx.runOnClient(mc -> RenderConfig.RENDER_MUZZLE_SMOKE.set(true));
 
             // Legacy quad keeps the historical silence switch, NOT the renew fractional policy.
+            ctx.runOnClient(mc -> RenderConfig.LEGACY_MUZZLE_LIGHT.set(true));
+            equip(ctx,world,AK,NONE,LEGACY); fire(ctx,world,false,false,true,null);
+            if (ctx.computeOnClient(mc -> MuzzleQuadProbe.modelLight) != 7 << 4) throw new AssertionError("Legacy rifle should receive bounded light");
             equip(ctx,world,AK,id("tacz:muzzle_brake_cthulhu"),LEGACY); fire(ctx,world,false,false,true,null);
             equip(ctx,world,AK,RC1,LEGACY); fire(ctx,world,false,false,false,null);
+            if (ctx.computeOnClient(mc -> MuzzleQuadProbe.modelLight) != 0) throw new AssertionError("Silenced legacy gun was lit");
             equip(ctx,world,RULES,NONE,LEGACY); fire(ctx,world,false,false,false,null);
+            ctx.runOnClient(mc -> RenderConfig.LEGACY_MUZZLE_LIGHT.set(false));
             markerFrames(ctx,world);
             ctx.runOnClient(mc -> mc.options.setCameraType(CameraType.THIRD_PERSON_BACK));
             equip(ctx,world,AK,RC1,MARKER); fire(ctx,world,true,true,false,null);
@@ -101,7 +107,7 @@ final class MuzzleEffectsSmoke {
         } finally {
             ctx.getInput().releaseKey(ShootKey.SHOOT_KEY);
             ctx.runOnClient(mc -> { MuzzleQuadProbe.stop(); mc.options.setCameraType(camera); RenderConfig.RENDER_MUZZLE_SMOKE.set(smoke);
-                RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.set(disable); NativeMuzzleEffects.clear(); WorldEmitterManager.getInstance().clear(); });
+                RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.set(disable); RenderConfig.LEGACY_MUZZLE_LIGHT.set(oldLight); NativeMuzzleEffects.clear(); WorldEmitterManager.getInstance().clear(); });
             world.getServer().runOnServer(s -> { var p=world.getConnection().getServerPlayer(); p.setItemInHand(InteractionHand.MAIN_HAND,saved); p.inventoryMenu.broadcastChanges(); });
         }
     }
@@ -141,7 +147,8 @@ final class MuzzleEffectsSmoke {
                 throw new AssertionError(((IGun)mc.player.getMainHandItem().getItem()).getGunId(mc.player.getMainHandItem()) + "/" + ((IGun)mc.player.getMainHandItem().getItem()).getGunDisplayId(mc.player.getMainHandItem())
                         + "/" + ((IGun)mc.player.getMainHandItem().getItem()).getAttachmentId(mc.player.getMainHandItem(),AttachmentType.MUZZLE) + " expected flash/smoke/legacy " + flash+"/"+smoke+"/"+legacy
                         + " got " + MuzzleQuadProbe.last+"/"+MuzzleQuadProbe.smokeQuads+"/"+MuzzleQuadProbe.legacyTasks+" shots="+MuzzleQuadProbe.shots);
-            if (!flash && MuzzleQuadProbe.modelLight!=0) throw new AssertionError("Hidden flash still lit model");
+            if (!flash && (MuzzleQuadProbe.modelLight>0) != (legacy && RenderConfig.LEGACY_MUZZLE_LIGHT.get()))
+                throw new AssertionError("Unexpected legacy/hidden model light: " + MuzzleQuadProbe.modelLight);
             return MuzzleQuadProbe.last;
         });
         if (screenshot!=null) ctx.takeScreenshot(screenshot);

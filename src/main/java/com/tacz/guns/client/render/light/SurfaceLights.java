@@ -46,6 +46,11 @@ public final class SurfaceLights {
     private static long buildTick, laserFrame;
     private static int builds;
     private static List<Draw> dots = List.of();
+    private static long muzzleEvents, explosionEvents, stunEvents, projections;
+    public record Diagnostics(int active, int beamHits, long muzzles, long explosions, long stuns, long projections) {}
+    public static Diagnostics diagnostics() {
+        return new Diagnostics(pulses.size(), dots.size(), muzzleEvents, explosionEvents, stunEvents, projections);
+    }
 
     private record Ray(Vec3 origin, Vec3 delta) {}
     private record Anchor(Identifier gun, Identifier display, boolean first, long frame, Ray ray) {}
@@ -79,7 +84,7 @@ public final class SurfaceLights {
 
     private static @Nullable LivingEntity holder(ItemDisplayContext ctx) {
         var mc = Minecraft.getInstance();
-        if (ctx == null || mc.player == null || mc.screen != null || IrisCompat.isRenderShadow() || ScopePipRenderer.isInsideScopeLevelRender()) return null;
+        if (ctx == null || mc.player == null || mc.gui.screen() != null || IrisCompat.isRenderShadow() || ScopePipRenderer.isInsideScopeLevelRender()) return null;
         if (ctx.firstPerson()) return mc.options.getCameraType().isFirstPerson() && MuzzleFlashRender.isSelf ? mc.player : null;
         if (ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND || ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND) {
             if (GunItemRendererWrapper.IS_MAIN_HAND_SUBMIT && level.getEntity(NativeMuzzleEffects.currentOwner()) instanceof LivingEntity entity
@@ -117,6 +122,7 @@ public final class SurfaceLights {
             var actual = a.ray.origin.add(a.ray.delta.scale(offsetBb/16f));
             if (actual.isFinite() && actual.distanceToSqr(eye)<16) pos=actual;
         }
+        muzzleEvents++;
         offer(new Pulse(pos,eye,1+2.25*light/15.,WARM,.48f*light/15,50,shooter.getId(),shooter==Minecraft.getInstance().player));
     }
     public static void laserLocator(ItemDisplayContext ctx, Matrix4f locator, float length, float width, int color, boolean fade) {
@@ -148,14 +154,17 @@ public final class SurfaceLights {
         var kind=packet.explosionParticle().getType();
         if (kind!=ParticleTypes.EXPLOSION && kind!=ParticleTypes.EXPLOSION_EMITTER) return;
         if (!(packet.radius()>0) || !Float.isFinite(packet.radius()) || !near(packet.center())) return;
+        explosionEvents++;
         offer(new Pulse(packet.center(),null,Math.clamp(packet.radius()*1.5,2,6),BLAST,.65f,130,-1,false));
     }
     /** LR already sends one FLASH burst at the stun entity, before removal. Never use a blind
      * status on the camera, a trail particle, or all 12 individual sprites as light sources. */
     public static void stun(ClientboundLevelParticlesPacket packet) {
-        if (!RenderConfig.EXPLOSION_SURFACE_LIGHT.get() || packet.particle().getType()!=ParticleTypes.FLASH || !ready()) return;
+        if (!RenderConfig.EXPLOSION_SURFACE_LIGHT.get() || packet.particle().getType()!=ParticleTypes.FLASH
+                || packet.count()!=StunGrenadeEntity.FLASH_PARTICLES || !ready()) return;
         var pos=new Vec3(packet.x(),packet.y(),packet.z());
         if (!near(pos) || level.getEntitiesOfClass(StunGrenadeEntity.class,new AABB(pos,pos).inflate(1.5)).isEmpty()) return;
+        stunEvents++;
         offer(new Pulse(pos,null,4,WHITE,.6f,100,-1,false));
     }
     private static boolean near(Vec3 pos) { return pos.isFinite() && pos.distanceToSqr(camera())<NEAR_SQR; }
@@ -182,7 +191,7 @@ public final class SurfaceLights {
         for (var p:pulses) {
             if (p.patches==null) {
                 if (builds>=MAX_PULSES) continue;
-                builds++;
+                builds++; projections++;
                 var origin=p.eye==null?p.pos:SurfaceProjection.visibleOrigin(level,p.eye,p.pos);
                 p.patches=SurfaceProjection.scatter(level,origin,p.range); p.start=now;
             }
