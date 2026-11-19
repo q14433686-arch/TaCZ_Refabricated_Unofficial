@@ -7,5 +7,7 @@
   "muzzle_flash": {
     "type": "renew",
     "scale": 0.75
-  }
+  },
+  "slot": "tacz:gun/slot/ak47",
+  "hud": "tacz:gun/hud/ak47"
 }

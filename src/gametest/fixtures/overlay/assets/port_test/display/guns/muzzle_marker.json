@@ -8,6 +8,10 @@
     "type": "renew",
     "scale": 0.75,
     "first_person_flash": "port_test:muzzle_marker",
-    "first_person_smoke": null
-  }
+    "first_person_smoke": null,
+    "third_person_flash": "port_test:muzzle_marker",
+    "third_person_smoke": "port_test:muzzle_anchor_smoke"
+  },
+  "slot": "tacz:gun/slot/ak47",
+  "hud": "tacz:gun/hud/ak47"
 }

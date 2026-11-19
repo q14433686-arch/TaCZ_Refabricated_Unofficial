@@ -66,8 +66,9 @@ if [[ -z ${TACZ_SMOKE_VIEWER:-} && ${TACZ_SMOKE_CONTROLLER:-} != true ]]; then
         test -s "$(find "$run/screenshots" -name "*tacz_particle_pass_${sample}.png" -print -quit)"
     done
     for sample in first F5 tracked; do grep -Fq "PORT_MUZZLE_SCALE: $sample" "$run/logs/latest.log"; done
+    grep -Fq 'PORT_MUZZLE_ANCHOR:' "$run/logs/latest.log"
     grep -Fq 'PORT_MUZZLE_PIXELS:' "$run/logs/latest.log"
-    grep -E 'PORT_MUZZLE(_SCALE|_PIXELS)?:' "$run/logs/latest.log" | sed 's/^/::notice::/'
+    grep -E 'PORT_MUZZLE(_SCALE|_PIXELS|_ANCHOR)?:' "$run/logs/latest.log" | sed 's/^/::notice::/'
     grep -Fq 'PORT_PARTICLE_PASS: rear' "$run/logs/latest.log"
     grep -Fq 'PORT_CONSTRAINT: ADS pixels' "$run/logs/latest.log"
     grep -Fq 'PORT_BILLBOARD: pitched' "$run/logs/latest.log"

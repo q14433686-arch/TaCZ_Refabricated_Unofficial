@@ -85,6 +85,9 @@ final class MuzzleEffectsSmoke {
             equip(ctx,world,AK,RC1,LEGACY); fire(ctx,world,false,false,false,null);
             equip(ctx,world,RULES,NONE,LEGACY); fire(ctx,world,false,false,false,null);
             markerFrames(ctx,world);
+            ctx.runOnClient(mc -> mc.options.setCameraType(CameraType.THIRD_PERSON_BACK));
+            equip(ctx,world,AK,RC1,MARKER); fire(ctx,world,true,true,false,null);
+            ctx.runOnClient(mc -> MuzzleBindingSmoke.check(mc,MuzzleQuadProbe.markerFlash,MuzzleQuadProbe.markerSmoke));
             ctx.waitTicks(32);
             ctx.runOnClient(mc -> {
                 var d=NativeMuzzleEffects.diagnostics();
@@ -132,7 +135,8 @@ final class MuzzleEffectsSmoke {
         ctx.waitTicks(4); // Include the next simulation tick and deferred draw, even for a negative.
         var edges=ctx.computeOnClient(mc -> {
             if (MuzzleQuadProbe.shots!=1 || (MuzzleQuadProbe.last!=null)!=flash || (MuzzleQuadProbe.smokeQuads>0)!=smoke || (MuzzleQuadProbe.legacyTasks>0)!=legacy)
-                throw new AssertionError(mc.player.getMainHandItem() + " expected flash/smoke/legacy " + flash+"/"+smoke+"/"+legacy
+                throw new AssertionError(((IGun)mc.player.getMainHandItem().getItem()).getGunId(mc.player.getMainHandItem()) + "/" + ((IGun)mc.player.getMainHandItem().getItem()).getGunDisplayId(mc.player.getMainHandItem())
+                        + "/" + ((IGun)mc.player.getMainHandItem().getItem()).getAttachmentId(mc.player.getMainHandItem(),AttachmentType.MUZZLE) + " expected flash/smoke/legacy " + flash+"/"+smoke+"/"+legacy
                         + " got " + MuzzleQuadProbe.last+"/"+MuzzleQuadProbe.smokeQuads+"/"+MuzzleQuadProbe.legacyTasks+" shots="+MuzzleQuadProbe.shots);
             if (!flash && MuzzleQuadProbe.modelLight!=0) throw new AssertionError("Hidden flash still lit model");
             return MuzzleQuadProbe.last;
@@ -144,12 +148,18 @@ final class MuzzleEffectsSmoke {
     private static void markerFrames(ClientGameTestContext ctx, TestSingleplayerContext world) {
         // Same pack variable, but a longer-lived uniquely colored quad. The stock 20 ms strip's
         // random UV/rotation and recoil make a screenshot taken after waitTicks a poor pixel oracle.
+        // Face the grass rather than saturating an additive marker against a white sky. Keep
+        // a separate flash-off reference for each stack; exclude both the ammo HUD and hotbar.
+        ctx.getInput().lookAt(0,25);
         int[] pixels = new int[2]; int i=0;
         for (var part : new Identifier[]{NONE,RC1}) {
             equip(ctx,world,AK,part,MARKER);
             String label=part.equals(NONE)?"bare":"rc1";
             var wall=SnowstormMaterialSmoke.read(ctx.takeScreenshot("tacz_muzzle_marker_"+label+"_off"));
-            fire(ctx,world,true,false,false,null);
+            var edges=fire(ctx,world,true,false,false,null);
+            float expected=.8f * (part.equals(NONE) ? .75f : .15f);
+            if(!(Math.abs(edges.width()/edges.spawnScale()-expected)<.001f && Math.abs(edges.height()/edges.spawnScale()-expected)<.001f))
+                throw new AssertionError("Custom definition creation_expression: expected " + expected + " got " + edges);
             int light=ctx.computeOnClient(mc -> MuzzleQuadProbe.modelLight);
             if (light != (part.equals(NONE)?10:3)<<4) throw new AssertionError("Configured flash ID model light="+light);
             var lit=SnowstormMaterialSmoke.read(ctx.takeScreenshot("tacz_muzzle_marker_"+label+"_on"));
@@ -160,7 +170,7 @@ final class MuzzleEffectsSmoke {
     }
     private static int pink(BufferedImage off, BufferedImage on) {
         int n=0;
-        for(int y=on.getHeight()/10;y<on.getHeight()*9/10;y++) for(int x=on.getWidth()/8;x<on.getWidth()*7/8;x++) {
+        for(int y=on.getHeight()/5;y<on.getHeight()*3/4;y++) for(int x=on.getWidth()/5;x<on.getWidth()*4/5;x++) {
             int p=on.getRGB(x,y), q=off.getRGB(x,y);
             int a=Math.min(p>>16&255,p&255)-(p>>8&255), b=Math.min(q>>16&255,q&255)-(q>>8&255);
             if(a>60 && a-b>50)n++;

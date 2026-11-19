@@ -13,6 +13,8 @@ public final class MuzzleQuadProbe {
     static final Identifier MARKER = Identifier.parse("port_test:muzzle_marker");
     static final Identifier SMOKE = Identifier.parse("tacz:muzzle_flash_smoke");
     private static final IdentityHashMap<ParticleInstance, Vector3f[]> corners = new IdentityHashMap<>();
+    private static final Identifier ANCHOR_SMOKE = Identifier.parse("port_test:muzzle_anchor_smoke");
+    static ParticleInstance markerFlash, markerSmoke;
     private static int owner = -1;
     private static boolean hand;
     static Edges last;
@@ -26,7 +28,7 @@ public final class MuzzleQuadProbe {
         }
     }
     static void begin(int id, boolean first) {
-        owner=id; hand=first; last=null; smokeQuads=shots=legacyTasks=0; modelLight=-1; corners.clear();
+        owner=id; hand=first; markerFlash=markerSmoke=null; last=null; smokeQuads=shots=legacyTasks=0; modelLight=-1; corners.clear();
     }
     static void stop() { begin(-1, false); }
     static void onShot(com.tacz.guns.api.event.common.GunFirePostEvent e) {
@@ -42,8 +44,10 @@ public final class MuzzleQuadProbe {
         var entity = live.emitter.getMolang().getContext().getEntity();
         if (!(entity instanceof Entity e) || e.getId() != owner) return;
         var id = live.emitter.getDefinition().getIdentifier();
+        if (MARKER.equals(id)) markerFlash=live;
+        if (ANCHOR_SMOKE.equals(id)) markerSmoke=live;
         if (FLASH.equals(id) || MARKER.equals(id)) corners.put(frozen, new Vector3f[4]);
-        else if (SMOKE.equals(id)) {
+        else if (SMOKE.equals(id) || ANCHOR_SMOKE.equals(id)) {
             if (!live.worldSpace || live.emitter.isFollowAnchor()) throw new AssertionError("Shipped smoke was not detached in world space");
             corners.put(frozen, new Vector3f[0]);
         }

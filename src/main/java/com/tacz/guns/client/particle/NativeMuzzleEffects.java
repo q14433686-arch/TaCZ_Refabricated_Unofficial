@@ -7,6 +7,7 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.event.common.GunFirePostEvent;
 import com.tacz.guns.client.model.GunModelConstant;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.client.particle.bedrock.particle.data.ParticleEffectDefinition;
 import com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader;
 import com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager;
 import com.tacz.guns.client.model.IFunctionalSubmitter;
@@ -53,7 +54,7 @@ public final class NativeMuzzleEffects {
     private static final class Shot {
         final MuzzleEffectParameters effect;
         final long born;
-        final Identifier gun;
+        final Identifier gun, displayId;
         final boolean firstPerson;
         final float offset;
         final float rotation = (float)(Math.random() * 120 - 60);
@@ -61,9 +62,8 @@ public final class NativeMuzzleEffects {
         long flashBorn = -1;
         boolean smoked;
         boolean customFlashed;
-        Identifier displayId;
-        Shot(MuzzleEffectParameters effect, Identifier gun, boolean firstPerson, float offset) {
-            this.effect = effect; this.gun = gun; this.firstPerson = firstPerson; this.offset = offset;
+        Shot(MuzzleEffectParameters effect, Identifier gun, Identifier displayId, boolean firstPerson, float offset) {
+            this.effect = effect; this.gun = gun; this.displayId = displayId; this.firstPerson = firstPerson; this.offset = offset;
             born = GunTime.nowMillis();
         }
     }
@@ -119,9 +119,7 @@ public final class NativeMuzzleEffects {
         var effect = MuzzleEffectParameters.resolve(display.getMuzzleFlash(), part.data(), part.silenced());
         boolean first = shooter == mc.player && mc.options.getCameraType().isFirstPerson();
         if (SHOTS.size() >= 128 && !SHOTS.containsKey(shooter.getId())) return;
-        Shot shot = new Shot(effect, gun.getGunId(stack), first, part.offsetBb());
-        shot.displayId = gun.getGunDisplayId(stack);
-        SHOTS.put(shooter.getId(), shot);
+        SHOTS.put(shooter.getId(), new Shot(effect, gun.getGunId(stack), gun.getGunDisplayId(stack), first, part.offsetBb()));
     }
 
     /** True means renew owns this locator, even when no flash is active. */
@@ -142,20 +140,24 @@ public final class NativeMuzzleEffects {
         var effect = shot.effect;
         PoseStack pose = copy(context.poseStack());
         pose.translate(0, 0, -shot.offset / 16f);
+        var definitions = ParticleDefinitionLoader.getInstance();
         if (!shot.smoked) {
-            shot.smoked = true; // Includes disabled/missing effects: don't burst when options change later.
-            Identifier definition = first ? effect.firstSmoke() : effect.thirdSmoke();
-            if (effect.smokeEnabled() && RenderConfig.RENDER_MUZZLE_SMOKE.get()
-                    && !customEffect(definition, shot, pose, id, true) && supported(definition, SMOKE) && effect.smokeSpeed() > 0) {
-                emitSmoke(shot, worldPose(pose, first), context.light(), first ? GunItemRendererWrapper.muzzleWorldScale() : 1f);
+            shot.smoked = true; // Do not replay a disabled/missing layer on a later render pass.
+            Identifier smokeId = first ? effect.firstSmoke() : effect.thirdSmoke();
+            if (effect.smokeEnabled() && smokeId != null && RenderConfig.RENDER_MUZZLE_SMOKE.get()) {
+                var smoke = definitions.getDefinition(smokeId);
+                if (smoke != null) startDefinition(smoke, shot, pose, id, true);
+                else if (supported(smokeId, SMOKE) && effect.smokeSpeed() > 0)
+                    emitSmoke(effect, first, worldPose(pose, first), context.light(), first ? GunItemRendererWrapper.muzzleWorldScale() : 1f);
             }
         }
-        Identifier definition = first ? effect.firstFlash() : effect.thirdFlash();
-        if (!effect.hasFlash() || definition == null || RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) return true;
-        if (ParticleDefinitionLoader.getInstance().getDefinition(definition) != null) {
+        Identifier flashId = first ? effect.firstFlash() : effect.thirdFlash();
+        if (!effect.hasFlash() || flashId == null) return true;
+        var flash = definitions.getDefinition(flashId);
+        if (flash != null) {
             if (!shot.customFlashed) {
                 shot.customFlashed = true;
-                customEffect(definition, shot, pose, id, false);
+                if (!RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) startDefinition(flash, shot, pose, id, false);
             }
             return true;
         }
@@ -164,7 +166,7 @@ public final class NativeMuzzleEffects {
         if (shot.flashBorn < 0) shot.flashBorn = GunTime.nowMillis();
         long flashAge = first ? GunTime.nowMillis() - shot.flashBorn : age;
         long lifetime = first ? 20 : 150;
-        if (age < 0 || flashAge > lifetime || !supported(definition, FLASH)) return true;
+        if (age < 0 || flashAge > lifetime || RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get() || !supported(flashId, FLASH)) return true;
         float size = effect.flashScale() * .45f;
         if (!Float.isFinite(size) || size > 32) return true;
         pose.rotate(com.mojang.math.Axis.ZP.rotationDegrees(shot.rotation));
@@ -182,7 +184,7 @@ public final class NativeMuzzleEffects {
         if (id.equals(SMOKE)) {
             if (RenderConfig.RENDER_MUZZLE_SMOKE.get()) {
                 var parameters = new MuzzleEffectParameters(null, SMOKE, null, SMOKE, 0, 0, true, 1, 1, 15, null);
-                emitSmoke(new Shot(parameters, id, first, 0), world, light, first ? GunItemRendererWrapper.muzzleWorldScale() : 1);
+                emitSmoke(parameters, first, world, light, first ? GunItemRendererWrapper.muzzleWorldScale() : 1);
             }
             return true;
         }
@@ -203,9 +205,7 @@ public final class NativeMuzzleEffects {
         return new Matrix4f(pose.last().pose()).translateLocal((float)camera.x, (float)camera.y, (float)camera.z);
     }
 
-    private static boolean customEffect(Identifier id, Shot shot, PoseStack pose, int owner, boolean smoke) {
-        var definition = ParticleDefinitionLoader.getInstance().getDefinition(id);
-        if (definition == null) return false;
+    private static void startDefinition(ParticleEffectDefinition definition, Shot shot, PoseStack pose, int owner, boolean smoke) {
         var mc = Minecraft.getInstance();
         boolean first = shot.firstPerson;
         Matrix4f world = worldPose(pose, first);
@@ -215,15 +215,15 @@ public final class NativeMuzzleEffects {
         var emitter = runtime.addEmitter(mc.level, world, Vec3.ZERO, definition, "", mc.level.getEntity(owner),
                 smoke ? shot.effect::bindSmoke : shot.effect::bindFlash);
         if (emitter != null) {
-            // World smoke (including custom sustained emitters) stays at the firing position.
-            if (first || !smoke) runtime.bindAnimated(emitter, owner, shot.gun, GunModelConstant.MUZZLE_FLASH_ORIGIN_NODE,
-                    first, pose.last().pose(), world, -shot.offset / 16f);
+            // A fixed world emitter still has an owner for query/teardown purposes, but no
+            // moving locator. This also freezes later emissions from a sustained smoke definition.
+            String locator = first || !smoke ? GunModelConstant.MUZZLE_FLASH_ORIGIN_NODE : null;
+            runtime.bindAnimated(emitter, owner, shot.gun, locator, first, pose.last().pose(), world, -shot.offset / 16f);
             emitter.setFollowAnchor(!first && !smoke);
             if (smoke) runtimeSmokeBursts++;
             else if (first) runtimeFirstFlashes++;
             else runtimeThirdFlashes++;
         }
-        return true;
     }
 
     private static boolean supported(Identifier actual, Identifier profile) {
@@ -232,8 +232,7 @@ public final class NativeMuzzleEffects {
         if (WARNED.add(actual)) GunMod.LOGGER.warn("Native muzzle profile {} is unsupported (expected {}); not substituting another effect", actual, profile);
         return false;
     }
-    private static void emitSmoke(Shot shot, Matrix4f pose, int light, float worldScale) {
-        var effect = shot.effect;
+    private static void emitSmoke(MuzzleEffectParameters effect, boolean first, Matrix4f pose, int light, float worldScale) {
         float count = effect.smokeCount() == 0 ? 15 : effect.smokeCount();
         float size = effect.smokeSize() == 0 ? 1 : effect.smokeSize();
         // A zero attachment multiplier suppresses emission rather than reactivating definition defaults.
@@ -260,7 +259,7 @@ public final class NativeMuzzleEffects {
             var velocity = pose.transformDirection(direction).normalize().mul(6 * effect.smokeSpeed() * worldScale);
             PUFFS.add(new Puff(new Vec3(origin.x,origin.y,origin.z), new Vec3(velocity.x,velocity.y,velocity.z),
                     GunTime.nowMillis(), .12f + (float)Math.random() * .13f,
-                    size * worldScale * (.8f + (float)Math.random()*.4f), (float)Math.random()*360, light, shot.firstPerson));
+                    size * worldScale * (.8f + (float)Math.random()*.4f), (float)Math.random()*360, light, first));
         }
         smokeBursts++;
     }

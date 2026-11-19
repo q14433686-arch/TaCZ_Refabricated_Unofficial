@@ -8,5 +8,7 @@
     "type": "default",
     "texture": "tacz:flash/common_muzzle_flash",
     "scale": 0.75
-  }
+  },
+  "slot": "tacz:gun/slot/ak47",
+  "hud": "tacz:gun/hud/ak47"
 }

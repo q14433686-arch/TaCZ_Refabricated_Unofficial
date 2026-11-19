@@ -15,6 +15,7 @@ import net.minecraft.client.renderer.rendertype.*;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import javax.annotation.Nullable;
 import java.util.*;
 
 /** Fabric 26.3 lifecycle and immutable SubmitNode geometry adapter. No vanilla smoke substitution. */
@@ -35,7 +36,8 @@ public final class WorldEmitterManager {
     public void bindAnimated(ParticleEmitterInstance emitter,int owner,net.minecraft.resources.Identifier gun,String locator,boolean first,Matrix4f hand,Matrix4f world){
         bindAnimated(emitter,owner,gun,locator,first,hand,world,0);
     }
-    public void bindAnimated(ParticleEmitterInstance emitter,int owner,net.minecraft.resources.Identifier gun,String locator,
+    /** A null locator tracks ownership/lifetime but leaves the emission transform fixed. */
+    public void bindAnimated(ParticleEmitterInstance emitter,int owner,net.minecraft.resources.Identifier gun,@Nullable String locator,
                              boolean first,Matrix4f hand,Matrix4f world,float locatorOffsetZ){
         for(var a:pending)if(a.emitter==emitter){
             a.locatorOffsetZ=locatorOffsetZ;
@@ -50,7 +52,7 @@ public final class WorldEmitterManager {
     }
     public void updateAnchors(int owner,net.minecraft.resources.Identifier gun,com.tacz.guns.client.model.BedrockGunModel model,
                               PoseStack root,boolean first,SubmitNodeCollector collector,int light){
-        for(var a:all())if(a.owner==owner&&a.first==first&&gun.equals(a.gun)){
+        for(var a:all())if(a.locator!=null&&a.owner==owner&&a.first==first&&gun.equals(a.gun)){
             var node=model.getNode(a.locator);if(node==null)continue;
             var chain=new java.util.ArrayDeque<com.tacz.guns.client.model.bedrock.BedrockPart>();
             for(var n=node;n!=null;n=n.getParent())chain.push(n);
