@@ -43,6 +43,7 @@ public class PackClientSmoke implements FabricClientGameTest {
             world.getConnection().waitForChunksRender();
             context.waitTicks(30);
             saveFrame(context, "tacz_held_default_gun");
+            if (Boolean.getBoolean("tacz.test.pal")) { PalRuntimeSmoke.run(context); return; }
             if (Boolean.getBoolean("tacz.test.controller")) { ControllerSmoke.run(context, world); return; }
             if (!Boolean.getBoolean("tacz.test.iris")) RackPreviewSmoke.run(context, world, id);
             PortInputSmoke.run(context, world);

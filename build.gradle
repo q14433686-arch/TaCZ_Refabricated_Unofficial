@@ -264,6 +264,10 @@ dependencies {
 // Test-mod adapters compile against the same optional APIs as the port, but a normal game
 // (including the baseline client smoke) must not acquire a viewer. Never nest these jars.
 configurations.gametestCompileOnly.extendsFrom(configurations.compileOnly)
+if (project.hasProperty('taczPalSmoke')) {
+    loom.runs.clientGameTest.property 'tacz.test.pal', 'true'
+    dependencies { gametestRuntimeOnly "maven.modrinth:player-animation-library:${player_animation_lib}" }
+}
 if (project.hasProperty('taczControllerSmoke')) {
     loom.runs.clientGameTest.property 'tacz.test.controller', 'true'
     dependencies {

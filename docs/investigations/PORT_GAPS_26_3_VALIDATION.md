@@ -61,6 +61,10 @@
 
 六个外部动画关键帧在状态机自己分配的轨道播放，发射器跟随真实枪口，`to_world=false`。Mesa 下统计新增粉色像素的色强分位比（q20/q85），煤块前 cutout **1.00**、alpha/blend 都是 **0.318**；浅色背板分别为 **1.00 / 0.467 / 0.467**。另外三种手部材质也有可见像素，不用这些数证明照明、深度写入或 UV 滚动都已对齐。相机仰视 35° 再侧倾 0°/30° 时，从画面取狭长纹理的主轴：`rotate_y` 和 `lookat_y` 与投影的世界竖直方向吻合（绝对点积 ≥0.98），高度缩短；对照 `rotate_xyz` 仍在屏幕上竖直。`b57d091` 的 [JEI 和 REI](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44433542067)也分别跑通了重载后的展示和双向查询，不再停在 429。
 
+可对照正常的[纯网格空槽](../../build-reports/visual/44434717131-tacz_mesh_empty.png)、[青色预览](../../build-reports/visual/44434717131-tacz_mesh_ghost.png)、[实物](../../build-reports/visual/44434717131-tacz_mesh_placed.png)：同一个中心窗口，**2,820 / 3,065** 个青色网格像素符合中间色条件。[30° 时绕 Y](../../build-reports/visual/44434717131-tacz_billboard_roll_30_rotate_y.png)与[同机位完全朝相机](../../build-reports/visual/44434717131-tacz_billboard_roll_30_rotate_xyz.png)的长边也可直接比较。
+
+`bdd681a` 的 [Iris 手部对照](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44434717123/job/135260570748)跑到了深色六材质，但旧 q85 判据失败。对[基准](../../build-reports/visual/44434717123-tacz_hand_material_dark_control.png)复算，[alpha](../../build-reports/visual/44434717123-tacz_hand_material_dark_particles_alpha.png) 和 [blend](../../build-reports/visual/44434717123-tacz_hand_material_dark_particles_blend.png)都**只有同样的三个**新增色强值 36、76、120。最高一档分别占 55/349 和 47/325，手部遮挡的一小块使 q85 刚好落在台阶两边；[cutout](../../build-reports/visual/44434717123-tacz_hand_material_dark_particles_opaque.png) 则为 349 个同色强 127 的像素。新判据比较完整累计直方图的距离，并要求两种半透明材质相对实心对照仍有宽的强度分布；并非简单调大 0.17 的容差。
+
 ## 尚不能外推的部分
 
 - **输入与展示：** `ae8f1d9` 的[超时][rack-failure]后来在 `043fba5` 定位到原版好友 GUI 吞掉 O（两端均未收到 use）。新默认 K 和旧 `options.txt` 的手动改绑说明见 README。已过的是生存模式的指定板／柜和烘焙物品，不是每种第三方特殊渲染器或用户现存的所有键位组合。

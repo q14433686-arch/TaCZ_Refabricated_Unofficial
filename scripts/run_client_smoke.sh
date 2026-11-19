@@ -37,6 +37,7 @@ probe & probe_pid=$!
 trap 'kill "$probe_pid" 2>/dev/null || true' EXIT
 # Leave time for Gradle/SDL teardown and evidence upload before the enclosing job-step timeout.
 args=(-PtaczClientSmoke)
+if [[ ${TACZ_SMOKE_PAL:-} == true ]]; then args+=(-PtaczPalSmoke); fi
 if [[ ${TACZ_SMOKE_CONTROLLER:-} == true ]]; then args+=(-PtaczControllerSmoke); fi
 if [[ ${TACZ_SMOKE_IRIS:-} == true ]]; then args+=(-PtaczIrisSmoke); fi
 case ${TACZ_SMOKE_VIEWER:-} in
@@ -45,6 +46,10 @@ case ${TACZ_SMOKE_VIEWER:-} in
     *) echo 'Expected jei or rei' >&2; exit 2;;
 esac
 timeout -k 20s 10m ./gradlew "${args[@]}" runClientGameTest --console=plain --stacktrace 2>&1 | tee "$RUNNER_TEMP/tacz-client.log"
+if [[ ${TACZ_SMOKE_PAL:-} == true ]]; then
+    grep -F 'PORT_PAL: offscreen' "$run/logs/latest.log" | sed 's/^/::notice::/'
+    exit
+fi
 # Require both material paths, not just a generic "rendered" message. Frame data stays in the job artifact.
 if [[ -z ${TACZ_SMOKE_VIEWER:-} && ${TACZ_SMOKE_CONTROLLER:-} != true ]]; then
     for backing in dark light; do
@@ -72,6 +77,7 @@ if [[ -n ${TACZ_SMOKE_VIEWER:-} ]]; then
     test -s "$(find "$run/screenshots" -name "*tacz_viewer_$TACZ_SMOKE_VIEWER.png" -print -quit)"
     exit
 fi
+grep -E 'PORT_RACK_PREVIEW:|PORT_RACK_LOAD:|PORT_OUTLINE:' "$run/logs/latest.log" | sed 's/^/::notice::/'
 for frame in tacz_{rack,case,corner,vanilla_quad,mesh}_{empty,ghost,placed} tacz_hover_{en_us,zh_cn}_{scope_xm157,scope_mk5hd,scope_standard_8x,less_flash,more_flash,gun_display_case} tacz_hand_filter_{empty,cleared} tacz_held_default_gun tacz_held_variant tacz_default_refit tacz_range_readout tacz_display_wall tacz_xm157_{entity,control,restored,occluded} \
         tacz_lens_pip_1x tacz_lens_{classic,pip}_{bare,optical,hot,wall,restored,tagged}; do
     test -s "$(find "$run/screenshots" -name "*${frame}.png" -print -quit)"

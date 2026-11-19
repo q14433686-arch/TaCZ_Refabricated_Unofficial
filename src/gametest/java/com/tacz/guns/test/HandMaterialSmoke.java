@@ -45,7 +45,7 @@ final class HandMaterialSmoke {
             try {
                 String prefix = "tacz_hand_material_" + backing + "_";
                 var control = SnowstormMaterialSmoke.read(ctx.takeScreenshot(prefix + "control"));
-                var ratios = new HashMap<String,Double>();
+                var samples = new HashMap<String, Strength>();
                 for (String name : SnowstormMaterialSmoke.MATERIALS) {
                     long before = ctx.computeOnClient(mc -> {
                         if (!controller.containPrototype(name)) throw new AssertionError("Display did not load animation " + name);
@@ -57,14 +57,19 @@ final class HandMaterialSmoke {
                     catch (AssertionError e) { throw new AssertionError(prefix + name + ": " + ctx.computeOnClient(mc ->
                             rt.emitterCount() + " emitters, " + rt.particleCount() + " particles, " + (rt.rendered()-before) + " submits"), e); }
                     var frame = SnowstormMaterialSmoke.read(ctx.takeScreenshot(prefix + name));
-                    ratios.put(name, strengthRatio(control, frame, prefix + name));
+                    samples.put(name, strength(control, frame, prefix + name));
                     ctx.runOnClient(mc -> { controller.removeAnimation(track); rt.clear(); });
                     ctx.waitTicks(2);
                 }
-                double cutout = ratios.get("particles_opaque"), alpha = ratios.get("particles_alpha"), blend = ratios.get("particles_blend");
-                if (Math.abs(alpha-blend) > .17 || Math.max(alpha, blend) > cutout-.12)
-                    throw new AssertionError(prefix + " opacity bands: " + ratios);
-                GunMod.LOGGER.info("PORT_HAND_MATERIALS: {} six visible muzzle-local effects; q20/q85 color strength {}", backing, ratios);
+                var cutout = samples.get("particles_opaque");
+                var alpha = samples.get("particles_alpha");
+                var blend = samples.get("particles_blend");
+                double between = alpha.distance(blend), toCutout = Math.min(alpha.distance(cutout), blend.distance(cutout));
+                if (Math.max(alpha.bandRatio(), blend.bandRatio()) > cutout.bandRatio() - .12 || between > toCutout / 3)
+                    throw new AssertionError(prefix + " q10/q95 cutout/alpha/blend=" + cutout.bandRatio() + "/" + alpha.bandRatio() + "/" + blend.bandRatio()
+                            + "; alpha/blend distance=" + between + " vs cutout=" + toCutout);
+                GunMod.LOGGER.info("PORT_HAND_MATERIALS: {} six visible muzzle-local effects; q10/q95 cutout/alpha/blend={}/{}/{}; color distances {}/{}",
+                        backing, cutout.bandRatio(), alpha.bandRatio(), blend.bandRatio(), between, toCutout);
             } finally {
                 ctx.runOnClient(mc -> { controller.removeAnimation(track); rt.clear(); });
             }
@@ -78,7 +83,25 @@ final class HandMaterialSmoke {
 
     // The hand can breathe between frames: compare the distribution of color *inside* the
     // injected quad, not a whole-screen diff that would count moving geometry or the chat/HUD.
-    private static double strengthRatio(BufferedImage base, BufferedImage frame, String name) {
+    private record Strength(int[] histogram, int count) {
+        int quantile(double q) {
+            int sum = 0;
+            for (int i = 0; i < histogram.length; i++) if ((sum += histogram[i]) >= count * q) return i;
+            throw new AssertionError("Empty color distribution");
+        }
+        double bandRatio() { return quantile(.1) / (double)quantile(.95); }
+        // Compare all observed levels, not two individual percentile bins. A moving hand can
+        // occlude 14% vs 16% of the bright stripe; q85 then jumps to the next *identical* color.
+        double distance(Strength other) {
+            int a = 0, b = 0; double distance = 0;
+            for (int i = 0; i < histogram.length; i++) {
+                a += histogram[i]; b += other.histogram[i];
+                distance += Math.abs(a / (double)count - b / (double)other.count);
+            }
+            return distance;
+        }
+    }
+    private static Strength strength(BufferedImage base, BufferedImage frame, String name) {
         int[] histogram = new int[256]; int count = 0;
         for (int y = frame.getHeight()/6; y < frame.getHeight()*4/5; y++)
             for (int x = frame.getWidth()/5; x < frame.getWidth()*4/5; x++) {
@@ -86,13 +109,7 @@ final class HandMaterialSmoke {
                 if (value > 12 && value - chroma(base.getRGB(x,y)) > 12) { histogram[value]++; count++; }
             }
         if (count < 60) throw new AssertionError(name + " added only " + count + " pink pixels");
-        int low = 0, high = 0, sum = 0;
-        for (int i = 0; i < histogram.length; i++) {
-            sum += histogram[i];
-            if (low == 0 && sum >= count * .2) low = i;
-            if (sum >= count * .85) { high = i; break; }
-        }
-        return low / (double)high;
+        return new Strength(histogram, count);
     }
     private static int chroma(int c) { return Math.min(c >> 16 & 255, c & 255) - (c >> 8 & 255); }
 }
