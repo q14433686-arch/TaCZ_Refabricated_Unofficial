@@ -7,12 +7,15 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
+import com.tacz.guns.client.model.bedrock.BedrockCubePerFace;
 import com.tacz.guns.client.resource.ClientAssetsManager;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.pojo.display.gun.GunDisplay;
+import com.tacz.guns.client.resource.pojo.model.FaceUVsItem;
 import com.tacz.guns.config.client.RenderConfig;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.entity.ItemEntityRenderer;
@@ -27,6 +30,9 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -71,6 +77,7 @@ final class DroppedGunSmoke {
                     && TimelessAPI.getGunDisplay(AUTHORED, AK).orElseThrow().getExternalModel(true) != null);
             if (!Boolean.getBoolean("tacz.test.iris")) {
                 scene(ctx, world, 3, 1);
+                scene(ctx, world, 3, 16);
                 scene(ctx, world, 12, 1);
             }
             scene(ctx, world, 12, 16);
@@ -110,13 +117,13 @@ final class DroppedGunSmoke {
                 if (icons ? geometry.sprites != count || geometry.nodes != count || geometry.vertices.n != 4 * count
                         : geometry.sprites != 0 || geometry.vertices.n < 1000 * count)
                     throw new AssertionError("Wrong drop path for " + distance + "/" + cutoff + ": " + geometry);
-                if (distance == 3 && cutoff == 0) ctx.runOnClient(mc -> checkContexts(mc, (ItemEntity)mc.level.getEntity(ids.getFirst())));
+                if (distance == 3 && count == 1 && cutoff == 0) ctx.runOnClient(mc -> checkContexts(mc, (ItemEntity)mc.level.getEntity(ids.getFirst())));
                 ctx.runOnClient(mc -> { samples = 0; times = new long[FRAMES]; });
                 ctx.waitFor(mc -> samples == FRAMES);
                 var sorted = ctx.computeOnClient(mc -> { var a = times; times = null; Arrays.sort(a); return a; });
                 GunMod.LOGGER.info("PORT_DROPPED_GUN: {} drops at {} blocks, cutoff={}, {} geometry submissions / {} vertices; {} Minecraft renderFrame samples median={} us p95={} us",
                         count, distance, cutoff, geometry.nodes, geometry.vertices.n, FRAMES, sorted[FRAMES / 2] / 1000, sorted[FRAMES * 95 / 100] / 1000);
-                if (count == 16) {
+                if (distance == 12 && count == 16) {
                     var image = SnowstormMaterialSmoke.read(ctx.takeScreenshot("tacz_dropped_guns_" + (icons ? "on" : "off")));
                     if (icons) {
                         int pixels = newCyanPixels(full, image);
@@ -146,6 +153,15 @@ final class DroppedGunSmoke {
     private static int chroma(int rgb) { return Math.min(rgb >> 8 & 255, rgb & 255) - (rgb >> 16 & 255); }
 
     private static void checkDisplays() {
+        // Explicit single-texel UV is valid, just like a nonzero UV. Only the four omitted
+        // faces of this cube may be skipped; its public six-direction layout must not change.
+        var faces = ClientAssetsManager.GSON.fromJson("""
+                {"south":{"uv":[0,0],"uv_size":[0,0]},"up":{"uv":[0,0],"uv_size":[4,4]}}
+                """, FaceUVsItem.class);
+        var cube = new BedrockCubePerFace(1, 1, 1, 4, 4, 4, 0, 16, 16, faces);
+        var counter = new Counter();
+        cube.compile(new PoseStack().last(), counter, 0, 0, 1, 1, 1, 1);
+        if (cube.getPolygons().length != 6 || counter.n != 8) throw new AssertionError("Per-face cube wrote " + counter.n + " vertices");
         if (!SLOT.equals(TimelessAPI.getGunDisplay(DISPLAY, AK).orElseThrow().getMissingLodDropTexture())
                 || TimelessAPI.getGunDisplay(Identifier.parse("port_test:rack_mesh"), AK).orElseThrow().getMissingLodDropTexture() != null
                 || TimelessAPI.getGunDisplay(NO_SLOT, AK).orElseThrow().getMissingLodDropTexture() != null)
@@ -160,6 +176,32 @@ final class DroppedGunSmoke {
                     throw new AssertionError("Wrong broken-resource fallback: " + lod + ", " + slot);
             }
         }
+    }
+
+    /** Install a client-only overlay in the disposable Loom run dir before an already scheduled
+     * resource reload. Same display ID gains a real LOD; the old presence memo must not win. */
+    static void acrossReload(ClientGameTestContext ctx, Runnable reload) {
+        var old = ctx.computeOnClient(mc -> TimelessAPI.getGunDisplay(DISPLAY, AK).orElseThrow());
+        ctx.runOnClient(mc -> {
+            if (!SLOT.equals(old.getMissingLodDropTexture())) throw new AssertionError("Expected no-LOD display before reload");
+        });
+        try {
+            // GunPackLoader searches directories lexically; this test-only pack precedes the fixture ZIP.
+            var pack = Files.createTempDirectory(FabricLoader.getInstance().getGameDir().resolve("tacz"), "000-drop-reload-");
+            Files.writeString(pack.resolve("gunpack.meta.json"), "{\"namespace\":\"port_test\",\"dependencies\":{\"minecraft\":\"[26.3]\"}}");
+            Files.writeString(Files.createDirectories(pack.resolve("assets/port_test/display/guns")).resolve("drop_no_lod.json"), """
+                    {"model":"tacz:gun/ak47_geo","texture":"tacz:gun/uv/ak47","slot":"port_test:gun/rack_mesh",
+                     "lod":{"model":"tacz:gun/lod/ak47","texture":"tacz:gun/lod/ak47"}}
+                    """);
+        } catch (IOException e) { throw new UncheckedIOException(e); }
+        reload.run();
+        var low = Identifier.parse("tacz:textures/gun/lod/ak47.png");
+        ctx.waitFor(mc -> {
+            var fresh = TimelessAPI.getGunDisplay(DISPLAY, AK).orElseThrow();
+            var rig = fresh.getExternalModel(true);
+            return fresh != old && fresh.getMissingLodDropTexture() == null && rig != null && rig.getRight().equals(low);
+        });
+        GunMod.LOGGER.info("PORT_DROPPED_GUN: reloaded same display from no LOD to authored 3D LOD");
     }
 
     private static void checkContexts(Minecraft mc, ItemEntity drop) {

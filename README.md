@@ -155,6 +155,7 @@ authored 对齐（实机验证待补）；其余内容不变。
   世界语境有近距全模豁免与顶点预算保护。依赖外置 TML 的枪包在本 mod 下
   视为依赖满足（`provides: ["taczmeshloader"]`）。范围、配置与已知边界见
   [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md)）；
+- **无 LOD 的掉落枪**：默认从 8 格起用该枪包的 `slot` 图标，不隐藏掉落物。有作者低模时沿用原选模，没有图标则保留 3D。近处堆枪也卡可把客户端 `DroppedGunSpriteDistance` 设为 `0`；`-1` 关闭图标回退。见[选路、实测方法与取舍](docs/investigations/DROPPED_GUN_LOD_26_3.md)；
 - 若干可选模组的兼容接线。
 
 这不代表本项目是 TaCZ 或 LRTactical 的官方版本，也不代表所有第三方枪包、
@@ -394,7 +395,7 @@ Minecraft 26.3 收紧了翻译加载：**任意一个**资源包里的 `assets/<
 - 明确依赖 Arcana 的内容不受支持；其他枪包也不能仅凭“能被扫描到”就视为完全兼容。
 - 镜内文字裁剪对 ttf/unihex 灰度字体（第三方资源包替换默认字体时）回退 vanilla
   管线：文字照常显示但不参与镜内裁剪，属可接受降级。
-- TML 高模（poly_mesh）：世界语境（第三人称/掉落物/展示台）在
+- 对仍按 3D 渲染的 TML 高模（poly_mesh）：世界语境（第三人称/掉落物/展示台）在
   `MeshWorldFullDetailDistance`（默认 16 格）内始终画全模，超出后受
   `MeshWorldMaxVertices` 顶点预算保护（超预算只画立方体）；这是刻意的
   远近取舍，不是渲染缺失。mesh 目镜不支持（与外置 TML 一致）。

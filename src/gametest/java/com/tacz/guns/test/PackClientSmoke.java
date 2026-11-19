@@ -112,7 +112,7 @@ public class PackClientSmoke implements FabricClientGameTest {
             CoreCompletionSmoke.run(context, world);
             SnowstormSmoke.run(context, world);
             RemoteParticleSmoke.run(context, world);
-            TooltipSmoke.run(context, world);
+            DroppedGunSmoke.acrossReload(context, () -> TooltipSmoke.run(context, world));
             RackLoadSmoke.run(context, world);
             world.getServer().runOnServer(server -> world.getConnection().getServerPlayer().setGameMode(GameType.CREATIVE));
             context.waitFor(client -> client.player.isCreative());

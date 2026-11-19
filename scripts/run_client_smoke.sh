@@ -68,7 +68,8 @@ fi
 if [[ -z ${TACZ_SMOKE_VIEWER:-} && ${TACZ_SMOKE_CONTROLLER:-} != true ]]; then
     # Geometry counts (deferred replay) and live frame samples are different measurements.
     grep -Fq 'new cyan slot pixels in the pile' "$run/logs/latest.log"
-    grep -F 'PORT_DROPPED_GUN:' "$run/logs/latest.log" | sed 's/^/::notice::/'
+    # Keep all paired samples in one Checks notice (GitHub caps notices per step).
+    printf '::notice::PORT_DROPPED_GUN: %s\n' "$(sed -n 's/.*PORT_DROPPED_GUN: //p' "$run/logs/latest.log" | paste -sd ';' -)"
     for mode in on off; do test -s "$(find "$run/screenshots" -name "*tacz_dropped_guns_${mode}.png" -print -quit)"; done
     for marker in PORT_HUD_PRECISION PORT_HUD_SHOTS PORT_ACCOUNT_HUD; do grep -F "$marker:" "$run/logs/latest.log" | sed 's/^/::notice::/'; done
     grep -F 'PORT_HUD_PRESETS:' "$run/logs/latest.log" | sed 's/^/::notice::/'
@@ -121,6 +122,7 @@ if [[ -n ${TACZ_SMOKE_VIEWER:-} ]]; then
     test -s "$(find "$run/screenshots" -name "*tacz_viewer_$TACZ_SMOKE_VIEWER.png" -print -quit)"
     exit
 fi
+grep -Fq 'PORT_DROPPED_GUN: reloaded same display' "$run/logs/latest.log"
 grep -E 'PORT_RACK_PREVIEW:|PORT_RACK_LOAD:|PORT_OUTLINE:' "$run/logs/latest.log" | sed 's/^/::notice::/'
 for frame in tacz_{rack,case,corner,vanilla_quad,mesh}_{empty,ghost,placed} tacz_hover_{en_us,zh_cn}_{scope_xm157,scope_mk5hd,scope_standard_8x,less_flash,more_flash,gun_display_case} tacz_hand_filter_{empty,cleared} tacz_held_default_gun tacz_held_variant tacz_default_refit tacz_range_readout tacz_display_wall tacz_xm157_{entity,control,restored,occluded} \
         tacz_lens_pip_1x tacz_lens_{classic,pip}_{bare,optical,hot,wall,restored,tagged}; do
