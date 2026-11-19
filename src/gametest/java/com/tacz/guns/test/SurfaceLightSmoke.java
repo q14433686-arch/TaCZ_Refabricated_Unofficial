@@ -108,7 +108,7 @@ public final class SurfaceLightSmoke {
             ctx.runOnClient(mc->{SurfaceLights.clear();position(mc,origin,false);previousTick=-1;replay=true;});
             // Counterbalance warmup/order effects: both off→on and on→off, all samples reported.
             for (boolean enable : new boolean[]{false,true,true,false}) timing(ctx,enable);
-            ctx.runOnClient(mc->{replay=false;SurfaceLights.clear();});
+            ctx.runOnClient(mc->{replay=false;SurfaceLights.clear();RenderConfig.MUZZLE_SURFACE_LIGHT.set(true);});
             try { rocket(ctx,world,origin); } catch(AssertionError e) { failures.append(" rocket: ").append(e.getMessage()); }
             try { packets(ctx,world); } catch(AssertionError e) {
                 var state=ctx.computeOnClient(mc->SurfaceLights.diagnostics());
