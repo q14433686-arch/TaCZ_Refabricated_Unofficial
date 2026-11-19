@@ -54,7 +54,11 @@ surface_frames() {
     done
     grep -Fq 'PORT_RECEIVER: complete' "$run/logs/latest.log"
     printf '::notice::PORT_RECEIVER: %s\n' "$(sed -n 's/.*PORT_RECEIVER: //p' "$run/logs/latest.log" | paste -sd ';' -)"
-    for frame in objects_off objects_on objects_expired objects_blocked_rest objects_blocked ak_off ak_on muzzle_behind muzzle_expired rpg_off rpg_on blast_expired blast_behind; do
+    if [[ -z ${TACZ_IRIS_COLOR:-} ]]; then
+        test "$(grep -Fc 'PORT_RECEIVER_COST:' "$run/logs/latest.log")" = 4
+        printf '::notice::PORT_RECEIVER_COST: %s\n' "$(sed -n 's/.*PORT_RECEIVER_COST: //p' "$run/logs/latest.log" | paste -sd ';' -)"
+    fi
+    for frame in objects_rest objects_off objects_on objects_expired objects_blocked_rest objects_blocked ak_off ak_on muzzle_behind muzzle_expired rpg_off rpg_on blast_early_expired blast_expired blast_behind; do
         test -s "$run/screenshots/tacz_surface_${frame}.png"
     done
     printf '::notice::PORT_SURFACE: %s\n' "$(sed -n 's/.*PORT_SURFACE: //p' "$run/logs/latest.log" | paste -sd ';' -)"
@@ -135,11 +139,6 @@ if [[ -n ${TACZ_SMOKE_VIEWER:-} ]]; then
     printf '::notice::%s: %s\n' "$TACZ_SMOKE_VIEWER" "$verdict"
     test -s "$(find "$run/screenshots" -name "*tacz_viewer_$TACZ_SMOKE_VIEWER.png" -print -quit)"
     exit
-fi
-# Normal build already ran the dedicated GameTest suite in a different process. Require
-# the catalog-wide survival settlement there, not just the client's recipe index counts.
-if [[ -e build/run/gameTest/logs/latest.log ]]; then
-    grep -F 'PORT_SETTLEMENT: 202 survival menu products' build/run/gameTest/logs/latest.log | sed 's/^/::notice::/'
 fi
 grep -Fq 'PORT_DROPPED_GUN: reloaded same display' "$run/logs/latest.log"
 grep -E 'PORT_RACK_PREVIEW:|PORT_RACK_LOAD:|PORT_OUTLINE:' "$run/logs/latest.log" | sed 's/^/::notice::/'

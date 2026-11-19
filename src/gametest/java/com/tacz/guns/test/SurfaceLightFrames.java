@@ -70,6 +70,21 @@ final class SurfaceLightFrames {
             }
             int side=2*halfGrid+1; return sum/(side*side);
         }
+        // First expiry frame can still contain a few opaque vanilla explosion particles.
+        // Measure the typical paired wall pixel now as well as the strict mean once clear.
+        int[] medianRedDeltas(Frame reference, Region[] regions, double extent) {
+            int[] result = new int[regions.length], samples = new int[81];
+            for (int k=0;k<regions.length;k++) {
+                var r=regions[k]; int n=0;
+                for (int j=-4;j<=4;j++) for (int i=-4;i<=4;i++) {
+                    double v=j*extent/4;
+                    var point=r.center.add(i*extent/4,r.horizontal ? 0 : v,r.horizontal ? v : 0);
+                    samples[n++]=(rgb(point)>>16&255)-(reference.rgb(point)>>16&255);
+                }
+                java.util.Arrays.sort(samples); result[k]=samples[40];
+            }
+            return result;
+        }
         int[] deltas(Frame reference, Region[] points, double extent) {
             int[] d=new int[points.length];
             for (int i=0;i<d.length;i++) d[i]=meanRed(points[i],extent)-reference.meanRed(points[i],extent);

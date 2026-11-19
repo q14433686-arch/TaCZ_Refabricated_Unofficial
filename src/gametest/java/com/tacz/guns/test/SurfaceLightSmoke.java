@@ -106,7 +106,7 @@ public final class SurfaceLightSmoke {
             muzzleFrames(ctx,world,origin);
             if (measureLoad) {
                 ctx.runOnClient(mc->{overlapControl(origin);SurfaceLights.clear();position(mc,origin,false);previousTick=-1;replay=true;});
-                for (boolean enable : new boolean[]{false,true,true,false}) timing(ctx,enable);
+                for (boolean enable : new boolean[]{false,true,true,false}) timing(ctx,enable,"PORT_SURFACE");
             }
             ctx.runOnClient(mc->{replay=false;SurfaceLights.clear();RenderConfig.MUZZLE_SURFACE_LIGHT.set(true);});
             world.getServer().runOnServer(s->{var level=world.getConnection().getServerPlayer().level();
@@ -115,7 +115,7 @@ public final class SurfaceLightSmoke {
             ctx.waitFor(mc->mc.level.getBlockState(origin.south(PARTITION)).isAir());
             world.getConnection().waitForChunksRender(); ctx.waitTicks(12);
             blastFrames(ctx,world,origin);
-            ObjectLightSmoke.run(ctx, world, origin);
+            ObjectLightSmoke.run(ctx, world, origin, measureLoad);
             packets(ctx,world);
         } finally {
             ctx.runOnClient(mc->{ SurfaceLightFrames.clear();samples=submitSamples=null;replay=false;Arrays.fill(actors,null);rifle=null;NativeMuzzleEffects.clear();
@@ -218,13 +218,18 @@ public final class SurfaceLightSmoke {
         }
         GunMod.LOGGER.info("PORT_SURFACE: two aligned muzzles in one air cell share one footprint; a third 3 blocks away retains its own");
     }
-    private static void timing(ClientGameTestContext ctx, boolean enable) {
+    static void timeOccupiedScene(ClientGameTestContext ctx, BlockPos origin) {
+        ctx.runOnClient(mc->{SurfaceLights.clear();position(mc,origin,false);previousTick=-1;replay=true;});
+        try { for (boolean enabled : new boolean[]{false,true,true,false}) timing(ctx,enabled,"PORT_RECEIVER_COST"); }
+        finally { ctx.runOnClient(mc->{replay=false;SurfaceLights.clear();RenderConfig.MUZZLE_SURFACE_LIGHT.set(true);}); }
+    }
+    private static void timing(ClientGameTestContext ctx, boolean enable, String label) {
         ctx.runOnClient(mc->RenderConfig.MUZZLE_SURFACE_LIGHT.set(enable));ctx.waitTicks(10);
         var before=ctx.computeOnClient(mc->SurfaceLights.diagnostics());
         var t=frameTimes(ctx);
         var d=ctx.computeOnClient(mc->SurfaceLights.diagnostics());
         if(d.active()>2 || (d.projections()>before.projections())!=enable) throw new AssertionError("Muzzle budget/control: "+d);
-        GunMod.LOGGER.info("PORT_SURFACE: 16 sources/600 RPM, spill={}, 64 renderFrame samples median/p95/p99={} / {} / {} us, prepare + terrain submit p95={} us, admitted projections={}, overlapping offers={}",enable,t.frame[32]/1000,t.frame[60]/1000,t.frame[63]/1000,t.submit[60]/1000,d.projections()-before.projections(),d.coincident()-before.coincident());
+        GunMod.LOGGER.info("{}: 16 sources/600 RPM, spill={}, 64 renderFrame samples median/p95/p99={} / {} / {} us, prepare + terrain submit p95={} us, admitted projections={}, overlapping offers={}",label,enable,t.frame[32]/1000,t.frame[60]/1000,t.frame[63]/1000,t.submit[60]/1000,d.projections()-before.projections(),d.coincident()-before.coincident());
     }
     private record Timings(long[] frame,long[] submit) {}
     private static Timings frameTimes(ClientGameTestContext ctx) {
@@ -239,6 +244,10 @@ public final class SurfaceLightSmoke {
         var off=rocket(ctx,world,target,false);ctx.waitTicks(24);
         var on=rocket(ctx,world,target,true);
         ctx.waitFor(mc->SurfaceLights.diagnostics().active()==0); ctx.waitTicks(24);
+        var early=SurfaceLightFrames.still(ctx,"blast_early_expired");
+        // Inspect the flashing surface before AND after native RPG debris has dispersed.
+        // Do not turn off particles, freeze the clock, or relax the control thresholds.
+        ctx.waitTicks(100);
         var expired=SurfaceLightFrames.still(ctx,"blast_expired");
         // Four to five blocks from the actual hit, not the particle core or shooter. Each
         // explosion uses its own server-confirmed centre (stock RPG spread is not disabled).
@@ -252,7 +261,9 @@ public final class SurfaceLightSmoke {
         // Compare the two physical hits after subtracting each piece of wall's own rest
         // colour. This also excludes any native flash/bloom a pack already gives the OFF shot.
         int[] added=lit.clone(); for (int i=0;i<added.length;i++) added[i]-=dark[i];
-        checkSamples("live RPG7 beyond particle core",added,14,residue,leak);
+        int[] earlyResidual=early.medianRedDeltas(before,b,.40);
+        GunMod.LOGGER.info("PORT_SURFACE: early expiry paired median={} (native particles still allowed)",Arrays.toString(earlyResidual));
+        checkSamples("live RPG7 beyond particle core",added,14,earlyResidual,residue,leak);
     }
     private static Region[] blastPoints(Vec3 hit,BlockPos origin) {
         return new Region[]{Region.wall(hit.add(5,.35,0)),Region.wall(hit.add(-5,.35,0)),Region.floor(new Vec3(hit.x+3.5,origin.getY()-1,hit.z-4))};

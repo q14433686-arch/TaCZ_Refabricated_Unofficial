@@ -41,7 +41,8 @@ import static com.tacz.guns.test.SurfaceLightFrames.*;
  * are on the receiver, above the muzzle and in front of a distant (out of range) backstop. */
 final class ObjectLightSmoke {
     private static final Identifier AK = Identifier.parse("tacz:ak47");
-    static void run(ClientGameTestContext ctx, TestSingleplayerContext world, BlockPos origin) {
+    private enum Response { LIT, FULLBRIGHT, UNSHADED }
+    static void run(ClientGameTestContext ctx, TestSingleplayerContext world, BlockPos origin, boolean measureLoad) {
         var eye = ctx.computeOnClient(mc->mc.player.getEyePosition());
         Vec3 cowPos = eye.add(2.35,-.60,4), standPos = eye.add(1.1,-.89,3.6);
         var dropPos = eye.add(.10,.72,3.7);
@@ -95,11 +96,12 @@ final class ObjectLightSmoke {
                 var samples=List.of(rest,off,on,expired,blockedRest,blocked).stream().mapToInt(probe::value).toArray();
                 boolean emissive=probe.name.startsWith("case item");
                 boolean unlitShader=flat && !probe.name.equals("board plate") && !probe.name.equals("case back");
-                check(probe.name,samples,emissive || unlitShader,errors);
+                check(probe.name,samples,emissive ? Response.FULLBRIGHT : unlitShader ? Response.UNSHADED : Response.LIT,errors);
             }
             var drops=List.of(rest,off,on,expired,blockedRest,blocked).stream().mapToInt(f->cyanCore(f,dropPos)).toArray();
-            check("dropped TaCZ item",drops,flat,errors);
+            check("dropped TaCZ item",drops,flat ? Response.UNSHADED : Response.LIT,errors);
             if (!errors.isEmpty()) throw new AssertionError("World receiver controls failed: "+errors);
+            if (measureLoad) SurfaceLightSmoke.timeOccupiedScene(ctx, origin);
             GunMod.LOGGER.info("PORT_RECEIVER: complete, flat unlit test shader={}",flat);
         } finally {
             ctx.runOnClient(mc->{ReceiverInputs.clear();RenderConfig.DROPPED_GUN_SPRITE_DISTANCE.set(cutoff);});
@@ -122,13 +124,13 @@ final class ObjectLightSmoke {
             int rgb=frame.rgb(base.add(x*.035,-.25+y*.05,0)); int g=rgb>>8&255,b=rgb&255,r=rgb>>16&255;
             if(Math.min(g,b)>r+2) values[n++]=g;
         }
-        if(n<12) return 0;
+        if(n<12) throw new AssertionError("Lost dropped item cyan core: "+n+" samples");
         Arrays.sort(values,0,n);return values[n/2];
     }
-    private static void check(String name,int[] a,boolean flat,StringBuilder errors) {
+    private static void check(String name,int[] a,Response response,StringBuilder errors) {
         int light=a[2]-a[1],expired=a[3]-a[0],blocked=a[5]-a[4];
         GunMod.LOGGER.info("PORT_RECEIVER: {} rest/off/on/expired/blocked-rest/blocked={} delta={}/{}/{}",name,Arrays.toString(a),light,expired,blocked);
-        if ((!flat && light<6) || Math.abs(expired)>7 || Math.abs(blocked)>7) errors.append(name).append(Arrays.toString(a)).append(' ');
+        if ((response==Response.LIT && light<6) || (response==Response.FULLBRIGHT && Math.abs(light)>7) || Math.abs(expired)>7 || Math.abs(blocked)>7) errors.append(name).append(Arrays.toString(a)).append(' ');
     }
     private ObjectLightSmoke() {}
 }

@@ -1,7 +1,15 @@
-# a3847d0d: Reimagined ACT 128 passed the object frame and UV2 checks; inspect original frames.
+# a2f53dda: first real rendered frame after each funded local shot / tracked server hit. No frozen time.
+44626162907	smoke	tacz_surface_ak_off
+44626162907	smoke	tacz_surface_ak_on
+44626162907	smoke	tacz_surface_rpg_off
+44626162907	smoke	tacz_surface_rpg_on
+44626162782	reimagined-act	tacz_surface_ak_off
+44626162782	reimagined-act	tacz_surface_ak_on
+44626162782	reimagined-act	tacz_surface_rpg_off
+44626162782	reimagined-act	tacz_surface_rpg_on
+# a14e06e3: player guide illustrations (cyan diagnostic slot, actual bench UI and range display).
+44627993715	smoke	tacz_hand_filter_cleared
+44627993715	smoke	tacz_range_readout
+# a3847d0d: both frames following real shots, successful ACT 128 receiver job.
 44639006524	reimagined-act	tacz_surface_objects_off
 44639006524	reimagined-act	tacz_surface_objects_on
-# Simple Iris: one of three distant wall/floor controls changed; identify what actually covered it.
-44639006524	iris	tacz_surface_range_rest
-44639006524	iris	tacz_surface_blast_expired
-44639006524	iris	tacz_surface_blast_behind
