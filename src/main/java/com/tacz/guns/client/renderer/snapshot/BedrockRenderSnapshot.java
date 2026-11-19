@@ -165,7 +165,7 @@ public final class BedrockRenderSnapshot {
             if (!part.visible) {
                 return;
             }
-            int partLight = part.illuminated ? 15728880 : inheritedLight;
+            int partLight = part.illuminated ? com.tacz.guns.util.IlluminatedLights.resolve(inheritedLight) : inheritedLight;
             if (!part.cubes.isEmpty()) {
                 PoseStack.Pose current = poseStack.last();
                 this.commands.add(new DrawCommand(
@@ -178,7 +178,7 @@ public final class BedrockRenderSnapshot {
         }
 
         private void capturePart(BedrockPart part, PoseStack poseStack, int inheritedLight) {
-            int partLight = part.illuminated ? 15728880 : inheritedLight;
+            int partLight = part.illuminated ? com.tacz.guns.util.IlluminatedLights.resolve(inheritedLight) : inheritedLight;
 
             // FunctionalBedrockPart always evaluates its provider, even if visible is false. Providers
             // returning null are visibility/state hooks and can be snapshotted normally. Providers

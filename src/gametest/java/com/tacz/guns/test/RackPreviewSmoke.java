@@ -90,17 +90,22 @@ final class RackPreviewSmoke {
         ctx.getInput().releaseShift();
         ctx.waitTicks(10);
         if (requireSlot(ctx, pos, true, "standing") != slot) throw new AssertionError("Aim changed during preview");
-        var hit = ctx.computeOnClient(mc -> (BlockHitResult) mc.hitResult);
         world.getServer().runOnServer(s -> {
             var p = world.getConnection().getServerPlayer();
             var rack = (DisplayRackBlockEntity)p.level().getBlockEntity(pos);
             var held = p.getMainHandItem();
             if (!rack.getItem(slot).isEmpty() || held.getCount() != 1 || !ItemStack.isSameItemSameComponents(item, held))
                 throw new AssertionError("Rendering a preview mutated the rack or hand");
-            rack.getBlockState().useItemOn(held, p.level(), p, InteractionHand.MAIN_HAND, hit);
+        });
+        // The same bound Interact action shown above the display, not a direct BlockState/BE call.
+        if (item.getItem() instanceof IGun) ctx.getInput().pressKey(com.tacz.guns.client.input.InteractKey.INTERACT_KEY);
+        else ctx.getInput().pressMouse(1);
+        world.getServer().waitFor(s -> world.getConnection().getServerPlayer().getMainHandItem().isEmpty());
+        world.getServer().runOnServer(s -> {
+            var p = world.getConnection().getServerPlayer();
+            var rack = (DisplayRackBlockEntity)p.level().getBlockEntity(pos);
             if (!p.getMainHandItem().isEmpty() || rack.getItem(slot).getCount() != 1 || !ItemStack.isSameItemSameComponents(item, rack.getItem(slot)))
                 throw new AssertionError("Deposit did not transfer exactly one item with its components");
-            p.inventoryMenu.broadcastChanges();
         });
         ctx.waitFor(mc -> mc.player.getMainHandItem().isEmpty() && !((DisplayRackBlockEntity)mc.level.getBlockEntity(pos)).getItem(slot).isEmpty());
         ctx.waitTicks(10);

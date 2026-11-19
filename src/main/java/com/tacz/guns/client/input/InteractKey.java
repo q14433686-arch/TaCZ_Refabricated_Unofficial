@@ -35,6 +35,16 @@ public class InteractKey {
         return !use.isUnbound() && KeyMappingHelper.getBoundKeyOf(INTERACT_KEY).equals(KeyMappingHelper.getBoundKeyOf(use));
     }
 
+    // Only for the synchronous, allowlisted startUseItem call below. A pad (or a mouse rebind)
+    // need not have set the keyboard mapping's down flag when Minecraft fires its use event.
+    private static boolean dispatchingUse;
+    public static boolean isDispatchingUse() { return dispatchingUse; }
+    private static void use(Minecraft mc) {
+        boolean previous = dispatchingUse;
+        dispatchingUse = true;
+        try { mc.startUseItem(); } finally { dispatchingUse = previous; }
+    }
+
     static boolean doInteractLogic(boolean controller) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
@@ -45,7 +55,7 @@ public class InteractKey {
             return true;
         }
         if (mc.hitResult instanceof EntityHitResult entityHitResult) {
-            if (!vanillaUse && InteractKeyConfigRead.canInteractEntity(entityHitResult.getEntity())) mc.startUseItem();
+            if (!vanillaUse && InteractKeyConfigRead.canInteractEntity(entityHitResult.getEntity())) use(mc);
             return true;
         }
         return false;
@@ -60,7 +70,7 @@ public class InteractKey {
             return;
         }
         if (!vanillaUse && InteractKeyConfigRead.canInteractBlock(block)) {
-            mc.startUseItem();
+            use(mc);
         }
     }
 }

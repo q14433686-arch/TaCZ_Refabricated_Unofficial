@@ -48,7 +48,7 @@ final class SnowstormMaterialSmoke {
             ctx.waitFor(mc -> mc.player.getMainHandItem().isEmpty());
             ctx.getInput().lookAt(0,0); ctx.waitTicks(15);
             for (boolean dark : new boolean[]{true,false}) {
-                var backing = dark ? Blocks.BLACK_CONCRETE : Blocks.WHITE_CONCRETE;
+                var backing = dark ? Blocks.COAL_BLOCK : Blocks.SMOOTH_STONE;
                 world.getServer().runOnServer(s -> wall.keySet().forEach(pos -> world.getConnection().getServerPlayer().level().setBlock(pos,backing.defaultBlockState(),Block.UPDATE_ALL)));
                 ctx.waitFor(mc -> wall.keySet().stream().allMatch(pos -> mc.level.getBlockState(pos).is(backing)));
                 world.getConnection().waitForChunksRender(); ctx.waitTicks(3);

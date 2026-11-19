@@ -54,7 +54,7 @@ if [[ ${TACZ_SMOKE_IRIS:-} == true ]]; then
     exit
 fi
 if [[ ${TACZ_SMOKE_CONTROLLER:-} == true ]]; then
-    grep -F 'PORT_CONTROLLER:' "$run/logs/latest.log"
+    grep -F 'PORT_CONTROLLER:' "$run/logs/latest.log" | sed 's/^/::notice::/'
     exit
 fi
 if [[ -n ${TACZ_SMOKE_VIEWER:-} ]]; then

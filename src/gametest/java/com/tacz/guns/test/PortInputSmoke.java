@@ -53,9 +53,19 @@ final class PortInputSmoke {
             ctx.getInput().pressMouse(4); ctx.waitFor(mc -> mc.gui.screen() == null);
             ctx.waitFor(mc -> op(mc).getDataHolder().clientAimingProgress == 0 && com.tacz.guns.util.InputExtraCheck.isInGame());
             ctx.getInput().pressMouse(5); ctx.waitFor(mc -> count(mc)==2 && op(mc).getDataHolder().autoReloadSuppressed);
+            world.getServer().runOnServer(s -> {
+                var stack = world.getConnection().getServerPlayer().getMainHandItem();
+                if (!(stack.getItem() instanceof IGun gun) || gun.getCurrentAmmoCount(stack) != 2)
+                    throw new AssertionError("Client and authoritative magazine disagree after unload");
+            });
             ctx.runOnClient(mc -> { GunInputHandler.UNLOAD_KEY.setKey(InputConstants.UNKNOWN); KeyMapping.resetMapping(); });
             ctx.waitTicks(30);
             ctx.getInput().holdAlt(); ctx.getInput().pressMouse(5); ctx.getInput().releaseAlt(); ctx.waitFor(mc -> count(mc)==1);
+            world.getServer().runOnServer(s -> {
+                var stack = world.getConnection().getServerPlayer().getMainHandItem();
+                if (!(stack.getItem() instanceof IGun gun) || gun.getCurrentAmmoCount(stack) != 1)
+                    throw new AssertionError("Client and authoritative magazine disagree after unload");
+            });
             equip(world, GunItemBuilder.create().setId(Identifier.parse("tacz:ak47")).setAmmoCount(1).setAmmoInBarrel(true).build());
             world.getServer().runOnServer(s -> {
                 var p = world.getConnection().getServerPlayer();
