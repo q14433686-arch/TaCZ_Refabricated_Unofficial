@@ -27,7 +27,10 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 
+import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.UUID;
@@ -66,6 +69,7 @@ final class HudPrecisionSmoke {
         // Native texture (no replacement dot) + the four one-unit arms, on even and odd render targets.
         axes(frame(ctx, "native_axes", false), scale);
         axes(frame(ctx, "native_axes_odd", true), scale);
+        var reported = reportedViewport(ctx);
         open(ctx, key); ctx.clickScreenButton(UI + "mode.preset");
         for (String shape : List.of("cross", "t", "sides", "box")) ctx.clickScreenButton(UI + "shape." + shape);
         ctx.runOnClient(mc -> {
@@ -100,8 +104,32 @@ final class HudPrecisionSmoke {
         }
         check(counts[0] == 25 && counts[1] == 49, "Hundredths did not reach the raster: " + counts[0] + "/" + counts[1]);
         ctx.runOnClient(mc -> Dimension.DOT_SIZE.option.set(2.99));
-        GunMod.LOGGER.info("PORT_HUD_PRECISION: native axes coincident on even/odd targets; circle, open ellipse and dot subpixel boundary {}/{} framebuffer pixels", counts[0], counts[1]);
+        GunMod.LOGGER.info("PORT_HUD_PRECISION: native axes even/odd + 2560x1417 at 4x {}; circle, open ellipse and dot subpixel boundary {}/{} framebuffer pixels", reported, counts[0], counts[1]);
         realBurst(ctx, world, scale);
+    }
+
+    /** The original report used a 2560 x 1417 framebuffer with 4-pixel-thick one-GUI-unit arms. */
+    private static Axes reportedViewport(ClientGameTestContext ctx) {
+        int[] original = ctx.computeOnClient(mc -> new int[]{mc.getWindow().getWidth(), mc.getWindow().getHeight(), mc.getWindow().getGuiScale()});
+        try {
+            setTarget(ctx, 2560, 1417, 4);
+            var shot = ctx.takeScreenshot(TestScreenshotOptions.of("tacz_view_tuning_native_axes_reported").withSize(2560, 1417));
+            BufferedImage im = SnowstormMaterialSmoke.read(shot);
+            check(im.getWidth() == 2560 && im.getHeight() == 1417, "Unexpected render target");
+            var axes = axes(im, 4);
+            // Also keep a lossless, unscaled crop for frame review; the full target is in the smoke artifact.
+            var crop = im.getSubimage(im.getWidth()/2 - 128, im.getHeight()/2 - 128, 256, 257);
+            ImageIO.write(crop, "png", shot.resolveSibling("tacz_view_tuning_reported_crop.png").toFile());
+            return axes;
+        } catch (IOException e) { throw new UncheckedIOException(e); }
+        finally { setTarget(ctx, original[0], original[1], original[2]); }
+    }
+
+    private static void setTarget(ClientGameTestContext ctx, int w, int h, int scale) {
+        ctx.runOnClient(mc -> {
+            var window = mc.getWindow();
+            window.setWidth(w); window.setHeight(h); window.setGuiScale(scale); mc.gameRenderer.resize(w, h);
+        });
     }
 
     private static void open(ClientGameTestContext ctx, KeyMapping key) {
@@ -194,7 +222,8 @@ final class HudPrecisionSmoke {
         }
         return data;
     }
-    private static void axes(BufferedImage im, int scale) {
+    private record Axes(double dotX, double dotY, double verticalX, double horizontalY) {}
+    private static Axes axes(BufferedImage im, int scale) {
         int r = 40*scale, c = 3*scale;
         var dot = pixels(im, c, (x,y) -> true);
         Ink l = pixels(im,r,(x,y) -> x < -c), right = pixels(im,r,(x,y) -> x > c);
@@ -203,6 +232,7 @@ final class HudPrecisionSmoke {
         double cx = (im.getWidth()-1)/2d, cy = (im.getHeight()-1)/2d;
         for (double x : new double[]{dot.x(), top.x(), b.x(), (l.x()+right.x())/2}) check(Math.abs(x-cx) <= .55, "Horizontal center " + x + " vs " + cx);
         for (double y : new double[]{dot.y(), l.y(), right.y(), (top.y()+b.y())/2}) check(Math.abs(y-cy) <= .55, "Vertical center " + y + " vs " + cy);
+        return new Axes(dot.x(), dot.y(), (top.x()+b.x())/2, (l.y()+right.y())/2);
     }
     private static Ink ring(BufferedImage im, int scale, double aspect, boolean dot) {
         var all = pixels(im, 38*scale, (x,y) -> true);

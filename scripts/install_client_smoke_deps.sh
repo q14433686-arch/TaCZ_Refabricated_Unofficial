@@ -20,7 +20,7 @@ primary=("${apt[@]}")
 if [[ -f /etc/apt/sources.list.d/ubuntu.sources ]]; then
     primary+=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
 fi
-if timeout --kill-after=10s 180s "${primary[@]}" install --no-install-recommends -y "${missing[@]}"; then exit 0; fi
+if timeout --kill-after=10s 140s "${primary[@]}" install --no-install-recommends -y "${missing[@]}"; then exit 0; fi
 # Don't rewrite the runner's global sources or touch unrelated PPAs. Official Ubuntu archive
 # has updates/security pockets too. Total budgets below stay inside the workflow's 10min step.
 . /etc/os-release
@@ -32,7 +32,8 @@ cat > "$fallback/ubuntu.sources" <<EOF
 Types: deb
 URIs: https://archive.ubuntu.com/ubuntu/
 Suites: $VERSION_CODENAME $VERSION_CODENAME-updates $VERSION_CODENAME-security
-Components: main restricted universe multiverse
+Components: main universe
+Architectures: $(dpkg --print-architecture)
 Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
 EOF
 chmod 644 "$fallback/ubuntu.sources"
@@ -40,5 +41,8 @@ apt+=(-o "Dir::Etc::sourcelist=$fallback/ubuntu.sources" -o Dir::Etc::sourcepart
 echo '::warning::Image mirror failed or stalled; retrying official Ubuntu archive with bounded budgets'
 # If a timeout interrupted dpkg, finish its transaction before another apt invocation.
 timeout --kill-after=5s 40s sudo env DEBIAN_FRONTEND=noninteractive dpkg --configure -a
-timeout --kill-after=5s 60s "${apt[@]}" update -qq
-timeout --kill-after=10s 240s "${apt[@]}" install --no-install-recommends -y "${missing[@]}"
+# A fresh archive URI cannot reuse the image mirror's list files. Fetch just binary indexes for the
+# native packages (no translations/appstream), leaving enough time to verify a fresh universe list.
+timeout --kill-after=5s 180s "${apt[@]}" -o Acquire::Languages=none \
+    -o Acquire::IndexTargets::deb::DEP-11::DefaultEnabled=false -o Acquire::IndexTargets::deb::CNF::DefaultEnabled=false update -qq
+timeout --kill-after=10s 195s "${apt[@]}" install --no-install-recommends -y "${missing[@]}"
