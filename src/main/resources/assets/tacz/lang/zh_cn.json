@@ -248,7 +248,7 @@
   "gui.tacz.client_gun_pack_downloader.fail.subtitle": "请检查网络连接，或者退出游戏后重新进入",
   "gui.tacz.client_gun_pack_downloader.fail.title": "枪械包下载失败",
   "gui.tacz.cloth_config_warning.download": "下载 Cloth Config API 模组",
-  "gui.tacz.cloth_config_warning.tips": "你需要安装 Cloth Config API 模组才能使用游戏内配置功能",
+  "gui.tacz.cloth_config_warning.tips": "常规 TaCZ 配置面板需要 Cloth Config API。仅调整持枪位置或准星，请按 Esc → TaCZ 持枪与准星。",
   "gui.tacz.gun_refit.property_diagrams.ads": "开镜时间",
   "gui.tacz.gun_refit.property_diagrams.aim_inaccuracy": "瞄准精度",
   "gui.tacz.gun_refit.property_diagrams.ammo_capacity": "弹匣容量",

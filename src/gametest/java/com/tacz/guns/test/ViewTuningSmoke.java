@@ -157,8 +157,10 @@ final class ViewTuningSmoke {
     }
 
     private static Button saveButton(Minecraft mc) {
+        // Vanilla supplies a differently styled Component when inactive. Match the visible label as Fabric does.
+        String label = Component.translatable(UI + "save").getString();
         return mc.gui.screen().children().stream().filter(Button.class::isInstance).map(Button.class::cast)
-                .filter(b -> b.getMessage().equals(Component.translatable(UI + "save"))).findFirst().orElseThrow();
+                .filter(b -> b.getMessage().getString().equals(label)).findFirst().orElseThrow();
     }
 
     private static void slider(Minecraft mc, String key, double fraction) {
