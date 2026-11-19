@@ -57,16 +57,16 @@ final class ObjectLightSmoke {
             var drop=new ItemEntity(level,dropPos.x,dropPos.y,dropPos.z,proxy,0,0,0); drop.setNeverPickUp(); drop.setNoGravity(true); level.addFreshEntity(drop);
             level.setBlock(board,ModBlocks.GUN_PEGBOARD.defaultBlockState(),Block.UPDATE_ALL);
             level.setBlock(cabinet,ModBlocks.GUN_DISPLAY_CASE.defaultBlockState().setValue(GunDisplayCaseBlock.LOCKED,false),Block.UPDATE_ALL);
-            if (!((DisplayRackBlockEntity)level.getBlockEntity(cabinet)).setItem(10,new ItemStack(Items.EMERALD))) throw new AssertionError("Fixture whitelist refused rack item");
+            for(var rack:List.of(board,cabinet)) if (!((DisplayRackBlockEntity)level.getBlockEntity(rack)).setItem(10,new ItemStack(Items.EMERALD))) throw new AssertionError("Fixture whitelist refused rack item");
             var lower=ModBlocks.STATUE.defaultBlockState(); level.setBlock(statue,lower,Block.UPDATE_ALL);
             level.setBlock(statue.above(),lower.setValue(StatueBlock.HALF,DoubleBlockHalf.UPPER),Block.UPDATE_ALL);
             p.setItemInHand(InteractionHand.MAIN_HAND,GunItemBuilder.create().setId(AK).setAmmoCount(8).setAmmoInBarrel(true).setFireMode(FireMode.SEMI).build());
             p.inventoryMenu.broadcastChanges(); return List.of(cow.getUUID(),stand.getUUID(),drop.getUUID());
         });
         try {
-            ctx.runOnClient(mc->RenderConfig.DROPPED_GUN_SPRITE_DISTANCE.set(0));
+            ctx.runOnClient(mc->{RenderConfig.DROPPED_GUN_SPRITE_DISTANCE.set(0);ReceiverInputs.scene(cowPos,standPos,dropPos,statue,board,cabinet);});
             ctx.waitFor(mc->ids.stream().allMatch(id->mc.level.getEntity(id)!=null) && mc.level.getBlockEntity(cabinet) instanceof DisplayRackBlockEntity r
-                    && r.getItem(10).is(Items.EMERALD) && mc.player.getMainHandItem().getItem() instanceof IGun);
+                    && r.getItem(10).is(Items.EMERALD) && mc.level.getBlockEntity(board) instanceof DisplayRackBlockEntity b && b.getItem(10).is(Items.EMERALD) && mc.player.getMainHandItem().getItem() instanceof IGun);
             world.getConnection().waitForChunksRender();ctx.getInput().lookAt(0,0);ctx.waitTicks(30);
             ctx.waitFor(mc->IGunOperator.fromLivingEntity(mc.player).getSynDrawCoolDown()==0 && IClientPlayerGunOperator.fromLocalPlayer(mc.player).getDataHolder().clientBaseTimestamp>=0);
             var rest=still(ctx,"objects_rest");
@@ -83,24 +83,28 @@ final class ObjectLightSmoke {
                 emitter.snapTo(new Vec3(eye.x,eye.y-emitter.getEyeHeight(),origin.getZ()-2.1),0,0);
                 arm("objects_blocked",Trigger.STILL); ReimaginedShotControl.taczTest$shot(new GunFirePostEvent(emitter,GunItemBuilder.create().setId(AK).build(),LogicalSide.CLIENT));});
             var blocked=read(ctx);
+            ctx.runOnClient(mc->ReceiverInputs.verify());
             var probes=List.of(new Probe("cow",cowPos.add(0,.99,-.4),.075,16),new Probe("stand wood",standPos.add(0,1.41,-.09),.035,16),
                     new Probe("iron helmet",standPos.add(0,1.76,-.25),.066,16),new Probe("statue head",Vec3.atLowerCornerOf(statue).add(.50,2.19,.22),.065,16),
-                    new Probe("board plate",Vec3.atLowerCornerOf(board).add(.5,.6,.8125),.13,16),new Probe("case back",Vec3.atLowerCornerOf(cabinet).add(.23,.25,.875),.045,16),
-                    new Probe("case item",Vec3.atLowerCornerOf(cabinet).add(.625,.625,.75),.035,8));
+                    new Probe("board plate",Vec3.atLowerCornerOf(board).add(.22,.25,.8125),.075,16),new Probe("case back",Vec3.atLowerCornerOf(cabinet).add(.23,.25,.875),.045,16),
+                    new Probe("board item",Vec3.atLowerCornerOf(board).add(.625,.625,.75),.035,8),
+                    new Probe("case item (fullbright)",Vec3.atLowerCornerOf(cabinet).add(.625,.625,.75),.035,8));
             var errors=new StringBuilder();
             boolean flat=Boolean.getBoolean("tacz.test.iris") && System.getProperty("tacz.test.irisColor")==null;
             for (var probe:probes) {
                 var samples=List.of(rest,off,on,expired,blockedRest,blocked).stream().mapToInt(probe::value).toArray();
-                check(probe.name,samples,flat && !probe.name.equals("board plate") && !probe.name.equals("case back"),errors);
+                boolean emissive=probe.name.startsWith("case item");
+                boolean unlitShader=flat && !probe.name.equals("board plate") && !probe.name.equals("case back");
+                check(probe.name,samples,emissive || unlitShader,errors);
             }
             var drops=List.of(rest,off,on,expired,blockedRest,blocked).stream().mapToInt(f->cyanCore(f,dropPos)).toArray();
             check("dropped TaCZ item",drops,flat,errors);
             if (!errors.isEmpty()) throw new AssertionError("World receiver controls failed: "+errors);
             GunMod.LOGGER.info("PORT_RECEIVER: complete, flat unlit test shader={}",flat);
         } finally {
-            ctx.runOnClient(mc->RenderConfig.DROPPED_GUN_SPRITE_DISTANCE.set(cutoff));
+            ctx.runOnClient(mc->{ReceiverInputs.clear();RenderConfig.DROPPED_GUN_SPRITE_DISTANCE.set(cutoff);});
             server.runOnServer(s->{var p=world.getConnection().getServerPlayer();var l=p.level();for(var id:ids) if(l.getEntity(id)!=null) l.getEntity(id).discard();
-                if(l.getBlockEntity(cabinet) instanceof DisplayRackBlockEntity r) r.clearContent();
+                for(var pos:List.of(board,cabinet)) if(l.getBlockEntity(pos) instanceof DisplayRackBlockEntity r) r.clearContent();
                 for (var pos:List.of(board,cabinet,statue.above(),statue)) l.removeBlock(pos,false);
                 for(int x=-4;x<=4;x++)for(int y=-1;y<=3;y++)l.removeBlock(origin.offset(x,y,-1),false);
                 p.setItemInHand(InteractionHand.MAIN_HAND,ItemStack.EMPTY);p.inventoryMenu.broadcastChanges();});
@@ -108,7 +112,7 @@ final class ObjectLightSmoke {
         }
     }
     private record Probe(String name,Vec3 p,double extent,int shift) {
-        int value(Frame f) { return f.mean(Region.wall(p),extent,shift); }
+        int value(Frame f) { return f.mean(Region.wall(p),extent,shift,20); }
     }
     /** The actual rotating/bobbing ItemEntity is not in a fixed screen rectangle. Use only its
      * cyan test albedo in this projected window, never the grey wall/skin/muzzle. */

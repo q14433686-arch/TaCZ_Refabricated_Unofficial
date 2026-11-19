@@ -286,7 +286,7 @@ public class RenderConfig {
         builder.push("render");
         DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER = builder.comment("Hide third-person offhand and unselected hotbar guns; keep main hand visible").define("DisableThirdPersonOffhandAndHotbarGunRender", false);
         GUN_HURT_BOB_MULTIPLIER = builder.comment("First-person ordinary hurt tilt while holding a gun; front/back hits are additionally halved").defineInRange("GunHurtBobMultiplier", 0.1, 0, 1);
-        MUZZLE_SURFACE_LIGHT = builder.comment("Briefly light nearby opaque block faces on a successful shot (client visual only).").define("MuzzleSurfaceLight", false);
+        MUZZLE_SURFACE_LIGHT = builder.comment("Briefly light nearby terrain, world entities and displayed objects on a successful shot (client visual only).").define("MuzzleSurfaceLight", false);
         LEGACY_MUZZLE_LIGHT = builder.comment("Estimate shot exposure for old textured flashes and explosive launchers that omit the flash. Never enables disabled renew effects.").define("LegacyMuzzleLight", false);
         EXPLOSION_SURFACE_LIGHT = builder.comment("Project a short-range pulse for standard explosion notifications (including TNT) and tracked LR stun bursts.").define("ExplosionSurfaceLight", false);
         RENDER_MUZZLE_SMOKE = builder.comment("Render detached renew muzzle smoke independently of flash").define("RenderMuzzleSmoke", true);

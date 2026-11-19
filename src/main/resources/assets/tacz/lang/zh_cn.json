@@ -438,7 +438,7 @@
   "commands.tacz.debug.pegboard.failed": "[TACZ] 已生成 %s 把枪械，但在 %s 放置挂板时失败",
   "commands.tacz.debug.pegboard.success": "[TACZ] 已从 %4$s 起生成 %1$s 把枪械、%2$s 块挂板，包含 %3$s 种枪械",
   "config.tacz.client.render.muzzle_surface_light": "枪口近场散射",
-  "config.tacz.client.render.muzzle_surface_light.desc": "击发时短暂照亮附近的不透明方块表面。仅改变画面，不改变世界光照。",
+  "config.tacz.client.render.muzzle_surface_light.desc": "击发时短暂照亮附近的地形、实体、装备和展示物。自发光部件保持原样；不改变世界光照。",
   "config.tacz.client.render.legacy_muzzle_light": "估算旧枪包击发曝光",
   "config.tacz.client.render.legacy_muzzle_light.desc": "为旧贴图火焰和未配置火焰的爆炸发射器补上枪体和手臂曝光。搭配枪口近场散射可以照亮近墙。",
   "config.tacz.client.render.explosion_surface_light": "爆炸近场散射",

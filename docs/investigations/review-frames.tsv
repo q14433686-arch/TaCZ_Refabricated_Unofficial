@@ -1,14 +1,5 @@
-# a2f53dda: first real rendered frame after each funded local shot / tracked server hit. No frozen time.
-44626162907	smoke	tacz_surface_ak_off
-44626162907	smoke	tacz_surface_ak_on
-44626162907	smoke	tacz_surface_rpg_off
-44626162907	smoke	tacz_surface_rpg_on
-44626162782	reimagined-act	tacz_surface_ak_off
-44626162782	reimagined-act	tacz_surface_ak_on
-44626162782	reimagined-act	tacz_surface_rpg_off
-44626162782	reimagined-act	tacz_surface_rpg_on
-# a14e06e3: player guide illustrations (cyan diagnostic slot, actual bench UI and range display).
-44627993715	smoke	tacz_dropped_guns_off
-44627993715	smoke	tacz_dropped_guns_on
-44627993715	smoke	tacz_hand_filter_cleared
-44627993715	smoke	tacz_range_readout
+# First receiver pass: diagnose the dark cabinet panel and board controls before accepting pixels.
+44637664181	reimagined-act	tacz_surface_objects_off
+44637664181	reimagined-act	tacz_surface_objects_on
+44637664181	iris	tacz_surface_objects_blocked_rest
+44637664181	iris	tacz_surface_objects_blocked

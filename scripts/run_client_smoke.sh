@@ -136,6 +136,11 @@ if [[ -n ${TACZ_SMOKE_VIEWER:-} ]]; then
     test -s "$(find "$run/screenshots" -name "*tacz_viewer_$TACZ_SMOKE_VIEWER.png" -print -quit)"
     exit
 fi
+# Normal build already ran the dedicated GameTest suite in a different process. Require
+# the catalog-wide survival settlement there, not just the client's recipe index counts.
+if [[ -e build/run/gameTest/logs/latest.log ]]; then
+    grep -F 'PORT_SETTLEMENT: 202 survival menu products' build/run/gameTest/logs/latest.log | sed 's/^/::notice::/'
+fi
 grep -Fq 'PORT_DROPPED_GUN: reloaded same display' "$run/logs/latest.log"
 grep -E 'PORT_RACK_PREVIEW:|PORT_RACK_LOAD:|PORT_OUTLINE:' "$run/logs/latest.log" | sed 's/^/::notice::/'
 for frame in tacz_{rack,case,corner,vanilla_quad,mesh}_{empty,ghost,placed} tacz_hover_{en_us,zh_cn}_{scope_xm157,scope_mk5hd,scope_standard_8x,less_flash,more_flash,gun_display_case} tacz_hand_filter_{empty,cleared} tacz_held_default_gun tacz_held_variant tacz_default_refit tacz_range_readout tacz_display_wall tacz_xm157_{entity,control,restored,occluded} \

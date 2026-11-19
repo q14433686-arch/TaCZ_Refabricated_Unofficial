@@ -476,7 +476,7 @@
   "config.tacz.common.ammo.bullet_damage_ignore_list.desc": "Entity type IDs protected when the ignore list is enabled. Defaults to vanilla paintings, item frames and glow item frames.",
   "config.tacz.common.other.hide_gun_pack_compatibility_warning": "Hide Gun Pack Compatibility Warnings",
   "config.tacz.client.render.muzzle_surface_light": "Muzzle light on nearby surfaces",
-  "config.tacz.client.render.muzzle_surface_light.desc": "Briefly brighten nearby opaque block faces on firing. Visual only; no world lighting changes.",
+  "config.tacz.client.render.muzzle_surface_light.desc": "Briefly light nearby terrain, entities, equipment and displayed objects on firing. Preserves fullbright layers; no world lighting changes.",
   "config.tacz.client.render.legacy_muzzle_light": "Estimate old-pack muzzle light",
   "config.tacz.client.render.legacy_muzzle_light.desc": "Light the gun and arms for legacy textured flashes and unconfigured explosive launchers. Combine with muzzle surface light for nearby walls.",
   "config.tacz.client.render.explosion_surface_light": "Explosion light on nearby surfaces",

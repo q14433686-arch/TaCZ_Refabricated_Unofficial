@@ -20,10 +20,12 @@ final class SurfaceLightFrames {
     private static volatile Path saved;
 
     static void arm(String label, Trigger event) {
+        ReceiverInputs.arm(label);
         name="tacz_surface_"+label+".png"; waiting=event; triggered=event==Trigger.STILL; collected=false; saved=null;
     }
     static void trigger(Trigger event) { if (waiting==event) triggered=true; }
-    static void afterCollection() { if (triggered) collected=true; }
+    static boolean triggered() { return triggered && !collected; }
+    static void afterCollection() { if (triggered()) { ReceiverInputs.collected(); collected=true; } }
     static void renderEnd(Minecraft mc) {
         if (!collected) return;
         collected=triggered=false; waiting=null;
@@ -56,17 +58,17 @@ final class SurfaceLightFrames {
             if (x<0 || y<0 || x>=w || y>=h) throw new AssertionError("Receiver outside frame: "+point+" -> "+x+","+y+" in "+w+"x"+h);
             return image.getRGB(x,y);
         }
-        int meanRed(Region region, double extent) { return mean(region, extent, 16); }
-        int mean(Region region, double extent, int shift) {
+        int meanRed(Region region, double extent) { return mean(region, extent, 16, 4); }
+        int mean(Region region, double extent, int shift, int halfGrid) {
             int sum=0;
-            for (int j=-4;j<=4;j++) for (int i=-4;i<=4;i++) {
+            for (int j=-halfGrid;j<=halfGrid;j++) for (int i=-halfGrid;i<=halfGrid;i++) {
                 // Sample on the plane itself. A square screen ROI at grazing incidence
                 // could include the far wall or the sky rather than just the floor.
-                double v=j*extent/4;
-                var point=region.center.add(i*extent/4,region.horizontal ? 0 : v,region.horizontal ? v : 0);
+                double v=j*extent/halfGrid;
+                var point=region.center.add(i*extent/halfGrid,region.horizontal ? 0 : v,region.horizontal ? v : 0);
                 sum+=rgb(point)>>shift&255;
             }
-            return sum/81;
+            int side=2*halfGrid+1; return sum/(side*side);
         }
         int[] deltas(Frame reference, Region[] points, double extent) {
             int[] d=new int[points.length];
