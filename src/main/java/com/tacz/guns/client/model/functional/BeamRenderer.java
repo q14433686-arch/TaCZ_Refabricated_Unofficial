@@ -101,6 +101,8 @@ public class BeamRenderer {
             float width = transformType.firstPerson() ? laserConfig.getWidth() : laserConfig.getWidthThird();
             boolean fadeOut = RenderConfig.ENABLE_LASER_FADE_OUT.get();
 
+            if (RenderConfig.LASER_IMPACT_SPOT.get()) com.tacz.guns.client.render.light.SurfaceLights.laserLocator(
+                    transformType, poseStack.last().pose(), -z, width, color, fadeOut);
             collector.submitCustomGeometry(poseStack, getLaserBeam(), (pose, consumer) -> {
                 stringVertex(z, width, consumer, pose, r, g, b, fadeOut);
             });

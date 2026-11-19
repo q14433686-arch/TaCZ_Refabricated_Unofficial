@@ -27,6 +27,19 @@ public class RenderClothConfig {
                 .setMin(0).setMax(1).setDefaultValue(0.1).setTooltip(Component.translatable("config.tacz.client.render.gun_hurt_bob_multiplier.desc"))
                 .setSaveConsumer(RenderConfig.GUN_HURT_BOB_MULTIPLIER::set).build());
 
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.laser_impact_spot"), RenderConfig.LASER_IMPACT_SPOT.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.laser_impact_spot.desc"))
+                .setSaveConsumer(RenderConfig.LASER_IMPACT_SPOT::set).build());
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.muzzle_surface_light"), RenderConfig.MUZZLE_SURFACE_LIGHT.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.muzzle_surface_light.desc"))
+                .setSaveConsumer(RenderConfig.MUZZLE_SURFACE_LIGHT::set).build());
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.legacy_muzzle_light"), RenderConfig.LEGACY_MUZZLE_LIGHT.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.legacy_muzzle_light.desc"))
+                .setSaveConsumer(RenderConfig.LEGACY_MUZZLE_LIGHT::set).build());
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.explosion_surface_light"), RenderConfig.EXPLOSION_SURFACE_LIGHT.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.explosion_surface_light.desc"))
+                .setSaveConsumer(RenderConfig.EXPLOSION_SURFACE_LIGHT::set).build());
+
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.muzzle_smoke"), RenderConfig.RENDER_MUZZLE_SMOKE.get())
                 .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.muzzle_smoke.desc"))
                 .setSaveConsumer(RenderConfig.RENDER_MUZZLE_SMOKE::set).build());

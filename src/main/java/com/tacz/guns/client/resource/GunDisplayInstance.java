@@ -99,6 +99,7 @@ public class GunDisplayInstance {
     private @Nullable ShellEjection shellEjection;
     private @Nullable BedrockAmmoModel shellModel;
     private @Nullable MuzzleFlash muzzleFlash;
+    private boolean omittedMuzzleFlash;
     private LayerGunShow offhandShow = new LayerGunShow();
     private @Nullable Int2ObjectArrayMap<LayerGunShow> hotbarShow;
     private float ironZoom;
@@ -559,6 +560,7 @@ public class GunDisplayInstance {
     }
 
     private void checkMuzzleFlash(GunDisplay display) {
+        omittedMuzzleFlash = display.omitsMuzzleFlash();
         muzzleFlash = display.getMuzzleFlash();
         if (muzzleFlash != null && !muzzleFlash.isRenew() && muzzleFlash.getTexture() == null) {
             muzzleFlash = null;
@@ -708,6 +710,8 @@ public class GunDisplayInstance {
     public MuzzleFlash getMuzzleFlash() {
         return muzzleFlash;
     }
+
+    public boolean omitsMuzzleFlash() { return omittedMuzzleFlash; }
 
     public LayerGunShow getOffhandShow() {
         return offhandShow;

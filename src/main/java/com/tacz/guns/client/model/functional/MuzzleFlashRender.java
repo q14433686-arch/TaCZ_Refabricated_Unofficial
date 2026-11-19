@@ -82,6 +82,8 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
     public void extract(ExtractionContext context) {
         if (IrisCompat.isRenderShadow()) return;
         ItemStack currentGunItem = bedrockGunModel.getCurrentGunItem();
+        if (RenderConfig.MUZZLE_SURFACE_LIGHT.get()) com.tacz.guns.client.render.light.SurfaceLights.muzzleLocator(
+                currentGunItem, context.displayContext(), context.poseStack().last().pose());
         // Renew owns two independent layers. Disabling the flash must not suppress the smoke.
         if (NativeMuzzleEffects.extract(currentGunItem, context)) return;
         if (!isSelf || RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) return;

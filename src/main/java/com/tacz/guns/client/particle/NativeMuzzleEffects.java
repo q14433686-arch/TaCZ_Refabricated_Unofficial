@@ -13,6 +13,7 @@ import com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager;
 import com.tacz.guns.client.model.IFunctionalSubmitter;
 import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
 import com.tacz.guns.client.render.FlashMaterials;
+import com.tacz.guns.client.render.light.SurfaceLights;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.util.time.GunTime;
@@ -42,6 +43,8 @@ public final class NativeMuzzleEffects {
     private static final Identifier FLASH_TEXTURE = Identifier.parse("tacz:textures/particle/flash_strip.png");
     private static final Identifier SMOKE_TEXTURE = Identifier.parse("tacz:textures/particle/smoke_strip.png");
     private static final Map<Integer, Shot> SHOTS = new HashMap<>();
+    private record LegacyExposure(Identifier gun, Identifier display, int light, long born) {}
+    private static LegacyExposure legacyExposure;
     private static final List<Puff> PUFFS = new ArrayList<>();
     private static final Set<Identifier> WARNED = new HashSet<>();
     private static int currentOwner = -1;
@@ -78,6 +81,7 @@ public final class NativeMuzzleEffects {
             synchronizeSession();
             var camera = context.levelState().cameraRenderState;
             submitSmoke(context.submitNodeCollector(), camera.pos);
+            SurfaceLights.submit(context.submitNodeCollector(), camera.pos);
         });
     }
     public static void extracted(Entity entity, EntityRenderState state) {
@@ -103,6 +107,7 @@ public final class NativeMuzzleEffects {
     }
     public static void clear() {
         com.tacz.guns.client.particle.AnimationParticleDispatcher.clear();
+        legacyExposure = null; SurfaceLights.clear();
         SHOTS.clear(); PUFFS.clear(); WARNED.clear(); currentOwner = -1; level = null; epoch = -1;
     }
 
@@ -115,10 +120,30 @@ public final class NativeMuzzleEffects {
         var gun = IGun.getIGunOrNull(stack);
         if (gun == null || mc.level == null) return;
         var display = TimelessAPI.getGunDisplay(stack).orElse(null);
-        if (display == null || display.getMuzzleFlash() == null || !display.getMuzzleFlash().isRenew()) return;
-        var part = MuzzleAttachment.of(stack);
-        var effect = MuzzleEffectParameters.resolve(display.getMuzzleFlash(), part.data(), part.silenced());
+        if (shooter == mc.player) legacyExposure = null;
+        if (display == null || shooter.level() != mc.level) return;
+        var flash = display.getMuzzleFlash();
         boolean first = shooter == mc.player && mc.options.getCameraType().isFirstPerson();
+        if (flash == null || !flash.isRenew()) {
+            if (!RenderConfig.LEGACY_MUZZLE_LIGHT.get() || RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()
+                    || (!first && !RenderConfig.MUZZLE_SURFACE_LIGHT.get())) return;
+            var id = gun.getGunId(stack);
+            var index = TimelessAPI.getCommonGunIndex(id).orElse(null);
+            if (index == null) return;
+            var explosion = index.getBulletData().getExplosionData();
+            int light = LegacyShotLight.level(flash, display.omitsMuzzleFlash(), index.getType(), explosion != null && explosion.isExplode(), MuzzleAttachment.of(stack), first);
+            if (light > 0) {
+                if (first) legacyExposure = new LegacyExposure(id, gun.getGunDisplayId(stack), light, GunTime.nowMillis());
+                SurfaceLights.shot(shooter, id, gun.getGunDisplayId(stack), first, 0, light);
+            }
+            return;
+        }
+        var part = MuzzleAttachment.of(stack);
+        var effect = MuzzleEffectParameters.resolve(flash, part.data(), part.silenced());
+        if (RenderConfig.MUZZLE_SURFACE_LIGHT.get() && !RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get() && effect.hasFlash()
+                && (first ? effect.firstFlash() : effect.thirdFlash()) != null) {
+            SurfaceLights.shot(shooter, gun.getGunId(stack), gun.getGunDisplayId(stack), first, part.offsetBb(), effect.flashLight());
+        }
         if (SHOTS.size() >= 128 && !SHOTS.containsKey(shooter.getId())) return;
         SHOTS.put(shooter.getId(), new Shot(effect, gun.getGunId(stack), gun.getGunDisplayId(stack), first, part.offsetBb()));
     }
@@ -293,6 +318,12 @@ public final class NativeMuzzleEffects {
     }
     public static int flashLight(ItemStack stack, int light) {
         var mc = Minecraft.getInstance();
+        if (legacyExposure != null && RenderConfig.LEGACY_MUZZLE_LIGHT.get() && mc.player != null && mc.level == level
+                && !RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get() && GunTime.isWithin(legacyExposure.born, 50)) {
+            var gun = IGun.getIGunOrNull(stack);
+            if (gun != null && legacyExposure.gun.equals(gun.getGunId(stack)) && legacyExposure.display.equals(gun.getGunDisplayId(stack)))
+                return withFlashLight(light, legacyExposure.light);
+        }
         Shot shot = mc.player == null ? null : SHOTS.get(mc.player.getId());
         if (shot == null || !shot.firstPerson || !shot.effect.hasFlash() || shot.effect.firstFlash() == null
                 || !GunTime.isWithin(shot.born, 50) || RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) return light;

@@ -12,6 +12,7 @@
   ],
   "client": [
     "client.AbstractButtonMixin",
+    "client.DetonationLightMixin",
     "client.CameraMixin",
     "client.CreativeModeInventoryScreenMixin",
     "client.FeatureRenderDispatcherMixin",

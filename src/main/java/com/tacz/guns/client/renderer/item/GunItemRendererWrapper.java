@@ -129,6 +129,14 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
         return new Matrix4f().translation((float)pos.x,(float)pos.y,(float)pos.z).rotate(camera.rotation()).mul(local);
     }
 
+    /** Camera-relative transform for world surface receivers. For a beam both endpoints, not
+     * just the locator translation, must undergo the hand/world projection conversion. */
+    public static Matrix4f surfaceLocator(Matrix4f locator, boolean first) {
+        if (!first) return new Matrix4f(locator);
+        return new Matrix4f().rotation(Minecraft.getInstance().gameRenderer.mainCamera().rotation())
+                .scale(1, 1, 1 / muzzleWorldScale()).mul(new Matrix4f(handBasePoseEntry).invert()).mul(locator);
+    }
+
     public static float muzzleWorldScale() {
         double ratio = Math.tan(Math.toRadians(CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2)
                 / Math.tan(Math.toRadians(CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get()) / 2);
