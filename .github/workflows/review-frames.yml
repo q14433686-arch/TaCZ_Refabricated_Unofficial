@@ -28,12 +28,12 @@ jobs:
           assert len(entries) <= 12
           with tempfile.TemporaryDirectory() as tmp:
               for run, kind, frame in entries:
-                  assert re.fullmatch(r'[0-9]+',run) and kind in ('smoke','viewer-jei','viewer-rei','iris','pal') and re.fullmatch(r'tacz_[a-z0-9_]+',frame)
+                  assert re.fullmatch(r'[0-9]+',run) and kind in ('smoke','viewer-jei','viewer-rei','iris','reimagined-off','reimagined-act','pal') and re.fullmatch(r'tacz_[a-z0-9_]+',frame)
                   output = dest / f'{run}-{frame}.png'
                   if output.exists(): continue
                   meta = json.loads(subprocess.check_output(['gh','api',f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{run}']))
                   assert meta['event']=='push' and meta['head_branch']==os.environ['GITHUB_REF_NAME'] and meta['conclusion'] in ('success','failure')
-                  assert meta['path']=='.github/workflows/'+('build.yml' if kind=='smoke' else 'iris-smoke.yml' if kind=='iris' else 'animation-smoke.yml' if kind=='pal' else 'viewer-smoke.yml')
+                  assert meta['path']=='.github/workflows/'+('build.yml' if kind=='smoke' else 'iris-smoke.yml' if kind in ('iris','reimagined-off','reimagined-act') else 'animation-smoke.yml' if kind=='pal' else 'viewer-smoke.yml')
                   artifact = kind+'-'+meta['head_sha']; root = Path(tmp)/artifact
                   if not root.exists():
                       subprocess.run(['gh','run','download',run,'-n',artifact,'-D',str(root)],check=True)

@@ -11,6 +11,15 @@ concurrency:
   cancel-in-progress: true
 jobs:
   iris:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { artifact: iris, color: '' }
+          - { artifact: reimagined-off, color: '0' }
+          - { artifact: reimagined-act, color: '128' }
+    env:
+      TACZ_IRIS_COLOR: ${{ matrix.color }}
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -24,7 +33,7 @@ jobs:
       - run: bash scripts/install_client_smoke_deps.sh
         env:
           TACZ_SMOKE_IRIS: 'true'
-      - name: Real Iris and Sodium with an active authored shader pack (OpenGL software)
+      - name: Real Iris and Sodium with the selected active shader pack (OpenGL software)
         env:
           SDL_VIDEO_DRIVER: x11
           LIBGL_ALWAYS_SOFTWARE: 'true'
@@ -43,6 +52,8 @@ jobs:
           for p in [Path(os.environ['RUNNER_TEMP'])/'tacz-client.log',Path('build/run/clientGameTest/logs/latest.log')]:
             if not p.exists(): continue
             lines=p.read_text(errors='replace').splitlines()
+            for s in lines:
+              if re.search("PORT_REIMAGINED|profile.*custom|Using shaderpack|Failed to load shaderpack|assign.*illuminated|program match for tacz:pipeline/(?:illuminated|muzzle)|ShaderCompileException",s,re.I): print("::notice::"+s[:1600].replace("%","%25"))
             failures=[i for i,s in enumerate(lines) if re.search('AssertionError|Client gametests failed|Caused by:|error:',s)]
             for i in failures[-3:]: print('::error::'+' '.join(lines[i:i+5])[:2500].replace('%','%25'))
             for i in [i for i,s in enumerate(lines) if re.search('com[.]tacz[.]guns[.]test[.]|PORT_|Heat capture|Pack lens|Caused by:|error:|AssertionError|Failed|Exception|requires ',s)][-16:]:
@@ -51,7 +62,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: iris-${{ github.sha }}
+          name: ${{ matrix.artifact }}-${{ github.sha }}
           path: |
             build/iris-smoke/manifest.json
             build/run/clientGameTest/logs/latest.log

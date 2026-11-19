@@ -36,6 +36,7 @@ public class PackClientSmoke implements FabricClientGameTest {
             context.waitFor(client -> CommonNetworkCache.INSTANCE.getGunIndex(id) != null
                     && TimelessAPI.getClientGunIndex(id).isPresent());
             GunMod.LOGGER.info("PORT_SMOKE_CLIENT: default client index and sync installed");
+            if (System.getProperty("tacz.test.irisColor") != null) { ReimaginedSmoke.run(context, world); return; }
             context.runOnClient(mc -> DefaultClientCatalogSmoke.client());
             world.getServer().runOnServer(server -> world.getConnection().getServerPlayer().setItemInHand(
                     InteractionHand.MAIN_HAND, GunItemBuilder.create().setId(id).setAmmoCount(3).build()));

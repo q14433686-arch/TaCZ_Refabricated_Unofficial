@@ -41,12 +41,18 @@ if [[ ${GITHUB_ACTIONS:-} == true ]]; then args+=(--init-script scripts/ci-centr
 if [[ ${TACZ_SMOKE_PAL:-} == true ]]; then args+=(-PtaczPalSmoke); fi
 if [[ ${TACZ_SMOKE_CONTROLLER:-} == true ]]; then args+=(-PtaczControllerSmoke); fi
 if [[ ${TACZ_SMOKE_IRIS:-} == true ]]; then args+=(-PtaczIrisSmoke); fi
+[[ -z ${TACZ_IRIS_COLOR:-} ]] || args+=("-PtaczIrisColor=$TACZ_IRIS_COLOR")
 case ${TACZ_SMOKE_VIEWER:-} in
     jei|rei) args+=("-PtaczViewerSmoke=$TACZ_SMOKE_VIEWER");;
     '') ;;
     *) echo 'Expected jei or rei' >&2; exit 2;;
 esac
 timeout -k 20s 10m ./gradlew "${args[@]}" runClientGameTest --console=plain --stacktrace 2>&1 | tee "$RUNNER_TEMP/tacz-client.log"
+if [[ -n ${TACZ_IRIS_COLOR:-} ]]; then
+    grep -Fq 'PORT_REIMAGINED: complete' "$run/logs/latest.log"
+    grep -E 'PORT_REIMAGINED:|program match for tacz:pipeline/(illuminated|muzzle)' "$run/logs/latest.log" | sed 's/^/::notice::/'
+    exit
+fi
 if [[ ${TACZ_SMOKE_PAL:-} == true ]]; then
     grep -F 'PORT_PAL: re-entry support arm' "$run/logs/latest.log" | sed 's/^/::notice::/'
     grep -F 'PORT_PAL: offscreen' "$run/logs/latest.log" | sed 's/^/::notice::/'

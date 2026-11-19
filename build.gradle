@@ -294,6 +294,7 @@ if (project.hasProperty('taczIrisSmoke')) {
     if (!project.hasProperty('taczClientSmoke')) throw new GradleException('Iris smoke needs client tests')
     dependencies { gametestRuntimeOnly files('build/iris-smoke/iris.jar', 'build/iris-smoke/sodium.jar') }
     loom.runs.clientGameTest.property 'tacz.test.iris', 'true'
+    if (project.hasProperty('taczIrisColor')) loom.runs.clientGameTest.property 'tacz.test.irisColor', project.property('taczIrisColor')
 }
 
 // Install the fixture as an external ZIP (not a mod resource or part of the release jar).
@@ -324,6 +325,9 @@ if (project.hasProperty('taczClientSmoke')) {
     if (project.hasProperty('taczIrisSmoke')) {
         installClientPack.configure { doLast {
             copy { from 'src/gametest/irisConfig'; into layout.buildDirectory.dir('run/clientGameTest') }
+            if (project.hasProperty('taczIrisColor')) copy {
+                from 'build/iris-smoke/complementary'; into layout.buildDirectory.dir('run/clientGameTest')
+            }
         } }
     }
     tasks.named('runClientGameTest') { dependsOn installClientPack }

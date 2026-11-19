@@ -2,7 +2,7 @@
 """CI only: resolve exact reported Iris/Sodium release lines; verify downloaded hashes.
 Never use latest or a different Minecraft/loader version when the pin is unavailable.
 """
-import hashlib, json, pathlib, urllib.request, re, sys
+import hashlib, io, json, os, pathlib, tarfile, urllib.request, re, sys, zipfile
 
 def report_exception(kind, value, trace):
     print(f"::error::Iris runtime preparation: {kind.__name__}: {value}", flush=True)
@@ -21,5 +21,24 @@ for project,prefix in [('iris','1.11.6'),('sodium','0.9.2')]:
     if hashlib.sha512(data).hexdigest()!=f['hashes']['sha512']: raise SystemExit('Hash mismatch')
     (root/f'{project}.jar').write_bytes(data)
     manifest.append({'project':project,'version':v['version_number'],'id':v['id'],'sha512':f['hashes']['sha512']})
+# Optional screenshot regression. Fetch the pinned original; neither the shader source nor
+# the generated pack/options belong in the mod, the repository or the uploaded artifacts.
+color = os.environ.get('TACZ_IRIS_COLOR')
+if color:
+    if color not in ('0','128'): raise ValueError('COLORED_LIGHTING must be 0 or 128')
+    commit = '54ae23a44dd21dcf1c8fe70b4f0683d973b34cd0'
+    name = 'ComplementaryReimagined_r5.9.3.zip'
+    req = urllib.request.Request('https://codeload.github.com/ComplementaryDevelopment/ComplementaryReimagined/tar.gz/'+commit)
+    data = urllib.request.urlopen(req, timeout=90).read()
+    digest = hashlib.sha256(data).hexdigest()
+    if digest != '4800cabf00f9002eb91be02e5ba26c1c99710bf9c89ce79c8a9493d6b4e83e89': raise ValueError('Wrong Reimagined source')
+    run = root/'complementary'
+    (run/'shaderpacks').mkdir(parents=True,exist_ok=True); (run/'config').mkdir(exist_ok=True)
+    with tarfile.open(fileobj=io.BytesIO(data),mode='r:gz') as tar, zipfile.ZipFile(run/'shaderpacks'/name,'w',zipfile.ZIP_DEFLATED) as pack:
+        for entry in tar:
+            if entry.isfile(): pack.writestr(entry.name.split('/',1)[1],tar.extractfile(entry).read())
+    (run/'config/iris.properties').write_text('enableShaders=true\nshaderPack='+name+'\n')
+    (run/'shaderpacks'/(name+'.txt')).write_text('COLORED_LIGHTING='+color+'\nSHADOW_QUALITY=1\nshadowDistance=64.0\nENTITY_SHADOW=1\nCLOUD_QUALITY=0\n')
+    manifest.append({'shaderpack':name,'commit':commit,'archiveSha256':digest,'COLORED_LIGHTING':int(color)})
 (root/'manifest.json').write_text(json.dumps(manifest,indent=2))
 print(json.dumps(manifest,indent=2))
