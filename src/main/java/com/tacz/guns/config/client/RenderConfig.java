@@ -10,6 +10,8 @@ public class RenderConfig {
     public static ForgeConfigSpec.DoubleValue GUN_HURT_BOB_MULTIPLIER;
     public static ForgeConfigSpec.BooleanValue ILLUMINATED_REAL_SKY;
     public static ForgeConfigSpec.IntValue GUN_LOD_RENDER_DISTANCE;
+    public static final int DEFAULT_DROPPED_GUN_SPRITE_DISTANCE = 8;
+    public static ForgeConfigSpec.IntValue DROPPED_GUN_SPRITE_DISTANCE;
     public static ForgeConfigSpec.BooleanValue HIT_PARTICLE_ENABLE;
     public static ForgeConfigSpec.BooleanValue HIT_EXTRA_PARTICLE_ENABLE;
     public static ForgeConfigSpec.IntValue HIT_PARTICLE_MAX_DISTANCE;
@@ -302,6 +304,10 @@ public class RenderConfig {
 
         builder.comment("How far to display the lod model, 0 means always display");
         GUN_LOD_RENDER_DISTANCE = builder.defineInRange("GunLodRenderDistance", 0, 0, Integer.MAX_VALUE);
+
+        DROPPED_GUN_SPRITE_DISTANCE = builder.comment("Without a usable pack LOD, draw dropped guns as their slot icon from this distance (blocks).",
+                "-1: disable, 0: even nearby. Does not affect held guns, previews or racks.")
+                .defineInRange("DroppedGunSpriteDistance", DEFAULT_DROPPED_GUN_SPRITE_DISTANCE, -1, Integer.MAX_VALUE);
 
         HIT_PARTICLE_ENABLE = builder.comment("Show block impact particles").define("HitParticleEnable", true);
         HIT_EXTRA_PARTICLE_ENABLE = builder.comment("Show gun pack hit_surface_particles in addition to block fragments").define("HitExtraParticleEnable", true);

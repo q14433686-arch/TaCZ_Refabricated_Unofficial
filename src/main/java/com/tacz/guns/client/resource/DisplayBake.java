@@ -45,6 +45,11 @@ final class DisplayBake<T> {
         };
     }
 
+    /** Not the same as ready() == null: pending and obsolete bakes are not evidence of missing geometry. */
+    boolean completedEmpty() {
+        return current.getAsBoolean() && task.state() == Future.State.SUCCESS && task.resultNow() == null;
+    }
+
     /** While the requested detail is baking keep drawing the other one if it already exists. */
     @Nullable T preferOver(DisplayBake<T> alternate) {
         request();

@@ -2,6 +2,7 @@ package com.tacz.guns.client.resource;
 
 import cn.sh1rocu.tacz.compat.meshloader.model.TaczPolyMeshGunModel;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mojang.brigadier.StringReader;
@@ -31,10 +32,12 @@ import com.tacz.guns.util.ColorHex;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.commands.arguments.ParticleArgument;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -45,6 +48,7 @@ import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.function.Supplier;
 
 /**
  * 经过处理和校验的枪械显示数据
@@ -71,6 +75,12 @@ public class GunDisplayInstance {
     private BedrockGunModel gunModel;
     private final DisplayBake<Pair<BedrockGunModel, Identifier>> externalHigh;
     private final DisplayBake<Pair<BedrockGunModel, Identifier>> externalLod;
+
+    // Look up file presence once, on demand, per display revision. Never open a stream, decode
+    // a model on the render thread, or keep a pack resource/texture handle across reloads.
+    private static final FileToIdConverter GEO_FILES = FileToIdConverter.json("geo_models");
+    private record DropAssets(boolean lodFilesPresent, @Nullable Identifier slot) {}
+    private final Supplier<DropAssets> dropAssets = Suppliers.memoize(this::findDropAssets);
 
     private LuaAnimationStateMachine<GunAnimationStateContext> animationStateMachine;
     private @Nullable LuaTable stateMachineParam;
@@ -587,6 +597,23 @@ public class GunDisplayInstance {
     /** Collector path for third-person, ground and FIXED. Never waits for a bake or borrows the hand rig. */
     public @Nullable Pair<BedrockGunModel, Identifier> getExternalModel(boolean preferLod) {
         return preferLod ? externalLod.preferOver(externalHigh) : externalHigh.preferOver(externalLod);
+    }
+
+    private DropAssets findDropAssets() {
+        var resources = Minecraft.getInstance().getResourceManager();
+        var lod = display.getGunLod();
+        boolean hasLod = lod != null && lod.getModelLocation() != null && lod.getModelTexture() != null
+                && resources.getResource(GEO_FILES.idToFile(lod.getModelLocation())).isPresent()
+                && resources.getResource(lod.getModelTexture()).isPresent();
+        boolean hasSlot = !MissingTextureAtlasSprite.getLocation().equals(slotTexture)
+                && resources.getResource(slotTexture).isPresent();
+        return new DropAssets(hasLod, hasSlot ? slotTexture : null);
+    }
+
+    /** A declared LOD that's merely waiting on the asset worker still owns the normal 3D path. */
+    public @Nullable Identifier getMissingLodDropTexture() {
+        var assets = dropAssets.get();
+        return !assets.lodFilesPresent() || externalLod.completedEmpty() ? assets.slot() : null;
     }
 
     void retireModels() {

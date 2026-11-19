@@ -201,6 +201,8 @@
   "config.tacz.client.key.auto_reload": "自動重新裝填",
   "config.tacz.client.key.auto_reload.desc": "彈藥耗盡時自動重新裝填",
   "config.tacz.client.render": "渲染",
+  "config.tacz.client.render.dropped_gun_sprite_distance": "無低模掉落槍圖示距離",
+  "config.tacz.client.render.dropped_gun_sprite_distance.desc": "槍包沒有可用低模時，從此距離（格）起用物品圖示顯示掉落的槍。-1：關閉；0：近處也用圖示。沒有圖示則保留 3D 模型。",
   "config.tacz.client.render.gun_lod_render_distance": "槍枝 Lod 渲染距離",
   "config.tacz.client.render.gun_lod_render_distance.desc": "lod模型顯示多遠，0表示始終顯示",
   "config.tacz.client.render.bullet_hole_particle_life": "彈孔粒子滯留時間",

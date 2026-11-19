@@ -34,16 +34,21 @@ class DisplayBakeTest {
         var bad = new DisplayBake<String>(queue::add, active::get, () -> { throw new IllegalArgumentException(); }, e -> errors.incrementAndGet());
         var fallback = new DisplayBake<>(queue::add, active::get, () -> "fallback", e -> fail(e));
         var stale = new DisplayBake<String>(queue::add, active::get, () -> fail("outdated bake ran"), e -> fail(e));
+        assertFalse(bad.completedEmpty());
         assertNull(bad.preferOver(fallback));
+        assertFalse(bad.completedEmpty()); // pending is not missing
         queue.remove().run();
+        assertTrue(bad.completedEmpty());
         assertNull(bad.preferOver(fallback));
         assertEquals("fallback", fallback.loadNow()); // synchronous request can claim a queued task
         queue.remove().run();
         assertEquals("fallback", bad.preferOver(fallback));
         assertEquals(1, errors.get());
+        assertFalse(fallback.completedEmpty());
         stale.request();
         active.set(false);
         queue.remove().run();
         assertNull(stale.ready());
+        assertFalse(bad.completedEmpty()); // retired display
     }
 }

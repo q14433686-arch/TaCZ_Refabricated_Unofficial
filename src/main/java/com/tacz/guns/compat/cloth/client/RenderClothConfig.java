@@ -48,6 +48,11 @@ public class RenderClothConfig {
                 .setMin(0).setMax(Integer.MAX_VALUE).setDefaultValue(0).setTooltip(Component.translatable("config.tacz.client.render.gun_lod_render_distance.desc"))
                 .setSaveConsumer(RenderConfig.GUN_LOD_RENDER_DISTANCE::set).build());
 
+        render.addEntry(entryBuilder.startIntField(Component.translatable("config.tacz.client.render.dropped_gun_sprite_distance"), RenderConfig.DROPPED_GUN_SPRITE_DISTANCE.get())
+                .setMin(-1).setMax(Integer.MAX_VALUE).setDefaultValue(RenderConfig.DEFAULT_DROPPED_GUN_SPRITE_DISTANCE)
+                .setTooltip(Component.translatable("config.tacz.client.render.dropped_gun_sprite_distance.desc"))
+                .setSaveConsumer(RenderConfig.DROPPED_GUN_SPRITE_DISTANCE::set).build());
+
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.hit_particle_enable"), RenderConfig.HIT_PARTICLE_ENABLE.get())
                 .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.hit_particle_enable.desc"))
                 .setSaveConsumer(RenderConfig.HIT_PARTICLE_ENABLE::set).build());

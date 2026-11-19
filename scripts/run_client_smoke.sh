@@ -66,6 +66,10 @@ if [[ ${TACZ_SMOKE_PAL:-} == true ]]; then
 fi
 # Require both material paths, not just a generic "rendered" message. Frame data stays in the job artifact.
 if [[ -z ${TACZ_SMOKE_VIEWER:-} && ${TACZ_SMOKE_CONTROLLER:-} != true ]]; then
+    # Geometry counts (deferred replay) and live frame samples are different measurements.
+    grep -Fq 'new cyan slot pixels in the pile' "$run/logs/latest.log"
+    grep -F 'PORT_DROPPED_GUN:' "$run/logs/latest.log" | sed 's/^/::notice::/'
+    for mode in on off; do test -s "$(find "$run/screenshots" -name "*tacz_dropped_guns_${mode}.png" -print -quit)"; done
     for marker in PORT_HUD_PRECISION PORT_HUD_SHOTS PORT_ACCOUNT_HUD; do grep -F "$marker:" "$run/logs/latest.log" | sed 's/^/::notice::/'; done
     grep -F 'PORT_HUD_PRESETS:' "$run/logs/latest.log" | sed 's/^/::notice::/'
     grep -F 'PORT_HUD_PROFILES: AK stand/sneak/zero-cache radii=' "$run/logs/latest.log" | sed 's/^/::notice::/'
