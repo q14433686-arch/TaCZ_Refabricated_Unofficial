@@ -66,6 +66,10 @@ if [[ ${TACZ_SMOKE_PAL:-} == true ]]; then
 fi
 # Require both material paths, not just a generic "rendered" message. Frame data stays in the job artifact.
 if [[ -z ${TACZ_SMOKE_VIEWER:-} && ${TACZ_SMOKE_CONTROLLER:-} != true ]]; then
+    for marker in 'central wall red delta' 'spill=false, 64' 'spill=true, 64' 'server TaCZ explosion' 'held NGAL'; do
+        grep -Fq "$marker" "$run/logs/latest.log"
+    done
+    printf '::notice::PORT_SURFACE: %s\n' "$(sed -n 's/.*PORT_SURFACE: //p' "$run/logs/latest.log" | paste -sd ';' -)"
     # Geometry counts (deferred replay) and live frame samples are different measurements.
     grep -Fq 'new cyan slot pixels in the pile' "$run/logs/latest.log"
     # Keep all paired samples in one Checks notice (GitHub caps notices per step).
