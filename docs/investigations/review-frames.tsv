@@ -1,11 +1,13 @@
-# One camera, same cell: survival board and cabinet controls. Keep the unmodified pixels.
-44425974348	smoke	tacz_rack_empty
-44425974348	smoke	tacz_rack_ghost
-44425974348	smoke	tacz_rack_placed
-44425974348	smoke	tacz_case_empty
-44425974348	smoke	tacz_case_ghost
-44425974348	smoke	tacz_case_placed
-44425974348	smoke	tacz_hand_filter_empty
-44425974348	smoke	tacz_hand_filter_cleared
-44425974217	iris	tacz_amg10_particle_baseline_2
-44425974217	iris	tacz_amg10_particle_2
+# Successful Iris positive control, clipped control and gradient-material frames.
+44428762277	iris	tacz_amg10_particle_baseline_2
+44428762277	iris	tacz_amg10_particle_2
+44428762277	iris	tacz_amg10_particle_0
+44428762277	iris	tacz_material_light_control
+44428762277	iris	tacz_material_light_particles_alpha
+44428762277	iris	tacz_material_dark_control
+44428762277	iris	tacz_material_dark_particles_opaque
+44428762277	iris	tacz_material_dark_particles_alpha
+44428762277	iris	tacz_material_dark_particles_blend
+44428762277	iris	tacz_material_dark_particles_add
+44428762277	iris	tacz_material_dark_particles_emissive
+44428762277	iris	tacz_material_dark_energy_swirl

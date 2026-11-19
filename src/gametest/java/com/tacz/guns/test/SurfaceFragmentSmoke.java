@@ -22,6 +22,10 @@ public final class SurfaceFragmentSmoke {
     private static BlockPos target;
     private static boolean inside, hot;
     private static int blocks, lava, impacts, decals;
+    static void watch(BlockPos pos) {
+        target = pos; impacts = decals = lava = blocks = 0; inside = false;
+    }
+    static boolean receivedFiveStoneFragments() { return impacts == 1 && blocks == 5 && lava == 0 && !hot; }
     public static void begin(ParticleOptions options) {
         if (target != null && options instanceof BulletHoleOption hit && target.equals(hit.getPos())) {
             inside = true;
@@ -46,7 +50,7 @@ public final class SurfaceFragmentSmoke {
         try {
             ctx.waitFor(mc -> mc.level.getBlockState(pos).is(Blocks.STONE));
             for (boolean on : new boolean[]{true,false}) for (boolean incendiary : new boolean[]{true,false}) for (int n : new int[]{0,5}) {
-                ctx.runOnClient(mc -> { target = pos; impacts = decals = lava = blocks = 0; RenderConfig.HIT_PARTICLE_ENABLE.set(on); });
+                ctx.runOnClient(mc -> { watch(pos); RenderConfig.HIT_PARTICLE_ENABLE.set(on); });
                 world.getServer().runOnServer(s -> {
                     var p = world.getConnection().getServerPlayer();
                     var gun = Identifier.parse("tacz:ak47");

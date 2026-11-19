@@ -177,9 +177,29 @@ final class RackPreviewSmoke {
     private static int delta(int a, int b) {
         return Math.abs((a & 255) - (b & 255)) + Math.abs((a >> 8 & 255) - (b >> 8 & 255)) + Math.abs((a >> 16 & 255) - (b >> 16 & 255));
     }
+    private static boolean outlinePixel(int color, boolean occupied) {
+        int r = color >> 16 & 255, g = color >> 8 & 255, b = color & 255;
+        return r > 165 && r - b > 75 && (occupied ? g < 110 && r - g > 90 : g > 130 && g - b > 50);
+    }
+    private static void checkOccupiedOutline(java.awt.image.BufferedImage empty, java.awt.image.BufferedImage placed) {
+        int cx = empty.getWidth() / 2, cy = empty.getHeight() / 2, expected = 0, covered = 0;
+        // Same camera and slot. Keep the HUD text above the board out of the reference mask.
+        for (int y = cy - 18; y < cy + 46; y++) for (int x = cx - 60; x < cx + 60; x++) {
+            if (!outlinePixel(empty.getRGB(x,y), false)) continue;
+            expected++;
+            boolean found = false;
+            for (int dy = -2; dy <= 2 && !found; dy++) for (int dx = -2; dx <= 2; dx++) {
+                if (outlinePixel(placed.getRGB(x+dx,y+dy), true)) { found = true; break; }
+            }
+            if (found) covered++;
+        }
+        if (expected < 60 || covered < .8 * expected) throw new AssertionError("Occupied outline visible at only " + covered + "/" + expected + " empty edge pixels");
+        com.tacz.guns.GunMod.LOGGER.info("PORT_OUTLINE: occupied outline covers {}/{} reference edge pixels", covered, expected);
+    }
     private static void compare(Path empty, Path ghost, Path placed) {
         try {
             var a = ImageIO.read(empty.toFile()); var b = ImageIO.read(ghost.toFile()); var c = ImageIO.read(placed.toFile());
+            if (placed.getFileName().toString().endsWith("tacz_rack_placed.png")) checkOccupiedOutline(a, c);
             int between = 0, model = 0;
             // Mark only pixels in the cell that change towards, but not all the way to, the deposited model.
             for (int y = a.getHeight()/2-40; y < a.getHeight()/2+40; y++) for (int x = a.getWidth()/2-44; x < a.getWidth()/2+44; x++) {

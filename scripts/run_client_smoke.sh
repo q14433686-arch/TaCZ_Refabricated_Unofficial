@@ -50,7 +50,7 @@ if [[ ${TACZ_SMOKE_IRIS:-} == true ]]; then
     grep -Fq 'PORT_LENS: XL50 restored' "$run/logs/latest.log"
     grep -Fq 'PORT_CORE:' "$run/logs/latest.log"
     grep -Fq 'PORT_IRIS: thermal and new-item regression passed' "$run/logs/latest.log"
-    grep -E 'PORT_IRIS:|PORT_LENS:|PORT_CORE:' "$run/logs/latest.log" | sed 's/^/::notice::/'
+    grep -E 'PORT_IRIS:|PORT_LENS:|PORT_CORE:|PORT_WORLD_TRACER:|PORT_FRAGMENTS:|PORT_SCOPE_PARTICLE:|PORT_MATERIALS:|PORT_SNOWSTORM:' "$run/logs/latest.log" | sed 's/^/::notice::/'
     exit
 fi
 if [[ ${TACZ_SMOKE_CONTROLLER:-} == true ]]; then
@@ -101,6 +101,6 @@ printf '::notice::%s\n' "$(grep -F 'PORT_CONFIG:' "$run/logs/latest.log")"
 grep -Fq 'PORT_CORE:' "$run/logs/latest.log"
 printf '::notice::%s\n' "$(grep -F 'PORT_CORE:' "$run/logs/latest.log")"
 
-for marker in PORT_RACK_PREVIEW: PORT_MATERIALS: PORT_FRAGMENTS: PORT_HOVER: PORT_RACK_LOAD:; do
+for marker in PORT_RACK_PREVIEW: PORT_OUTLINE: PORT_MATERIALS: PORT_WORLD_TRACER: PORT_FRAGMENTS: PORT_HOVER: PORT_RACK_LOAD:; do
     grep -F "$marker" "$run/logs/latest.log" | sed 's/^/::notice::/'
 done

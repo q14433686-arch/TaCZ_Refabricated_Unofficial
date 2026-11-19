@@ -24,7 +24,7 @@ import static com.tacz.guns.util.InputExtraCheck.isInGame;
 public class InteractKey {
     public static final KeyMapping INTERACT_KEY = new KeyMapping("key.tacz.interact.desc",
             InputConstants.Type.KEYBOARD,
-            InputConstants.KEY_O,
+            InputConstants.KEY_K, // O opens vanilla 26.3's friends screen before block use can run.
             TaCZKeyCategory.TACZ);
 
     public static boolean onInteractControllerPress(boolean isPress) {

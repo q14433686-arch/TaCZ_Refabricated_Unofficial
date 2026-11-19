@@ -6,7 +6,7 @@
   "mixins": [{ "config": "tacz-port-test.mixins.json", "environment": "client" }],
   "entrypoints": {
     "jei_mod_plugin": ["com.tacz.guns.test.JeiViewerSmoke"],
-    "fabric-gametest": ["com.tacz.guns.test.PackServerSmoke", "com.tacz.guns.test.GunActionSmoke", "com.tacz.guns.test.BulletRulesSmoke", "com.tacz.guns.test.ScriptGuardSmoke", "com.tacz.guns.test.DefaultReloadSmoke", "com.tacz.guns.test.AmmoStorageSmoke", "com.tacz.guns.test.DisplayRackSmoke", "com.tacz.guns.test.PegboardCommandSmoke", "com.tacz.guns.test.PackConversionSmoke"],
+    "fabric-gametest": ["com.tacz.guns.test.PackServerSmoke", "com.tacz.guns.test.GunActionSmoke", "com.tacz.guns.test.BulletRulesSmoke", "com.tacz.guns.test.ScriptGuardSmoke", "com.tacz.guns.test.DefaultReloadSmoke", "com.tacz.guns.test.AmmoStorageSmoke", "com.tacz.guns.test.DisplayRackSmoke", "com.tacz.guns.test.PegboardCommandSmoke", "com.tacz.guns.test.PackConversionSmoke", "com.tacz.guns.util.ExportUpgradeSmoke"],
     "fabric-client-gametest": ["com.tacz.guns.test.PackClientSmoke"]
   },
   "depends": { "tacz": "*" }

@@ -58,6 +58,7 @@ public final class PlayerFeedbackSmoke {
             checkImpactPackets(ctx,world);
             SurfaceFragmentSmoke.run(ctx, world);
             TracerFrameSmoke.run(ctx);
+            WorldTracerSmoke.run(ctx, world);
             GunMod.LOGGER.info("PORT_FEEDBACK: back-mounted toggle, actual ordinary-hurt render hook and same-level impact delivery controls passed");
         } finally {
             ctx.runOnClient(mc->{observing=false;mc.options.setCameraType(camera);RenderConfig.DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER.set(hidden);RenderConfig.GUN_HURT_BOB_MULTIPLIER.set(multiplier);});

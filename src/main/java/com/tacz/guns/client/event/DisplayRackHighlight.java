@@ -52,7 +52,15 @@ public final class DisplayRackHighlight {
                 var pos = outline.pos();
                 pose.pushPose();
                 pose.translate(pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z);
-                for (var cell : cells) context.submitNodeCollector().submitShapeOutline(pose, Shapes.create(cell.box), RenderTypes.lines(), cell.color, 1f, false);
+                for (var cell : cells) {
+                    var shape = Shapes.create(cell.box);
+                    // A stored model can cover the very cell the player is selecting. Vanilla's
+                    // secondary outline draws the depth-hidden part, the normal pass the visible part.
+                    // Both are native line pipelines (also mapped by Iris); only the picked rack qualifies.
+                    var out = context.submitNodeCollector();
+                    out.submitShapeOutline(pose, shape, RenderTypes.secondaryBlockOutline(), cell.color, 1f, false);
+                    out.submitShapeOutline(pose, shape, RenderTypes.lines(), cell.color, 1f, false);
+                }
                 pose.popPose();
             }
             return true;

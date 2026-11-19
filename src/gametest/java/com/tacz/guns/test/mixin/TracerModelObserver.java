@@ -17,5 +17,6 @@ abstract class TracerModelObserver {
     private void submit(PoseStack pose, ItemDisplayContext context, SubmitNodeCollector out, RenderType type, int light, int overlay,
                         float r, float g, float b, float a, CallbackInfo ci) {
         TracerFrameSmoke.observe(pose);
+        com.tacz.guns.test.WorldTracerSmoke.model(pose);
     }
 }
