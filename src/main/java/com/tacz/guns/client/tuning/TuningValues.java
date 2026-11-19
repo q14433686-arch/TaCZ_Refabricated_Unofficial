@@ -37,6 +37,8 @@ public interface TuningValues {
 
         public <T> void reset(ConfigValue<T> option) { set(option, option.getDefault()); }
 
+        void merge(Draft validated) { edits.putAll(validated.edits); }
+
         public void save() {
             if (edits.isEmpty()) return;
             edits.values().forEach(Edit::apply);

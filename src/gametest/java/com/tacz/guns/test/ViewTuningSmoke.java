@@ -4,6 +4,8 @@ import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.GunProperties;
+import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.client.gui.ViewTuningScreen;
 import com.tacz.guns.client.input.AimKey;
@@ -17,6 +19,7 @@ import com.tacz.guns.config.client.ViewTuningConfig;
 import com.tacz.guns.config.client.ViewTuningConfig.Axis;
 import com.tacz.guns.config.client.ViewTuningConfig.Measure;
 import com.tacz.guns.config.client.ViewTuningConfig.Mode;
+import com.tacz.guns.resource.pojo.data.gun.InaccuracyType;
 import com.tacz.guns.util.InputExtraCheck;
 import fuzs.forgeconfigapiport.fabric.api.v5.ModConfigEvents;
 import fuzs.forgeconfigapiport.fabric.impl.config.ForgeConfigApiPortConfig;
@@ -34,12 +37,14 @@ import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Pose;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 import net.neoforged.fml.config.ModConfig;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.awt.image.BufferedImage;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -68,13 +73,15 @@ final class ViewTuningSmoke {
     static void run(ClientGameTestContext ctx) {
         var key = GunInputHandler.VIEW_TUNING_KEY;
         var binding = ctx.computeOnClient(mc -> KeyMappingHelper.getBoundKeyOf(key));
+        String clipboard = ctx.computeOnClient(mc -> mc.keyboardHandler.getClipboard());
         var camera = ctx.computeOnClient(mc -> mc.options.getCameraType());
         var previous = ctx.computeOnClient(mc -> {
             var backup = new TuningValues.Draft();
             for (Axis axis : Axis.values()) remember(backup, axis.option);
             for (Measure measure : Measure.values()) remember(backup, measure.option);
             for (var option : List.of(ViewTuningConfig.MODE, ViewTuningConfig.RGB, ViewTuningConfig.DOT,
-                    ViewTuningConfig.OUTLINE, RenderConfig.CROSSHAIR_TYPE)) remember(backup, option);
+                    ViewTuningConfig.OUTLINE, ViewTuningConfig.SHAPE, ViewTuningConfig.TEXTURE_CENTER,
+                    ViewTuningConfig.DYNAMIC, RenderConfig.CROSSHAIR_TYPE)) remember(backup, option);
             mc.options.setCameraType(CameraType.FIRST_PERSON);
             key.setKey(InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_J));
             KeyMapping.resetMapping();
@@ -116,14 +123,25 @@ final class ViewTuningSmoke {
             ctx.runOnClient(mc -> check(TuningValues.visible().get(Axis.X.option) == 0d, "Cancelled draft leaked"));
             ctx.clickScreenButton(UI + "title");
             ctx.runOnClient(mc -> field(mc, "axis.x").setValue(".237"));
+            String positionCode = copy(ctx);
+            check(positionCode.equals("TACZ-POS1:0.237,0.000,0.000"), "Wrong position share: " + positionCode);
             ctx.clickScreenButton(UI + "crosshair");
             ctx.clickScreenButton(UI + "mode.preset");
+            ctx.clickScreenButton(UI + "page.geometry");
+            ctx.runOnClient(mc -> slider(mc, "thickness", 2d / 7));
+            ctx.clickScreenButton(UI + "page.color");
             ctx.runOnClient(mc -> {
                 var rgb = field(mc, "rgb"); rgb.setValue("#XY0101");
                 check(!saveButton(mc).active, "Save enabled for malformed RGB");
-                rgb.setValue("#FF00FF");
-                slider(mc, "opacity", 1); slider(mc, "thickness", 2d / 7);
+                rgb.setValue("#FFFFFF");
+                slider(mc, "hue", .5); slider(mc, "saturation", 1); slider(mc, "brightness", .5);
+                check(rgb.getValue().equals("#008080"), "Hue lost on white or channels not synchronized: " + rgb.getValue());
+                slider(mc, "opacity", 1);
             });
+            ctx.clickScreenButton("color.minecraft.magenta");
+            ctx.runOnClient(mc -> check(field(mc, "rgb").getValue().equals("#FF00FF"), "Color swatch did not reach RGB field"));
+            frame(ctx, "colors");
+            String hudCode = profileRoundTrips(ctx, positionCode);
             frame(ctx, "designer");
             diskMode = null;
             ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(PauseScreen.class);
@@ -155,8 +173,12 @@ final class ViewTuningSmoke {
             ctx.runOnClient(mc -> mc.options.setCameraType(CameraType.THIRD_PERSON_BACK));
             assertHud(frame(ctx, "third_person"), scale, 0, 0, 0);
             ctx.runOnClient(mc -> mc.options.setCameraType(CameraType.FIRST_PERSON));
+            dynamicBox(ctx, scale, key);
             ctx.getInput().pressKey(key); ctx.waitForScreen(ViewTuningScreen.class); // rebound, not the Cloth config key
-            ctx.clickScreenButton(UI + "crosshair"); ctx.clickScreenButton(UI + "mode.designer");
+            ctx.clickScreenButton(UI + "crosshair"); ctx.clickScreenButton(UI + "page.share");
+            paste(ctx, hudCode); // restore static and the original proportions before sampling the full-UV PNG
+            ctx.clickScreenButton(UI + "page.style"); ctx.clickScreenButton(UI + "mode.designer");
+            ctx.clickScreenButton(UI + "page.geometry");
             ctx.runOnClient(mc -> slider(mc, "size", (32d - 4) / (64 - 4)));
             diskMode = null;
             ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null);
@@ -164,25 +186,123 @@ final class ViewTuningSmoke {
             // The test resource pack overrides the slot with a 32x32 texture, six opaque centered columns.
             int png = assertHud(frame(ctx, "png"), scale, 6 * 32, 6, 32);
             ctx.getInput().pressKey(key); ctx.waitForScreen(ViewTuningScreen.class);
+            ctx.clickScreenButton(UI + "crosshair"); ctx.clickScreenButton(UI + "page.geometry");
+            ctx.clickScreenButton(UI + "center.original"); ctx.clickScreenButton(UI + "center.clear");
+            ctx.runOnClient(mc -> { slider(mc, "aspect", 125d/175); slider(mc, "dot_size", 4d/12); });
+            diskMode = null;
+            ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); awaitDiskReload(ctx, Mode.PNG);
+            // 32x48: six columns, except the middle 12 rows. The replacement center is 4x4, not stretched.
+            assertHud(frame(ctx, "png_center"), scale, 6 * 36 + 16, 6, 48);
+            ctx.getInput().pressKey(key); ctx.waitForScreen(ViewTuningScreen.class);
             ctx.clickScreenButton(UI + "crosshair"); ctx.clickScreenButton(UI + "reset");
             ctx.runOnClient(mc -> check(TuningValues.visible().get(ViewTuningConfig.MODE) == Mode.PRESET
                     && TuningValues.visible().get(Axis.X.option) == .237d, "Reset affected wrong page"));
+            ctx.clickScreenButton(UI + "page.share"); paste(ctx, hudCode);
+            ctx.runOnClient(mc -> check(TuningValues.visible().get(ViewTuningConfig.MODE) == Mode.DESIGNER, "Imported code not previewed"));
             ctx.getInput().pressKey(InputConstants.KEY_ESCAPE); ctx.waitForScreen(null);
-            ctx.runOnClient(mc -> check(ViewTuningConfig.MODE.get() == Mode.PNG, "Escape saved the reset"));
+            ctx.runOnClient(mc -> check(ViewTuningConfig.MODE.get() == Mode.PNG && Measure.ASPECT.option.get() == 150, "Escape saved reset/import"));
             GunMod.LOGGER.info("PORT_VIEW_TUNING: live muzzle delta={}, changed hand pixels={}, HUD designer/PNG={}/{} px at {}x, ADS and F5=0; disk, reset, cancel and rebound key passed",
                     delta, handPixels, designer, png, scale);
         } finally {
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
+            ctx.getInput().releaseKey(o -> o.keyShift);
             ctx.setScreen(() -> null);
             diskMode = null;
             Mode restored = ctx.computeOnClient(mc -> {
                 Mode mode = previous.get(ViewTuningConfig.MODE);
-                previous.save(); mc.options.setCameraType(camera); key.setKey(binding); KeyMapping.resetMapping();
+                previous.save(); mc.keyboardHandler.setClipboard(clipboard); mc.options.setCameraType(camera); key.setKey(binding); KeyMapping.resetMapping();
                 return mode;
             });
             awaitDiskReload(ctx, restored);
             ctx.waitFor(mc -> !mc.isPaused() && InputExtraCheck.isInGame());
         }
+    }
+
+    private static String copy(ClientGameTestContext ctx) {
+        ctx.clickScreenButton(UI + "copy");
+        return ctx.computeOnClient(mc -> mc.keyboardHandler.getClipboard());
+    }
+
+    private static void paste(ClientGameTestContext ctx, String code) {
+        ctx.runOnClient(mc -> mc.keyboardHandler.setClipboard(code));
+        ctx.clickScreenButton(UI + "paste");
+    }
+
+    private static String profileRoundTrips(ClientGameTestContext ctx, String position) {
+        ctx.clickScreenButton(UI + "page.share");
+        String hud = copy(ctx);
+        check(hud.startsWith("TACZ-HUD1:DESIGNER,"), "Wrong HUD share: " + hud);
+        ctx.clickScreenButton(UI + "reset");
+        String neutral = copy(ctx);
+        for (String bad : List.of(position, hud.replace("HUD1", "HUD2"), hud + ",1", hud.substring(0, hud.lastIndexOf(',') + 1) + "201", "x".repeat(257))) {
+            paste(ctx, bad);
+            check(copy(ctx).equals(neutral), "Invalid code partially applied to HUD: " + bad);
+        }
+        paste(ctx, hud);
+        check(copy(ctx).equals(hud), "HUD round trip lost values");
+        ctx.clickScreenButton(UI + "model");
+        check(copy(ctx).equals(position), "HUD import changed XYZ");
+        ctx.runOnClient(mc -> field(mc, "axis.x").setValue("-.750"));
+        String changed = copy(ctx);
+        for (String bad : List.of(hud, "TACZ-POS1:0.125,0.2,NaN", "TACZ-POS1:0.125,2.0,0.3")) {
+            paste(ctx, bad);
+            check(copy(ctx).equals(changed), "Invalid code partially applied to XYZ");
+        }
+        paste(ctx, position);
+        check(copy(ctx).equals(position), "Position round trip lost precision");
+        ctx.clickScreenButton(UI + "crosshair");
+        check(copy(ctx).equals(hud), "Position import changed HUD");
+        ctx.runOnClient(mc -> check(Axis.X.option.get() == 0d && ViewTuningConfig.MODE.get() == Mode.PRESET,
+                "Sharing bypassed Save"));
+        ctx.clickScreenButton(UI + "page.geometry");
+        return hud;
+    }
+
+    private static void dynamicBox(ClientGameTestContext ctx, int scale, KeyMapping key) {
+        ctx.getInput().pressKey(key); ctx.waitForScreen(ViewTuningScreen.class);
+        ctx.clickScreenButton(UI + "crosshair");
+        for (String shape : List.of("cross", "t", "sides")) ctx.clickScreenButton(UI + "shape." + shape);
+        ctx.clickScreenButton(UI + "motion.static");
+        ctx.clickScreenButton(UI + "page.geometry");
+        ctx.runOnClient(mc -> { slider(mc, "aspect", 125d/175); slider(mc, "dot_size", 5d/12); });
+        diskMode = null;
+        ctx.clickScreenButton(UI + "save"); ctx.waitForScreen(null); awaitDiskReload(ctx, Mode.DESIGNER);
+        ctx.waitFor(mc -> mc.player.onGround() && mc.player.getPose() == Pose.STANDING && !mc.isPaused());
+        int stand = boxFrame(ctx, "stand", scale, InaccuracyType.STAND);
+        ctx.getInput().holdKey(o -> o.keyShift);
+        ctx.waitFor(mc -> mc.player.getPose() == Pose.CROUCHING);
+        int sneak = boxFrame(ctx, "sneak", scale, InaccuracyType.SNEAK);
+        ctx.getInput().releaseKey(o -> o.keyShift);
+        ctx.waitFor(mc -> mc.player.getPose() == Pose.STANDING);
+        check(stand > sneak && sneak > 0, "Box did not contract with AK stance: " + stand + "/" + sneak);
+        // Override ONLY the test client's modified stand entry. Base gun data and pose are unchanged;
+        // a HUD driven by key inputs, a timer, or the unmodified pack spread cannot pass this frame.
+        var old = ctx.computeOnClient(mc -> {
+            var cache = IGunOperator.fromLivingEntity(mc.player).getCacheProperty();
+            var saved = cache.getCache(GunProperties.INACCURACY);
+            var perfect = new EnumMap<>(saved); perfect.put(InaccuracyType.STAND, 0f);
+            cache.setCache(GunProperties.INACCURACY, perfect);
+            return saved;
+        });
+        try {
+            check(boxFrame(ctx, "zero_cache", scale, InaccuracyType.STAND) == 0, "Ignored zero modified spread");
+        } finally {
+            ctx.runOnClient(mc -> IGunOperator.fromLivingEntity(mc.player).getCacheProperty().setCache(GunProperties.INACCURACY, old));
+        }
+        GunMod.LOGGER.info("PORT_HUD_PROFILES: AK stand/sneak/zero-cache radii={}/{}/0 GUI px; box proportions, fixed dot, HSV and separate clipboard round trips passed", stand, sneak);
+    }
+
+    private static int boxFrame(ClientGameTestContext ctx, String name, int scale, InaccuracyType stance) {
+        ctx.waitTicks(4);
+        int r = ctx.computeOnClient(mc -> {
+            float uncertainty = IGunOperator.fromLivingEntity(mc.player).getCacheProperty().getCache(GunProperties.INACCURACY).get(stance);
+            float projection = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState.projectionMatrix.m11();
+            return (int) Math.round(uncertainty * .0172275 * projection * mc.getWindow().getGuiScaledHeight() / 2);
+        });
+        // Base box 17x21, outline stroke 3 and a separate 5x5 center. Only the gap may grow.
+        int w = 17 + 2 * r, h = 21 + 2 * r;
+        assertHud(frame(ctx, "box_" + name), scale, 6 * (w + h - 6) + 25, w, h);
+        return r;
     }
 
     private static <T> void remember(TuningValues.Draft backup, ConfigValue<T> option) {
