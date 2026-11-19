@@ -251,8 +251,9 @@ dependencies {
 
     // REI — 26.3（maven.shedaniel.me 26.3.823 + maven.architectury.dev 22.0.3，2026-09-30 核实并恢复）
     compileOnly "dev.architectury:architectury-fabric:${architectury_version}"
-    compileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:$rei_version"
-    compileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei_version"
+    // The pinned runtime exposes the holder's indexed single-display removal and its reload-task guard.
+    // Optional compile classpath only: do not bundle or require REI.
+    compileOnly("me.shedaniel:RoughlyEnoughItems-fabric:$rei_version") { transitive = false }
 
     // Spark
     // runtimeOnly "curse.maven:spark-361579:4738953"

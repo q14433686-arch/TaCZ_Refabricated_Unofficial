@@ -69,6 +69,19 @@ class RecipeViewerChecks(unittest.TestCase):
             self.assertNotIn(forbidden, source)
         self.assertIn("jeiReloadListener.onResourceManagerReload(client.getResourceManager())", source)
 
+    def test_rei_refresh_does_not_rebuild_the_server_display_holder(self):
+        self.assertNotIn("reloadPlugins", code(BRIDGE))
+        rei = code(JAVA / "cn/sh1rocu/tacz/compat/rei/ReiPackRefresh.java")
+        self.assertIn("registry.getDisplayOrigin(d) == REIClientPlugin.PACK_ORIGIN", rei)
+        self.assertNotIn("startReload(", rei)
+
+    def test_book_unlocks_reward_real_ordinary_recipes(self):
+        for recipe in (RESOURCES / "data").glob("*/recipe/*.json"):
+            recipe_id = f"{recipe.parents[1].name}:{recipe.stem}"
+            unlock = json.loads((recipe.parents[1] / "advancement/recipes" / recipe.name).read_text())
+            self.assertEqual(unlock["rewards"]["recipes"], [recipe_id])
+            self.assertEqual(unlock["criteria"]["has_material"]["trigger"], "minecraft:inventory_changed")
+
     def test_optional_mixin_captures_safe_listener(self):
         config = json.loads((RESOURCES / "tacz.fabric.mixins.json").read_text())
         self.assertIn(MIXIN_NAME, config["client"])

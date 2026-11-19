@@ -58,10 +58,10 @@ public class CommonNetworkCacheEvent {
 
     private static void clearDisconnected(ClientPacketListener handler) {
         ServerMessageSyncGunPackPart.clearPendingSync();
+        RecipeViewerReloadBridge.clear();
         if (handler.getConnection() == null || handler.getConnection().isMemoryConnection()) {
             return;
         }
-        RecipeViewerReloadBridge.clear();
         CommonAssetsManager.clearInstance();
         CommonNetworkCache.INSTANCE.clear();
         ClientIndexManager.clear();

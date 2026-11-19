@@ -10,6 +10,27 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.resources.Identifier;
 
 final class ReiViewerSmoke implements ViewerSmoke {
+    private static me.shedaniel.rei.api.common.display.Display crafting(String id) {
+        return DisplayRegistry.getInstance().get(me.shedaniel.rei.plugin.common.BuiltinPlugin.CRAFTING).stream()
+                .filter(d -> d.getDisplayLocation().filter(Identifier.parse(id)::equals).isPresent()).findFirst().orElse(null);
+    }
+
+    void checkLateSync(net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext ctx) {
+        // An integrated server can resend when REI reloads both sides. Require the SAME live synced
+        // display objects, not simply a nonempty list some later packet could have recreated.
+        ctx.waitFor(mc -> !PluginManager.areAnyReloading() && crafting("tacz:gun_smith_table") != null
+                && crafting("minecraft:crafting_table") != null && !DisplayRegistry.getInstance().get(REIClientPlugin.GUN_AMMO_QUERY).isEmpty(), 1200);
+        var before = ctx.computeOnClient(mc -> java.util.List.of(crafting("tacz:gun_smith_table"), crafting("minecraft:crafting_table"),
+                DisplayRegistry.getInstance().get(REIClientPlugin.GUN_AMMO_QUERY).getFirst()));
+        ctx.runOnClient(mc -> com.tacz.guns.client.compat.RecipeViewerReloadBridge.requestReload());
+        ctx.waitFor(mc -> !PluginManager.areAnyReloading() && !DisplayRegistry.getInstance().get(REIClientPlugin.GUN_AMMO_QUERY).contains(before.get(2))
+                && forward(EXISTING), 1200);
+        ctx.runOnClient(mc -> {
+            if (crafting("tacz:gun_smith_table") != before.get(0) || crafting("minecraft:crafting_table") != before.get(1))
+                throw new AssertionError("Gun-pack refresh replaced authoritative vanilla crafting displays");
+        });
+    }
+
     @Override public boolean forward(Identifier id) {
         return !PluginManager.areAnyReloading() && DisplayRegistry.getInstance().get(REIClientPlugin.GUN_AMMO_QUERY).stream()
                 .anyMatch(display -> ViewerSmoke.isGun(display.getEntry().getGunStack(), id));

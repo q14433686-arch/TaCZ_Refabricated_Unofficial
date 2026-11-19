@@ -55,6 +55,19 @@ public class PackServerSmoke {
     }
 
     @GameTest
+    public void ordinaryTableCraftsWorkbench(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var log = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.OAK_LOG);
+        var iron = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_INGOT);
+        var block = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_BLOCK);
+        var input = net.minecraft.world.item.crafting.CraftingInput.of(3, 3, java.util.List.of(log, log, log, iron, block, iron, iron, net.minecraft.world.item.ItemStack.EMPTY, iron));
+        var recipe = level.getServer().getRecipeManager().getRecipeFor(net.minecraft.world.item.crafting.RecipeType.CRAFTING, input, level).orElseThrow();
+        helper.assertTrue(recipe.id().identifier().equals(Identifier.parse("tacz:gun_smith_table"))
+                && recipe.value().assemble(input).is(com.tacz.guns.init.ModItems.GUN_SMITH_TABLE), "Server 3x3 crafting did not yield the workbench");
+        helper.succeed();
+    }
+
+    @GameTest
     public void viewerSelectionHonorsTheOpenTable(GameTestHelper helper) {
         var inv = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL).getInventory();
         var gunId = Identifier.parse("tacz:gun/ak47");

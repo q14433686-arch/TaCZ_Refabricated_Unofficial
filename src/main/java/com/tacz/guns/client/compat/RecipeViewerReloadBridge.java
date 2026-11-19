@@ -1,5 +1,6 @@
 package com.tacz.guns.client.compat;
 
+import cn.sh1rocu.tacz.compat.rei.ReiPackRefresh;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.resource.CommonAssetsManager;
 import net.fabricmc.api.EnvType;
@@ -7,9 +8,6 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
-
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 
 /**
  * Rebuilds optional recipe-viewer registrations after TACZ's authoritative gun-pack cache arrives.
@@ -20,20 +18,15 @@ import java.lang.reflect.Modifier;
  * Requests are deliberately coalesced and deferred to {@link #tick(Minecraft)}: packet handling,
  * viewer internals, and client resources must all remain on the Minecraft client thread.</p>
  *
- * <p>The lightweight entry points are optional implementation APIs. This class only probes
- * installed viewers and uses reflection for REI. JEI uses its non-destructive lifecycle reload
- * listener, captured by an optional mixin; REI uses
- * {@code me.shedaniel.rei.RoughlyEnoughItemsCoreClient#reloadPlugins} with two nullable arguments. Never synthesize JEI's {@code AFTER_RECIPES_UPDATED} event:
- * newer JEI versions interpret it without a preceding recipe-sync notification as a server switch
- * and clear the authoritative recipe map, leaving only the vanilla client fallback. If either
- * installed viewer has moved its entry point, one normal client resource reload is used as a safe
- * fallback for the connection; it is never retriggered by the fallback itself.</p>
+ * <p>JEI uses its lifecycle listener. REI's server displays are one-shot additions to the current
+ * holder, not registrations replayed by plugins. Only replace our own gun-pack entries there.</p>
  */
 @Environment(EnvType.CLIENT)
 public final class RecipeViewerReloadBridge {
     // This listener belongs to JEI's client lifecycle, not a connection. Keep it across clear().
     private static ResourceManagerReloadListener jeiReloadListener;
     private static boolean reloadRequested;
+    private static boolean reiPending;
     private static boolean reloadInProgress;
     private static boolean resourceFallbackUsed;
 
@@ -49,11 +42,13 @@ public final class RecipeViewerReloadBridge {
     public static void requestReload() {
         if (hasJei() || hasRei()) {
             reloadRequested = true;
+            reiPending = hasRei();
         }
     }
 
     /** Drops pending work when the client leaves before the synchronized cache can be used. */
     public static void clear() {
+        reiPending = false;
         reloadRequested = false;
         reloadInProgress = false;
         resourceFallbackUsed = false;
@@ -61,10 +56,20 @@ public final class RecipeViewerReloadBridge {
 
     /** Runs from {@code END_CLIENT_TICK} after the client has a level and player. */
     public static void tick(Minecraft client) {
-        if (!reloadRequested || reloadInProgress || client.level == null || client.player == null) {
+        if (reloadInProgress || client.level == null || client.player == null) {
             return;
         }
 
+        if (reiPending) {
+            try {
+                reiPending = !ReiPackRefresh.refreshWhenReady();
+            } catch (RuntimeException | LinkageError ex) {
+                reiPending = false;
+                // Never use a destructive full reload as a fallback on an unfamiliar REI runtime.
+                GunMod.LOGGER.warn("[TACZ Recipe Viewer] Could not refresh REI gun-pack entries; leaving server displays alone.", ex);
+            }
+        }
+        if (!reloadRequested) return;
         reloadRequested = false;
         reloadInProgress = true;
         int tableCount = CommonAssetsManager.get().getAllBlocks().size();
@@ -77,15 +82,10 @@ public final class RecipeViewerReloadBridge {
         if (hasJei() && !refreshJei(client)) {
             requiresResourceFallback = true;
         }
-        if (hasRei() && !refreshRei()) {
-            requiresResourceFallback = true;
-        }
         if (!requiresResourceFallback || resourceFallbackUsed) {
             reloadInProgress = false;
             if (requiresResourceFallback) {
                 GunMod.LOGGER.warn("[TACZ Recipe Viewer] Lightweight refresh is unavailable; the one fallback for this connection was already used.");
-            } else {
-                GunMod.LOGGER.info("[TACZ Recipe Viewer] JEI/REI refresh completed.");
             }
             return;
         }
@@ -151,32 +151,6 @@ public final class RecipeViewerReloadBridge {
             return true;
         } catch (LinkageError | RuntimeException exception) {
             GunMod.LOGGER.debug("[TACZ Recipe Viewer] JEI lightweight refresh unavailable.", exception);
-            return false;
-        }
-    }
-
-    /** REI 26.3.823 reloads all plugin stages through reloadPlugins(MutableLong, ReloadStage). */
-    private static boolean refreshRei() {
-        try {
-            Class<?> coreClient = Class.forName("me.shedaniel.rei.RoughlyEnoughItemsCoreClient");
-            Method reload = null;
-            for (Method candidate : coreClient.getMethods()) {
-                if (candidate.getName().equals("reloadPlugins")
-                        && Modifier.isStatic(candidate.getModifiers())
-                        && candidate.getParameterCount() == 2) {
-                    reload = candidate;
-                    break;
-                }
-            }
-            if (reload == null) {
-                throw new NoSuchMethodException("RoughlyEnoughItemsCoreClient.reloadPlugins(MutableLong, ReloadStage)");
-            }
-            // Null requests the full plugin-stage reload; REI's own 26.3 UI uses this same
-            // two-argument entry point for a manual reload.
-            reload.invoke(null, null, null);
-            return true;
-        } catch (ReflectiveOperationException | LinkageError | RuntimeException exception) {
-            GunMod.LOGGER.debug("[TACZ Recipe Viewer] REI lightweight refresh unavailable.", exception);
             return false;
         }
     }

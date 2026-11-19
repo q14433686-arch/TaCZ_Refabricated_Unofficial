@@ -43,9 +43,17 @@ interface ViewerSmoke {
             ctx.runOnClient(mc -> {
                 if (api.forward(NEW) || api.reverse(NEW)) throw new AssertionError("New gun already in viewer before conversion");
             });
+            // Prove discovery on the vanilla recipe-book channel, not just a custom viewer category.
+            world.getServer().runOnServer(server -> world.getConnection().getServerPlayer().getInventory()
+                    .add(new ItemStack(net.minecraft.world.item.Items.IRON_BLOCK)));
+            ctx.waitFor(mc -> mc.player.getRecipeBook().getCollections().stream().flatMap(c -> c.getRecipes().stream())
+                    .flatMap(e -> e.display().result().resolveForStacks(net.minecraft.world.item.crafting.display.SlotDisplayContext.fromLevel(mc.level)).stream())
+                    .anyMatch(stack -> stack.is(com.tacz.guns.init.ModItems.GUN_SMITH_TABLE)), 300);
+            if (api instanceof ReiViewerSmoke rei) rei.checkLateSync(ctx);
             ConversionReloadSmoke.run(ctx, world);
             world.getConnection().waitForChunksRender();
             ctx.waitFor(mc -> mc.gui.screen() == null && mc.gui.overlay() == null && api.forward(NEW) && api.reverse(NEW), 1200);
+            if (api instanceof ReiViewerSmoke rei) rei.checkLateSync(ctx);
             Path background = ctx.takeScreenshot("tacz_world_before_" + viewer);
             // Match the normal player entry point, not an in-flight join/loading screen.
             ctx.getInput().pressKey(options -> options.keyInventory);
