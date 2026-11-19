@@ -101,7 +101,7 @@ public final class ReimaginedSmoke {
         server.runCommand("gamerule advance_time false"); server.runCommand("time set 4000"); server.runCommand("weather clear");
         server.runCommand("gamerule spawn_mobs false"); server.runCommand("kill @e[type=!minecraft:player]");
         var base=server.computeOnServer(s->{var p=world.getConnection().getServerPlayer(); var pos=p.blockPosition(); var level=p.level();
-            for(int x=-12;x<=12;x++) for(int z=-4;z<=30;z++) level.setBlock(pos.offset(x,-1,z), Blocks.WHITE_CONCRETE.defaultBlockState(),Block.UPDATE_ALL);
+            for(int x=-12;x<=12;x++) for(int z=-4;z<=30;z++) level.setBlock(pos.offset(x,-1,z), net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(Identifier.parse("minecraft:white_concrete")).defaultBlockState(),Block.UPDATE_ALL);
             return pos;});
         ctx.getInput().lookAt(0,18);
         world.getConnection().waitForChunksRender(); ctx.waitTicks(12);
