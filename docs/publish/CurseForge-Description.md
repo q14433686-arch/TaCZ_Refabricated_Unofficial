@@ -8,7 +8,7 @@ In **Files**, match the **exact Minecraft version** and the **Fabric** loader. T
 
 | Minecraft | Java | What to expect |
 |---|---|---|
-| 26.3 | 25 | The development line is bringing over selected upstream 1.2.0-hotfix features. Check the individual file's changelog; the older R1-hotfix3 release predates the features below. |
+| 26.3 | 25 | The development version is `1.2.0+fabric.26.3.R1`, with selected upstream 1.2.0-hotfix features. Check the individual file's changelog; the older R1-hotfix3 release predates the features below. |
 | 26.2, 26.1.2 | 25 | Separate builds with their own pack, renderer and optional-mod compatibility. |
 | 1.21.11 | 21 | A separate build for this game version, not a 26.x jar. |
 
@@ -16,7 +16,7 @@ In **Files**, match the **exact Minecraft version** and the **Fabric** loader. T
 
 The port adapts pack loading, networking and scopes to each game version. It includes **TacZ Mesh Loader** for supported high-poly packs and **part of LRTactical's data-driven framework**; it is not the full LRTactical mod. Experimental scope picture-in-picture (PIP) is optional and off by default.
 
-**In the 26.3 development build**, you can hang items on pegboards or lock them in display cases, use tiered ammo storage, and browse compatible items in JEI or REI. Hold a gun and open **Esc → TaCZ: View settings** to set first-person position and a HUD style for your launcher account. A style for one gun overrides its category; neither changes the scope reticle or gameplay. The same build keeps ordinary crafting recipes in REI when gun-pack data arrives after login. Recipe-book unlocks also require updated server data. These changes are **not** promised by every 26.3 upload or by the three older lines. The port retains the `1.1.8` compatibility baseline; it does not claim support for every 1.2.0 pack.
+**In the 26.3 development build**, you can hang items on pegboards or lock them in display cases, use tiered ammo storage, and browse compatible items in JEI or REI. Hold a gun and open **Esc → TaCZ: View settings** to set first-person position and a HUD style for your launcher account. A style for one gun overrides its category; neither changes the scope reticle or gameplay. The same build keeps ordinary crafting recipes in REI when gun-pack data arrives after login. Recipe-book unlocks also require updated server data. These changes are **not** promised by every 26.3 upload or by the three older lines. A pack requiring exactly `1.1.8` will not pass the new version check. Passing the check does not guarantee full support for every 1.2.0 pack.
 
 ### Packs and troubleshooting
 
@@ -29,7 +29,7 @@ The port adapts pack loading, networking and scopes to each game version. It inc
 
 这是 TaCZ 的**非官方 Fabric 移植**。在「Files」按自己的 MC 版本选文件：26.3、26.2、26.1.2 使用 Java 25，1.21.11 使用 Java 21；都需要对应版本的 Fabric API 与 Forge Config API Port。普通枪包放在 `.minecraft/tacz/`，ZIP 不用解压，包根必须有 `gunpack.meta.json`。
 
-**26.3 开发构建**中可以在挂板和展示柜陈列物品、使用分级弹药库，持枪按 **Esc → TaCZ 持枪与准星** 可按账号保存持枪位置，并为单枪或类别指定准星。普通工作台合成、配方书解锁和 JEI/REI 查询是三条不同路径。旧版发布文件不会因源码合并自动更新，另外三条线也不共用 26.3 的构建；安装前看该文件的更新说明。内置 TML 不代表所有挂板物品都有静态 VBO，也不保证任意第三方枪包、光影或完整 LRTactical 兼容。
+**26.3 开发构建 `1.2.0+fabric.26.3.R1`** 中可以在挂板和展示柜陈列物品、使用分级弹药库，持枪按 **Esc → TaCZ 持枪与准星** 可按账号保存持枪位置，并为单枪或类别指定准星。普通工作台合成、配方书解锁和 JEI/REI 查询是三条不同路径。旧版发布文件不会因源码合并自动更新，另外三条线也不共用 26.3 的构建；安装前看该文件的更新说明。内置 TML 不代表所有挂板物品都有静态 VBO，也不保证任意第三方枪包、光影或完整 LRTactical 兼容。
 
 ### Credits and licenses / 署名与许可
 

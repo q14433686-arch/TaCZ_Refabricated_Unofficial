@@ -31,7 +31,7 @@ TaCZ（Timeless & Classics Guns: Zero）的**非官方** Fabric 移植，GPL-3.0
 只要你改动了任一分支的 `gradle.properties` 中的 `mod_version` 或任何依赖版本，
 **必须在同一次改动中**同步更新该分支根 `README.md` 的以下位置：
 
-1. 顶部「本分支当前源码版本为 **`1.1.8+fabric.<mc>.R<n>`**」
+1. 顶部「本分支当前源码版本为 **`<核心版本>+fabric.<mc>.R<n>`**」
 2. 「> 仓库源码已使用 **R<n>** 版本号」提示行
 3. §1 支持环境表里的「**R<n>** 构建使用 ...」与「本 mod」行
 4. 依赖版本变了的话，支持环境表对应格子（Fabric API / Forge Config API Port / Java）

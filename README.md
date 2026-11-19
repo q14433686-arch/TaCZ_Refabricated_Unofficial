@@ -14,9 +14,9 @@
 - **调自己的持枪位置与准星**：持枪按 **Esc → TaCZ 持枪与准星**。位置按本机启动器账号保存；准星可以只改一把枪，或给整个类别设默认。[玩家设置指南](#玩家设置与普通合成) · [两把同类枪的 HUD 对照](build-reports/visual/44482591156-hud-rules.png)。
 - **合成和查配方**：枪械制造台本身在原版 3×3 工作台制作；取得铁块可解锁配方书条目。枪包晚于进服同步时，REI 只更新本插件的展示，不清掉服务器普通配方。[三种情况怎么区分](docs/investigations/ORDINARY_CRAFTING_26_3.md)。
 
-**下载要分清：**下表的 Release 是已发布文件；要试上面这批新功能，请用[经过专服和客户端验证的 26.3 测试 JAR（Actions ZIP）](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44482591156/artifacts/14509073878)，或[从源码构建](#9-从源码构建)。测试产物有保留期限；合并源码不会更新旧 Release 或 CurseForge 上的文件。
+**下载要分清：**下表链接的是已发布文件。要试 1.2.0 R1，请在 [26.3 构建记录](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/workflows/build.yml?query=branch%3A26.3)中选择成功的构建，解压 Artifacts 的 ZIP，核对 JAR 文件名；也可[从源码构建](#9-从源码构建)。测试产物有保留期限，旧 Release 不会随源码升级。
 
-本分支当前源码版本为 **`1.1.8+fabric.26.3.R1-hotfix3`**，版本字符串与旧 Release 相同，反馈请附构建 SHA 或文件来源。以 `0.7.0-forge1.1.8-hotfix` 为基线，已移入上游 **1.2.0-hotfix 的部分能力**，不声明完整 1.2.0 枪包兼容，也不需要安装 1.21.1 的 SimpleBedrockModel。[玩家可感变化](docs/investigations/FABRIC_120_PLAYER_CHECKLIST.md) · [移植账本](docs/investigations/FABRIC_120_PORT_26_3.md) · [三条旧线的平行移植指南](docs/lineage/26.3-backports/README.md)。
+本分支当前源码版本为 **`1.2.0+fabric.26.3.R1`**。26.3 从这一版重新以 R1 计数。以 `0.7.0-forge1.1.8-hotfix` 为基线，已移入上游 **1.2.0-hotfix 的部分能力**，不声明完整 1.2.0 枪包兼容，也不需要安装 1.21.1 的 SimpleBedrockModel。[玩家可感变化](docs/investigations/FABRIC_120_PLAYER_CHECKLIST.md) · [移植账本](docs/investigations/FABRIC_120_PORT_26_3.md) · [三条旧线的平行移植指南](docs/lineage/26.3-backports/README.md)。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [CurseForge](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated)
@@ -28,14 +28,14 @@
 
 | Minecraft | Java | 源码分支 | 已发布的文件（不是本轮测试包） |
 |---|---|---|---|
-| **26.3** | 25 | [`26.3`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3) | [R1-hotfix3](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.3%E7%9A%84mod%E6%96%87%E4%BB%B6_R1_HOTFIX-3) |
+| **26.3** | 25 | [`26.3`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3) | [1.1.8 R1-hotfix3（旧版）](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.3%E7%9A%84mod%E6%96%87%E4%BB%B6_R1_HOTFIX-3) |
 | **26.2** | 25 | [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) | [R3-hotfix4](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.2%E7%9A%84mod%E6%96%87%E4%BB%B6_R3_HOTFIX-4) |
 | **26.1.2** | 25 | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) | [R3-hotfix4](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.1.2%E7%9A%84mod%E6%96%87%E4%BB%B6_R3_HOTFIX-4) |
 | **1.21.11** | 21 | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) | [R3-hotfix4](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/1.21.11%E7%9A%84mod%E6%96%87%E4%BB%B6_R3_HOTFIX-4) |
 
 四条线都需要对应 MC 版本的 Fabric API 和 Forge Config API Port。本文环境表和下方测试只对应 **26.3**。
 
-> 仓库源码已使用 R1-hotfix3 版本号；请按文件来源区分已发布版与开发测试版。
+> 仓库源码已使用 R1 版本号；以上 Release 表不代表 1.2.0 R1 已发版。
 
 ---
 
@@ -46,15 +46,15 @@
 | Minecraft | **26.3** |
 | 加载器 | **Fabric Loader 0.19.5+** |
 | Java | **25+** |
-| Fabric API | 需要安装；R1-hotfix3 构建使用 **0.160.7+26.3** |
+| Fabric API | 需要安装；R1 构建使用 **0.160.7+26.3** |
 | Forge Config API Port | **26.3.0+，硬依赖** |
-| 本 mod | **`1.1.8+fabric.26.3.R1-hotfix3`** |
+| 本 mod | **`1.2.0+fabric.26.3.R1`** |
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
 下列是 26.3 的可选集成，不是硬依赖。[JEI 与 REI 的普通配方及枪包重载](docs/investigations/ORDINARY_CRAFTING_26_3.md)已在两个独立客户端作业验证；不据此推断其他模组组合也已通过。
 
-| 可选 mod | R1-hotfix3 编译 pin / 建议版本 | 用途 |
+| 可选 mod | R1 编译 pin / 建议版本 | 用途 |
 |---|---|---|
 | JEI | 编译 pin **31.8.0.48**（beta） | 内置 Ammo Query 与工作台类别 |
 | REI | 编译 pin **26.3.823**（+ Architectury **22.0.3**） | 内置 Ammo Query 与工作台类别 |
@@ -81,7 +81,7 @@
   同时修正标靶矿车的同类空 UUID 和皮肤解析问题。R1-hotfix3 让查得真实 UUID 的方块档案
   继续由客户端动态解析皮肤；隔离桩回归已通过，尚未实机验证，见下方变更清单。
 
-**26.3 R1-hotfix3**（当前源码版本）的变更清单见 [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)：
+**1.1.8 时期的 26.3 R1-hotfix3** 历史变更见 [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)：
 渲染底层 renderpearl 迁移、第一人称拆分、shaderc 着色器、Iris 26.3 裁剪判定重做、26.3 战利品表/配方 codec/
 配方同步行为修复、枪包同步后的 JEI 刷新改为捕获 JEI 生命周期 listener（不再伪造配方更新事件）、
 弹孔朝向修复、YSM（Yes Steve Model）状态门面与第一人称渲染归属握手，
@@ -298,7 +298,7 @@ ScopePipAllowShaderPacks = true   # 默认 false 是保守默认，不是已知�
 4. 把三个 mod 的 `.jar` 放入 `.minecraft/mods/`；
 5. 启动游戏。第三方枪包按下一节安装。
 
-不要只看文件名中的 `1.1.8`：还必须核对 Minecraft 版本与加载器。
+不要只看文件名中的 `1.2.0`：还必须核对 Minecraft 版本与加载器。
 
 ---
 
@@ -354,9 +354,7 @@ gunpack.meta.json
 
 ### 版本约束
 
-枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
-作为 SemVer 核心，`+fabric.26.3.R1-hotfix3` 是构建元数据，不参与 Fabric 的版本先后比较。
-一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
+枪包的 `gunpack.meta.json` 通过 `dependencies.tacz` 检查模组版本。本线按 `1.2.0` 比较，`+fabric.26.3.R1` 是构建元数据，不参与排序。要求 `>=1.2.0` 或 `>=1.1.8` 的包可以通过这项检查；锁定 `=1.1.8` 或要求 `<1.2.0` 的包则不会通过。通过版本检查不等于枪包的所有功能都已兼容。
 
 ### 枪包 lang 文件写错时的表现（26.3）
 
