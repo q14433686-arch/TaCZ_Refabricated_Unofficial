@@ -60,6 +60,9 @@ if [[ -z ${TACZ_SMOKE_VIEWER:-} && ${TACZ_SMOKE_CONTROLLER:-} != true ]]; then
     for angle in 35 125; do
         grep -Fq "PORT_BONE_LIGHT: yaw=$angle plain" "$run/logs/latest.log"
     done
+    for sample in add_rear emissive_rear; do
+        test -s "$(find "$run/screenshots" -name "*tacz_particle_pass_${sample}.png" -print -quit)"
+    done
     grep -Fq 'PORT_PARTICLE_PASS: rear' "$run/logs/latest.log"
     grep -Fq 'PORT_CONSTRAINT: ADS pixels' "$run/logs/latest.log"
     grep -Fq 'PORT_BILLBOARD: pitched' "$run/logs/latest.log"
