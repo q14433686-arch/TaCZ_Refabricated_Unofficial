@@ -18,9 +18,12 @@ final class ScopeUserRegressionSmoke {
         var scope=Identifier.parse("tacz:scope_amg_10");
         var saved=world.getServer().computeOnServer(s->world.getConnection().getServerPlayer().getMainHandItem().copy());
         var prior=ctx.computeOnClient(mc->new boolean[]{mc.options.bobView().get(),RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.get()});
+        var facing=ctx.computeOnClient(mc -> new float[]{mc.player.getYRot(), mc.player.getXRot()});
         StringBuilder errors=new StringBuilder();
         try {
             ctx.runOnClient(mc->{mc.options.bobView().set(false);RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.set(true);});
+            // Keep the moving grass/sky boundary outside the optical-axis sampling window.
+            ctx.getInput().lookAt(0, -16);
             for(int zoom=0;zoom<3;zoom++) {
                 final int z=zoom;
                 ctx.getInput().releaseKey(AimKey.AIM_KEY);
@@ -51,6 +54,7 @@ final class ScopeUserRegressionSmoke {
             GunMod.LOGGER.info("PORT_AMG10: all three zooms produced bounded on-axis apertures");
         } finally {
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
+            ctx.getInput().lookAt(facing[0], facing[1]);
             ctx.runOnClient(mc->{mc.options.bobView().set(prior[0]);RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.set(prior[1]);});
             world.getServer().runOnServer(s->world.getConnection().getServerPlayer().setItemInHand(InteractionHand.MAIN_HAND,saved));
             ctx.waitTicks(25);
@@ -91,7 +95,10 @@ final class ScopeUserRegressionSmoke {
                 // Additive magenta over blue sky is pale pink, not saturated magenta.
                 // Measure the injected red/blue energy against the same ADS frame;
                 // sky brightness alone must never satisfy the positive control.
-                if(dr>30 && db>=0 && dr+db-2*dg>40)magenta++;
+                // Require the resulting hue too. A one-row shift of the horizon changes
+                // green grass to blue sky with a large red delta, but neither color is pink.
+                int green = c >>> 8 & 255;
+                if ((c >>> 16 & 255) > green+15 && (c & 255) > green+15 && dr>30 && db>=0 && dr+db-2*dg>40) magenta++;
             }
             if(zoom<2?magenta>0:magenta<8)throw new AssertionError("Owned particle aperture policy zoom="+zoom+" magenta="+magenta);
             GunMod.LOGGER.info("PORT_SCOPE_PARTICLE: AMG10 zoom={} central magenta={}",zoom,magenta);

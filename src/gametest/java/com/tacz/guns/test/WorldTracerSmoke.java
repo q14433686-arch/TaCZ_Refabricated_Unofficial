@@ -61,6 +61,7 @@ public final class WorldTracerSmoke {
     public static void end() { inside = false; }
 
     static void run(ClientGameTestContext ctx, TestSingleplayerContext world) {
+        var facing = ctx.computeOnClient(mc -> new float[]{mc.player.getYRot(), mc.player.getXRot()});
         var pos = world.getServer().computeOnServer(s -> BlockPos.containing(world.getConnection().getServerPlayer().getEyePosition()).south(15));
         var saved = world.getServer().computeOnServer(s -> {
             var p = world.getConnection().getServerPlayer();
@@ -95,6 +96,7 @@ public final class WorldTracerSmoke {
             GunMod.LOGGER.info("PORT_WORLD_TRACER: one funded shot, {} distinct render ticks, frozen origin after a turn, five stone fragments", frames);
         } finally {
             ctx.getInput().releaseKey(ShootKey.SHOOT_KEY);
+            ctx.getInput().lookAt(facing[0], facing[1]);
             ctx.runOnClient(mc -> { watching = inside = false; tracer = null; SurfaceFragmentSmoke.watch(null); });
             world.getServer().runOnServer(s -> {
                 var p = world.getConnection().getServerPlayer();

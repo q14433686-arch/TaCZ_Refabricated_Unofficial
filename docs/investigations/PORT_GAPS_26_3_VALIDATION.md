@@ -31,6 +31,15 @@
 
 [光影客户端][trace-world]在同一提交测到一次游戏内绑定开火、服务端弹匣少一发、同一曳光在 **20 个不同游戏刻**提交模型，转头前后相对初始枪口/相机快照的位置匹配，随后石头命中发出五个普通碎屑。不是只调用 renderer 或读取缓存字段。8 个独立碰撞对照也通过。REI 和 Controllable 作业通过；本次 JEI 作业在下载 Maven 父 POM 时收到 HTTP 429，未进入游戏。
 
+## `b4310c3`：展示与两个粒子对照
+
+[普通客户端][b43-mesa]已越过完整生存放入测试。独立、只写颜色的格线管线在[空格](../../build-reports/visual/44430716200-tacz_rack_empty.png)与[实物](../../build-reports/visual/44430716200-tacz_rack_placed.png)之间覆盖 **174/174** 个原边线像素（同一 ±2 像素定位窗）。第二面的[空格](../../build-reports/visual/44430716200-tacz_corner_empty.png)、[预览](../../build-reports/visual/44430716200-tacz_corner_ghost.png)、[放入](../../build-reports/visual/44430716200-tacz_corner_placed.png)测得 **1,601/2,639** 个中间色／变化像素。允许展示的普通[绿宝石预览](../../build-reports/visual/44430716200-tacz_vanilla_quad_ghost.png)对[空](../../build-reports/visual/44430716200-tacz_vanilla_quad_empty.png)／[实](../../build-reports/visual/44430716200-tacz_vanilla_quad_placed.png)为 **1,867/2,065**。这些是 K（枪）或原版使用键（普通物品）经客户端、服务端各自的交互和库存同步，不是直接调用 BE。
+
+这次两项粒子断言仍红，原帧指出了夹具的问题：
+
+- 普通客户端在[亮色天空上](../../build-reports/visual/44430716200-tacz_snowstorm_runtime.png)拍无背板的加色脉冲。中心有浅粉色，但旧的全图深洋红筛选数为零。改为对准同一片煤块空墙取前后帧，仍须观察真实的四粒、实际提交、局部新增色及到期回收。
+- [Iris 的 zoom 1][b43-iris] 单次差分报 60。比对[基准](../../build-reports/visual/44430716192-tacz_amg10_particle_baseline_1.png)和[注入帧](../../build-reports/visual/44430716192-tacz_amg10_particle_1.png)，**全部 60 个都在 y=264**，是草地 `(82,102,46)` 变成蓝天（G 仍大于 R），不是一排洋红粒子。夹具改为避开地平线，同时验新增能量及最终色相；不放宽镜内零像素门槛。回算旧 zoom 2 正对照仍为 **125/125**。这不证明任意相机／光影都能裁剪。
+
 ## 还要以实际消费者判定的项目
 
 - **输入与展示：** 用提示所显示的 Interact（非枪物品用原版使用键）放入。`ae8f1d9` 的[普通客户端][rack-failure]在等待生存手变空时超时；`043fba5` 已捕获原因：客户端和服务端均未收到 use，当前 GUI 是原版 `FriendsListConfirmScreen`，默认 O 与好友列表冲突。改新默认 K，保留用户已有绑定；不退回直接改 BE 来变绿。分别检查方块白名单、按键派发、两端潜行状态、客户端预测、服务端库存、拐角第二面和普通物品的不透明／半透明。
@@ -48,3 +57,5 @@
 [iris]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44428762277/job/135240376445
 [outline-fail]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44429872717/job/135244203544
 [trace-world]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44429872551/job/135244203201
+[b43-mesa]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44430716200/job/135247080971
+[b43-iris]: https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44430716192/job/135247080786

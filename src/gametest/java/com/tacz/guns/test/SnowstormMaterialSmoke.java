@@ -54,6 +54,7 @@ final class SnowstormMaterialSmoke {
                 world.getConnection().waitForChunksRender(); ctx.waitTicks(3);
                 var prefix = "tacz_material_" + (dark ? "dark_" : "light_");
                 var base = read(ctx.takeScreenshot(prefix + "control"));
+                if (dark) SnowstormSmoke.checkRuntimePulse(ctx, base);
                 var images = new HashMap<String,BufferedImage>();
                 for (String name : List.of("particles_opaque", "particles_alpha", "particles_blend", "particles_add", "particles_emissive", "energy_swirl")) {
                     ctx.runOnClient(mc -> {

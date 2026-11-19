@@ -83,25 +83,36 @@ final class SnowstormSmoke {
             rt.tick();
             if(parent.getParticleCount()!=5 || rt.particleCount()!=5)throw new AssertionError("Nested expression leaked into child: parent="+parent.getParticleCount()+", total="+rt.particleCount());
             rt.clear();
-            var camera=mc.gameRenderer.mainCamera();var pos=camera.position().add(mc.player.getLookAngle().scale(2));
-            WorldEmitterManager.getInstance().addEmitter(mc.level,new Matrix4f().translation((float)pos.x,(float)pos.y,(float)pos.z),Vec3.ZERO,def,"variable.count = 4;");
         });
-        long before=ctx.computeOnClient(mc->WorldEmitterManager.getInstance().rendered());
-        ctx.waitTicks(3);
-        if(ctx.computeOnClient(mc->WorldEmitterManager.getInstance().rendered())<=before)throw new AssertionError("Snowstorm did not submit actual render geometry");
-        try {
-            var image=javax.imageio.ImageIO.read(ctx.takeScreenshot("tacz_snowstorm_runtime").toFile());
-            int pixels=0;
-            for(int y=0;y<image.getHeight();y++)for(int x=0;x<image.getWidth();x++){
-                int color=image.getRGB(x,y),r=(color>>16)&255,g=(color>>8)&255,b=color&255;
-                if(r>100&&b>100&&r>g*1.5&&b>g*1.5)pixels++;
-            }
-            if(pixels<8)throw new AssertionError("Submitted Snowstorm geometry was not visibly magenta: "+pixels);
-            GunMod.LOGGER.info("PORT_SNOWSTORM_PIXELS: {} magenta pixels in actual client frame",pixels);
-        }catch(java.io.IOException e){throw new java.io.UncheckedIOException(e);}
-        ctx.waitTicks(25);
-        if(ctx.computeOnClient(mc->WorldEmitterManager.getInstance().emitterCount())!=0)throw new AssertionError("Snowstorm retained expired emitters");
         SnowstormMaterialSmoke.run(ctx, world);
         GunMod.LOGGER.info("PORT_SNOWSTORM: compiled Molang math, isolated variables, pre-effect count, lifetimes and real render geometry passed");
+    }
+
+    /** Additive light against a known dark surface. A white sky can saturate an additive draw;
+     * never use the previous test's arbitrary camera/backdrop as the visibility control. */
+    static void checkRuntimePulse(ClientGameTestContext ctx, java.awt.image.BufferedImage emptyWall) {
+        var rt = WorldEmitterManager.getInstance();
+        long before = ctx.computeOnClient(mc -> {
+            var def = new ParticleEffectDeserializer().parse(JsonParser.parseString(DEFINITION), new ParticleMolangEnvironment());
+            var pos = mc.gameRenderer.mainCamera().position().add(mc.player.getLookAngle().scale(2));
+            long count = rt.rendered();
+            rt.addEmitter(mc.level, new Matrix4f().translation((float)pos.x, (float)pos.y, (float)pos.z), Vec3.ZERO, def, "variable.count = 4;");
+            return count;
+        });
+        ctx.waitFor(mc -> rt.particleCount() == 4 && rt.rendered() > before);
+        ctx.waitTicks(2);
+        try {
+            var image = javax.imageio.ImageIO.read(ctx.takeScreenshot("tacz_snowstorm_runtime").toFile());
+            int pixels = 0, cx = image.getWidth() / 2, cy = image.getHeight() / 2;
+            for (int y = cy-42; y < cy+42; y++) for (int x = cx-42; x < cx+42; x++) {
+                int color = image.getRGB(x,y), r = color >> 16 & 255, g = color >> 8 & 255, b = color & 255;
+                int base = emptyWall.getRGB(x,y);
+                if (r>100 && b>100 && r>g*1.5 && b>g*1.5 && r-(base>>16&255)>45 && b-(base&255)>45) pixels++;
+            }
+            if (pixels < 8) throw new AssertionError("Snowstorm pulse added only " + pixels + " magenta pixels over the wall");
+            GunMod.LOGGER.info("PORT_SNOWSTORM_PIXELS: {} new magenta pixels over the empty wall", pixels);
+        } catch (java.io.IOException e) { throw new java.io.UncheckedIOException(e); }
+        ctx.waitTicks(25);
+        if (ctx.computeOnClient(mc -> rt.emitterCount()) != 0) throw new AssertionError("Snowstorm retained expired emitters");
     }
 }
