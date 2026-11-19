@@ -11,11 +11,14 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.Connection;
 import net.minecraft.network.FriendlyByteBuf;
+import io.netty.handler.codec.DecoderException;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,36 +30,38 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
     private final Map<DataType, Map<Identifier, String>> cache;
 
     public ServerMessageSyncGunPack(FriendlyByteBuf buf) {
-        this(readCache(buf));
+        this(readCache(buf, Short.MAX_VALUE));
     }
 
     public ServerMessageSyncGunPack(Map<DataType, Map<Identifier, String>> cache) {
         this.cache = cache;
     }
 
-    /**
-     * 26.3: {@code FriendlyByteBuf#readMap/writeMap} 已被移除，改为手写「先长度后条目」的循环。
-     * 线格式与 26.2 的 readMap/writeMap 完全一致（varint 长度 + 逐条 key/value），
-     * 所以不影响与旧客户端以外的任何东西 —— 本包本来就要求两端同版本。
-     */
-    private static Map<DataType, Map<Identifier, String>> readCache(FriendlyByteBuf buf) {
-        int typeCount = buf.readVarInt();
-        Map<DataType, Map<Identifier, String>> cache = new HashMap<>(Math.max(16, typeCount));
-        for (int i = 0; i < typeCount; i++) {
-            DataType dataType = buf.readEnum(DataType.class);
-            int entryCount = buf.readVarInt();
-            Map<Identifier, String> entries = new HashMap<>(Math.max(16, entryCount));
-            for (int j = 0; j < entryCount; j++) {
+    // Shared inner wire format. The legacy channel keeps its old string limit.
+    static Map<DataType, Map<Identifier, String>> readCache(FriendlyByteBuf buf, int maxChars) {
+        int types = buf.readVarInt();
+        if (types < 0 || types > DataType.values().length) throw new DecoderException("Invalid data type count: " + types);
+        Map<DataType, Map<Identifier, String>> cache = new EnumMap<>(DataType.class);
+        for (int i = 0; i < types; i++) {
+            DataType type = buf.readEnum(DataType.class);
+            int count = buf.readVarInt();
+            if (count < 0 || count > buf.readableBytes() / 2) throw new DecoderException("Invalid entry count: " + count);
+            var entries = new HashMap<Identifier, String>();
+            for (int j = 0; j < count; j++) {
                 Identifier id = buf.readIdentifier();
-                entries.put(id, buf.readUtf());
+                if (entries.put(id, buf.readUtf(maxChars)) != null) throw new DecoderException("Duplicate resource: " + id);
             }
-            cache.put(dataType, entries);
+            if (cache.put(type, entries) != null) throw new DecoderException("Duplicate data type: " + type);
         }
+        if (buf.isReadable()) throw new DecoderException("Trailing gun pack data");
         return cache;
     }
 
     public void write(FriendlyByteBuf buf) {
-        Map<DataType, Map<Identifier, String>> cache = getCache();
+        writeCache(buf, cache, Short.MAX_VALUE);
+    }
+
+    static void writeCache(FriendlyByteBuf buf, Map<DataType, Map<Identifier, String>> cache, int maxChars) {
         buf.writeVarInt(cache.size());
         for (Map.Entry<DataType, Map<Identifier, String>> typeEntry : cache.entrySet()) {
             buf.writeEnum(typeEntry.getKey());
@@ -64,7 +69,7 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
             buf.writeVarInt(entries.size());
             for (Map.Entry<Identifier, String> entry : entries.entrySet()) {
                 buf.writeIdentifier(entry.getKey());
-                buf.writeUtf(entry.getValue());
+                buf.writeUtf(entry.getValue(), maxChars);
             }
         }
     }
@@ -76,28 +81,29 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
 
     @Environment(EnvType.CLIENT)
     public void handle(LocalPlayer player, PacketSender responseSender) {
-        // Network delivery need not be on the client event loop. Cache installation, index rebuilding,
-        // and optional recipe-viewer registration all touch client-owned state, so keep their order
-        // together on Minecraft's executor.
+        Connection connection = player.connection.getConnection();
         Minecraft.getInstance().execute(() -> {
-            boolean remoteConnection = player.connection.getConnection() != null
-                    && !player.connection.getConnection().isMemoryConnection();
-            doSync(this, remoteConnection);
+            if (isCurrent(connection)) installCache(cache, connection);
         });
     }
 
+    @Environment(EnvType.CLIENT)
+    static boolean isCurrent(Connection connection) {
+        var handler = Minecraft.getInstance().getConnection();
+        return handler != null && handler.getConnection() == connection && connection.isConnected();
+    }
 
     public Map<DataType, Map<Identifier, String>> getCache() {
         return cache;
     }
 
     @Environment(EnvType.CLIENT)
-    private static void doSync(ServerMessageSyncGunPack message, boolean remoteConnection) {
-        if (remoteConnection) {
+    static void installCache(Map<DataType, Map<Identifier, String>> cache, Connection connection) {
+        if (!connection.isMemoryConnection()) {
             CommonAssetsManager.clearInstance();
         }
         // Ordering is intentional: viewers must observe the newly installed cache and rebuilt index.
-        CommonNetworkCache.INSTANCE.fromNetwork(message.cache);
+        CommonNetworkCache.INSTANCE.fromNetwork(cache);
         // 通知客户端重新构建ClientIndex
         ClientIndexManager.reload();
         RecipeViewerReloadBridge.requestReload();

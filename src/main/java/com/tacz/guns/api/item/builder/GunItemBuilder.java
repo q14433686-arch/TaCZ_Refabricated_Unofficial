@@ -8,6 +8,7 @@ import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.api.item.gun.GunItemManager;
 import com.tacz.guns.init.ModItems;
+import com.tacz.guns.util.VirtualOemAttachment;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
@@ -20,6 +21,7 @@ public final class GunItemBuilder {
     private Identifier gunId;
     private FireMode fireMode = FireMode.UNKNOWN;
     private boolean bulletInBarrel = false;
+    private EnumMap<AttachmentType, Identifier> virtualAttachments = Maps.newEnumMap(AttachmentType.class);
     private EnumMap<AttachmentType, Identifier> attachments = Maps.newEnumMap(AttachmentType.class);
 
     private GunItemBuilder() {
@@ -64,6 +66,11 @@ public final class GunItemBuilder {
         return this;
     }
 
+    public GunItemBuilder putAllVirtualAttachment(EnumMap<AttachmentType, Identifier> defaults) {
+        this.virtualAttachments = defaults;
+        return this;
+    }
+
     public GunItemBuilder setHeatData(boolean heatData) {
         this.heatData = heatData;
         return this;
@@ -81,10 +88,7 @@ public final class GunItemBuilder {
             iGun.setCurrentAmmoCount(gun, this.ammoCount);
             iGun.setBulletInBarrel(gun, this.bulletInBarrel);
             if (heatData) iGun.setHeatAmount(gun, 0f);
-            this.attachments.forEach((type, id) -> {
-                ItemStack attachmentStack = AttachmentItemBuilder.create().setId(id).build();
-                iGun.installAttachment(gun, attachmentStack);
-            });
+            installAttachments(gun, iGun);
         }
         return gun;
     }
@@ -106,11 +110,19 @@ public final class GunItemBuilder {
             iGun.setFireMode(gun, this.fireMode);
             iGun.setCurrentAmmoCount(gun, this.ammoCount);
             iGun.setBulletInBarrel(gun, this.bulletInBarrel);
-            this.attachments.forEach((type, id) -> {
-                ItemStack attachmentStack = AttachmentItemBuilder.create().setId(id).build();
-                iGun.installAttachment(gun, attachmentStack);
-            });
+            installAttachments(gun, iGun);
         }
         return gun;
+    }
+
+    private void installAttachments(ItemStack gun, IGun iGun) {
+        virtualAttachments.forEach((type, id) -> {
+            if (attachments.containsKey(type) || !VirtualOemAttachment.isAllowedVirtualOem(gunId, id, type)) return;
+            ItemStack part = AttachmentItemBuilder.create().setId(id).build();
+            if (!(part.getItem() instanceof com.tacz.guns.api.item.IAttachment item) || item.getType(part) != type) return;
+            VirtualOemAttachment.mark(part);
+            iGun.installAttachment(gun, part);
+        });
+        attachments.forEach((type, id) -> iGun.installAttachment(gun, AttachmentItemBuilder.create().setId(id).build()));
     }
 }

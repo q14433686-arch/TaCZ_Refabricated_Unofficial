@@ -1,5 +1,6 @@
 package com.tacz.guns.client.renderer.item;
 
+import com.tacz.guns.client.render.ViewmodelFlash;
 import cn.sh1rocu.simplebedrockmodel.api.event.ViewportEvent;
 import com.google.common.base.Suppliers;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -40,7 +41,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import org.apache.commons.lang3.tuple.Pair;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -114,6 +114,25 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
      */
     public static void copyHandBaseRotation(org.joml.Matrix3f dst) {
         dst.set(handBasePoseEntry);
+    }
+
+    /** Convert an extracted hand locator to a detached world emitter, normalizing the hand
+     * pass base once. Do not use global ModelView, whose contract differs under Iris. */
+    public static Matrix4f muzzleWorldPose(Matrix4f locator) {
+        var mc = Minecraft.getInstance();
+        var camera = mc.gameRenderer.mainCamera();
+        Matrix4f local = new Matrix4f(handBasePoseEntry).invert().mul(locator);
+        double ratio = Math.tan(Math.toRadians(CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get()) / 2)
+                / Math.tan(Math.toRadians(CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2);
+        if (Double.isFinite(ratio) && ratio > 0) local.m32((float)(local.m32()*ratio));
+        var pos = camera.position();
+        return new Matrix4f().translation((float)pos.x,(float)pos.y,(float)pos.z).rotate(camera.rotation()).mul(local);
+    }
+
+    public static float muzzleWorldScale() {
+        double ratio = Math.tan(Math.toRadians(CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2)
+                / Math.tan(Math.toRadians(CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get()) / 2);
+        return Double.isFinite(ratio) && ratio > 0 ? (float)ratio : 1f;
     }
 
     public GunItemRendererWrapper() {
@@ -383,8 +402,9 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             // 之后的视图坐标也逐帧记下：若 viewRoot 与 viewMuzzle 同偏同量，偏转来自定位/延滞链；
             // 若 viewRoot 不偏而 viewMuzzle 偏，则来自骨骼动画层（枪口骨骼路径）。
             debugRecoilGunRoot(poseStack.last().pose());
-            gunModel.submit(poseStack, stack, ctx, collector, renderType,
-                    display.getModelTexture(), light, OverlayTexture.NO_OVERLAY);
+            ViewmodelFlash.submit(stack, light, baseLight ->
+                    gunModel.submit(poseStack, stack, ctx, collector, renderType,
+                            display.getModelTexture(), baseLight, OverlayTexture.NO_OVERLAY));
             // 缓存枪口位置，为第一人称曳光弹渲染作准备
             cacheMuzzlePosition(poseStack, gunModel);
             // 【RecoilDebug 探针】第 27.5 轮：机瞄骨骼链视图坐标逐帧取证。
@@ -781,20 +801,13 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
                 return;
             }
             // 剩下的渲染
-            BedrockGunModel gunModel;
-            Identifier gunTexture;
-            Pair<BedrockGunModel, Identifier> lodModel = gunIndex.getLodModel();
-            if (lodModel == null || RenderDistance.inRenderHighPolyModelDistance(poseStack)) {
-                gunModel = gunIndex.getGunModel();
-                gunTexture = gunIndex.getModelTexture();
-            } else {
-                gunModel = lodModel.getLeft();
-                gunTexture = lodModel.getRight();
-            }
-            if (gunModel == null) {
+            var rig = gunIndex.getExternalModel(!RenderDistance.inRenderHighPolyModelDistance(poseStack));
+            if (rig == null) {
                 renderSlotTexture(poseStack, collector, pPackedLight, pPackedOverlay, gunIndex.getSlotTexture());
                 return;
             }
+            var gunModel = rig.getLeft();
+            var gunTexture = rig.getRight();
             // 移动到模型原点
             poseStack.translate(0.5, 2, 0.5);
             // 反转模型

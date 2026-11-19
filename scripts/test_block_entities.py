@@ -269,6 +269,7 @@ STUBS = {
             private BlockState defaultState;
             public Block() { this(new Properties()); }
             public Block(Properties props) { stateDefinition = new StateDefinition<>(this); defaultState = new BlockState(this); }
+            protected BlockState rotate(BlockState state, Rotation rotation) { return state; }
             protected void registerDefaultState(BlockState state) { defaultState = state; }
             public BlockState defaultBlockState() { return defaultState; }
             public static VoxelShape box(double x1, double y1, double z1, double x2, double y2, double z2) { return new VoxelShape(); }
@@ -462,6 +463,17 @@ STUBS.update({
         import java.lang.annotation.*;
         @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD, ElementType.FIELD})
         public @interface NotNull {}
+    """,
+    "net.minecraft.server.level.ServerPlayer": """
+        import net.minecraft.world.entity.player.Player;
+        public class ServerPlayer extends Player { public ServerPlayer(ServerLevel level) { super(level); } }
+    """,
+    "com.tacz.guns.advancement.TargetHitTrigger": """
+        import net.minecraft.server.level.ServerPlayer;
+        public class TargetHitTrigger {
+            public static final TargetHitTrigger INSTANCE = new TargetHitTrigger();
+            public void trigger(ServerPlayer player, double distance) {}
+        }
     """,
     "cn.sh1rocu.tacz.api.LogicalSide": "public enum LogicalSide { SERVER }",
     "cn.sh1rocu.tacz.api.extension.IMinecart": "public interface IMinecart { boolean tacz$canBeRidden(); }",
@@ -832,6 +844,10 @@ STUBS.update({
         public class BaseEntityBlock extends Block { public BaseEntityBlock(Properties properties) { super(properties); } }
     """,
     "net.minecraft.world.level.block.Blocks": "public class Blocks { public static final Block AIR = new Block(); }",
+    "net.minecraft.world.level.block.Rotation": """
+        import net.minecraft.core.Direction;
+        public enum Rotation { NONE; public Direction rotate(Direction facing) { return facing; } }
+    """,
     "net.minecraft.world.level.block.RenderShape": "public enum RenderShape { MODEL, INVISIBLE }",
     "net.minecraft.world.level.block.entity.BlockEntityTicker": """
         import net.minecraft.core.BlockPos;

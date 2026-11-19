@@ -97,6 +97,10 @@ void main() {
     #ifdef OIT_ALPHA_ONLY
     executeAlphaOnlyPhase(gl_FragCoord.z, color.a);
     #else
+#ifdef SCOPE_FINAL
+    fragColor = color;
+#else
     fragColor = calculateFinalColor(color);
+#endif
     #endif
 }

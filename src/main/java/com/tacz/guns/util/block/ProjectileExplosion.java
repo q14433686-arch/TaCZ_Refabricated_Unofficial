@@ -119,7 +119,7 @@ public class ProjectileExplosion extends ServerExplosion {
         Vec3 explosionPos = new Vec3(this.x, this.y, this.z);
 
         for (Entity entity : entities) {
-            if (entity.ignoreExplosion(this)) {
+            if (entity.ignoreExplosion(this) || com.tacz.guns.util.EntityUtil.isBulletDamageIgnored(entity)) {
                 continue;
             }
 

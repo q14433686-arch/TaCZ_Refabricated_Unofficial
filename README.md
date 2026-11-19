@@ -4,24 +4,19 @@
 [![CurseForge Versions](https://cf.way2muchnoise.eu/versions/1627909.svg)](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated/files)
 [![GitHub Downloads](https://img.shields.io/github/downloads/q14433686-arch/TaCZ_Refabricated_Unofficial/total?logo=github&label=GitHub%20Downloads)](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 
-> **Unofficial Fabric port of TaCZ (Timeless & Classics Guns: Zero) for Minecraft 26.3,
-> 26.2, 26.1.2 and 1.21.11, with an LRTactical compatibility framework. Not an official
-> TaCZ release; not reviewed or endorsed by the TACZ Dev Team. GPL-3.0.**
+> **Unofficial Fabric port of TaCZ (Timeless & Classics Guns: Zero).** Craft at gunsmithing tables, fit attachments and load community gun packs. The **26.3 development build** adds display racks, tiered ammo storage and per-account HUD settings. The other Minecraft versions have separate builds; see the table below. Not an official TaCZ release.
 
-> **非官方社区移植，不是 TaCZ 官方发布，也未获 TACZ Dev Team 审核或背书。**
+这是一款把 TaCZ 带到新版 Minecraft 的**非官方 Fabric 移植**，基于 [TACZ Dev Team 的原作](https://github.com/MCModderAnchor/TACZ)和 [Sh1roCu 的 Fabric 移植](https://github.com/Sh1roCu/TACZ-Refabricated)。随包提供默认枪包、内置 TML 高模加载和部分 LRTactical 兼容；代码与美术的[许可不同](LICENSES.md)。本项目未获原作者审核或背书，遇到移植问题请到[本仓库反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)。
 
-本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
-的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.3 Fabric**。直接上游的版本号为
-`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.3.R1-hotfix3`**。
+### 26.3 开发版里可以做什么？
 
-> **本分支是 26.3 线，尚无正式发布；CI 产物以对应 Actions 运行页面为准。** R1 基础版已在维护者环境完成一轮实机验证
-> （2026-09-18 ~ 09-21：无光影、Iris 光影、专服三种环境）；R1-hotfix2 新增的枪包 lang 容错、
-> JEI 配方刷新、弹孔朝向修复与 YSM 适配门面仅经 CI 编译/静态校验，尚未实机验证；
-> R1-hotfix3 的方块及标靶修复、动态皮肤档案调整已通过隔离桩测试与
-> [CI 完整构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/40417943032)；
-> 以上改动尚未实机验证。
-> 逐项结果见 [`docs/CHANGELOG_26_3_R1.md`](docs/CHANGELOG_26_3_R1.md)。下方各节继承自 26.2 线的描述，
-> 凡未在该文件标 ✅ 的，在 26.3 上仍视为**未经验证**。想要现在就能玩的版本请用 `26.2(main)` 分支及其 Release。
+- **陈列和收纳**：对准挂板空格，先看手中物品的放置预览；也能用可锁展示柜陈列，用分级弹药库收纳。[展示墙实图](build-reports/visual/44417531060-tacz_display_wall.png) · [功能与测试范围](docs/investigations/PORT_GAPS_26_3_VALIDATION.md)。
+- **调自己的持枪位置与准星**：持枪按 **Esc → TaCZ 持枪与准星**。位置按本机启动器账号保存；准星可以只改一把枪，或给整个类别设默认。[玩家设置指南](#玩家设置与普通合成) · [两把同类枪的 HUD 对照](build-reports/visual/44482591156-hud-rules.png)。
+- **合成和查配方**：枪械制造台本身在原版 3×3 工作台制作；取得铁块可解锁配方书条目。枪包晚于进服同步时，REI 只更新本插件的展示，不清掉服务器普通配方。[三种情况怎么区分](docs/investigations/ORDINARY_CRAFTING_26_3.md)。
+
+**下载要分清：**下表的 Release 是已发布文件；要试上面这批新功能，请用[经过专服和客户端验证的 26.3 测试 JAR（Actions ZIP）](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44482591156/artifacts/14509073878)，或[从源码构建](#9-从源码构建)。测试产物有保留期限；合并源码不会更新旧 Release 或 CurseForge 上的文件。
+
+本分支当前源码版本为 **`1.1.8+fabric.26.3.R1-hotfix3`**，版本字符串与旧 Release 相同，反馈请附构建 SHA 或文件来源。以 `0.7.0-forge1.1.8-hotfix` 为基线，已移入上游 **1.2.0-hotfix 的部分能力**，不声明完整 1.2.0 枪包兼容，也不需要安装 1.21.1 的 SimpleBedrockModel。[玩家可感变化](docs/investigations/FABRIC_120_PLAYER_CHECKLIST.md) · [移植账本](docs/investigations/FABRIC_120_PORT_26_3.md) · [三条旧线的平行移植指南](docs/lineage/26.3-backports/README.md)。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [CurseForge](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated)
@@ -31,18 +26,16 @@
 
 ### 选择你的 Minecraft 版本 / Pick your Minecraft version
 
-| Minecraft | 源码分支 |
-|---|---|
-| **26.3**（移植中，未正式发布） | [`26.3`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3) |
-| **26.2** | [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) |
-| **26.1.2** | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) |
-| **1.21.11** | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) |
+| Minecraft | Java | 源码分支 | 已发布的文件（不是本轮测试包） |
+|---|---|---|---|
+| **26.3** | 25 | [`26.3`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3) | [R1-hotfix3](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.3%E7%9A%84mod%E6%96%87%E4%BB%B6_R1_HOTFIX-3) |
+| **26.2** | 25 | [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) | [R3-hotfix4](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.2%E7%9A%84mod%E6%96%87%E4%BB%B6_R3_HOTFIX-4) |
+| **26.1.2** | 25 | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) | [R3-hotfix4](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.1.2%E7%9A%84mod%E6%96%87%E4%BB%B6_R3_HOTFIX-4) |
+| **1.21.11** | 21 | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) | [R3-hotfix4](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/1.21.11%E7%9A%84mod%E6%96%87%E4%BB%B6_R3_HOTFIX-4) |
 
-本页面对应 **26.3** 分支。所有版本都需要 Fabric API 与 Forge Config API Port，
-具体版本见下方表格与对应 Release 说明。
+四条线都需要对应 MC 版本的 Fabric API 和 Forge Config API Port。本文环境表和下方测试只对应 **26.3**。
 
-> 仓库源码已使用 R1-hotfix3 版本号；26.3 线尚未发布，实际可下载版本及其发布日期以
-> Releases 页面为准。
+> 仓库源码已使用 R1-hotfix3 版本号；请按文件来源区分已发布版与开发测试版。
 
 ---
 
@@ -59,7 +52,7 @@
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
-R1-hotfix3 的可选集成（并非硬依赖）如下（JEI 已在 26.3 单人与专服实测；REI、Zoomify、Shoulder Surfing Reloaded、Carry On 的 26.3 适配已随上游发布恢复，待实机复验）：
+下列是 26.3 的可选集成，不是硬依赖。[JEI 与 REI 的普通配方及枪包重载](docs/investigations/ORDINARY_CRAFTING_26_3.md)已在两个独立客户端作业验证；不据此推断其他模组组合也已通过。
 
 | 可选 mod | R1-hotfix3 编译 pin / 建议版本 | 用途 |
 |---|---|---|
@@ -127,18 +120,38 @@ authored 对齐（实机验证待补）；其余内容不变。
   （Mod Menu → Timeless and Classics Guns → 齿轮 → 「渲染」分类，见 §4.2），
   不再需要手动编辑 TOML。
 
+### 玩家设置与普通合成
+
+持枪交互默认用 **K**；26.3 原版的 **O** 会打开好友界面。沿用 `options.txt` 的玩家可在「按键绑定」里改键，无须删除配置。
+
+**调整第一人称持枪位置和准星**：手持枪械，按 **Esc → 左下角「TaCZ 持枪与准星」**。也可在按键绑定里给编辑器设快捷键（默认未绑定）。这两项无需 Cloth Config。界面实图：[持枪位置](build-reports/visual/44464116067-tacz_view_tuning_moved.png) · [准星调色](build-reports/visual/44469134375-tacz_view_tuning_colors.png)。
+
+- **持枪位置**：拖动 X/Y/Z 或输入三位小数，正数分别向右、向上、拉近。设置对本账号所有 TaCZ 枪生效；开镜、改装时回到枪包的位置，不改第三人称、世界 FOV 或弹道。
+- **准星 → 样式**：默认仍是静态。切到「间距：动态」后，每发本地击发都会把准星逐渐撑开，连发可叠加，停火后收回；即使枪械的散布不变也有效。[零散布三连发实景对照](build-reports/visual/44475620919-hud-shot-comparison.png)。可分别调「单发扩张量」「回收时间」和「枪械散布」。最后一项设为 **0%** 就只看开火反馈；非零时还叠加姿态、配件／射击模式及热量的散布提示。「试播开火」只播放右侧预览，不消耗弹药。
+- **[自定义圆环](build-reports/visual/44475620919-tacz_view_tuning_ring_editor.png)**：在「样式」选择「自定义图形」，点底形切到「圆环」。在「形状」调**圆环内半径、粗细、纵向比例、点径和描边**；纵向 100% 是正圆，关掉中心点就得到空心环。也可选十字、T 字、左右双线或方框。几何量可拖动或直接输入到 **0.01 个界面像素**；负间距会让线条向中心收拢。[全部数值范围、设计参考和验证方法](docs/investigations/HUD_RETICLE_26_3.md)。
+- **准星 → 分配**：选「默认」「武器类别」或「指定单枪」。可定位到手中武器，用箭头切换，或按名称／ID 查找。选目标后编辑样式或导入 HUD 码；**单枪优先于类别，类别优先于账号默认**。「移除覆盖 · 恢复继承」会重新跟随上一级，不是恢复出厂样式。
+- **榴弹阶梯**：在「样式 → 自定义图形」中选择「榴弹阶梯」。它是中心下方三道横线的游戏 HUD，不提供距离或弹道预测。默认包的 `tacz:m320` 和 `tacz:rpg7` 同属 `rpg`；只想给 M320 换阶梯，就分配给「指定单枪」，不要改整个类别。[同类两把枪的实景对照](build-reports/visual/44482591156-hud-rules.png) · [分配页实图](build-reports/visual/44482591156-tacz_view_tuning_m320_rule.png)。
+- **内置预设／PNG**：都能改尺寸和纵横比例，保留原图中心、留空或换点。动态下，默认点和纯点设计固定点心，只移动四个外部刻度。资源包图片放在 `assets/tacz/textures/crosshair/custom.png`；此设置不替换镜内分划或命中标记。
+- **颜色**：八个色块可一键选色，也可拖动色相、饱和度、明度，或输入 `#RRGGBB`；不透明度单独设置。右侧用深浅两种底色预览。
+- **分享**：「准星 → 分享」导出 `TACZ-HUD2:`，也能导入旧 `TACZ-HUD1:`；「持枪位置」仍只处理 `TACZ-POS1:`。码不含 PNG 文件。导入先到预览；错页、未知版本或越界值不会覆盖设置。
+  - **动态圆环示例**（带中心点，仅开火时张开）：`TACZ-HUD2:DESIGNER,DOT_1,RING,ORIGINAL,5,FF00FF,16.00,4.00,2.00,1.75,100,2.99,255,0,9.37,7.25,1500`。想收得快些，可把「回收时间」调回默认 300 ms。
+  - 旧方框码仍可用：`TACZ-HUD1:DESIGNER,DOT_1,BOX,ORIGINAL,5,FF00FF,16,4,2,3,150,5,255,100`。
+- **按账号保存**：本机 `config/tacz/view-profiles/<启动器账号 UUID>.json`，不经过服务器。首次没有个人文件时，沿用旧 `config/tacz-client.toml` 的持枪和准星值；点保存后分开，不回写共享值。旧文件没有记录数值原本属于谁，无法还原以前被盖掉的设置。同一 UUID 仍是同一份档案。「重置」只改当前目标或持枪位置；取消／Esc 丢弃本次全部草稿。
+
+**进服后查不到普通合成？** 原版 3×3 工作台制作的枪械制造台、弹药箱等，不是枪包专用工作台里的配方。此版不再让晚到的枪包同步重载整个 REI；内置的普通合成也增加了配方书解锁条件（例如取得铁块可解锁 `tacz:gun_smith_table`）。客户端更新可修正 REI 的刷新；配方书解锁需要服务器也装新版。[分清 REI、配方书与服务器匹配](docs/investigations/ORDINARY_CRAFTING_26_3.md)。
+
 ---
 
 ## 3. 项目范围
 
 本仓库包含：
 
-- TaCZ 的 Fabric 26.2 端口及随上游带来的默认枪包；
+- TaCZ 的 Fabric 26.3 端口及随上游带来的默认枪包；
 - 为 26.x API 改写的网络、资源加载、GUI 和渲染接线；
 - 一套内置的 **LRTactical 兼容框架**；
 - 内置的 **TacZ Mesh Loader [TML]**（`model_type: "mesh"` 高模 poly_mesh 渲染，
   移植自 VellEagle 的 [TacZMeshLoader](https://github.com/VellEagle/TacZMeshLoader)，GPL-3.0。
-  含第一人称 GPU 静态烘焙——高模枪的逐顶点 CPU 变换成本归零，光影下同样生效；
+  符合条件的枪体网格可复用常驻 GPU 缓冲；不等于给挂板上的每件普通枪或散装配件烘了一份整模。
   世界语境有近距全模豁免与顶点预算保护。依赖外置 TML 的枪包在本 mod 下
   视为依赖满足（`provides: ["taczmeshloader"]`）。范围、配置与已知边界见
   [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md)）；
@@ -175,27 +188,29 @@ melee、consumable、detonator，以及 explode / sticky / smoke / stun / effect
 使用 stencil 值控制目镜、镜身、准星和枪体片元；镜片后看到的
 仍是同一次世界渲染。它没有第二台相机，也没有第二次 `renderLevel`。
 
-26.2 端口的**默认实现**仍是目镜掩码方案，无法沿用上游的即时 stencil 调用与绘制时序，因此改为：
+26.3 沿用 26.2 的**离屏目镜掩码**，无法沿用上游的即时 stencil 调用与绘制时序，因此改为：
 
 1. 把目镜几何写入一张离屏**掩码纹理**；
 2. 枪身、相关配件、枪口火光和准星的 shader 采样该掩码并按区域丢弃片元；
 3. 世界场景本身仍只渲染一次。
 
-这里的离屏目标只保存目镜掩码，**不是第二份世界画面**。默认配置下「镜内放大」依旧来自
+这张目镜掩码本身**不是第二份世界画面**。默认配置下「镜内放大」依旧来自
 整屏 FOV 变焦，镜筒周围的画面会跟着放大——与上游行为一致。代码中的
 `PictureInPictureRenderer` 仅用于枪械工作台的 GUI 模型预览，与瞄具实现无关（本节的
 画中画是 `ScopePipRenderer`，二者是两套东西）。
+
+**26.3 的枪包镜片与 PIP 是两个独立选项。** `EnableExperimentalScopeLens`（默认开）按当前筒镜 display 的 `scope_lens` 在目镜内处理世界画面的拷贝；关掉可恢复无镜片处理的画面，不改变倍率。`EnableScopeThermal`（默认开）只控制热源采集，关掉后热成像镜回到其光学偏色。白热模式下，符合条件且未被方块遮住的实体模型显示为亮色；类型标签 `tacz:thermal_imaging/blacklist` 优先于 `whitelist`。纯红点通道不应用该镜片。XL50 已在普通客户端和固定 Iris 测试光影中验证可见热源、遮挡与经典/PIP 恢复；[验证环境与边界](docs/investigations/PORT_GAPS_26_3_VALIDATION.md)不代表所有光影包。
 
 Iris 有单独的 HAND shader 接线；其他 shader pack 仍可能改写自定义管线的最终效果。
 Sulkan 目前没有等价接线，检测到时会回退到不启用镜内掩码裁剪的普通瞄具几何。
 
 ### 4.2 实验性镜内画中画（Scope PIP）：默认关闭，按需开启
 
-26.2 主线最新合并（[PR #66](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/66)）
+26.2 在历史版本中（[PR #66](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/66)）
 新增了可选的镜内画中画：**镜筒外保持 1×，只有镜片内按瞄具倍率放大**。这是对上游行为的
 刻意偏离，属于**实验性功能**：
 
-- **默认完全关闭**（`ScopePipEnable=false`）：不动配置，行为与之前版本完全一致；
+- **PIP 默认关闭**（`ScopePipEnable=false`）：使用整屏 FOV 变焦，枪包镜片效果另行控制；
 - 两种镜内成像方式：**重投影**（默认；复用已渲染好的主画面，代价小，但高倍镜下镜内偏软）
   与**二次渲染**（`ScopePipRerender=true`；用窄 FOV 把世界真画一遍，镜内原生分辨率，
   代价是每帧多一遍完整世界渲染）；
@@ -274,8 +289,7 @@ ScopePipAllowShaderPacks = true   # 默认 false 是保守默认，不是已知�
 
 ## 5. 安装
 
-> **26.3 线目前没有可下载构建**，以下步骤是该线发布后的预期流程。现在想安装请改用
-> `26.2(main)` 分支的 Release。
+> 选已发布版或本页开头的开发测试包，二者只装一个。测试包要先解压 Actions ZIP；联机测试枪包同步和配方书时请让客户端、服务端使用同一构建。
 
 1. 安装 Minecraft 26.3、Fabric Loader 0.19.5+ 与 Java 25+；
 2. 安装 Fabric API 和 Forge Config API Port 26.3.0+；
@@ -336,6 +350,8 @@ gunpack.meta.json
 转换器会生成带 `gunpack.meta.json` 的输出；它不能保证自动修复所有旧资源、配方或脚本差异，
 请保留原包备份并检查游戏日志。
 
+现代布局的 1.20.1 枪包如果需要导出新版覆盖层，另见[先检查、后导出](docs/GUNPACK_CONVERSION_26_3.md)。这不是上面的遗留目录转换。
+
 ### 版本约束
 
 枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
@@ -373,7 +389,7 @@ Minecraft 26.3 收紧了翻译加载：**任意一个**资源包里的 `assets/<
 ## 7. 当前已知边界
 
 - LRTactical 是部分兼容框架，`flash_shield` 未实现；第三方包兼容性需要逐包验证。
-- 26.2 的瞄具裁剪默认仍是 branch-specific 的掩码实现，不应描述成上游行为；镜内画中画（PIP）
+- 26.3 的瞄具裁剪默认仍是本分支的掩码实现，不应描述成上游行为；镜内画中画（PIP）
   是实验性可选开关（见第 4 节），不保证每个 shader pack 与渲染模组组合都得到完全相同的结果。
 - 26.2 的现有实测记录中，Player Animation Library 在经历 TaCZ 趴姿再站起后，下一次切枪的
   短暂第三人称 crossfade 仍可能带入旧姿态；切换完成后的稳态持枪不是该问题。

@@ -1,6 +1,6 @@
-To anyone want to edit this pack:
-If you want to change the default pack of tacz, you should turn "DefaultPackDebug"
-to "true" in the config file "tacz-pre.toml" in .minecraft/tacz (the gunpack folder)
-or the content will be overridden everytime you start the game.
-If things you edit been overwritten by accident, you can find the backup of the old
-pack in .minecraft/tacz_backup
+TaCZ default pack for Minecraft 26.3 (Fabric). See assets/tacz/gunpack_info.json for credits and license.
+The effective common assets and data are shipped once. Recipes, advancements, loot and
+workbench icons use the 26.3 base directories; no 1.21.1 overlay is required.
+To keep local changes, enable DefaultPackDebug in tacz/tacz-pre.toml before updating.
+To regenerate the bundled pack, back up local edits, disable DefaultPackDebug, remove
+tacz/tacz_default_gun and restart the game.

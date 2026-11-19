@@ -82,6 +82,20 @@ public interface IReticleRenderer {
                    int light,
                    int overlay,
                    float aimingProgress,
-                   boolean maskActive) {
+                   boolean maskActive,
+                   net.minecraft.resources.Identifier texture) {
+        public Context(PoseStack poseStack, SubmitNodeCollector collector, ItemDisplayContext displayContext,
+                       RenderType baseRenderType, RenderType illuminatedRenderType, int light, int overlay,
+                       float aimingProgress, boolean maskActive) {
+            this(poseStack, collector, displayContext, baseRenderType, illuminatedRenderType, light, overlay, aimingProgress, maskActive, null);
+        }
+        public void submit(com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot snapshot, boolean emissive) {
+            if (maskActive && texture != null && ScopePipRenderer.wantsIrisComposite()) {
+                ScopeFinalOverlayState.queueReticle(snapshot, ScopeBodyRenderTypes.finalReticle(texture, emissive));
+                return; // Do not bake display graphics into the scene subsequently thermally mapped.
+            }
+            collector.submitCustomGeometry(new PoseStack(), emissive ? illuminatedRenderType : baseRenderType,
+                    (pose, consumer) -> snapshot.write(consumer));
+        }
     }
 }

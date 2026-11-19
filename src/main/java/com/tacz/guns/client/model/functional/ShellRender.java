@@ -1,5 +1,6 @@
 package com.tacz.guns.client.model.functional;
 
+import com.tacz.guns.util.time.GunTime;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -48,14 +49,14 @@ public class ShellRender implements IFunctionalSubmitter {
     }
 
     public void addShell(Vector3f randomVelocity) {
-        if (SHELL_QUEUE.size() > 128) {
+        if (SHELL_QUEUE.size() >= 128) {
             SHELL_QUEUE.pollFirst();
         }
         double xRandom = Math.random() * randomVelocity.x();
         double yRandom = Math.random() * randomVelocity.y();
         double zRandom = Math.random() * randomVelocity.z();
         Vector3f vector3f = new Vector3f((float) xRandom, (float) yRandom, (float) zRandom);
-        SHELL_QUEUE.offerLast(new Data(System.currentTimeMillis(), vector3f));
+        SHELL_QUEUE.offerLast(new Data(GunTime.nowMillis(), vector3f));
     }
 
     private void renderShell(GunDisplayInstance display, GunData gunData, PoseStack poseStack, BedrockGunModel gunModel) {
@@ -104,7 +105,7 @@ public class ShellRender implements IFunctionalSubmitter {
 
     private void renderSingleShell(ItemDisplayContext transformType1, int light, int overlay, Data data, Vector3f initialVelocity, Vector3f acceleration, Vector3f angularVelocity, BedrockAmmoModel model, Identifier location) {
         // 再检查一次
-        if (data.normal == null && data.pose == null) {
+        if (data.epoch != GunTime.epoch() || data.normal == null || data.pose == null) {
             return;
         }
         // 先初始化到缓存位置和朝向
@@ -113,7 +114,7 @@ public class ShellRender implements IFunctionalSubmitter {
         poseStack2.last().pose().mul(data.pose);
 
         // 获取存留时间和各种参数
-        long remindTime = System.currentTimeMillis() - data.timeStamp;
+        long remindTime = GunTime.nowMillis() - data.timeStamp;
         double time = remindTime / 1000.0;
         Vector3f randomOffset = data.randomOffset;
 
@@ -146,12 +147,10 @@ public class ShellRender implements IFunctionalSubmitter {
     }
 
     private void checkShellQueue(long lifeTime) {
-        if (!SHELL_QUEUE.isEmpty()) {
-            Data data = SHELL_QUEUE.peekFirst();
-            if ((System.currentTimeMillis() - data.timeStamp) > lifeTime) {
-                SHELL_QUEUE.pollFirst();
-                checkShellQueue(lifeTime);
-            }
+        long now = GunTime.nowMillis(), epoch = GunTime.epoch();
+        for (Data data; (data = SHELL_QUEUE.peekFirst()) != null;) {
+            if (data.epoch == epoch && now - data.timeStamp <= lifeTime) break;
+            SHELL_QUEUE.pollFirst();
         }
     }
 
@@ -184,12 +183,18 @@ public class ShellRender implements IFunctionalSubmitter {
         }
 
         ShellEjection shellEjection = display.getShellEjection();
-        var ammoIndex = TimelessAPI.getClientAmmoIndex(gunData.getAmmoId()).orElse(null);
-        if (ammoIndex == null || ammoIndex.getShellModel() == null || ammoIndex.getShellTextureLocation() == null) {
-            return;
+        // A display override is a pair: never combine the ammo's geometry with the gun's UVs.
+        BedrockAmmoModel model;
+        Identifier texture;
+        if (shellEjection.getModelLocation() != null && display.getShellModel() != null && display.getShellTextureLocation() != null) {
+            model = display.getShellModel();
+            texture = display.getShellTextureLocation();
+        } else {
+            var ammoIndex = TimelessAPI.getClientAmmoIndex(gunData.getAmmoId()).orElse(null);
+            if (ammoIndex == null || ammoIndex.getShellModel() == null || ammoIndex.getShellTextureLocation() == null) return;
+            model = ammoIndex.getShellModel();
+            texture = ammoIndex.getShellTextureLocation();
         }
-        BedrockAmmoModel model = ammoIndex.getShellModel();
-        Identifier texture = ammoIndex.getShellTextureLocation();
         long lifeTime = (long) (shellEjection.getLivingTime() * 1000);
         checkShellQueue(lifeTime);
 
@@ -211,7 +216,7 @@ public class ShellRender implements IFunctionalSubmitter {
                 debugShell(gunId, "capture", displayContext, data, origin, 0, 0, 0,
                         initialVelocity, acceleration, angularVelocity, texture, debug);
             }
-            long ageMs = System.currentTimeMillis() - data.timeStamp;
+            long ageMs = GunTime.nowMillis() - data.timeStamp;
             double time = ageMs / 1000.0;
             Vector3f randomOffset = data.randomOffset;
 
@@ -285,7 +290,7 @@ public class ShellRender implements IFunctionalSubmitter {
         if (!enabled) {
             return;
         }
-        long now = System.currentTimeMillis();
+        long now = GunTime.nowMillis();
         int interval = shellDebugIntervalMs();
         if (now - lastDebugLogTime < interval) {
             return;
@@ -359,6 +364,7 @@ public class ShellRender implements IFunctionalSubmitter {
 
     public static class Data {
         public final long timeStamp;
+        final long epoch = GunTime.epoch();
         public final Vector3f randomOffset;
 
         public Matrix3f normal = null;

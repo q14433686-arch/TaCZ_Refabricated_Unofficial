@@ -1,12 +1,17 @@
 package com.tacz.guns.api;
 
+import com.tacz.guns.resource.index.CommonSlotAdapterIndex;
+import com.tacz.guns.resource.index.CommonAttachmentVariantIndex;
 import com.tacz.guns.api.client.other.IThirdPersonAnimation;
 import com.tacz.guns.api.client.other.ThirdPersonManager;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.client.resource.ClientIndexManager;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.index.ClientAmmoIndex;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
+import com.tacz.guns.client.resource.index.ClientAttachmentVariantIndex;
+import com.tacz.guns.client.resource.index.ClientSlotAdapterIndex;
 import com.tacz.guns.client.resource.index.ClientBlockIndex;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
@@ -68,6 +73,31 @@ public final class TimelessAPI {
     }
 
     @Environment(EnvType.CLIENT)
+    public static Optional<ClientAttachmentVariantIndex> getClientAttachmentVariantIndex(ItemStack attachment) {
+        if (ClientIndexManager.ATTACHMENT_VARIANT_INDEX.isEmpty() || !(attachment.getItem() instanceof IAttachment part)) return Optional.empty();
+        return getClientAttachmentVariantIndex(part.getAttachmentId(attachment), com.tacz.guns.util.ItemNbtUtils.getTag(attachment));
+    }
+
+    /** Reuse the decoded attachment component in per-frame scope/FOV queries. */
+    @Environment(EnvType.CLIENT)
+    public static Optional<ClientAttachmentVariantIndex> getClientAttachmentVariantIndex(Identifier partId, net.minecraft.nbt.CompoundTag tag) {
+        if (tag == null || ClientIndexManager.ATTACHMENT_VARIANT_INDEX.isEmpty()) return Optional.empty();
+        return tag.getString("Variant").map(Identifier::tryParse)
+                .filter(id -> getCommonAttachmentVariantIndex(id).filter(index -> index.appliesTo(partId)).isPresent())
+                .flatMap(TimelessAPI::getClientAttachmentVariantIndex);
+    }
+
+    @Environment(EnvType.CLIENT)
+    public static Optional<ClientAttachmentVariantIndex> getClientAttachmentVariantIndex(Identifier variantId) {
+        return Optional.ofNullable(ClientIndexManager.ATTACHMENT_VARIANT_INDEX.get(variantId));
+    }
+
+    @Environment(EnvType.CLIENT)
+    public static Optional<ClientSlotAdapterIndex> getClientSlotAdapterIndex(Identifier adapterId) {
+        return Optional.ofNullable(ClientIndexManager.SLOT_ADAPTER_INDEX.get(adapterId));
+    }
+
+    @Environment(EnvType.CLIENT)
     public static Optional<ClientAmmoIndex> getClientAmmoIndex(Identifier ammoId) {
         return Optional.ofNullable(ClientIndexManager.AMMO_INDEX.get(ammoId));
     }
@@ -92,6 +122,16 @@ public final class TimelessAPI {
         return ClientIndexManager.getAllAttachments();
     }
 
+    @Environment(EnvType.CLIENT)
+    public static Set<Map.Entry<Identifier, ClientAttachmentVariantIndex>> getAllClientAttachmentVariantIndex() {
+        return Map.copyOf(ClientIndexManager.ATTACHMENT_VARIANT_INDEX).entrySet();
+    }
+
+    @Environment(EnvType.CLIENT)
+    public static Set<Map.Entry<Identifier, ClientSlotAdapterIndex>> getAllClientSlotAdapterIndex() {
+        return Map.copyOf(ClientIndexManager.SLOT_ADAPTER_INDEX).entrySet();
+    }
+
     public static Optional<CommonBlockIndex> getCommonBlockIndex(Identifier blockId) {
         return Optional.ofNullable(CommonAssetsManager.get().getBlockIndex(blockId));
     }
@@ -102,6 +142,22 @@ public final class TimelessAPI {
 
     public static Optional<CommonAttachmentIndex> getCommonAttachmentIndex(Identifier attachmentId) {
         return Optional.ofNullable(CommonAssetsManager.get().getAttachmentIndex(attachmentId));
+    }
+
+    public static Optional<CommonAttachmentVariantIndex> getCommonAttachmentVariantIndex(Identifier id) {
+        return Optional.ofNullable(CommonAssetsManager.get().getAttachmentVariantIndex(id));
+    }
+
+    public static Set<Map.Entry<Identifier, CommonAttachmentVariantIndex>> getAllCommonAttachmentVariantIndex() {
+        return CommonAssetsManager.get().getAllAttachmentVariants();
+    }
+
+    public static Optional<CommonSlotAdapterIndex> getCommonSlotAdapterIndex(Identifier id) {
+        return Optional.ofNullable(CommonAssetsManager.get().getSlotAdapterIndex(id));
+    }
+
+    public static Set<Map.Entry<Identifier, CommonSlotAdapterIndex>> getAllCommonSlotAdapterIndex() {
+        return CommonAssetsManager.get().getAllSlotAdapters();
     }
 
     public static Optional<CommonAmmoIndex> getCommonAmmoIndex(Identifier ammoId) {

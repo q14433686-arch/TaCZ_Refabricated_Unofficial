@@ -36,7 +36,7 @@ import java.util.function.Supplier;
  */
 public class LazyJsonDataManager<T> extends SimplePreparableReloadListener<LazyJsonDataManager.PreparedResult<T>> implements IdentifiableResourceReloadListener {
 
-    protected final Map<Identifier, T> dataMap = Maps.newHashMap();
+    protected final Map<Identifier, T> dataMap = new java.util.concurrent.ConcurrentHashMap<>();
     protected final Map<Identifier, Supplier<LoadResult<T>>> lazyLoaderMap = Maps.newHashMap();
     protected final Set<Identifier> failedData = new HashSet<>();
     protected final Set<Identifier> allResourceIds = new HashSet<>();
@@ -88,7 +88,7 @@ public class LazyJsonDataManager<T> extends SimplePreparableReloadListener<LazyJ
     }
 
     @Override
-    protected void apply(PreparedResult<T> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
+    protected synchronized void apply(PreparedResult<T> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
         dataMap.clear();
         lazyLoaderMap.clear();
         failedData.clear();
@@ -169,20 +169,15 @@ public class LazyJsonDataManager<T> extends SimplePreparableReloadListener<LazyJ
     }
 
     public T getData(Identifier id) {
+        if (id == null) return null;
         T data = dataMap.get(id);
-        if (data != null || failedData.contains(id)) {
-            return data;
-        }
-        Supplier<LoadResult<T>> loader = lazyLoaderMap.get(id);
-        if (loader == null) {
-            return null;
-        }
+        if (data != null) return data;
+        // Never race lazy reads/writes against reload apply; previously a worker could put an
+        // old parse back into the just-cleared map, or see a missing loader during another read.
         synchronized (this) {
             data = dataMap.get(id);
-            if (data != null || failedData.contains(id)) {
-                return data;
-            }
-            loader = lazyLoaderMap.remove(id);
+            if (data != null || failedData.contains(id)) return data;
+            var loader = lazyLoaderMap.remove(id);
             if (loader == null) {
                 return null;
             }
@@ -204,8 +199,8 @@ public class LazyJsonDataManager<T> extends SimplePreparableReloadListener<LazyJ
         return dataMap;
     }
 
-    public Set<Identifier> getAllIds() {
-        return allResourceIds;
+    public synchronized Set<Identifier> getAllIds() {
+        return Set.copyOf(allResourceIds);
     }
 
     protected final boolean shouldEagerLoad(Identifier id) {

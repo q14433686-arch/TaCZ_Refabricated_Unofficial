@@ -1,6 +1,6 @@
 # CurseForge 发布文案
 
-> 复制粘贴用。`[[ ]]` 里的内容**需你自己替换**，发布前搜 `[[` 全部处理掉。
+> 更新项目页时只复制 §② Summary 和 §③ 链接的双语正文。§⑤ 是历史文件的 changelog，不是项目介绍。
 > 所有规则依据均为 CurseForge 官方
 > [Moderation Policies](https://support.curseforge.com/support/solutions/articles/9000197279-moderation-policies)（2025-12-31 版）原文。
 
@@ -46,238 +46,20 @@
 ## ② Summary（一句话）
 
 ```
-An unofficial community port of the TaCZ gun mod, bringing its customizable firearms to newer Minecraft versions on Fabric.
+Craft workbenches, fit attachments and load community gun packs on Fabric. This unofficial TaCZ port has separate files for each supported Minecraft version.
 ```
 
-> CurseForge 要求 Summary 是描述的 tldr、**尽量别与描述重复**，故此处不复述版本号。
+## ③ Description（项目页正文）
 
----
+打开 [CurseForge-Description.md](CurseForge-Description.md)，复制**全文**到项目的 Description（英文在前、中文在后，无占位符）。Summary 单独填上一栏。不要把仓库指南、历史 changelog 或 Actions 下载链接贴进去。此操作只更新项目介绍，不上传文件。
 
-## ③ Description
-
-> ⚠️ 下面这段**不是**上游描述的复制品 —— 按规则必须自己写、且要说明「改了什么」。
-
-```markdown
-# TaCZ Refabricated — Unofficial Fabric Port
-
-> **Unofficial community port. Not an official TACZ release, and not
-> affiliated with, reviewed by, or endorsed by the TACZ Dev Team.**
-
-## What this project is
-
-**Timeless and Classics Guns: Zero (TaCZ)** is a modern firearms mod featuring
-highly customizable guns — attachments, optics, ammo types, and a gun-smithing
-workbench for crafting and modifying weapons.
-
-This project is a **community port of that mod to the Fabric loader on newer
-Minecraft versions**. It adds no new guns or gameplay of its own; the goal is to
-make the existing mod run on a platform and game version it did not previously
-support.
-
-## Credits — original work
-
-| | |
-|---|---|
-| Original mod | **Timeless and Classics Guns: Zero**, by the **TACZ Dev Team** |
-| Upstream Fabric port | [`Sh1roCu/TACZ-Refabricated`](https://github.com/Sh1roCu/TACZ-Refabricated) |
-| Baseline version | upstream **1.1.8-hotfix** |
-| Bundled mesh renderer | **TacZ Mesh Loader [TML]** by **VellEagle** — ported into this build and extended here (GPL-3.0) |
-| Source of this port | [[ 填你的 GitHub 仓库地址 ]] |
-
-The original mod is licensed under **GPL-3.0**, which permits this port. This
-project is likewise released under GPL-3.0.
-
-## What changed from the original
-
-This is a port, not a content fork — but the target game version removed or
-reworked a number of APIs, so substantial internal rework was required:
-
-- **Rendering layer partially rewritten.** The stencil buffer, which upstream
-  relied on for through-the-optic (in-scope) rendering, no longer exists on the
-  target version. The scope rendering path was reimplemented. **Some visual
-  effects therefore differ from the original**, which is a known trade-off.
-- **Networking updated** to the current packet/codec system.
-- **Data-pack and model loading updated** for the new resource format
-  (directory naming, item model definitions, component-based item data).
-- **Gun pack loading fixes** so that existing third-party gun packs — including
-  ones written for older versions — continue to work.
-- **High-poly `mesh` guns render out of the box.** The community *TacZ Mesh Loader*
-  addon (by VellEagle, GPL-3.0) is built in, so packs using that format no longer
-  need it installed separately. Vertex work is baked on the GPU, both in first
-  person and for guns held by other players / dropped on the ground.
-- **In-game config saves again.** Settings changed in the config screen are written
-  back to `config/tacz-client.toml`; a Forge Config API Port 26.x regression had
-  made saves in-memory only, so every setting reset on restart.
-
-## Status: test build
-
-**Playable, but under active testing. Expect bugs.** The exact build identity is
-in the file name and version field of each upload — see the release notes there
-for what that build contains.
-
-## Configuring
-
-Almost every option is available **in game**: open the mod list (Mod Menu), pick
-**Timeless and Classics Guns**, then the gear icon, and pick the **Render**
-category (the screen is one searchable list; the other categories are alongside). Saving there takes effect immediately and is written back to
-`config/tacz-client.toml`, so editing that file by hand is normally unnecessary —
-it is only needed for the handful of debug keys that have no in-game entry, and it
-requires a game restart.
-
-One notable option is **Scope Picture-in-Picture (PIP)**, an experimental in-lens
-world renderer for high-magnification scopes. It is **off by default** and is
-turned on in that same Render page (plus "Allow PIP with Shader Packs" if you use
-Iris). Only `ScopePipShadowScale` needs a restart or a dimension change; everything
-else applies live. Turning the option back off returns the game to the default
-rendering path.
-
-## Requirements
-
-| | |
-|---|---|
-| Loader | **Fabric** |
-| Fabric API | Required |
-| Forge Config API Port | **Required** |
-| Java | **25+** |
-
-Exact Minecraft and dependency versions are listed on each file — check the file
-you are downloading.
-
-> **Fabric only.** There is no Forge or NeoForge build of this port.
-
-## Installing gun packs
-
-Gun packs go in **`.minecraft/tacz/`** — *not* `tacz_backup`.
-
-```
-.minecraft/
-├── tacz/                  ← put gun packs HERE (created on first launch)
-│   ├── some_pack.zip      ← .zip works directly, no need to extract
-│   └── another_pack/      ← extracted folders also work
-└── tacz_backup/           ← input directory for the legacy pack converter only
-```
-
-A folder or zip is recognised as a gun pack only if **`gunpack.meta.json` exists
-at its root**:
-
-```json
-{ "namespace": "your_pack_namespace" }
-```
-
-Without that file the pack is **silently skipped**.
-
-### If a pack doesn't load, check in this order
-
-1. Is it in `tacz/` rather than `tacz_backup/`?
-2. Does `gunpack.meta.json` exist?
-3. Is the zip nesting correct? That file must sit at the zip **root**, not inside
-   `zip/packname/`.
-4. Check the log for `Mod version mismatch`.
-
-### Note on the reported mod version
-
-This port reports its version with the upstream baseline first
-(`1.1.8`), followed by build metadata after a `+`. Under the SemVer
-specification build metadata is **ignored when comparing versions**, so gun packs
-that declare a requirement such as `"tacz": ">=1.1.8"` load normally.
-
-## Known limitation: packs requiring **TacZ:Arcana**
-
-Some gun packs **cannot be loaded by any TACZ build that lacks TacZ:Arcana**.
-Symptom: **missing textures (purple/black) and models not rendering**, while gun
-entries, names and recipes all appear correctly.
-
-To identify such a pack, extract it and look for:
-
-- `recursion/taczpack.dat` (often tens of MB — most of the pack's size), or
-- `data/<namespace>/expansions/taczexpands.data`, and
-- **no `.png` / `.ogg` / `geo_models/` / `textures/` anywhere in the pack**
-
-Those packs ship their models, textures, animations and sounds **encrypted**
-inside that `.dat`, leaving only JSON indexes on disk. Decryption is performed by
-the separate mod **TacZ:Arcana**, which is Forge-only and closed-source.
-
-No TACZ build contains that decryption logic — not the original Forge mod, not the
-upstream Fabric port, and not this one. **This is therefore not a defect in this
-port and cannot be resolved here.**
-
-## FAQ: REI/JEI cheating on a dedicated server gives purple/black items with `item.tacz.*` names
-
-**Symptom:** on a dedicated server, items cheated / picked up from REI or JEI
-(and sometimes `/give tacz:modern_kinetic_gun` without components) show
-**missing textures and raw keys** such as `item.tacz.modern_kinetic_gun` or
-`item.tacz.attachment`, while the same items render correctly inside the
-REI/JEI list, and single-player / LAN is fine.
-
-**Cause:** TACZ items are not self-contained: gun, ammo, attachment and
-workbench ids live in the `minecraft:custom_data` component (`GunId` /
-`AmmoId` / `AttachmentId` / `BlockId`). When REI **is not installed on the
-server**, its cheat-give falls back to a client-built `/give` command carrying
-only the item's registry id and an **empty component tag**
-(`ClientHelperImpl#tryCheatingEntry`, `tagMessage = /* TODO 24w09a ... */ ""`).
-The server receives a **bare item**; TACZ then reads `tacz:empty` as the
-content id and falls back to the vanilla `item.*` key with no model. The same
-happens on the original mod — this is REI behaviour, not a port defect. (The
-iron ammo box keeps a real name because its key ships in the mod jar; that is
-the bare-item fallback itself.)
-
-**Fix:**
-
-- **Install the same REI version on the dedicated server** — cheating then uses
-  REI's network packet, which serialises the full item components;
-- or take items from **TACZ's own creative tabs** or the built-in **Ammo /
-  Attachment / Gun Smith Table** recipe categories (entries are built with the
-  required id components);
-- for `/give`, always append components, e.g.
-  `/give @p tacz:modern_kinetic_gun[minecraft:custom_data={GunId:"tacz:ak47"}]`.
-
-JEI's client-side fallback uses the vanilla creative-slot packet, which does
-carry components; if you see the same symptom with JEI alone, please report it
-with the exact viewer and server versions.
-
-## Licensing
-
-The repository is not covered by a single license:
-
-| Scope | License |
-|---|---|
-| **Code** (this port and the original mod's code) | **GPL-3.0** |
-| **Ported third-party code** — TacZ Mesh Loader (VellEagle), LRTactical (LesRaisins) | **GPL-3.0**, each under its upstream project's license |
-| **Bundled runtime library** — Mayday Animation Engine 1.1.1 | **MIT** |
-| **Bundled default gun pack assets** | **CC BY-NC-ND 4.0** |
-
-The code is copyleft — redistribute modifications under GPL-3.0. The bundled
-default pack assets are **NonCommercial + NoDerivatives**: they may not be sold,
-and may not be modified and redistributed. To build your own pack, create a
-separate pack rather than editing the default one. Code licenses never cover art
-assets; a full notice lives in `LICENSES.md` in the source repository.
-
-## Reporting issues
-
-Please report issues to this project, not to the original authors — they have no
-obligation to support this port. If an issue is confirmed to originate upstream,
-it can be raised there afterwards.
-
-## Disclaimer
-
-Provided **"as is", without warranty of any kind**. You assume all risk, including
-world corruption, crashes, data loss, and mod conflicts. Non-commercial project.
-```
-
----
-
-## ④ 文件上传（Upload File）
+## ④ 文件上传（仅在另行发版时）
 
 | 字段 | 填什么 |
 |---|---|
-| **Display Name** | `TACZ-Refabricated-26.2-1.1.8+fabric.26.2.R3-hotfix2` |
-| **Release Type** | **Release** |
-| **Game Version** | `26.2` |
-| **Modloader** | `Fabric` |
-| **Java Version** | `Java 25` |
-
-> 版本号信息放在**文件名**里 —— 这正是 CurseForge 规则要求的
-> "Any technical information belongs in the description or **relevant file tagging**"。
+| **Display Name / Game Version** | 按实际 JAR 名称与目标 MC 填写，不给单一 JAR 勾选四个游戏版本 |
+| **Release Type** | 按该文件的实际发布状态，不把 CI 测试包冒充正式版 |
+| **Modloader / Java Version** | Fabric；26.x 为 Java 25，1.21.11 为 Java 21 |
 
 ### Relations（依赖）—— 漏填会导致用户装不上
 
@@ -463,7 +245,6 @@ R3 – test build of this Fabric port.
 - **Categories**：`Armor, Tools, and Weapons` + `Adventure and RPG`
 - **License**：`GNU General Public License version 3 (GPLv3)`
   （枪包资源的 CC 许可在描述里已说明）
-- **Links**：Source / Issues 填 `[[ 你的 GitHub 仓库 ]]`
-  —— 注意**不要在描述正文里放下载链接**（违反 Third Party Downloads 规则）
+- **Links**：[Source](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial) / [Issues](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)。不要在介绍中放外部下载链接。
 - **Avatar**：**[[ 需自制 400×400 图，不可纯色，不可直接用 TACZ 官方图 ]]**
 - **Rewards Program**：**必须关闭**

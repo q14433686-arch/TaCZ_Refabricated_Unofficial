@@ -1,0 +1,68 @@
+name: Selected game frames for review
+# Only explicitly nominated frames. Keep full logs/PNGs in expiring Actions artifacts.
+on:
+  push:
+    branches: ['arena/**']
+    paths: ['docs/investigations/review-frames.tsv', '.github/workflows/review-frames.yml']
+permissions:
+  actions: read
+  contents: write
+jobs:
+  previews:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Collect lossless frames from explicitly named completed same-branch test runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -o pipefail
+          python3 - <<'PY' 2>&1 | tee "$RUNNER_TEMP/review.log"
+          from pathlib import Path
+          import json, os, re, shutil, subprocess, tempfile
+          dest = Path('build-reports/visual'); dest.mkdir(parents=True, exist_ok=True)
+          entries = [s.split('\t') for s in Path('docs/investigations/review-frames.tsv').read_text().splitlines() if s and not s.startswith('#')]
+          assert len(entries) <= 12
+          with tempfile.TemporaryDirectory() as tmp:
+              for run, kind, frame in entries:
+                  assert re.fullmatch(r'[0-9]+',run) and kind in ('smoke','viewer-jei','viewer-rei','iris','reimagined-off','reimagined-act','pal') and re.fullmatch(r'tacz_[a-z0-9_]+',frame)
+                  label = run+'-'+kind if kind.startswith('reimagined-') else run
+                  output = dest / f'{label}-{frame}.png'
+                  if output.exists(): continue
+                  meta = json.loads(subprocess.check_output(['gh','api',f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{run}']))
+                  assert meta['event']=='push' and meta['head_branch']==os.environ['GITHUB_REF_NAME'] and meta['conclusion'] in ('success','failure')
+                  assert meta['path']=='.github/workflows/'+('build.yml' if kind=='smoke' else 'iris-smoke.yml' if kind in ('iris','reimagined-off','reimagined-act') else 'animation-smoke.yml' if kind=='pal' else 'viewer-smoke.yml')
+                  artifact = kind+'-'+meta['head_sha']; root = Path(tmp)/artifact
+                  if not root.exists():
+                      subprocess.run(['gh','run','download',run,'-n',artifact,'-D',str(root)],check=True)
+                  pictures = list(root.rglob('*.png'))
+                  matches = [p for p in pictures if p.name.endswith(frame+'.png')]
+                  if len(matches)!=1: raise ValueError(f'{frame}: expected 1 file, found {len(matches)}; available: {[p.name for p in pictures][:20]}')
+                  source, = matches
+                  # A dithered 854x480 Reimagined frame does not compress like the solid-colour fixtures.
+                  limit = 1700*1024 if kind.startswith('reimagined-') else 512*1024
+                  if not 0 < source.stat().st_size <= limit: raise ValueError(f'Size budget exceeded: {source.name}')
+                  with source.open('rb') as png:
+                      if png.read(8) != b'\x89PNG\r\n\x1a\n': raise ValueError(f'Invalid PNG: {source.name}')
+                  shutil.copyfile(source, output)
+          PY
+      - name: Report frame diagnostics
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import os, pathlib
+          p = pathlib.Path(os.environ['RUNNER_TEMP'])/'review.log'
+          if p.exists(): print('::error::' + ' '.join(p.read_text(errors='replace').splitlines()[-5:])[:1800].replace('%','%25'))
+          PY
+      - name: Save only the nominated review frames on this branch
+        run: |
+          git add -- build-reports/visual/
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'ci-log: selected original in-game review frames'
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "$GITHUB_REF_NAME"

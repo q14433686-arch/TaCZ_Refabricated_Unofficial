@@ -1,0 +1,6 @@
+{
+  "name": "验收用 inventory",
+  "display": "port_acceptance:probe",
+  "data": "port_acceptance:inventory",
+  "type": "rifle"
+}

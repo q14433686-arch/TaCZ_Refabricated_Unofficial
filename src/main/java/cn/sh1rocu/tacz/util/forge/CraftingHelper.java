@@ -33,6 +33,16 @@ public class CraftingHelper {
         return getItemStack(json, readNBT, false);
     }
 
+    public static JsonElement encodeItemStack(ItemStack stack) {
+        var ops = RegistryOps.create(JsonOps.INSTANCE, RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY));
+        return ItemStack.OPTIONAL_CODEC.encodeStart(ops, stack).getOrThrow();
+    }
+
+    public static net.minecraft.core.component.DataComponentPatch parseComponents(JsonObject json) {
+        var ops = RegistryOps.create(JsonOps.INSTANCE, RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY));
+        return net.minecraft.core.component.DataComponentPatch.CODEC.parse(ops, json).getOrThrow();
+    }
+
     public static Item getItem(String itemName, boolean disallowsAirInRecipe) {
         Identifier itemKey = Identifier.parse(itemName);
         if (!BuiltInRegistries.ITEM.containsKey(itemKey))

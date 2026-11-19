@@ -21,7 +21,13 @@ public class AmmoCountPapi implements Function<ItemStack, String> {
             if (gunIndex == null) {
                 return "";
             }
-            int ammoCount = iGun.getCurrentAmmoCount(stack) + (iGun.hasBulletInBarrel(stack) && gunIndex.getGunData().getBolt() != Bolt.OPEN_BOLT ? 1 : 0);
+            var data = gunIndex.getGunData();
+            if (data == null) return "";
+            var player = net.minecraft.client.Minecraft.getInstance().player;
+            int ammoCount = iGun.useInventoryAmmo(stack) && player != null && player.getMainHandItem() == stack
+                    ? com.tacz.guns.client.gameplay.ClientAmmoCount.getCached(player, stack, iGun)
+                    : iGun.getCurrentAmmoCount(stack);
+            ammoCount += iGun.hasBulletInBarrel(stack) && data.getBolt() != Bolt.OPEN_BOLT ? 1 : 0;
             return "" + ammoCount;
         }
         return "";

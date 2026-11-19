@@ -1,6 +1,5 @@
 package com.tacz.guns.client.input;
 
-import cn.sh1rocu.tacz.api.event.InputEvent;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.gui.GunRefitScreen;
@@ -19,22 +18,18 @@ public class RefitKey {
             InputConstants.KEY_Z,
             TaCZKeyCategory.TACZ);
 
-    public static void onRefitPress(InputEvent.Key event) {
-        if (event.getAction() == InputConstants.PRESS && REFIT_KEY.matches(InputConstants.Type.KEYBOARD.getOrCreate(event.getKey()))) {
-            LocalPlayer player = Minecraft.getInstance().player;
-            if (player == null || player.isSpectator()) {
-                return;
-            }
-            if (isInGame()) {
-                if (IGun.mainHandHoldGun(player) && Minecraft.getInstance().gui.screen() == null) {
-                    IGun iGun = IGun.getIGunOrNull(player.getMainHandItem());
-                    if (iGun != null && iGun.hasAttachmentLock(player.getMainHandItem())) {
-                        return;
-                    }
-                    Minecraft.getInstance().gui.setScreen(new GunRefitScreen());
+    static void onRefitPress() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null || player.isSpectator()) {
+            return;
+        }
+        if (isInGame()) {
+            if (IGun.mainHandHoldGun(player) && Minecraft.getInstance().gui.screen() == null) {
+                IGun iGun = IGun.getIGunOrNull(player.getMainHandItem());
+                if (iGun != null && iGun.hasAttachmentLock(player.getMainHandItem())) {
+                    return;
                 }
-            } else if (Minecraft.getInstance().gui.screen() instanceof GunRefitScreen refitScreen) {
-                refitScreen.onClose();
+                Minecraft.getInstance().gui.setScreen(new GunRefitScreen());
             }
         }
     }

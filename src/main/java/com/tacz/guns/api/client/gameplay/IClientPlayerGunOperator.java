@@ -42,6 +42,8 @@ public interface IClientPlayerGunOperator {
      */
     void reload();
 
+    void unloadAmmo();
+
     /**
      * 客户端检视
      */

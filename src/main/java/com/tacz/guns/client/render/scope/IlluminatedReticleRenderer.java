@@ -140,9 +140,7 @@ public final class IlluminatedReticleRenderer implements IReticleRenderer {
         // 否则根变换会被叠加两次。
         if (!snapshot.isEmpty()) {
             PoseStack identity = new PoseStack();
-            ctx.collector().submitCustomGeometry(
-                    identity, ctx.illuminatedRenderType(),
-                    (entryPose, consumer) -> snapshot.write(consumer));
+            ctx.submit(snapshot, true);
         }
     }
 }

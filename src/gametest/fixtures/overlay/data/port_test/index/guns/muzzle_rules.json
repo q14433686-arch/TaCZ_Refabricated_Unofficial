@@ -1,0 +1,6 @@
+{
+  "name": "Muzzle rule probe",
+  "type": "rifle",
+  "display": "tacz:ak47_display",
+  "data": "port_test:muzzle_rules"
+}

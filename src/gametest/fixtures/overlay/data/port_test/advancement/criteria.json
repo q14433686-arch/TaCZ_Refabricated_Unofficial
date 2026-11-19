@@ -1,0 +1,1 @@
+{"criteria":{"hit":{"trigger":"tacz:target_hit","conditions":{"distance":{"min":10}}},"refit":{"trigger":"tacz:gun_refit"}},"requirements":[["hit"],["refit"]]}

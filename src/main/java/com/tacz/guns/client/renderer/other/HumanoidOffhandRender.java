@@ -57,6 +57,7 @@ public class HumanoidOffhandRender {
      * {@code state.id} 反查实体。GUI/展示柜等场景可能没有真实实体，此时直接跳过。</p>
      */
     public static void renderGun(ArmedEntityRenderState state, PoseStack poseStack, SubmitNodeCollector collector, int packedLight) {
+        if (com.tacz.guns.config.client.RenderConfig.DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER.get()) return;
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null) {
             return;

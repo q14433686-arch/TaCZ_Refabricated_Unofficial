@@ -34,7 +34,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -75,6 +75,9 @@ jobs:
           sys.exit(1 if bad else 0)
           EOF
 
+      - name: Verify pinned 1.2.0 imports and default-pack references
+        run: python3 scripts/verify_120_resources.py
+
       - name: Block drop wiring (26.3 loot schema)
         run: python3 scripts/verify_block_drops.py --strict
 
@@ -91,13 +94,102 @@ jobs:
 
       - name: Block and target regression tests (isolated Minecraft API doubles)
         run: |
+          python3 scripts/verify_recipe_viewer_reload.py
           python3 scripts/test_block_guards.py
           python3 scripts/test_block_entities.py
 
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Full build
-        run: ./gradlew build --console=plain --stacktrace --no-daemon
+        run: |
+          set -o pipefail
+          ./gradlew build --console=plain --stacktrace --no-daemon 2>&1 | tee "$RUNNER_TEMP/tacz-build.log"
+
+      - name: Verify server smoke and nested MAE
+        run: |
+          grep -F 'PORT_CATALOG: server loaded 229 indexes' build/run/gameTest/logs/latest.log
+          grep -F 'PORT_ACTION: six default Lua reloads conserved' build/run/gameTest/logs/latest.log
+          grep -F 'PORT_ACTION: malformed and nested Lua errors isolated' build/run/gameTest/logs/latest.log
+          grep -F 'PORT_SMOKE_SERVER: 26.3 overlay and tacz:ak47 loaded' build/run/gameTest/logs/latest.log
+          python3 - <<'PY'
+          import json, zipfile
+          from pathlib import Path
+          jar, = [p for p in Path('build/libs').glob('*.jar') if not p.name.endswith('-sources.jar')]
+          with zipfile.ZipFile(jar) as z:
+              deps = [n for n in z.namelist() if n.startswith('META-INF/jars/mae-')]
+              assert deps == ['META-INF/jars/mae-1.1.4.jar'], deps
+              assert [j['file'] for j in json.loads(z.read('fabric.mod.json'))['jars']].count(deps[0]) == 1
+              assert not any('/guns/test/' in n or n.endswith('tacz-port-smoke.zip') for n in z.namelist())
+              print('::notice::' + jar.name + ' contains one registered ' + deps[0] + '; server overlay smoke passed')
+          PY
+
+      - name: Install software Vulkan WSI for client smoke
+        timeout-minutes: 10
+        run: bash scripts/install_client_smoke_deps.sh
+
+      - name: Client smoke (Mesa software rendering, integrated world and held gun)
+        timeout-minutes: 12
+        env:
+          SDL_VIDEO_DRIVER: x11
+          LIBGL_ALWAYS_SOFTWARE: 'true'
+          ALSOFT_DRIVERS: 'null'
+        run: xvfb-run -a bash scripts/run_client_smoke.sh
+
+      - name: Annotate smoke or JUnit failures (also available via Checks API)
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import os, re, xml.etree.ElementTree as ET
+          from pathlib import Path
+          def message(s):
+              print('::error::' + s[:1600].strip().replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          for p in Path('build/test-results/test').glob('*.xml'):
+              for f in ET.parse(p).iter('failure'): message(f.get('message', 'JUnit failure'))
+          client = Path('build/run/clientGameTest')
+          def note(text):
+              print('::notice::' + text[:3000].strip().replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          for p in [*client.glob('logs/latest.log'), *Path(os.environ['RUNNER_TEMP']).glob('tacz-*.log')]:
+              lines = p.read_text(errors='replace').splitlines()
+              for line in list(dict.fromkeys(s for s in lines if re.search(r'BackendCreationException|Caused by:|error:|FAILED|AssertionError', s)))[-8:]: message(p.name + ': ' + line)
+              note(str(p.name) + ' tail:\n' + '\n'.join(lines[-14:]))
+          for p in Path('build/run/gameTest').glob('logs/latest.log'):
+              lines = p.read_text(errors='replace').splitlines()
+              for i in [i for i, line in enumerate(lines) if re.search(r'Test .* failed|Failed to run test|required tests? failed|GameTestAssert|Exception:|AssertionError:|Failed to parse recipe', line, re.I)][-10:]:
+                  note('server: ' + '\n'.join(lines[i:i+6]))
+          for p in sorted(client.glob('crash-reports/crash-*.txt'))[-1:]:
+              lines = p.read_text(errors='replace').splitlines()
+              start = next((i for i, line in enumerate(lines) if line.startswith('Description:')), 0)
+              note(p.name + ':\n' + '\n'.join(lines[start:start+24]))
+          for p in client.glob('logs/latest.log'):
+              lines = p.read_text(errors='replace').splitlines()
+              for i in [i for i, line in enumerate(lines) if re.search(r'PORT_SMOKE_CLIENT|GameTest.*(?:[Ee]xception|[Ff]ail)|(?:IllegalStateException|AssertionError|MixinTransformerError|NullPointerException|NoSuchMethodError):|Encountered an unexpected exception', line)][-10:]:
+                  note('client: ' + '\n'.join(lines[i:i+6]))
+          for p in client.glob('logs/latest.log'):
+              lines = p.read_text(errors='replace').splitlines()
+              for i in [i for i, line in enumerate(lines) if re.search(r'PORT_LENS|Heat capture unavailable|Pack lens failed|Scope PIP.*failed|Couldn.t compile pipeline|scope_lens.*[Ee]rror', line)][-4:]:
+                  note('lens: ' + '\n'.join(lines[i:i+8]))
+          for p in client.glob('screenshots/**/*.png'): note(f'{p.name}: {p.stat().st_size} bytes')
+          for p in sorted(client.glob('diagnostics/threads-*.txt'))[-2:]:
+              sections = re.split(r'\n(?=")', p.read_text(errors='replace'))
+              for t in sections:
+                  if re.match(r'"(Render thread|Server thread|[^"\n]*(?:GameTest|Game Test)[^"\n]*)"', t, re.I): note(t)
+          for p in sorted(client.glob('diagnostics/windows-*.txt'))[-1:]: note(p.read_text(errors='replace'))
+          PY
+
+      - name: Upload smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-${{ github.sha }}
+          path: |
+            build/run/gameTest/logs/latest.log
+            build/run/clientGameTest/logs/latest.log
+            build/run/clientGameTest/screenshots/**/*.png
+            build/run/clientGameTest/diagnostics/*.txt
+            build/run/clientGameTest/crash-reports/*.txt
+            build/test-results/test/*.xml
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Upload jars
         uses: actions/upload-artifact@v4

@@ -13,10 +13,11 @@ TaCZ（Timeless & Classics Guns: Zero）的**非官方** Fabric 移植，GPL-3.0
 上游是 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)（1.21.1 Fabric），
 原始项目是 [MCModderAnchor/TACZ](https://github.com/MCModderAnchor/TACZ)。
 
-**本仓库有三条并行分支，这是所有规则的根源：**
+**本次涉及四条独立的 Fabric 版本线，源码不能整树互换：**
 
 | 分支 | Minecraft | Java | 混淆 |
 |---|---|---|---|
+| `26.3`（当前特性集成线） | 26.3 | **25** | 否 |
 | `26.2(main)`（默认） | 26.2 | **25** | 否 |
 | `26.1.2` | 26.1.2 | **25** | 否 |
 | `1.21.11` | 1.21.11 | **21** | **是（Loom remap 模式）** |
@@ -48,7 +49,7 @@ TaCZ（Timeless & Classics Guns: Zero）的**非官方** Fabric 移植，GPL-3.0
 
 ```bash
 bash scripts/check_release_consistency.sh            # 工作区，只报告（恒退出 0）
-bash scripts/check_release_consistency.sh --all      # 远端三条分支
+bash scripts/check_release_consistency.sh --all      # 远端四条版本线
 bash scripts/check_release_consistency.sh --strict   # 发布门禁，不一致则退出 1
 ```
 
@@ -111,8 +112,9 @@ CI 模板位于 `docs/ci/`（26.2 线三件均已上线，该目录是正式件�
 
 ## 3. 分支纪律
 
-- **不要跨分支复制文件后不做适配。** 三条分支的 Java 版本、混淆状态、依赖版本、
-  瞄具实现（26.x 是掩码/stencil 路径，1.21.11 是深度孔径路径）都不同。
+- **不要跨分支复制文件后不做适配。** 不同版本线的 Java 版本、混淆状态、依赖版本、
+  瞄具实现（26.3/26.2 是离屏掩码，26.1.2/1.21.11 是深度孔径）都不同。
+  当前平行移植入口：[26.3 → 三条旧线](docs/lineage/26.3-backports/README.md)。
 - `docs/README_26_1_2.md` 是 **26.1.2 分支根 README 的替换版**，
   改动 `26.2(main)` 的 README 结构时也要同步它。
   （1.21.11 的对应蓝本在该分支自己的仓内维护，本分支没有副本。）

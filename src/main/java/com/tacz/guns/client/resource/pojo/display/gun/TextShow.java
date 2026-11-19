@@ -2,6 +2,7 @@ package com.tacz.guns.client.resource.pojo.display.gun;
 
 import com.google.gson.annotations.SerializedName;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 public class TextShow {
     @SerializedName("scale")
@@ -21,6 +22,11 @@ public class TextShow {
 
     @SerializedName("text")
     private String textKey = StringUtils.EMPTY;
+
+    @SerializedName("rangefinder")
+    private Rangefinder rangefinder;
+
+    public @Nullable Rangefinder getRangefinder() { return rangefinder; }
 
     /** 默认白色。<b>必须带 alpha</b>，原因见 {@link #setColorInt(int)}。 */
     private volatile int colorInt = 0xFFFFFFFF;

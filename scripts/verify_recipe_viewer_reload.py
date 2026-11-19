@@ -69,6 +69,19 @@ class RecipeViewerChecks(unittest.TestCase):
             self.assertNotIn(forbidden, source)
         self.assertIn("jeiReloadListener.onResourceManagerReload(client.getResourceManager())", source)
 
+    def test_rei_refresh_does_not_rebuild_the_server_display_holder(self):
+        self.assertNotIn("reloadPlugins", code(BRIDGE))
+        rei = code(JAVA / "cn/sh1rocu/tacz/compat/rei/ReiPackRefresh.java")
+        self.assertIn("registry.getDisplayOrigin(d) == REIClientPlugin.PACK_ORIGIN", rei)
+        self.assertNotIn("startReload(", rei)
+
+    def test_book_unlocks_reward_real_ordinary_recipes(self):
+        for recipe in (RESOURCES / "data").glob("*/recipe/*.json"):
+            recipe_id = f"{recipe.parents[1].name}:{recipe.stem}"
+            unlock = json.loads((recipe.parents[1] / "advancement/recipes" / recipe.name).read_text())
+            self.assertEqual(unlock["rewards"]["recipes"], [recipe_id])
+            self.assertEqual(unlock["criteria"]["has_material"]["trigger"], "minecraft:inventory_changed")
+
     def test_optional_mixin_captures_safe_listener(self):
         config = json.loads((RESOURCES / "tacz.fabric.mixins.json").read_text())
         self.assertIn(MIXIN_NAME, config["client"])
@@ -82,6 +95,18 @@ class RecipeViewerChecks(unittest.TestCase):
         self.assertIn("RecipeViewerReloadBridge.setJeiReloadListener(cir.getReturnValue())", source)
         # Existing MixinPlugin derives the optional mod id from this package segment.
         self.assertEqual(("cn.sh1rocu.tacz.mixin." + MIXIN_NAME).split(".")[5], "jei")
+
+    def test_legacy_and_chunked_sync_share_one_current_connection_install(self):
+        base = JAVA / "com/tacz/guns/network/message"
+        legacy = code(base / "ServerMessageSyncGunPack.java")
+        parts = code(base / "ServerMessageSyncGunPackPart.java")
+        self.assertIn("isCurrent(connection)", legacy)
+        self.assertIn("isCurrent(connection)", parts)
+        self.assertIn("ServerMessageSyncGunPack.installCache(", parts)
+        install = legacy.split("static void installCache(", 1)[1]
+        calls = [install.index(call) for call in ("CommonNetworkCache.INSTANCE.fromNetwork(",
+                 "ClientIndexManager.reload()", "RecipeViewerReloadBridge.requestReload()")]
+        self.assertEqual(calls, sorted(calls))
 
     def test_listener_is_client_lifetime_not_connection_lifetime(self):
         source = code(BRIDGE)

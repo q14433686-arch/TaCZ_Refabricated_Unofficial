@@ -1,6 +1,7 @@
 package com.tacz.guns.util.math;
 
-import java.util.Date;
+import com.tacz.guns.util.time.GunTime;
+
 import java.util.Random;
 
 public class PerlinNoise {
@@ -10,18 +11,24 @@ public class PerlinNoise {
     private final long periodMs;
     private float prevNum;
     private float num;
-    private long prevTime = new Date().getTime();
+    private long prevTime = GunTime.nowMillis();
+    private long epoch = GunTime.epoch();
     private boolean reverse = false;
 
     public PerlinNoise(float rangeDown, float rangeUp, long periodMs) {
         this.rangeDown = rangeDown;
         this.rangeUp = rangeUp;
-        this.periodMs = periodMs;
-        prevNum = random.nextFloat() * (rangeUp - rangeDown) + rangeDown;
-        num = random.nextFloat() * (rangeUp - rangeDown) + rangeDown;
-        if (reverse && prevNum * num > 0) {
-            num = -num;
-        }
+        this.periodMs = Math.max(1, periodMs);
+        num = nextValue();
+        advance();
+    }
+
+    private float nextValue() { return random.nextFloat() * (rangeUp - rangeDown) + rangeDown; }
+
+    private void advance() {
+        prevNum = num;
+        num = nextValue();
+        if (reverse && prevNum * num > 0) num = -num;
     }
 
     private static double easeInterpolate(double x) {
@@ -33,23 +40,21 @@ public class PerlinNoise {
     }
 
     public float getValue() {
-        long periodTime = new Date().getTime() - prevTime;
+        long currentEpoch = GunTime.epoch();
+        long now = GunTime.nowMillis();
+        if (epoch != currentEpoch || now < prevTime) {
+            epoch = currentEpoch;
+            prevTime = now;
+            advance();
+        }
+        long periodTime = now - prevTime;
         long repeat = periodTime / periodMs;
         long partialTime = periodTime % periodMs;
         prevTime += repeat * periodMs;
         double x = easeInterpolate((double) partialTime / (double) periodMs);
-        if (repeat == 1) {
-            prevNum = num;
-            num = random.nextFloat() * (rangeUp - rangeDown) + rangeDown;
-            if (reverse && prevNum * num > 0) {
-                num = -num;
-            }
-        } else if (repeat > 1) {
-            prevNum = random.nextFloat() * (rangeUp - rangeDown) + rangeDown;
-            num = random.nextFloat() * (rangeUp - rangeDown) + rangeDown;
-            if (reverse && prevNum * num > 0) {
-                num = -num;
-            }
+        if (repeat > 0) {
+            if (repeat > 1) num = nextValue();
+            advance();
         }
         return (float) (prevNum * (1 - x) + num * x);
     }

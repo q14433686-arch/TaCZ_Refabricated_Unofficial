@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_material": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "tacz:glow_gun_pegboard"
+          }
+        ]
+      }
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipes": "tacz:glow_gun_pegboard_dye"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_material",
+      "has_the_recipe"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "tacz:glow_gun_pegboard_dye"
+    ]
+  }
+}

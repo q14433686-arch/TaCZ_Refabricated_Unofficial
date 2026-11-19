@@ -81,6 +81,11 @@ function M.tick_reload(api)
     local reload_time = api:getReloadTime()
     -- Get cache from api, it will be used to count loaded ammo, mark reload interruptions, etc.
     local cache = api:getCachedScriptData()
+    -- 缓存由 start_reload 建立。切枪时引擎可能拿着新枪来 tick 上一把枪遗留的换弹状态，
+    -- 此时新枪的 start_reload 从未执行过，缓存为空——直接取字段会抛 LuaError 崩客户端。
+    if (cache == nil) then
+        return NOT_RELOADING, -1
+    end
     local interrupted_time = cache.interrupted_time
     -- Handle interrupting reload
     if (interrupted_time ~= -1) then
@@ -106,15 +111,19 @@ function M.tick_reload(api)
         if (not cache.is_tactical) then
             if (api:getFireMode() == BURST) then
                 if (reload_time > intro_empty_feed_semi) then
-                    api:consumeAmmoFromPlayer(1)
-                    api:setAmmoInBarrel(true)
-                    reloaded_count = reloaded_count + 1
+                    if (api:loadChamberFromReserve()) then
+                        reloaded_count = 1
+                    else
+                        interrupted_time = reload_time
+                    end
                 end
             else
                 if (reload_time > intro_empty_feed) then
-                    api:consumeAmmoFromPlayer(1)
-                    api:setAmmoInBarrel(true)
-                    reloaded_count = reloaded_count + 1
+                    if (api:loadChamberFromReserve()) then
+                        reloaded_count = 1
+                    else
+                        interrupted_time = reload_time
+                    end
                 end
             end
         else
@@ -133,14 +142,14 @@ function M.tick_reload(api)
         else
             base_time = base_time + intro
         end
-        while (base_time < reload_time) do
-            if (reloaded_count > cache.needed_count) then
+        while (interrupted_time == -1 and reloaded_count <= cache.needed_count and base_time < reload_time) do
+            local loaded = api:loadMagazineFromReserve(1)
+            if (loaded == 0) then
+                interrupted_time = reload_time
                 break
             end
-            reloaded_count = reloaded_count + 1
+            reloaded_count = reloaded_count + loaded
             base_time = base_time + loop
-            api:consumeAmmoFromPlayer(1)
-            api:putAmmoInMagazine(1)
         end
     end
     -- Write back cache

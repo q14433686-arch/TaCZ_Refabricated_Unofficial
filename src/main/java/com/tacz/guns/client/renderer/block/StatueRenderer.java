@@ -1,5 +1,6 @@
 package com.tacz.guns.client.renderer.block;
 
+import com.tacz.guns.util.time.GunTime;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.tacz.guns.block.StatueBlock;
@@ -99,7 +100,7 @@ public class StatueRenderer implements BlockEntityRenderer<StatueBlockEntity, St
             poseStack.translate(0, -0.875, -1.2);
             poseStack.rotate(Axis.ZP.rotationDegrees(180));
 
-            double offset = Math.sin(Util.getMillis() / 500.0) * 0.1;
+            double offset = Math.sin(GunTime.nowMillis() / 500.0) * 0.1;
             poseStack.translate(0, offset, 0);
 
             // 直接提交 extract 阶段解析好的物品渲染状态全亮渲染，与旧行为一致

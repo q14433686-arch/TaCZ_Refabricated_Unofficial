@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.resource.CommonAssetsManager;
+import com.tacz.guns.resource.ICommonResourceProvider;
 import com.tacz.guns.resource.pojo.GunIndexPOJO;
 import com.tacz.guns.resource.pojo.data.gun.*;
 import net.minecraft.resources.Identifier;
@@ -23,6 +24,7 @@ public class CommonGunIndex {
     private String type;
     private GunIndexPOJO pojo;
     private int sort;
+    private boolean hasUnloadAmmoScript;
     private LuaTable script;
     private LuaTable scriptParam;
 
@@ -30,10 +32,15 @@ public class CommonGunIndex {
     }
 
     public static CommonGunIndex getInstance(GunIndexPOJO gunIndexPOJO) throws IllegalArgumentException {
+        return getInstance(gunIndexPOJO, CommonAssetsManager.get());
+    }
+
+    /** Explicit source so an integrated client cannot accidentally resolve the server's Lua while decoding a packet. */
+    public static CommonGunIndex getInstance(GunIndexPOJO gunIndexPOJO, ICommonResourceProvider resources) {
         CommonGunIndex index = new CommonGunIndex();
         index.pojo = gunIndexPOJO;
         checkIndex(gunIndexPOJO, index);
-        checkData(gunIndexPOJO, index);
+        checkData(gunIndexPOJO, index, resources);
         return index;
     }
 
@@ -44,10 +51,10 @@ public class CommonGunIndex {
         index.sort = Mth.clamp(gunIndexPOJO.getSort(), 0, 65536);
     }
 
-    private static void checkData(GunIndexPOJO gunIndexPOJO, CommonGunIndex index) {
+    private static void checkData(GunIndexPOJO gunIndexPOJO, CommonGunIndex index, ICommonResourceProvider resources) {
         Identifier pojoData = gunIndexPOJO.getData();
         Preconditions.checkArgument(pojoData != null, "index object missing pojoData field");
-        GunData data = CommonAssetsManager.get().getGunData(pojoData);
+        GunData data = resources.getGunData(pojoData);
         Preconditions.checkArgument(data != null, "there is no corresponding data file");
         Preconditions.checkArgument(data.getAmmoId() != null, "ammo id is empty");
         Preconditions.checkArgument(data.getAmmoAmount() >= 1, "ammo count must >= 1");
@@ -60,7 +67,7 @@ public class CommonGunIndex {
         Preconditions.checkArgument(!data.getFireModeSet().contains(null) && !data.getFireModeSet().contains(FireMode.UNKNOWN), "fire mode is error");
         checkInaccuracy(data);
         checkRecoil(data);
-        checkScript(data, index);
+        checkScript(data, index, resources);
         index.gunData = data;
     }
 
@@ -99,16 +106,18 @@ public class CommonGunIndex {
         }
     }
 
-    private static void checkScript(GunData data, CommonGunIndex index) {
+    private static void checkScript(GunData data, CommonGunIndex index, ICommonResourceProvider resources) {
         // 加载脚本
         Identifier scriptId = data.getScript();
-        CommonAssetsManager commonAssetsManager = CommonAssetsManager.getInstance();
-        if (scriptId != null && commonAssetsManager != null) {
+        if (scriptId != null && resources instanceof CommonAssetsManager commonAssetsManager) {
             index.script = commonAssetsManager.getScript(scriptId);
             if (index.script == null) {
                 GunMod.LOGGER.warn(MARKER, "script '{}' not found", scriptId);
             }
         }
+        index.hasUnloadAmmoScript = resources instanceof CommonAssetsManager
+                ? index.script != null && index.script.get("unload_ammo").isfunction()
+                : index.pojo.hasUnloadAmmoScript();
         // 加载脚本参数
         Map<String, Object> params = data.getScriptParam();
         if (params != null) {
@@ -137,6 +146,14 @@ public class CommonGunIndex {
 
     public LuaTable getScript() {
         return script;
+    }
+
+    public boolean hasUnloadAmmoScript() { return hasUnloadAmmoScript; }
+
+    public boolean canUnloadAmmo() {
+        var reload = gunData.getReloadData();
+        return !reload.isInfinite() && reload.getType() != FeedType.FUEL && reload.getType() != FeedType.INVENTORY
+                && (gunData.getScript() == null || gunData.isAllowAmmoUnload() || hasUnloadAmmoScript);
     }
 
     public LuaTable getScriptParam() {

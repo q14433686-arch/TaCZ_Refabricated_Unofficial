@@ -1,0 +1,4 @@
+{
+  "model_type": "mesh", "model": "port_test:triangle", "texture": "tacz:gun/uv/ak47",
+  "lod": {"model": "port_test:triangle", "texture": "tacz:gun/lod/ak47"}
+}

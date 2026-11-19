@@ -55,6 +55,11 @@ public final class PlayerAnimatorCompat {
                 && PalAnimationManager.hasAnimations(display);
     }
 
+    /** Rendering fallback for a first visible frame; ticks also update out-of-view players. */
+    public static boolean updatePlayerLayers(LivingEntity entity) {
+        return installed && entity instanceof AbstractClientPlayer player && PalAnimationManager.update(player);
+    }
+
     public static void stopAllAnimation(LivingEntity livingEntity) {
         stopAllAnimation(livingEntity, 8);
     }

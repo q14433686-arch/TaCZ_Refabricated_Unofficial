@@ -1,6 +1,5 @@
 package com.tacz.guns.client.input;
 
-import cn.sh1rocu.tacz.api.event.InputEvent;
 import cn.sh1rocu.tacz.api.event.PlayerTickEvent;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.tacz.guns.api.TimelessAPI;
@@ -24,29 +23,13 @@ public class ReloadKey {
             InputConstants.KEY_R,
             TaCZKeyCategory.TACZ);
 
-    public static void onReloadPress(InputEvent.Key event) {
-        if (isInGame() && event.getAction() == InputConstants.PRESS && RELOAD_KEY.matches(InputConstants.Type.KEYBOARD.getOrCreate(event.getKey()))) {
-            LocalPlayer player = Minecraft.getInstance().player;
-            if (player == null || player.isSpectator()) {
-                return;
-            }
-            if (player.getMainHandItem().getItem() instanceof IGun iGun) {
-                // 如果使用背包直读，且没有换弹冷却机制，则在输入时就屏蔽换弹
-                if (iGun.useInventoryAmmo(player.getMainHandItem())) {
-                    return;
-                }
-                IClientPlayerGunOperator.fromLocalPlayer(player).reload();
-            }
-        }
-    }
-
     public static boolean onReloadControllerPress(boolean isPress) {
         if (isInGame() && isPress) {
             LocalPlayer player = Minecraft.getInstance().player;
             if (player == null || player.isSpectator()) {
                 return false;
             }
-            if (IGun.mainHandHoldGun(player)) {
+            if (player.getMainHandItem().getItem() instanceof IGun gun && !gun.useInventoryAmmo(player.getMainHandItem())) {
                 IClientPlayerGunOperator.fromLocalPlayer(player).reload();
                 return true;
             }
@@ -67,6 +50,7 @@ public class ReloadKey {
         if (player == null || player.isSpectator() || player.tickCount % 5 != 0) {
             return;
         }
+        if (IClientPlayerGunOperator.fromLocalPlayer(player).getDataHolder().autoReloadSuppressed) return;
         ItemStack currentGunItem = player.getMainHandItem();
         if (player.getMainHandItem().getItem() instanceof IGun iGun) {
             // 如果使用背包直读，且没有换弹冷却机制，则在输入时就屏蔽换弹

@@ -1,0 +1,39 @@
+name: Inspect shader failure evidence
+on:
+  push:
+    branches: ['arena/**']
+    paths: ['.github/workflows/inspect-iris.yml']
+  workflow_dispatch:
+    inputs:
+      run:
+        description: Same-branch Iris regression run
+        required: true
+permissions:
+  actions: read
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - name: Summarize original same-branch test logs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN: ${{ inputs.run || '44393522517' }}
+        run: |
+          python3 - <<'PY'
+          import json,os,pathlib,re,subprocess,tempfile
+          run=os.environ['RUN']; assert run.isdecimal()
+          meta=json.loads(subprocess.check_output(['gh','api',f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{run}']))
+          assert meta['head_branch']==os.environ['GITHUB_REF_NAME'] and meta['path']=='.github/workflows/iris-smoke.yml'
+          with tempfile.TemporaryDirectory() as tmp:
+            subprocess.run(['gh','run','download',run,'-R',os.environ['GITHUB_REPOSITORY'],'-n','iris-'+meta['head_sha'],'-D',tmp],check=True)
+            for p in pathlib.Path(tmp).rglob('latest.log'):
+              lines=p.read_text(errors='replace').splitlines()
+              print('::notice::LAST LOG LINES: '+' '.join(lines[-25:])[:12000].replace('%','%25'))
+              matches = [(i,s) for i,s in enumerate(lines) if re.search(r'PORT_|AssertionError|Exception|timed out|Timeout|FATAL|ERROR',s)]
+              for i,s in matches[-22:]:
+                if re.search(r'com[.]tacz[.]guns[.]test[.]|PORT_|Heat capture|Pack lens|Shader compilation|GLSL|ShaderCompile|shader.*failed|AssertionError|Exception|timed out|Timeout|FATAL|ERROR',s,re.I):
+                  print('::notice::'+' '.join(lines[max(0,i-1):i+3])[:2000].replace('%','%25'))
+              print('::notice::LAST LOG LINES: '+' '.join(lines[-18:])[:3000].replace('%','%25'))
+          PY

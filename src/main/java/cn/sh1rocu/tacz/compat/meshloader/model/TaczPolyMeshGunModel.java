@@ -143,14 +143,16 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             return;
         }
 
-        boolean gpu = PolyMeshGpuRenderer.shouldSubmitGpu() && ensureBaked(texture, light);
+        // Opaque VBOs bypass the collector. Only the ghost takes the tinted CPU snapshot path.
+        boolean preview = collector instanceof com.tacz.guns.client.renderer.block.RackPreviewCollector;
+        boolean gpu = !preview && PolyMeshGpuRenderer.shouldSubmitGpu() && ensureBaked(texture, light);
         // 世界语境（第三人称/掉落物/展示框/展示台）的 GPU 路径。两级闸门：
         // ① isWorldGpuContext —— 按 transformType 排除 GUI 系语境。热栏图标
         //    以 GUI 语境在 HUD 提取（没有 Screen！ScreenRenderTracker 拦不住），
         //    带着 GUI 投影的 pose 落进世界表就是关 PR #33 的「枪画进世界」；
         // ② shouldSubmitGpuWorld —— Screen 提取窗口/镜内/阴影/手部（提交侧防泄漏）。
         Map<String, PolyMeshGpuRenderer.BakedBone> worldBaked = null;
-        if (!gpu && isWorldGpuContext(transformType) && PolyMeshGpuRenderer.shouldSubmitGpuWorld()) {
+        if (!gpu && !preview && isWorldGpuContext(transformType) && PolyMeshGpuRenderer.shouldSubmitGpuWorld()) {
             worldBaked = ensureWorldBaked(light);
         }
 
@@ -497,6 +499,14 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             }
         }
         worldBakedByLight.clear();
+    }
+
+    /** Called on the render thread when this display is retired; submitted draws may still reference its buffers. */
+    public void retire() {
+        releaseWorldBaked();
+        bakedBones.values().forEach(PolyMeshGpuRenderer::releaseDeferred);
+        bakedBones.clear();
+        gpuBaked = false;
     }
 
     private void releaseBaked() {

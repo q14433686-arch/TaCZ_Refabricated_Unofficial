@@ -1,0 +1,2 @@
+version:4896
+preferredGraphicsBackend:"opengl"

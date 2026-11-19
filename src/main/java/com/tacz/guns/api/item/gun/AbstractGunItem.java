@@ -10,13 +10,14 @@ import com.tacz.guns.api.item.ammo.AmmoSourceRegistry;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.builder.AmmoItemBuilder;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
+import com.tacz.guns.util.DefaultGunAttachments;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.inventory.tooltip.GunTooltip;
 import com.tacz.guns.resource.index.CommonGunIndex;
 import com.tacz.guns.resource.pojo.data.gun.FeedType;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
-import com.tacz.guns.util.AllowAttachmentTagMatcher;
+import com.tacz.guns.util.SlotAdapterHelper;
 import com.tacz.guns.util.AttachmentDataUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -33,6 +34,7 @@ import net.minecraft.world.item.ItemStack;
 
 import org.apache.commons.lang3.StringUtils;
 import javax.annotation.Nonnull;
+import com.tacz.guns.util.ContentPackOrder;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -42,7 +44,7 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
     }
 
     private static Comparator<Map.Entry<Identifier, CommonGunIndex>> idNameSort() {
-        return Comparator.comparingInt(m -> m.getValue().getSort());
+        return ContentPackOrder.byPackThenSort(CommonGunIndex::getSort);
     }
 
     /**
@@ -80,6 +82,17 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
      * 尝试打断换弹时调用
      */
     public abstract void interruptReload(ShooterDataHolder dataHolder, ItemStack gunItem, LivingEntity shooter);
+
+    public void unloadAmmo(ShooterDataHolder dataHolder, ItemStack gunItem, LivingEntity shooter) {
+        unloadAmmo(gunItem, shooter, true, -1);
+    }
+
+    /** Settlement only; Lua calls this overload without recursively invoking unload_ammo. */
+    public int unloadAmmo(ItemStack gunItem, LivingEntity shooter, boolean chamber, int amount) {
+        return TimelessAPI.getCommonGunIndex(getGunId(gunItem))
+                .map(index -> com.tacz.guns.util.GunAmmoUnloadHelper.unloadAmmo(shooter, gunItem, this, index, chamber, amount))
+                .orElse(0);
+    }
 
     /**
      * 切换开火模式时调用
@@ -261,9 +274,7 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
         IAttachment iAttachment = IAttachment.getIAttachmentOrNull(attachmentItem);
         IGun iGun = IGun.getIGunOrNull(gun);
         if (iGun != null && iAttachment != null) {
-            Identifier gunId = iGun.getGunId(gun);
-            Identifier attachmentId = iAttachment.getAttachmentId(attachmentItem);
-            return AllowAttachmentTagMatcher.match(gunId, attachmentId);
+            return SlotAdapterHelper.allowsAttachment(gun, iAttachment.getType(attachmentItem), iAttachment.getAttachmentId(attachmentItem));
         }
         return false;
     }
@@ -347,6 +358,7 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
             if (key.equals(indexType)) {
                 ItemStack itemStack = GunItemBuilder.create()
                         .setId(entry.getKey())
+                        .putAllVirtualAttachment(DefaultGunAttachments.defaults(entry.getKey()))
                         .setFireMode(gunData.getFireModeSet().get(0))
                         .setAmmoCount(gunData.getAmmoAmount())
                         .setHeatData(gunData.hasHeatData())

@@ -1,5 +1,9 @@
 package com.tacz.guns.resource;
 
+import com.tacz.guns.resource.index.CommonSlotAdapterIndex;
+import com.tacz.guns.resource.pojo.data.attachment.SlotAdapterData;
+import com.tacz.guns.resource.index.CommonAttachmentVariantIndex;
+import com.tacz.guns.resource.pojo.data.attachment.VariantData;
 import com.tacz.guns.resource.filter.RecipeFilter;
 import com.tacz.guns.resource.index.CommonAmmoIndex;
 import com.tacz.guns.resource.index.CommonAttachmentIndex;
@@ -20,6 +24,18 @@ public interface ICommonResourceProvider {
     @Nullable GunData getGunData(Identifier id);
 
     @Nullable AttachmentData getAttachmentData(Identifier attachmentId);
+
+    default @Nullable VariantData getAttachmentVariantData(Identifier id) { return null; }
+
+    default @Nullable CommonAttachmentVariantIndex getAttachmentVariantIndex(Identifier id) { return null; }
+
+    default Set<Map.Entry<Identifier, CommonAttachmentVariantIndex>> getAllAttachmentVariants() { return Set.of(); }
+
+    default @Nullable SlotAdapterData getSlotAdapterData(Identifier id) { return null; }
+
+    default @Nullable CommonSlotAdapterIndex getSlotAdapterIndex(Identifier id) { return null; }
+
+    default Set<Map.Entry<Identifier, CommonSlotAdapterIndex>> getAllSlotAdapters() { return Set.of(); }
 
     @Nullable BlockData getBlockData(Identifier id);
 

@@ -11,6 +11,10 @@ public class OtherClothConfig {
     public static void init(ConfigBuilder root, ConfigEntryBuilder entryBuilder) {
         ConfigCategory other = root.getOrCreateCategory(Component.translatable("config.tacz.common.other"));
 
+        other.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.common.other.hide_gun_pack_compatibility_warning"), OtherConfig.HIDE_GUN_PACK_COMPATIBILITY_WARNING.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.common.other.hide_gun_pack_compatibility_warning.desc"))
+                .setSaveConsumer(OtherConfig.HIDE_GUN_PACK_COMPATIBILITY_WARNING::set).build());
+
         other.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.common.other.default_pack_debug"), PreLoadConfig.override.get())
                 .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.common.other.default_pack_debug.desc"))
                 .setSaveConsumer(PreLoadConfig.override::set).build());

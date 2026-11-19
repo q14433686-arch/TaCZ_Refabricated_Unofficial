@@ -1,0 +1,7 @@
+{
+  "ammo": "port_test:fragments_5",
+  "bolt": "closed_bolt",
+  "fire_mode": ["semi"],
+  "inaccuracy": {"stand": 0, "move": 0, "sneak": 0, "lie": 0, "aim": 0},
+  "bullet": {"speed": 6, "gravity": 0, "friction": 0, "damage": 0, "life": 8, "tracer_count_interval": 0}
+}

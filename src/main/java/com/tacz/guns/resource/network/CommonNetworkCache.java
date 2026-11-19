@@ -1,11 +1,16 @@
 package com.tacz.guns.resource.network;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.tacz.guns.resource.index.CommonSlotAdapterIndex;
+import com.tacz.guns.resource.pojo.data.attachment.SlotAdapterData;
+import com.tacz.guns.resource.pojo.SlotAdapterIndexPOJO;
+import com.tacz.guns.resource.index.CommonAttachmentVariantIndex;
+import com.tacz.guns.resource.pojo.data.attachment.VariantData;
+import com.tacz.guns.resource.pojo.AttachmentVariantIndexPOJO;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import com.tacz.guns.GunMod;
-import com.tacz.guns.api.modifier.JsonProperty;
+import com.tacz.guns.resource.manager.AttachmentDataManager;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.ICommonResourceProvider;
 import com.tacz.guns.resource.filter.RecipeFilter;
@@ -14,7 +19,7 @@ import com.tacz.guns.resource.index.CommonAmmoIndex;
 import com.tacz.guns.resource.index.CommonAttachmentIndex;
 import com.tacz.guns.resource.index.CommonBlockIndex;
 import com.tacz.guns.resource.index.CommonGunIndex;
-import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
+import com.tacz.guns.resource.manager.GunDataManager;
 import com.tacz.guns.resource.pojo.data.attachment.AttachmentData;
 import com.tacz.guns.resource.pojo.data.block.BlockData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
@@ -32,6 +37,10 @@ import java.util.*;
 public enum CommonNetworkCache implements ICommonResourceProvider {
     INSTANCE;
 
+    private final Map<Identifier, VariantData> attachmentVariantData = new HashMap<>();
+    private final Map<Identifier, CommonAttachmentVariantIndex> attachmentVariantIndex = new HashMap<>();
+    private final Map<Identifier, SlotAdapterData> slotAdapterData = new HashMap<>();
+    private final Map<Identifier, CommonSlotAdapterIndex> slotAdapterIndex = new HashMap<>();
     public Map<Identifier, GunData> gunData = new HashMap<>();
     public Map<Identifier, AttachmentData> attachmentData = new HashMap<>();
     public Map<Identifier, RecipeFilter> recipeFilter = new HashMap<>();
@@ -134,7 +143,19 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
         return allowAttachmentTags.get(registryName);
     }
 
+    @Override public @Nullable VariantData getAttachmentVariantData(Identifier id) { return attachmentVariantData.get(id); }
+    @Override public @Nullable CommonAttachmentVariantIndex getAttachmentVariantIndex(Identifier id) { return attachmentVariantIndex.get(id); }
+    @Override public Set<Map.Entry<Identifier, CommonAttachmentVariantIndex>> getAllAttachmentVariants() { return attachmentVariantIndex.entrySet(); }
+
+    @Override public @Nullable SlotAdapterData getSlotAdapterData(Identifier id) { return slotAdapterData.get(id); }
+    @Override public @Nullable CommonSlotAdapterIndex getSlotAdapterIndex(Identifier id) { return slotAdapterIndex.get(id); }
+    @Override public Set<Map.Entry<Identifier, CommonSlotAdapterIndex>> getAllSlotAdapters() { return slotAdapterIndex.entrySet(); }
+
     public void clear() {
+        slotAdapterData.clear();
+        slotAdapterIndex.clear();
+        attachmentVariantData.clear();
+        attachmentVariantIndex.clear();
         gunData.clear();
         attachmentData.clear();
         gunIndex.clear();
@@ -159,6 +180,8 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
                 case GUN_INDEX:
                 case AMMO_INDEX:
                 case ATTACHMENT_INDEX:
+                case ATTACHMENT_VARIANT_INDEX:
+                case SLOT_ADAPTER_INDEX:
                 case BLOCK_INDEX:
                     delayed.put(entry.getKey(), entry.getValue());
                     break;
@@ -175,56 +198,32 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
         return CommonAssetsManager.GSON.fromJson(json, dataClass);
     }
 
-    private AttachmentData parseAttachmentData(String json) {
-        AttachmentData data = CommonAssetsManager.GSON.fromJson(json, AttachmentData.class);
-        JsonElement element = CommonAssetsManager.GSON.fromJson(json, JsonElement.class);
-        if (data != null) {
-            // 序列化注册的配件属性修改
-            AttachmentPropertyManager.getModifiers().forEach((key, value) -> {
-                if (!element.isJsonObject()) {
-                    return;
-                }
-                JsonObject jsonObject = element.getAsJsonObject();
-                if (jsonObject.has(key)) {
-                    JsonProperty<?> property = value.readJson(json);
-                    property.initComponents();
-                    data.addModifier(key, property);
-                } else if (jsonObject.has(value.getOptionalFields())) {
-                    // 为了兼容旧版本，读取可选字段名
-                    JsonProperty<?> property = value.readJson(json);
-                    property.initComponents();
-                    data.addModifier(key, property);
-                }
-            });
-        }
-        return data;
-    }
-
-    private void resolveAttachmentTags(Map<Identifier, String> data) {
-        for (Map.Entry<Identifier, String> entry : data.entrySet()) {
-            List<String> tags = CommonAssetsManager.GSON.fromJson(entry.getValue(), new TypeToken<>() {
-            });
-            if (entry.getKey().getPath().startsWith("allow_attachments/") && entry.getKey().getPath().length() > 18) {
-                Identifier gunId = entry.getKey().withPath(entry.getKey().getPath().substring(18));
-                allowAttachmentTags.computeIfAbsent(gunId, (v) -> new HashSet<>()).addAll(tags);
-            } else {
-                attachmentTags.computeIfAbsent(entry.getKey(), (v) -> new HashSet<>()).addAll(tags);
-            }
+    private void resolveAttachmentTag(Identifier id, String json) {
+        List<String> tags = CommonAssetsManager.GSON.fromJson(json, new TypeToken<>() {});
+        if (tags == null || tags.stream().anyMatch(Objects::isNull)) throw new JsonParseException("Invalid attachment tag list");
+        Set<String> ordered = Collections.unmodifiableSet(new LinkedHashSet<>(tags));
+        if (id.getPath().startsWith("allow_attachments/") && id.getPath().length() > 18) {
+            allowAttachmentTags.put(id.withPath(id.getPath().substring(18)), ordered);
+        } else {
+            attachmentTags.put(id, ordered);
         }
     }
-
 
     private void fromNetwork(DataType type, Map<Identifier, String> data) {
         for (Map.Entry<Identifier, String> entry : data.entrySet()) {
             try {
                 switch (type) {
-                    case GUN_DATA -> gunData.put(entry.getKey(), parse(entry.getValue(), GunData.class));
-                    case GUN_INDEX -> gunIndex.put(entry.getKey(), parse(entry.getValue(), CommonGunIndex.class));
+                    case GUN_DATA -> gunData.put(entry.getKey(), GunDataManager.parseData(JsonParser.parseString(entry.getValue())));
+                    case GUN_INDEX -> gunIndex.put(entry.getKey(), CommonGunIndex.getInstance(parse(entry.getValue(), com.tacz.guns.resource.pojo.GunIndexPOJO.class), this));
                     case AMMO_INDEX -> ammoIndex.put(entry.getKey(), parse(entry.getValue(), CommonAmmoIndex.class));
-                    case ATTACHMENT_DATA -> attachmentData.put(entry.getKey(), parseAttachmentData(entry.getValue()));
+                    case ATTACHMENT_DATA -> attachmentData.put(entry.getKey(), AttachmentDataManager.parseData(JsonParser.parseString(entry.getValue()), CommonAssetsManager.GSON));
+                    case ATTACHMENT_VARIANT_DATA -> attachmentVariantData.put(entry.getKey(), parse(entry.getValue(), VariantData.class));
+                    case ATTACHMENT_VARIANT_INDEX -> attachmentVariantIndex.put(entry.getKey(), CommonAttachmentVariantIndex.getInstance(parse(entry.getValue(), AttachmentVariantIndexPOJO.class), this));
+                    case SLOT_ADAPTER_DATA -> slotAdapterData.put(entry.getKey(), parse(entry.getValue(), SlotAdapterData.class));
+                    case SLOT_ADAPTER_INDEX -> slotAdapterIndex.put(entry.getKey(), CommonSlotAdapterIndex.getInstance(parse(entry.getValue(), SlotAdapterIndexPOJO.class), this));
                     case ATTACHMENT_INDEX ->
                             attachmentIndex.put(entry.getKey(), parse(entry.getValue(), CommonAttachmentIndex.class));
-                    case ATTACHMENT_TAGS -> resolveAttachmentTags(data);
+                    case ATTACHMENT_TAGS -> resolveAttachmentTag(entry.getKey(), entry.getValue());
                     case BLOCK_INDEX -> blockIndex.put(entry.getKey(), parse(entry.getValue(), CommonBlockIndex.class));
                     case RECIPE_FILTER -> recipeFilter.put(entry.getKey(), parse(entry.getValue(), RecipeFilter.class));
                     // 第 12 轮：接上此前只声明未接线的 RECIPES 通道

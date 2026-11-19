@@ -58,23 +58,36 @@ public class BedrockPart {
     }
 
     public void render(PoseStack poseStack, ItemDisplayContext transformType, VertexConsumer consumer, int light, int overlay, float red, float green, float blue, float alpha) {
+        render(poseStack, transformType, consumer, consumer, light, overlay, red, green, blue, alpha);
+    }
+
+    public void render(PoseStack poseStack, ItemDisplayContext transformType, VertexConsumer consumer, VertexConsumer unshadedConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
         int cubePackedLight = light;
         if (illuminated) {
             // 最大亮度；光影下 sky 列走环境真值（IlluminatedRealSky），
             // 否则夜里发光件会继承太阳/月亮亮度。与 poly_mesh 层同一开关。
             cubePackedLight = com.tacz.guns.util.IlluminatedLights.resolve(light);
+            consumer = unshadedConsumer;
         }
         if (this.visible) {
             if (!this.cubes.isEmpty() || !this.children.isEmpty()) {
                 poseStack.pushPose();
                 this.translateAndRotateAndScale(poseStack);
-                this.compile(poseStack.last(), consumer, cubePackedLight, overlay, red, green, blue, alpha);
-
-                for (BedrockPart part : this.children) {
-                    part.render(poseStack, transformType, consumer, cubePackedLight, overlay, red, green, blue, alpha);
-                }
-
+                renderGeometry(poseStack, transformType, consumer, unshadedConsumer, cubePackedLight, overlay, red, green, blue, alpha);
                 poseStack.popPose();
+            }
+        }
+    }
+
+    protected final void renderGeometry(PoseStack poseStack, ItemDisplayContext context, VertexConsumer consumer,
+                                        VertexConsumer unshadedConsumer, int light, int overlay,
+                                        float red, float green, float blue, float alpha) {
+        compile(poseStack.last(), consumer, light, overlay, red, green, blue, alpha);
+        for (BedrockPart child : children) {
+            if (consumer == unshadedConsumer) { // retain virtual dispatch to legacy single-buffer overrides
+                child.render(poseStack, context, consumer, light, overlay, red, green, blue, alpha);
+            } else {
+                child.render(poseStack, context, consumer, unshadedConsumer, light, overlay, red, green, blue, alpha);
             }
         }
     }

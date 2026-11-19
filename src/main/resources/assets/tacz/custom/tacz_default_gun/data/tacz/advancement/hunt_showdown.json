@@ -1,0 +1,55 @@
+{
+  "parent": "tacz:times_changed",
+  "display": {
+    "icon": {
+      "id": "tacz:modern_kinetic_gun",
+      "count": 1,
+      "components": {
+        "minecraft:custom_data": "{GunId:\"tacz:springfield1873\"}"
+      }
+    },
+    "title": {
+      "translate": "advancement.tacz.hunt_showdown.title"
+    },
+    "description": {
+      "translate": "advancement.tacz.hunt_showdown.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "kill": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "player": {
+          "type": "minecraft:entity_properties",
+          "entity": "this",
+          "predicate": {
+            "minecraft:equipment": {
+              "mainhand": {
+                "items": [
+                  "tacz:modern_kinetic_gun"
+                ],
+                "predicates": {
+                  "minecraft:custom_data": "{GunId:\"tacz:springfield1873\"}"
+                }
+              }
+            }
+          }
+        },
+        "entity": {
+          "type": "minecraft:entity_properties",
+          "entity": "this",
+          "predicate": {
+            "minecraft:distance": {
+              "absolute": {
+                "min": 75.0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

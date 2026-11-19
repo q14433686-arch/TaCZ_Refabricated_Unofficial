@@ -1,0 +1,9 @@
+{
+  "name": "Test mount",
+  "display": "port_test:mount",
+  "data": "port_test:mount",
+  "slot": "scope",
+  "allowed_attachments": [
+    "#port_test:optics"
+  ]
+}
