@@ -1,12 +1,22 @@
-# 发布文案（三站）
+# 项目主页与发布文案
 
 复制粘贴用。`[[ ]]` 里的内容**需你自己替换**，发布前搜 `[[` 全部处理掉。
 
 | 文件 | 平台 | 性质 |
 |---|---|---|
-| `CurseForge.md` | CurseForge | 文件托管站，审核较严 |
+| [Summary 与字段说明](CurseForge.md) · [双语 Description 正文](CurseForge-Description.md) | CurseForge | 正文可整页复制；不是文件更新日志 |
 | `Modrinth.md` | Modrinth | 文件托管站，规则条目化、可预期 |
 | `MCMOD.md` | MC 百科 (mcmod.cn) | **Wiki 型资料站，通常不托管 jar** |
+
+## GitHub 项目主页
+
+**About / Description**（仓库级简介，不更改默认分支）：
+
+```text
+Unofficial Fabric port of TaCZ (Timeless & Classics Guns: Zero). MC 26.3 development: display racks, ammo storage and per-account HUDs. Separate builds for 26.2, 26.1.2 and 1.21.11. Built-in TML; partial LRTactical support. 非官方社区移植。
+```
+
+**Website** 指向 [26.3 开发版介绍与版本选择](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3#readme)。默认分支 `26.2(main)` 的 README 属于 26.2；不要用 26.3 的版本表覆盖它。若在旧线首页引用，只需写：「[26.3 开发版](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3#readme)包含挂板、弹药库与账号准星；各 MC 版本单独构建，请按文件标注选择。」
 
 本目录文案**依据各站官方规则原文撰写**，来源：
 
@@ -126,7 +136,9 @@
 
 ---
 
-## 文案中的事实（均已核对仓库，改写时别改错）
+## 旧文件文案例子：26.2 R3-hotfix2
+
+下表是历史单文件口径，不是跨版本项目页的当前依赖表。当前 26.3 见[分支 README](../../README.md)，另外三条线见[交接基线](../lineage/26.3-backports/README.md)。
 
 | 项 | 值 |
 |---|---|
