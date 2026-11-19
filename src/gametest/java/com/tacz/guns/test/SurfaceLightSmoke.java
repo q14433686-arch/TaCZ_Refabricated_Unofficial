@@ -38,12 +38,13 @@ import java.util.UUID;
 /** Fixed receivers and a wall between the camera and the negative control. No gun, particles,
  * tracers or visible actors in the scatter A/B. Separately verify a real held beam and actual
  * server -> client detonation packets. Never mix packet generation or screenshot readback into timing. */
-final class SurfaceLightSmoke {
+public final class SurfaceLightSmoke {
+    public static long sampleTime = -1;
     private static final Identifier AK=id("ak47"), RPG=id("rpg7"), M4=id("m4a1"), NGAL=id("laser_ngal");
     private static Identifier id(String path) { return Identifier.fromNamespaceAndPath("tacz",path); }
     private static final Cow[] actors = new Cow[16];
     private static ItemStack rifle;
-    private static boolean registered, replay, timed;
+    private static boolean registered, replay;
     private static long previousTick;
     private static long[] samples;
     private static int n;
@@ -58,11 +59,13 @@ final class SurfaceLightSmoke {
             var p=world.getConnection().getServerPlayer(); var level=p.level(); p.setItemInHand(InteractionHand.MAIN_HAND,ItemStack.EMPTY);
             var states=new LinkedHashMap<BlockPos,BlockState>();
             for(int x=-4;x<=4;x++) for(int y=-2;y<=2;y++) for(int z=-3;z<=3;z++) {
-                if (Math.abs(x)!=4 && y!=2 && Math.abs(z)!=3) continue;
-                var pos=origin.offset(x,y,z); states.put(pos,level.getBlockState(pos)); level.setBlock(pos,Blocks.COAL_BLOCK.defaultBlockState(),Block.UPDATE_ALL);
+                var pos=origin.offset(x,y,z);
+                var block = Math.abs(x)==4 || Math.abs(y)==2 || Math.abs(z)==3 ? Blocks.COAL_BLOCK : Blocks.AIR;
+                states.put(pos,level.getBlockState(pos)); level.setBlock(pos,block.defaultBlockState(),Block.UPDATE_ALL);
             }
             return states;
         });
+        StringBuilder failures = new StringBuilder();
         try {
             ctx.getInput().lookAt(0,0);
             ctx.waitFor(mc->mc.player.getMainHandItem().isEmpty() && mc.level.getBlockState(origin.south(3)).is(Blocks.COAL_BLOCK));
@@ -74,31 +77,38 @@ final class SurfaceLightSmoke {
                 var launcher=GunItemBuilder.create().setId(RPG).build();
                 ReimaginedShotControl.taczTest$shot(new GunFirePostEvent(mc.player,launcher,LogicalSide.CLIENT));
                 if (NativeMuzzleEffects.flashLight(launcher,0)!=10<<4 || NativeMuzzleEffects.flashLight(rifle,0)!=0) throw new AssertionError("Locatorless RPG exposure / different gun");
-                previousTick=-1; replay=true;
+                sampleShot();
             });
             ctx.waitTicks(3);
             var off=frame(ctx,"off");
-            ctx.runOnClient(mc->RenderConfig.MUZZLE_SURFACE_LIGHT.set(true)); ctx.waitTicks(6);
-            int lit=0;
-            for (int i=0;i<3;i++) lit=Math.max(lit,redDelta(off,frame(ctx,"front_"+i)));
-            ctx.runOnClient(mc->{replay=false; SurfaceLights.clear(); position(mc,origin,true); replay=true;}); ctx.waitTicks(6);
+            ctx.runOnClient(mc->{RenderConfig.MUZZLE_SURFACE_LIGHT.set(true);sampleShot();}); ctx.waitTicks(4);
+            int lit=redDelta(off,frame(ctx,"front"));
+            var front=ctx.computeOnClient(mc->SurfaceLights.diagnostics());
+            ctx.runOnClient(mc->{SurfaceLights.clear();position(mc,origin,true);sampleShot();}); ctx.waitTicks(4);
             var rear=frame(ctx,"behind");
             int leak=redDelta(off,rear);
-            GunMod.LOGGER.info("PORT_SURFACE: central wall red delta off/front/behind={}/{} over control",lit,leak);
-            if (lit<8 || Math.abs(leak)>Math.max(4,lit/5)) throw new AssertionError("Wall did not light only on the visible side: "+lit+"/"+leak);
-            ctx.runOnClient(mc->{replay=false; SurfaceLights.clear();position(mc,origin,false);timed=true;previousTick=-1;replay=true;});
+            GunMod.LOGGER.info("PORT_SURFACE: central wall red delta front/behind over off={}/{}, front {}",lit,leak,front);
+            if (lit<8 || Math.abs(leak)>Math.max(4,lit/5)) failures.append(" wall front/behind=").append(lit).append("/").append(leak);
+            ctx.runOnClient(mc->sampleTime=-1);
+            ctx.waitFor(mc->SurfaceLights.diagnostics().active()==0,80); // Release the clock; a single pulse really expires.
+            ctx.runOnClient(mc->{SurfaceLights.clear();position(mc,origin,false);previousTick=-1;replay=true;});
             timing(ctx,false); timing(ctx,true);
-            ctx.runOnClient(mc->{replay=false;timed=false;SurfaceLights.clear();});
-            packets(ctx,world);
-            laser(ctx,world);
+            ctx.runOnClient(mc->{replay=false;SurfaceLights.clear();});
+            try { packets(ctx,world); } catch(AssertionError e) { failures.append(" packets: ").append(e.getMessage()).append(" ").append(ctx.computeOnClient(mc->SurfaceLights.diagnostics())); }
+            try { laser(ctx,world); } catch(AssertionError e) { failures.append(" laser: ").append(e.getMessage()); }
+            if (!failures.isEmpty()) throw new AssertionError("Near-field controls:"+failures);
         } finally {
-            ctx.runOnClient(mc->{ samples=null; replay=timed=false; Arrays.fill(actors,null);rifle=null;NativeMuzzleEffects.clear();
+            ctx.runOnClient(mc->{ sampleTime=-1;samples=null;replay=false; Arrays.fill(actors,null);rifle=null;NativeMuzzleEffects.clear();
                 RenderConfig.LASER_IMPACT_SPOT.set(opt[0]);RenderConfig.MUZZLE_SURFACE_LIGHT.set(opt[1]);
                 RenderConfig.LEGACY_MUZZLE_LIGHT.set(opt[2]);RenderConfig.EXPLOSION_SURFACE_LIGHT.set(opt[3]); });
             world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer(); old.forEach((pos,state)->p.level().setBlock(pos,state,Block.UPDATE_ALL));p.setItemInHand(InteractionHand.MAIN_HAND,saved);p.inventoryMenu.broadcastChanges();});
             ctx.getInput().lookAt(facing[0],facing[1]);
             world.getConnection().waitForChunksRender();ctx.waitTicks(5);
         }
+    }
+    private static void sampleShot() {
+        ReimaginedShotControl.taczTest$shot(new GunFirePostEvent(actors[0],rifle,LogicalSide.CLIENT));
+        sampleTime=com.tacz.guns.util.time.GunTime.nowMillis();
     }
     private static void setup(Minecraft mc, BlockPos origin) {
         rifle=GunItemBuilder.create().setId(AK).build();
@@ -114,7 +124,7 @@ final class SurfaceLightSmoke {
             long tick=mc.level.getGameTime();
             if (previousTick!=tick) {
                 previousTick=tick;
-                for(int i=timed?(int)(tick&1):0;i<(timed?16:1);i+=2)
+                for(int i=(int)(tick&1);i<actors.length;i+=2)
                     ReimaginedShotControl.taczTest$shot(new GunFirePostEvent(actors[i],rifle,LogicalSide.CLIENT));
             }
             if (samples!=null && n<samples.length) samples[n++]=mc.getFrameTimeNs();
@@ -125,7 +135,7 @@ final class SurfaceLightSmoke {
         for(int i=0;i<actors.length;i++) {
             var cow=actors[i];
             cow.snapTo(new Vec3(eye.x+(i==0?0:(i%4-1.5)*.32),eye.y-cow.getEyeHeight()+.12,
-                    origin.getZ()+(behind?4.25:1.65)+(i/4)*.05));
+                    origin.getZ()+(behind?4.25:1.65)+(i/4)*.05),0,0);
         }
     }
     private static BufferedImage frame(ClientGameTestContext c,String name) { return SnowstormMaterialSmoke.read(c.takeScreenshot("tacz_surface_"+name)); }
@@ -152,17 +162,17 @@ final class SurfaceLightSmoke {
             // A vanilla FLASH packet with the same count and no LR stun source must not light the scene.
             ParticleUtil.sendParticle(level, ColorParticleOption.create(ParticleTypes.FLASH,0xffffff),pos.x,pos.y,pos.z,12,.2,.2,.2,8,true);
             var g=new StunGrenadeEntity(p,level,200);g.setPos(pos.add(4,0,0));g.setThrowableGravity(0);level.addFreshEntity(g);return g.getUUID();});
-        ctx.waitFor(mc->mc.level.getEntity(stun)!=null && SurfaceLights.diagnostics().explosions()==before.explosions()+2);
+        ctx.waitFor(mc->mc.level.getEntity(stun)!=null && SurfaceLights.diagnostics().explosions()==before.explosions()+2,100);
         if(ctx.computeOnClient(mc->SurfaceLights.diagnostics().stuns())!=before.stuns()) throw new AssertionError("Frag sprites/unrelated FLASH misclassified as a stun");
         world.getServer().runOnServer(s->((StunGrenadeEntity)world.getConnection().getServerPlayer().level().getEntity(stun)).onDeath(null));
-        ctx.waitFor(mc->SurfaceLights.diagnostics().stuns()==before.stuns()+1);
+        ctx.waitFor(mc->SurfaceLights.diagnostics().stuns()==before.stuns()+1,100);
         GunMod.LOGGER.info("PORT_SURFACE: server TaCZ explosion + LR frag -> 2 blasts, LR stun -> 1 white pulse, 0 duplicate sprite bursts");
     }
     private static void laser(ClientGameTestContext ctx,TestSingleplayerContext world) {
         world.getServer().runOnServer(s->{var p=world.getConnection().getServerPlayer();p.setItemInHand(InteractionHand.MAIN_HAND,GunItemBuilder.create().setId(M4).setAmmoCount(5).putAttachment(AttachmentType.LASER,NGAL).build());p.inventoryMenu.broadcastChanges();});
         ctx.waitFor(mc->{var stack=mc.player.getMainHandItem();return stack.getItem() instanceof IGun gun && NGAL.equals(gun.getAttachmentId(stack,AttachmentType.LASER));});
         ctx.waitTicks(26);var off=frame(ctx,"laser_off");ctx.runOnClient(mc->RenderConfig.LASER_IMPACT_SPOT.set(true));
-        try { ctx.waitFor(mc->SurfaceLights.diagnostics().beamHits()>0); }
+        try { ctx.waitFor(mc->SurfaceLights.diagnostics().beamHits()>0,100); }
         catch(AssertionError e) { throw new AssertionError("Held NGAL did not project: "+ctx.computeOnClient(mc->SurfaceLights.diagnostics()),e); }ctx.waitTicks(4);var on=frame(ctx,"laser_on");
         int added=0;
         for(int y=on.getHeight()/5;y<on.getHeight()*3/4;y++) for(int x=on.getWidth()/5;x<on.getWidth()*4/5;x++) {

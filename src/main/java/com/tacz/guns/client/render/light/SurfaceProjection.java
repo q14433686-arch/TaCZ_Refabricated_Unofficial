@@ -28,15 +28,23 @@ final class SurfaceProjection {
         void draw(PoseStack.Pose pose, VertexConsumer out, Vec3 camera, int rgb, float strength) {
             var axis = face.getAxis();
             if ((normal(camera, axis) - plane) * sign(face) <= 0) return;
-            int a = Math.clamp(Math.round(255 * gain * strength), 0, 255);
-            if (a == 0) return;
-            int argb = a << 24 | (rgb & 0xffffff);
+            // Encode light intensity in RGB, not coverage. Packs that cut out alpha < .1
+            // should not discard an entire dim receiver. The texture alpha is radial coverage.
+            float intensity = Math.clamp(gain * strength, 0f, 1f);
+            int color = Math.round((rgb >> 16 & 255) * intensity) << 16
+                    | Math.round((rgb >> 8 & 255) * intensity) << 8 | Math.round((rgb & 255) * intensity);
+            if (color == 0) return;
+            int argb = 0xff000000 | color;
             double depth = plane - normal(camera, axis) + sign(face) * BIAS;
             double x = u(camera, axis), y = v(camera, axis);
-            vertex(pose, out, face, depth, l-x, b-y, u0, v0, argb);
-            vertex(pose, out, face, depth, r-x, b-y, u1, v0, argb);
-            vertex(pose, out, face, depth, r-x, t-y, u1, v1, argb);
-            vertex(pose, out, face, depth, l-x, t-y, u0, v1, argb);
+            // u×v points along +X, -Y and +Z respectively. Keep the receiving side front-facing.
+            boolean flip = (axis == Direction.Axis.Y) == (sign(face) > 0);
+            double left = (flip ? r : l)-x, right = (flip ? l : r)-x;
+            float sl = flip ? u1 : u0, sr = flip ? u0 : u1;
+            vertex(pose, out, face, depth, left, b-y, sl, v0, argb);
+            vertex(pose, out, face, depth, right, b-y, sr, v0, argb);
+            vertex(pose, out, face, depth, right, t-y, sr, v1, argb);
+            vertex(pose, out, face, depth, left, t-y, sl, v1, argb);
         }
     }
 

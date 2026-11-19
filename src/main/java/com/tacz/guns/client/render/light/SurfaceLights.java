@@ -182,7 +182,7 @@ public final class SurfaceLights {
 
     public static void submit(SubmitNodeCollector out, Vec3 camera) {
         if (pulses.isEmpty() && beams.isEmpty()) return;
-        if (!ready() || IrisCompat.isRenderShadow()) return;
+        if (!ready() || ScopePipRenderer.isInsideScopeLevelRender() || IrisCompat.isRenderShadow()) return;
         long now=GunTime.nowMillis(), tick=level.getGameTime(), frame=ScopePipRenderer.frameNumber();
         if (tick!=buildTick) { buildTick=tick; builds=0; }
         pulses.removeIf(p -> p.expired(now) || !(p.eye==null ? RenderConfig.EXPLOSION_SURFACE_LIGHT.get()
