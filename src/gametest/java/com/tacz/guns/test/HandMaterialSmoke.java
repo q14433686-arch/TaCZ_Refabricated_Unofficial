@@ -70,6 +70,7 @@ final class HandMaterialSmoke {
                             + "; alpha/blend distance=" + between + " vs cutout=" + toCutout);
                 GunMod.LOGGER.info("PORT_HAND_MATERIALS: {} six visible muzzle-local effects; q10/q95 cutout/alpha/blend={}/{}/{}; color distances {}/{}",
                         backing, cutout.bandRatio(), alpha.bandRatio(), blend.bandRatio(), between, toCutout);
+                if (backing.equals("dark")) ConstraintPoseSmoke.run(ctx, controller, track);
             } finally {
                 ctx.runOnClient(mc -> { controller.removeAnimation(track); rt.clear(); });
             }

@@ -2,7 +2,7 @@ name: Iris thermal regression
 on:
   push:
     branches: ['arena/**', '26.3']
-    paths: ['src/**', 'build.gradle', 'scripts/*iris*', 'scripts/run_client_smoke.sh', '.github/workflows/iris-smoke.yml']
+    paths: ['src/**', 'build.gradle', 'scripts/*iris*', 'scripts/run_client_smoke.sh', 'scripts/ci-central.init.gradle', '.github/workflows/iris-smoke.yml']
   workflow_dispatch:
 permissions:
   contents: read

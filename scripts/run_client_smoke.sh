@@ -37,7 +37,7 @@ probe & probe_pid=$!
 trap 'kill "$probe_pid" 2>/dev/null || true' EXIT
 # Leave time for Gradle/SDL teardown and evidence upload before the enclosing job-step timeout.
 args=(-PtaczClientSmoke)
-if [[ ${GITHUB_ACTIONS:-} == true ]]; then args+=(--init-script scripts/ci-asm.init.gradle); fi
+if [[ ${GITHUB_ACTIONS:-} == true ]]; then args+=(--init-script scripts/ci-central.init.gradle); fi
 if [[ ${TACZ_SMOKE_PAL:-} == true ]]; then args+=(-PtaczPalSmoke); fi
 if [[ ${TACZ_SMOKE_CONTROLLER:-} == true ]]; then args+=(-PtaczControllerSmoke); fi
 if [[ ${TACZ_SMOKE_IRIS:-} == true ]]; then args+=(-PtaczIrisSmoke); fi
@@ -56,8 +56,9 @@ if [[ -z ${TACZ_SMOKE_VIEWER:-} && ${TACZ_SMOKE_CONTROLLER:-} != true ]]; then
     for backing in dark light; do
         grep -Fq "PORT_HAND_MATERIALS: $backing six visible" "$run/logs/latest.log"
     done
+    grep -Fq 'PORT_CONSTRAINT: ADS pixels' "$run/logs/latest.log"
     grep -Fq 'PORT_BILLBOARD: pitched' "$run/logs/latest.log"
-    grep -E 'PORT_HAND_MATERIALS:|PORT_BILLBOARD:' "$run/logs/latest.log" | sed 's/^/::notice::/'
+    grep -E 'PORT_HAND_MATERIALS:|PORT_BILLBOARD:|PORT_CONSTRAINT:' "$run/logs/latest.log" | sed 's/^/::notice::/'
 fi
 if [[ ${TACZ_SMOKE_IRIS:-} == true ]]; then
     grep -Fq 'PORT_IRIS: active shader pack' "$run/logs/latest.log"

@@ -1,0 +1,20 @@
+// The isolated smoke jobs have cold Gradle caches. Fabric's Maven can serve the ASM
+// module POMs without their org.ow2 parent; if Central throttles the runner, even
+// Loom configuration fails before a game starts. Gson/Kotlin metadata for Loom have also hit Central 429s.
+// Read these same Central coordinates from Google's Central mirror first. No substitutions, artifact-only metadata or
+// credentials; keep every other module on the project's normal repositories.
+def addSmokeMirror = { repos ->
+    repos.maven {
+        name = 'SmokeCentral'
+        url = URI.create('https://maven-central.storage-download.googleapis.com/maven2/')
+        content {
+            includeGroup 'com.google.code.gson'
+            includeGroup 'org.jetbrains.kotlin'
+            includeGroup 'org.ow2.asm'
+            includeModule 'org.ow2', 'ow2'
+        }
+    }
+}
+
+gradle.beforeSettings { settings -> addSmokeMirror(settings.pluginManagement.repositories) }
+gradle.beforeProject { project -> addSmokeMirror(project.repositories) }

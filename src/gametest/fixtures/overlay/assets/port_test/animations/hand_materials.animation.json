@@ -1,6 +1,18 @@
 {
   "format_version": "1.8.0",
   "animations": {
+    "constraint_zero": {"animation_length": 2, "bones": {
+      "AKM": {"position": {"0": [4, 0, 0], "2": [4, 0, 0]}, "rotation": [12, 0, 0]},
+      "constraint": {"position": [0, 0, 0], "rotation": [0, 0, 0]}
+    }},
+    "constraint_positive": {"animation_length": 2, "bones": {
+      "AKM": {"position": {"0": [4, 0, 0], "2": [4, 0, 0]}, "rotation": [12, 0, 0]},
+      "constraint": {"position": [1, 1, 1], "rotation": [1, 1, 1]}
+    }},
+    "constraint_negative": {"animation_length": 2, "bones": {
+      "AKM": {"position": {"0": [4, 0, 0], "2": [4, 0, 0]}, "rotation": [12, 0, 0]},
+      "constraint": {"position": [-1, -1, -1], "rotation": [-1, -1, -1]}
+    }},
     "particles_opaque": {"animation_length": 1, "particle_effects": {"0": {"effect": "port_test:hand_particles_opaque", "locator": "muzzle_flash"}}},
     "particles_alpha": {"animation_length": 1, "particle_effects": {"0": {"effect": "port_test:hand_particles_alpha", "locator": "muzzle_flash"}}},
     "particles_blend": {"animation_length": 1, "particle_effects": {"0": {"effect": "port_test:hand_particles_blend", "locator": "muzzle_flash"}}},

@@ -37,6 +37,11 @@ public final class PalRuntimeSmoke {
         ctx.getInput().lookAt(180, 0); // look away before constructing the player to the south
         var remote = ctx.computeOnClient(mc -> {
             var actor = new RemotePlayer(mc.level, new GameProfile(UUID.randomUUID(), "PortPose"));
+            // A real client's spawn packet supplies the ID before ClientLevel.addEntity looks it up.
+            // This local-only fixture has no packet; leave positive server IDs and existing actors alone.
+            int id = -1;
+            while (mc.level.getEntity(id) != null) id--;
+            actor.setId(id);
             actor.snapTo(mc.player.position().add(0, 0, 3));
             actor.setNoGravity(true);
             Frames.watched = actor.getId(); Frames.count = 0;

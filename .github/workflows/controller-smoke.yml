@@ -2,7 +2,7 @@ name: Controllable runtime
 on:
   push:
     branches: ['arena/**', '26.3']
-    paths: &controller-paths ['src/**/controllable/**', 'src/**/input/**', 'src/**/ControllerSmoke.java', 'src/**/PackClientSmoke.java', 'scripts/run_client_smoke.sh', '.github/workflows/controller-smoke.yml', 'build.gradle']
+    paths: &controller-paths ['src/**/controllable/**', 'src/**/input/**', 'src/**/ControllerSmoke.java', 'src/**/PackClientSmoke.java', 'scripts/run_client_smoke.sh', 'scripts/ci-central.init.gradle', '.github/workflows/controller-smoke.yml', 'build.gradle']
   pull_request:
     paths: *controller-paths
   workflow_dispatch:

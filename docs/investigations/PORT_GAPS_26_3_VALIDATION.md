@@ -69,6 +69,12 @@
 
 同一提交的[无可选模组普通构建及客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44436002439/job/135265017304)亦通过；手部深/浅背景的 alpha 对 blend 距离为 **0.65 / 0.32**（各自对 cutout 均超过 26），不是同一份 Iris 结果。独立的 [JEI/REI 两项](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44436002559)通过。该轮 PAL 与手柄作业却未启动游戏：Gradle 无法为 Fabric Maven 的 ASM POM 解析 `org.ow2:ow2:1.5.1`，不能作为这两个可选组合的结果。CI 仅为此组 Central 坐标在解析前加入一个镜像；不替换版本，也不跳过游戏测试。
 
+## PAL 离屏与第一人称约束的独立验收
+
+`4f2df05` 的[普通构建、专服与 Mesa 客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138832/job/135268736218)、[手柄](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138908/job/135268736808)、[两个 viewer](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138855)通过。[PAL 作业](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138849/job/135268736137)已进入游戏，但测试自己构造的 `RemotePlayer` 没有出生包提供 ID，读 `getId()` 即报错；没有到达离屏动作断言。这是夹具的失败，不据此改 PAL 播放逻辑。[Iris 作业](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44437138863/job/135268736379)解析 Gson/Kotlin 元数据遇 HTTP 429，没有光影画面。最近同时跑完普通与光影渲染套件的提交仍是 `3594ef8`。
+
+复测把未占用的负 ID 赋给这个仅用于测试的角色，不向服务端发假玩家。另用同一套第一人称模型、同一个运动的父骨骼和三条等时动画，在 ADS 实际写入约束矩阵前后取样；+1 → 0 → −1 同机位留三张图，比较两种符号与零对照的姿态差异。这两种新验收不能靠测试代码存在就标绿。
+
 ## 尚不能外推的部分
 
 - **输入与展示：** `ae8f1d9` 的[超时][rack-failure]后来在 `043fba5` 定位到原版好友 GUI 吞掉 O（两端均未收到 use）。新默认 K 和旧 `options.txt` 的手动改绑说明见 README。已过的是生存模式的指定板／柜和烘焙物品，不是每种第三方特殊渲染器或用户现存的所有键位组合。
