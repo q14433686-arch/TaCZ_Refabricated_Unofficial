@@ -7,9 +7,9 @@
 44626162782	reimagined-act	tacz_surface_ak_on
 44626162782	reimagined-act	tacz_surface_rpg_off
 44626162782	reimagined-act	tacz_surface_rpg_on
-# a14e06e3: player guide illustrations (cyan diagnostic slot, actual bench UI and range display).
-44627993715	smoke	tacz_hand_filter_cleared
-44627993715	smoke	tacz_range_readout
 # a3847d0d: both frames following real shots, successful ACT 128 receiver job.
 44639006524	reimagined-act	tacz_surface_objects_off
 44639006524	reimagined-act	tacz_surface_objects_on
+# a28882da: same occupied lane, no shader pack, real local shots.
+44640438182	smoke	tacz_surface_objects_off
+44640438182	smoke	tacz_surface_objects_on
