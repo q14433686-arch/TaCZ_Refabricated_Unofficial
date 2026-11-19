@@ -84,6 +84,8 @@
 
 结论是**这组三条实际动画**中正负输入被当成同一幅值，零输入则产生可见的不同姿态；没有声称正负两帧逐像素相等，或每个第三方模型的 ADS 都无偏移。之前的 JUnit 仍分别覆盖混合、复位和根约束节点。
 
+**原帧复核：** [普通 +](../../build-reports/visual/44438204095-tacz_constraint_ads_positive.png) / [0](../../build-reports/visual/44438204095-tacz_constraint_ads_zero.png) / [−](../../build-reports/visual/44438204095-tacz_constraint_ads_negative.png)，[Iris +](../../build-reports/visual/44438204109-tacz_constraint_ads_positive.png) / [0](../../build-reports/visual/44438204109-tacz_constraint_ads_zero.png) / [−](../../build-reports/visual/44438204109-tacz_constraint_ads_negative.png)。这是人为加大动作的测量模型，不是原版 AK 持枪演示。[PAL 第一次入镜](../../build-reports/visual/44438204138-tacz_pal_remote_rifle.png)与[第二次](../../build-reports/visual/44438204138-tacz_pal_remote_pistol.png)可见同一角色，但本地第一人称模型挡住了一部分手臂；上一段对离屏切换的判断来自控制器和模型计数，而非这两张图的枪形。
+
 ## 尚不能外推的部分
 
 - **输入与展示：** `ae8f1d9` 的[超时][rack-failure]后来在 `043fba5` 定位到原版好友 GUI 吞掉 O（两端均未收到 use）。新默认 K 和旧 `options.txt` 的手动改绑说明见 README。已过的是生存模式的指定板／柜和烘焙物品，不是每种第三方特殊渲染器或用户现存的所有键位组合。

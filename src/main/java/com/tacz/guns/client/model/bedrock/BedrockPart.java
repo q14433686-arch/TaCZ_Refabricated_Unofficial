@@ -63,6 +63,7 @@ public class BedrockPart {
             // 最大亮度；光影下 sky 列走环境真值（IlluminatedRealSky），
             // 否则夜里发光件会继承太阳/月亮亮度。与 poly_mesh 层同一开关。
             cubePackedLight = com.tacz.guns.util.IlluminatedLights.resolve(light);
+            consumer = UnshadedVertices.wrap(consumer);
         }
         if (this.visible) {
             if (!this.cubes.isEmpty() || !this.children.isEmpty()) {

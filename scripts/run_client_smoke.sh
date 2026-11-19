@@ -48,6 +48,7 @@ case ${TACZ_SMOKE_VIEWER:-} in
 esac
 timeout -k 20s 10m ./gradlew "${args[@]}" runClientGameTest --console=plain --stacktrace 2>&1 | tee "$RUNNER_TEMP/tacz-client.log"
 if [[ ${TACZ_SMOKE_PAL:-} == true ]]; then
+    grep -F 'PORT_PAL: re-entry support arm' "$run/logs/latest.log" | sed 's/^/::notice::/'
     grep -F 'PORT_PAL: offscreen' "$run/logs/latest.log" | sed 's/^/::notice::/'
     exit
 fi
@@ -56,9 +57,10 @@ if [[ -z ${TACZ_SMOKE_VIEWER:-} && ${TACZ_SMOKE_CONTROLLER:-} != true ]]; then
     for backing in dark light; do
         grep -Fq "PORT_HAND_MATERIALS: $backing six visible" "$run/logs/latest.log"
     done
+    grep -Fq 'PORT_BONE_LIGHT: yaw=125' "$run/logs/latest.log"
     grep -Fq 'PORT_CONSTRAINT: ADS pixels' "$run/logs/latest.log"
     grep -Fq 'PORT_BILLBOARD: pitched' "$run/logs/latest.log"
-    grep -E 'PORT_HAND_MATERIALS:|PORT_BILLBOARD:|PORT_CONSTRAINT:' "$run/logs/latest.log" | sed 's/^/::notice::/'
+    grep -E 'PORT_HAND_MATERIALS:|PORT_BILLBOARD:|PORT_CONSTRAINT:|PORT_BONE_LIGHT:' "$run/logs/latest.log" | sed 's/^/::notice::/'
 fi
 if [[ ${TACZ_SMOKE_IRIS:-} == true ]]; then
     grep -Fq 'PORT_IRIS: active shader pack' "$run/logs/latest.log"

@@ -10,8 +10,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(PlayerModel.class)
 abstract class AvatarModelObserver {
-    @Inject(method="setupAnim(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)V", at=@At("RETURN"))
+    @Inject(method="setupAnim(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)V", at=@At("RETURN"), order=1200)
     private void countAvatar(AvatarRenderState state, CallbackInfo ci) {
-        if (state.id == Frames.watched) Frames.count++;
+        if (state.id == Frames.watched) {
+            Frames.leftArm = ((PlayerModel)(Object)this).leftArm.storePose();
+            Frames.count++;
+        }
     }
 }

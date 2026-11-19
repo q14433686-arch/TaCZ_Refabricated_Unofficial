@@ -13,6 +13,7 @@ import com.zigythebird.playeranimcore.animation.Animation;
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.minecraft.client.CameraType;
+import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.resources.Identifier;
@@ -28,6 +29,7 @@ import java.util.UUID;
 public final class PalRuntimeSmoke {
     public static final class Frames {
         public static int watched = Integer.MIN_VALUE, count;
+        public static PartPose leftArm;
     }
 
     static void run(ClientGameTestContext ctx) {
@@ -42,7 +44,10 @@ public final class PalRuntimeSmoke {
             int id = -1;
             while (mc.level.getEntity(id) != null) id--;
             actor.setId(id);
-            actor.snapTo(mc.player.position().add(0, 0, 3));
+            // In the original head-on picture the local first-person model hid the remote grip.
+            // Keep the observer still; show the avatar in profile on the left of the image.
+            actor.snapTo(mc.player.position().add(1.5, 0, 3.5));
+            actor.setYRot(90); actor.setYHeadRot(90); actor.yBodyRot = 90;
             actor.setNoGravity(true);
             Frames.watched = actor.getId(); Frames.count = 0;
             mc.level.addEntity(actor);
@@ -59,6 +64,8 @@ public final class PalRuntimeSmoke {
             });
             ctx.getInput().lookAt(0, 0);
             ctx.waitFor(mc -> Frames.count > 0);
+            ctx.waitTicks(12); // sample the settled hold, not a transient fade
+            var riflePose = ctx.computeOnClient(mc -> Frames.leftArm);
             ctx.takeScreenshot("tacz_pal_remote_rifle");
             ctx.getInput().lookAt(180, 0); ctx.waitTicks(3);
             int before = ctx.computeOnClient(mc -> Frames.count);
@@ -71,7 +78,17 @@ public final class PalRuntimeSmoke {
             ctx.getInput().lookAt(0, 0);
             ctx.waitFor(mc -> Frames.count > before);
             await(ctx, remote, pistol, true, "visible pistol");
+            ctx.waitTicks(12);
             ctx.takeScreenshot("tacz_pal_remote_pistol");
+            ctx.runOnClient(mc -> {
+                // The two stock hold clips share the right-arm channel. The support (left)
+                // arm, not just the displayed item/active clip ID, must take a different pose.
+                var pistolPose = Frames.leftArm;
+                float dz = Math.abs(riflePose.z() - pistolPose.z());
+                float rz = Math.abs(riflePose.zRot() - pistolPose.zRot());
+                if (!(dz > 1 && rz > .12f)) throw new AssertionError("Re-entry did not update the rendered support arm: " + riflePose + " / " + pistolPose);
+                GunMod.LOGGER.info("PORT_PAL: re-entry support arm Δz={}, Δroll={}", dz, rz);
+            });
 
             var local = ctx.computeOnClient(mc -> mc.player);
             ctx.runOnClient(mc -> mc.options.setCameraType(CameraType.THIRD_PERSON_BACK));
@@ -85,7 +102,7 @@ public final class PalRuntimeSmoke {
             await(ctx, remote, pistol, true, "remote unaffected by F5");
             GunMod.LOGGER.info("PORT_PAL: offscreen rifle/empty/pistol, two visible re-entries, independent remote/local controllers and F5 hand isolation passed");
         } finally {
-            ctx.runOnClient(mc -> { Frames.watched = Integer.MIN_VALUE; remote.discard(); mc.options.setCameraType(camera); });
+            ctx.runOnClient(mc -> { Frames.watched = Integer.MIN_VALUE; Frames.leftArm = null; remote.discard(); mc.options.setCameraType(camera); });
             ctx.getInput().lookAt(facing[0], facing[1]);
         }
     }

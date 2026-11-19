@@ -34,6 +34,7 @@ public class FunctionalBedrockPart extends BedrockPart {
         this.offsetY = part.offsetY;
         this.offsetZ = part.offsetZ;
         this.visible = part.visible;
+        this.illuminated = part.illuminated;
         this.mirror = part.mirror;
         this.setInitRotationAngle(part.getInitRotX(), part.getInitRotY(), part.getInitRotZ());
         this.xScale = part.xScale;
@@ -47,7 +48,8 @@ public class FunctionalBedrockPart extends BedrockPart {
         int cubePackedLight = light;
         if (illuminated) {
             // 最大亮度
-            cubePackedLight = 15728880;
+            cubePackedLight = com.tacz.guns.util.IlluminatedLights.resolve(light);
+            consumer = com.tacz.guns.client.model.bedrock.UnshadedVertices.wrap(consumer);
         }
 
         poseStack.pushPose();
