@@ -77,8 +77,12 @@ public final class ConfigPersist {
      * <p>逐个失败逐个记，一个坏文件不连坐另一个。</p>
      */
     public static void saveAll() {
-        saveOne(ModConfig.Type.CLIENT);
+        saveClient();
         saveOne(ModConfig.Type.COMMON);
+    }
+
+    public static void saveClient() {
+        saveOne(ModConfig.Type.CLIENT);
     }
 
     private static void saveOne(ModConfig.Type type) {
@@ -92,7 +96,7 @@ public final class ConfigPersist {
                 loaded.save();
             }
         } catch (Exception | LinkageError e) {
-            GunMod.LOGGER.error("Failed to persist the {} config after the Cloth screen saved; "
+            GunMod.LOGGER.error("Failed to persist the {} config after settings were saved; "
                     + "changes apply for this session but may reset on relaunch.", type, e);
         }
     }

@@ -13,6 +13,7 @@ import com.tacz.guns.api.event.common.GunFirePostEvent;
 import com.tacz.guns.client.animation.screen.RefitTransform;
 import com.tacz.guns.client.compat.RecipeViewerReloadBridge;
 import com.tacz.guns.client.event.*;
+import com.tacz.guns.client.gui.ViewTuningScreen;
 import com.tacz.guns.client.init.ClientSetupEvent;
 import com.tacz.guns.client.init.ModContainerScreen;
 import com.tacz.guns.client.init.ModEntitiesRender;
@@ -55,6 +56,7 @@ public class TaCZFabricClient implements ClientModInitializer {
         SelectItemModelProperties.ID_MAPPER.put(AmmoBoxStatueProperty.ID, AmmoBoxStatueProperty.TYPE);
         NetworkHandler.registerS2CPackets();
         ClientSetupEvent.init();
+        ViewTuningScreen.registerPauseButton();
         ModContainerScreen.registerScreens();
         ModEntitiesRender.registerEntityRenderers();
         // 附属模块 LRTactical 的实体渲染器。

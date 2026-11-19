@@ -12,7 +12,9 @@ import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ReloadState;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.gui.GunRefitScreen;
-import com.tacz.guns.client.renderer.crosshair.CrosshairType;
+import com.tacz.guns.client.gui.ViewTuningScreen;
+import com.tacz.guns.client.renderer.crosshair.GunCrosshair;
+import com.tacz.guns.client.tuning.TuningValues;
 import com.tacz.guns.compat.shouldersurfing.ShoulderSurfingCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import net.fabricmc.api.EnvType;
@@ -112,15 +114,9 @@ public class RenderCrosshairEvent {
         if (gameMode.getPlayerMode() == GameType.SPECTATOR) {
             return;
         }
-        int width = window.getGuiScaledWidth();
-        int height = window.getGuiScaledHeight();
-
-        Identifier location = CrosshairType.getTextureLocation(RenderConfig.CROSSHAIR_TYPE.get());
-
-        float x = width / 2f - 8;
-        float y = height / 2f - 8;
-        // 26.2: Blending now handled by RenderPipeline; color via last int param (ARGB)
-        graphics.blit(RenderPipelines.GUI_TEXTURED, location, (int) x, (int) y, 0, 0, 16, 16, 16, 16, 0xE6FFFFFF);
+        // The editor has its own preview. Never draw it twice (especially with partial opacity).
+        if (Minecraft.getInstance().gui.screen() instanceof ViewTuningScreen editor && editor.isCrosshairTab()) return;
+        GunCrosshair.draw(graphics, window.getGuiScaledWidth() / 2, window.getGuiScaledHeight() / 2, TuningValues.visible());
     }
 
     private static void renderHitMarker(GuiGraphicsExtractor graphics, Window window) {

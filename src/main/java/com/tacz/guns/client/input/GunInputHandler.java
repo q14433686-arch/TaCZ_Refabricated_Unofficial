@@ -5,6 +5,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.gui.GunRefitScreen;
+import com.tacz.guns.client.gui.ViewTuningScreen;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -14,6 +15,8 @@ import static com.tacz.guns.util.InputExtraCheck.isInGame;
 /** Both device events carry the native 26.3 physical key; dispatch each edge exactly once. */
 public final class GunInputHandler {
     public static final KeyMapping UNLOAD_KEY = new KeyMapping("key.tacz.unload.desc", InputConstants.Type.KEYBOARD,
+            InputConstants.UNKNOWN.getValue(), TaCZKeyCategory.TACZ);
+    public static final KeyMapping VIEW_TUNING_KEY = new KeyMapping("key.tacz.view_tuning.desc", InputConstants.Type.KEYBOARD,
             InputConstants.UNKNOWN.getValue(), TaCZKeyCategory.TACZ);
     private record Binding(KeyMapping mapping, Runnable press) {}
     private static final List<Binding> BINDINGS = List.of(
@@ -26,7 +29,8 @@ public final class GunInputHandler {
             new Binding(ZoomKey.ZOOM_KEY, ZoomKey::doZoomLogic),
             new Binding(InteractKey.INTERACT_KEY, () -> InteractKey.doInteractLogic(false)),
             new Binding(RefitKey.REFIT_KEY, RefitKey::onRefitPress),
-            new Binding(ConfigKey.OPEN_CONFIG_KEY, ConfigKey::onOpenConfig));
+            new Binding(ConfigKey.OPEN_CONFIG_KEY, ConfigKey::onOpenConfig),
+            new Binding(VIEW_TUNING_KEY, () -> ViewTuningScreen.open(null)));
 
     public static void registerMappings() {
         BINDINGS.forEach(b -> KeyMappingHelper.registerKeyMapping(b.mapping));
