@@ -86,6 +86,12 @@
 
 **原帧复核：** [普通 +](../../build-reports/visual/44438204095-tacz_constraint_ads_positive.png) / [0](../../build-reports/visual/44438204095-tacz_constraint_ads_zero.png) / [−](../../build-reports/visual/44438204095-tacz_constraint_ads_negative.png)，[Iris +](../../build-reports/visual/44438204109-tacz_constraint_ads_positive.png) / [0](../../build-reports/visual/44438204109-tacz_constraint_ads_zero.png) / [−](../../build-reports/visual/44438204109-tacz_constraint_ads_negative.png)。这是人为加大动作的测量模型，不是原版 AK 持枪演示。[PAL 第一次入镜](../../build-reports/visual/44438204138-tacz_pal_remote_rifle.png)与[第二次](../../build-reports/visual/44438204138-tacz_pal_remote_pistol.png)可见同一角色，但本地第一人称模型挡住了一部分手臂；上一段对离屏切换的判断来自控制器和模型计数，而非这两张图的枪形。
 
+## 普通发光骨骼，不用准星代测
+
+`9ac8d64` 的顶点转发器少了 26.3 要求的 packed-color 重载，未通过编译；`3f8aeb8` 的 Full build（含 JUnit）和专服通过。[同一提交的 PAL 作业](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44440040072/job/135278303144)将角色移到第一人称物品左侧，侧身取样。原包的步枪／手枪 `hold_upper` 右臂通道相同，但支撑手不同：在真正的 `PlayerModel.setupAnim` 结束时，这两次入镜的**左臂 z 坐标相差 4.00 个模型单位、滚转相差 0.338 弧度**。不仅是控制器换了 clip 名。
+
+普通 `_illuminated` 立方体在提取时沿骨骼树传递发光标记，写顶点时采用 26.3 当前光照条目的主光方向，不把“输入 packed light 刚好全亮”误当发光标记。保留原材质、透明度、掩码、深度与原来的环境 sky 选项。校准夹具给**普通和发光两者同样的满亮 lightmap**，只在父骨骼名字上有无后缀，比较子立方体转向 35° 与 125° 的青色各面。[`3f8aeb8` 的 Iris](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44440040071/job/135278413865)两种模型在两种朝向的 G 通道 q10/q90 均为 244/244：此回归光影直接输出纹理乘顶点色，普通对照本身不做法线光照，所以**不能**据此称方向光对照已过。[普通作业](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44440040228/job/135278303704)在客户端步骤的前两秒退出，只有空的 `tacz-vulkan.log`、没有游戏日志；具体 WSI 错误未取到，不是画面失败或通过。后续捕获 `vulkaninfo` 的 stderr，不跳过设备/窗口表面门槛。
+
 ## 尚不能外推的部分
 
 - **输入与展示：** `ae8f1d9` 的[超时][rack-failure]后来在 `043fba5` 定位到原版好友 GUI 吞掉 O（两端均未收到 use）。新默认 K 和旧 `options.txt` 的手动改绑说明见 README。已过的是生存模式的指定板／柜和烘焙物品，不是每种第三方特殊渲染器或用户现存的所有键位组合。

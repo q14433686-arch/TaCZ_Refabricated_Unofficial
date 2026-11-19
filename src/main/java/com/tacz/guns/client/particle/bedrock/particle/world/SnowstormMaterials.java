@@ -44,7 +44,8 @@ public final class SnowstormMaterials {
                 .withBindGroupLayout(BindGroupLayouts.SAMPLER1).withCull(false)
                 .withShaderDefine("ALPHA_CUTOUT", 0.1f)
                 .withColorTargetState(new ColorTargetState(BlendFunction.ADDITIVE));
-        if (pass.emissive) builder.withShaderDefine("EMISSIVE").withShaderDefine("NO_CARDINAL_LIGHTING");
+        if (pass.emissive) builder.withShaderDefine("EMISSIVE").withShaderDefine("NO_CARDINAL_LIGHTING")
+                .withDepthStencilState(DepthStencilState.DEFAULT);
         else builder.withShaderDefine("PER_FACE_LIGHTING").withDepthStencilState(new DepthStencilState(DepthStencilState.DEFAULT.depthTest(), false));
         if (pass.clipped) builder.withShaderDefine("SCOPE_MASK").withBindGroupLayout(ScopeBodyRenderTypes.maskSamplerLayout());
         var pipeline = builder.build();

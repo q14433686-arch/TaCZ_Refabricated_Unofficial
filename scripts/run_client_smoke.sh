@@ -9,7 +9,7 @@ if (( ${#icds[@]} == 0 )); then echo 'Missing Mesa Lavapipe ICD' >&2; exit 1; fi
 export VK_DRIVER_FILES="${icds[0]}"
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-$RUNNER_TEMP/tacz-xdg}"
 install -d -m 700 "$XDG_RUNTIME_DIR"
-timeout 30s vulkaninfo --summary | tee "$RUNNER_TEMP/tacz-vulkan.log"
+timeout 30s vulkaninfo --summary 2>&1 | tee "$RUNNER_TEMP/tacz-vulkan.log"
 grep -Eq 'VK_KHR_(xlib|xcb)_surface' "$RUNNER_TEMP/tacz-vulkan.log"
 grep -Fq 'PHYSICAL_DEVICE_TYPE_CPU' "$RUNNER_TEMP/tacz-vulkan.log"
 run=build/run/clientGameTest
@@ -60,9 +60,10 @@ if [[ -z ${TACZ_SMOKE_VIEWER:-} && ${TACZ_SMOKE_CONTROLLER:-} != true ]]; then
     for angle in 35 125; do
         grep -Fq "PORT_BONE_LIGHT: yaw=$angle plain" "$run/logs/latest.log"
     done
+    grep -Fq 'PORT_PARTICLE_PASS: rear' "$run/logs/latest.log"
     grep -Fq 'PORT_CONSTRAINT: ADS pixels' "$run/logs/latest.log"
     grep -Fq 'PORT_BILLBOARD: pitched' "$run/logs/latest.log"
-    grep -E 'PORT_HAND_MATERIALS:|PORT_BILLBOARD:|PORT_CONSTRAINT:|PORT_BONE_LIGHT:' "$run/logs/latest.log" | sed 's/^/::notice::/'
+    grep -E 'PORT_HAND_MATERIALS:|PORT_BILLBOARD:|PORT_CONSTRAINT:|PORT_BONE_LIGHT:|PORT_PARTICLE_PASS:' "$run/logs/latest.log" | sed 's/^/::notice::/'
 fi
 if [[ ${TACZ_SMOKE_IRIS:-} == true ]]; then
     grep -Fq 'PORT_IRIS: active shader pack' "$run/logs/latest.log"
