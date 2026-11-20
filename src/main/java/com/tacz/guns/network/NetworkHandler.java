@@ -32,6 +32,7 @@ public class NetworkHandler {
      */
     public static void registerPayloads() {
         // C2S (serverbound play)
+        PayloadTypeRegistry.serverboundPlay().register(AnimationParticleMessages.Request.TYPE,AnimationParticleMessages.Request.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessagePlayerShoot.TYPE, ClientMessagePlayerShoot.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessageAmmoStorageClick.TYPE, ClientMessageAmmoStorageClick.STREAM_CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessageAmmoStorageInteract.TYPE, ClientMessageAmmoStorageInteract.STREAM_CODEC);
@@ -53,6 +54,7 @@ public class NetworkHandler {
         PayloadTypeRegistry.serverboundPlay().register(ClientMessageSyncBaseTimestamp.TYPE, ClientMessageSyncBaseTimestamp.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(ClientMessageLaserColor.TYPE, ClientMessageLaserColor.CODEC);
         // S2C (clientbound play)
+        PayloadTypeRegistry.clientboundPlay().register(AnimationParticleMessages.Delivery.TYPE,AnimationParticleMessages.Delivery.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageSound.TYPE, ServerMessageSound.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageCraft.TYPE, ServerMessageCraft.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageRefreshRefitScreen.TYPE, ServerMessageRefreshRefitScreen.CODEC);
@@ -89,6 +91,8 @@ public class NetworkHandler {
     public static void registerC2SPackets() {
         registerPayloads();
 
+        ServerPlayNetworking.registerGlobalReceiver(AnimationParticleMessages.Request.TYPE,(message,context)->
+                context.server().execute(()->AnimationParticleMessages.relay(message,context.player())));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerShoot.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageAmmoStorageClick.TYPE, ClientMessageAmmoStorageClick::handle);
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageAmmoStorageInteract.TYPE, ClientMessageAmmoStorageInteract::handle);
@@ -116,6 +120,8 @@ public class NetworkHandler {
 
     @Environment(EnvType.CLIENT)
     public static void registerS2CPackets() {
+        ClientPlayNetworking.registerGlobalReceiver(AnimationParticleMessages.Delivery.TYPE,(message,context)->
+                context.client().execute(()->com.tacz.guns.client.particle.RemoteAnimationParticles.accept(message)));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageBulletHitBlock.Incendiary.TYPE, (p, ctx) -> ServerMessageBulletHitBlock.handle(p.hit(), ctx, true));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageBulletHitBlock.TYPE, ServerMessageBulletHitBlock::handle);
         ClientPlayNetworking.registerGlobalReceiver(IEntityAdditionalSpawnData.EXTRA_DATA_TYPE, (payload, context) -> {

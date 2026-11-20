@@ -3,6 +3,10 @@ package com.tacz.guns.client.renderer.block;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.tacz.guns.block.entity.DisplayRackBlockEntity;
+import com.tacz.guns.block.entity.GunPegboardBlockEntity;
+import com.tacz.guns.client.render.light.RackSurfaceLight;
+import com.tacz.guns.client.render.light.WorldFlashFrame;
+import net.minecraft.world.level.block.state.BlockState;
 import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -27,6 +31,8 @@ public class DisplayRackRenderer<T extends DisplayRackBlockEntity> implements Bl
     public static class State extends BlockEntityRenderState {
         private final List<Slot> slots = new ArrayList<>();
         private boolean glowing;
+        private BlockState modelState;
+        private int dye;
     }
     @Override public State createRenderState() { return new State(); }
 
@@ -34,6 +40,8 @@ public class DisplayRackRenderer<T extends DisplayRackBlockEntity> implements Bl
         BlockEntityRenderState.extractBase(rack, state, overlay);
         state.slots.clear();
         state.glowing = rack.isGlowing();
+        state.modelState = rack.getBlockState();
+        state.dye = rack instanceof GunPegboardBlockEntity board ? board.getColor() : -1;
         var level = rack.getLevel();
         if (level == null) return;
         var mc = Minecraft.getInstance();
@@ -69,7 +77,14 @@ public class DisplayRackRenderer<T extends DisplayRackBlockEntity> implements Bl
 
     @Override public void submit(State state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
         int light = state.glowing ? 15728880 : state.lightCoords;
+        var flash = WorldFlashFrame.current();
+        if (flash != null) RackSurfaceLight.submit(flash, state.modelState, state.blockPos, state.dye, camera.pos, pose, collector);
+        Direction previous = null;
         for (var slot : state.slots) {
+            if (flash != null && !state.glowing && slot.facing != previous) {
+                light = flash.rackSlotLight(state.lightCoords, state.blockPos, slot.facing);
+                previous = slot.facing;
+            }
             pose.pushPose();
             pose.translate(0.5, 0.5, 0.5);
             pose.mulPose(Axis.YP.rotationDegrees(180 - slot.facing.get2DDataValue() * 90));

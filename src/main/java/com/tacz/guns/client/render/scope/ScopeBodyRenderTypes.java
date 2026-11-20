@@ -235,6 +235,30 @@ public final class ScopeBodyRenderTypes {
      * 里的其他管线）：绘制发生在 isRenderingWorld=false 之后，注册了反而被塞回
      * 光影管线，既失去无雾语义又会被后置 pass 再盖一次。</p>
      */
+
+    private static RenderPipeline finalReticlePipeline(boolean emissive) {
+        var b = RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
+                .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_reticle_final_" + emissive))
+                .withVertexShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_body"))
+                .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_ring_final"))
+                .withShaderDefine("ALPHA_CUTOUT", 0.1F).withShaderDefine("SCOPE_MASK")
+                .withBindGroupLayout(BindGroupLayouts.SAMPLER1).withBindGroupLayout(MASK_SAMPLER_LAYOUT)
+                .withCull(false).withDepthStencilState(new DepthStencilState(
+                        com.mojang.blaze3d.platform.CompareOp.ALWAYS_PASS, false))
+                .withColorTargetState(ColorTargetState.DEFAULT);
+        if (emissive) b.withShaderDefine("EMISSIVE").withShaderDefine("NO_CARDINAL_LIGHTING");
+        else b.withShaderDefine("PER_FACE_LIGHTING");
+        return b.build();
+    }
+    private static final RenderPipeline FINAL_RETICLE = finalReticlePipeline(false), FINAL_RETICLE_EMISSIVE = finalReticlePipeline(true);
+    private static final Map<String, RenderType> FINAL_RETICLES = new HashMap<>();
+    public static RenderType finalReticle(Identifier texture, boolean emissive) {
+        return FINAL_RETICLES.computeIfAbsent(texture + ":" + emissive, key -> RenderType.create("tacz_final_reticle",
+                RenderSetup.builder(emissive ? FINAL_RETICLE_EMISSIVE : FINAL_RETICLE)
+                        .withTexture("Sampler0", texture).withTexture(MASK_SAMPLER, ScopeMaskTextureHandle.ID)
+                        .useLightmap().useOverlay().createRenderSetup()));
+    }
+
     private static final RenderPipeline FINAL_OCULAR_RING_PIPELINE =
             RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
                     .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_final_ocular_ring"))
@@ -315,7 +339,8 @@ public final class ScopeBodyRenderTypes {
     private static final Map<Identifier, RenderType> RETICLE_EMISSIVE_CACHE = new HashMap<>();
     private static final Map<Identifier, RenderType> EMISSIVE_CACHE = new HashMap<>();
     private static final Map<Identifier, RenderType> FLASH_TRANSLUCENT_CACHE = new HashMap<>();
-    private static final Map<Identifier, RenderType> FLASH_SWIRL_CACHE = new HashMap<>();
+    private record Swirl(Identifier texture, float offset) {}
+    private static final Map<Swirl, RenderType> FLASH_SWIRL_CACHE = new HashMap<>();
     private static final Map<Identifier, RenderType> FINAL_RING_CACHE = new HashMap<>();
 
     private ScopeBodyRenderTypes() {
@@ -334,6 +359,10 @@ public final class ScopeBodyRenderTypes {
     public static RenderType finalOcularRing(Identifier texture) {
         return FINAL_RING_CACHE.computeIfAbsent(texture,
                 tex -> create("tacz_scope_final_ocular_ring", FINAL_OCULAR_RING_PIPELINE, tex, false));
+    }
+
+    public static boolean isClippedBody(RenderType type, Identifier texture) {
+        return BODY_CACHE.get(texture) == type;
     }
 
     public static RenderType clipped(Identifier texture) {
@@ -417,23 +446,24 @@ public final class ScopeBodyRenderTypes {
     }
 
     /**
-     * 枪口火光【辉光涡旋层】：只在目镜<b>没盖到</b>处绘制，叠加发光观感与
-     * vanilla {@code RenderTypes.energySwirl(tex, 1, 1)} 逐状态一致。
-     *
-     * <p>RenderSetup 显式对照 vanilla energySwirl 的方法体字节码：
-     * Sampler0 + OffsetTextureTransform(1,1)（UV 滚动）+ useLightmap + useOverlay
-     * + sortOnUpload，再补一个掩码采样器绑定（管线里声明了就必须绑，r52 的教训）。</p>
+     * 裁剪版原生枪焰使用固定的零 UV 偏移；SBM 2.6.3 的 energy_swirl 则传 (1,1)。
+     * 二者共用管线但不共用错误的纹理矩阵。这不是一个随时间滚动的参数。
+     * 保留 Sampler0、lightmap、overlay、排序以及镜片掩码采样器。
      *
      * <p>调用方须先过 {@link #maskReadyForViewmodel}。 </p>
      */
     public static RenderType flashSwirlClipped(Identifier texture) {
+        return swirlClipped(texture, 0);
+    }
+
+    public static RenderType swirlClipped(Identifier texture, float offset) {
         ensureIrisCompatibility();
-        return FLASH_SWIRL_CACHE.computeIfAbsent(texture,
+        return FLASH_SWIRL_CACHE.computeIfAbsent(new Swirl(texture, offset),
                 tex -> RenderType.create("tacz_scope_flash_swirl_clipped",
                         RenderSetup.builder(FLASH_SWIRL_CLIPPED_PIPELINE)
-                                .withTexture("Sampler0", tex)
+                                .withTexture("Sampler0", tex.texture())
                                 .withTexture(MASK_SAMPLER, ScopeMaskTextureHandle.ID)
-                                .setTextureTransform(new TextureTransform.OffsetTextureTransform(1.0F, 1.0F))
+                                .setTextureTransform(new TextureTransform.OffsetTextureTransform(tex.offset(), tex.offset()))
                                 .useLightmap()
                                 .useOverlay()
                                 .sortOnUpload()

@@ -509,7 +509,9 @@ public final class IrisScopeMaskState {
                 return 1;
             }
             if (FLASH_TRANSLUCENT_PIPELINE.equals(normalized)
-                    || FLASH_SWIRL_PIPELINE.equals(normalized)) {
+                    || FLASH_SWIRL_PIPELINE.equals(normalized)
+                    || "pipeline/snowstorm_add_clipped".equals(normalized)
+                    || "pipeline/snowstorm_emissive_clipped".equals(normalized)) {
                 return 1;
             }
             if (RETICLE_PIPELINE.equals(normalized) || RETICLE_EMISSIVE_PIPELINE.equals(normalized)) {

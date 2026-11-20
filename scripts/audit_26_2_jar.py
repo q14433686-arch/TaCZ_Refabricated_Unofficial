@@ -28,6 +28,8 @@ def audit(path):
             assert hashlib.sha256(jar.read(name)).hexdigest() == sha, name
         meta = json.loads(jar.read('fabric.mod.json'))
         assert meta['depends']['minecraft'] == '26.2' and meta['version'].endswith('+fabric.26.2.R3-hotfix4'), meta
+        for notice in ('SimpleBedrockModel.NOTICE.md', 'SimpleBedrockModel-LGPL-3.0.txt'):
+            assert jar.read('META-INF/licenses/' + notice) == (ROOT / 'LICENSES' / notice).read_bytes(), notice
         nested = {n for n in names if n.endswith('.jar')}
         required = {'mae-1.1.1.jar', 'commons-math3-3.6.1.jar', 'luaj-core-3.0.8-figura.jar', 'luaj-jse-3.0.8-figura.jar', 'bcel-6.6.1.jar'}
         assert nested == {'META-INF/jars/' + n for n in required} == {j['file'] for j in meta['jars']}, nested

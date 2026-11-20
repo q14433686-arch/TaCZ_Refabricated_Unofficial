@@ -37,7 +37,13 @@ in vec2 texCoord0;
 
 out vec4 fragColor;
 
+#ifdef SCOPE_MASK
+uniform sampler2D ScopeMaskSampler;
+#endif
 void main() {
+#ifdef SCOPE_MASK
+    if (texture(ScopeMaskSampler, gl_FragCoord.xy / vec2(textureSize(ScopeMaskSampler, 0))).r < 0.5) discard;
+#endif
     vec4 color = texture(Sampler0, texCoord0);
 #ifdef ALPHA_CUTOUT
     if (color.a < ALPHA_CUTOUT) {

@@ -10,6 +10,10 @@
     "common.ServerPlayNetHandlerMixin"
   ],
   "client": [
+    "client.ThermalBodyNodesMixin",
+    "client.ThermalEntityMixin",
+    "client.LevelRendererReceiverLightMixin",
+    "client.DetonationLightMixin",
     "client.GameRendererProjectionAccessor",
     "client.CreativeModeInventoryScreenMixin",
     "client.ThermalRenderSetupAccessor",

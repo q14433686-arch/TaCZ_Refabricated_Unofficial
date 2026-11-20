@@ -20,7 +20,7 @@
 A. `src/main/java/com/tacz/guns/block/` 下的方块类（不含 `entity/`）不得出现
    `popResource` / `Block.popResource` —— 方块的产出只允许由战利品表决定。
    （`StatueBlockEntity` 掉的是雕像上的**枪**，不在方块战利品表里，属正常，不在此目录下。）
-B. 六份 `data/tacz/loot_table/blocks/*.json` 必须是 26.2 认的**旧 schema**
+B. `data/tacz/loot_table/blocks/*.json` 必须是 26.2 认的**旧 schema**
    （`conditions` / `functions` / `block_state_property`），并且：
    - 双方块（B/C/statue/target）的产出条件必须锁在**根**半边（`part=foot` / `half=lower`），
      与 Java 侧 `isRoot()` 一致；
@@ -91,7 +91,7 @@ def iter_conditions(node, out: list[dict]) -> None:
 
 
 def check_loot_tables() -> None:
-    """B. 六份战利品表的 schema 与根半边条件。"""
+    """B. 工作台、标靶、雕像和库存方块战利品表的 schema 与根半边条件。"""
     storage = {f"ammo_storage{tier}.json" for tier in ("", "_gold", "_diamond")}
     expected = set(DOUBLE_BLOCK_LOOT) | {"workbench_a.json"} | storage
     present = {p.name for p in LOOT_DIR.glob("*.json")}
@@ -191,7 +191,7 @@ def main() -> int:
 
     print("掉落接线检查：")
     print("  A. 方块类无手工 popResource —— %s" % ("FAIL" if errors else "OK"))
-    print("  B. 六份战利品表 schema + 根半边条件 —— %s" % ("见下" if errors else "OK"))
+    print("  B. 工作台、标靶、雕像和库存方块战利品表 schema + 根半边条件 —— %s" % ("见下" if errors else "OK"))
     print("  C. isRoot() 与 loot 根半边一致 —— %s" % ("见下" if errors else "OK"))
     for note in notes:
         print(f"  · {note}")

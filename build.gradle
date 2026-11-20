@@ -332,6 +332,8 @@ java {
 }
 
 jar {
+    from("LICENSES") { into "META-INF/licenses" }
+    from("LICENSES.md") { into "META-INF/licenses" }
     from("LICENSE") {
         rename { "${it}_${base.archivesName.get()}" }
     }

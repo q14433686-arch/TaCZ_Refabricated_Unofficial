@@ -116,6 +116,7 @@ public enum ClientAssetsManager {
             bedrockAnimation = register(new LazyJsonDataManager<>(BedrockAnimationFile.class, GSON, new FileToIdConverter("animations", ".animation.json"),
                     "BedrockAnimationLoader", id -> GunMod.MOD_ID.equals(id.getNamespace())));
             gltfAnimation = register(new GltfManager());
+            register(com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader.getInstance());
             scriptManager = register(new ScriptManager(new FileToIdConverter("scripts", ".lua"), libList));
             packInfo = register(new PackInfoManager());
             register(new IdentifiableResourceReloadListener() {
@@ -129,6 +130,10 @@ public enum ClientAssetsManager {
                 @Override
                 public CompletableFuture<Void> reload(SharedState sharedState, Executor backgroundExecutor, PreparationBarrier barrier, Executor gameExecutor) {
                     return barrier.wait(null).thenRunAsync(() -> {
+                        com.tacz.guns.client.render.scope.ScopePipRenderer.invalidateLensResources();
+                        com.tacz.guns.client.particle.NativeMuzzleEffects.clear();
+                        com.tacz.guns.client.model.bedrock.IlluminatedMaterials.clearTextures();
+                        com.tacz.guns.client.render.FlashMaterials.clearTextures();
                         ClientIndexManager.reload();
                     }, gameExecutor);
                 }

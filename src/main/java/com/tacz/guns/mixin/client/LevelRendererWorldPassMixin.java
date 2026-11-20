@@ -31,6 +31,7 @@ public abstract class LevelRendererWorldPassMixin {
 
     @Inject(method = "render", at = @At("HEAD"))
     private void tacz$beginLevelRender(CallbackInfo ci) {
+        com.tacz.guns.client.render.scope.ScopeThermalCapture.beginWorldPass();
         PolyMeshGpuRenderer.setInsideLevelRender(true);
     }
 

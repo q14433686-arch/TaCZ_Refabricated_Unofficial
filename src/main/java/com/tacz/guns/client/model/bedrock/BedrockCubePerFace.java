@@ -87,6 +87,10 @@ public class BedrockCubePerFace implements BedrockCube {
         Matrix3f matrix3f = pose.normal();
 
         for (BedrockPolygon polygon : this.polygons) {
+            // Absent face_uv entries have four coincident placeholder vertices. Keep the
+            // six-face getPolygons() layout for mask/compat readers; never submit that quad.
+            // Real faces with a zero-sized UV still cover pixels and must not be culled.
+            if (polygon.vertices == EMPTY_VERTEX) continue;
             Vector3f vector3f = new Vector3f(polygon.normal);
             vector3f.mul(matrix3f);
             float nx = vector3f.x();

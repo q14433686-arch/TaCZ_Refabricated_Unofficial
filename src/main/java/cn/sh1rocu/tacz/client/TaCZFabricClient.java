@@ -129,6 +129,8 @@ public class TaCZFabricClient implements ClientModInitializer {
 
         ClientPlayConnectionEvents.DISCONNECT.register(CommonNetworkCacheEvent::onDisconnect);
         PackCompatibilityNotice.register();
+        com.tacz.guns.client.particle.NativeMuzzleEffects.register();
+        com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance().register();
         com.tacz.guns.client.gui.ViewTuningScreen.registerPauseButton();
         GunInputHandler.registerEvents();
         com.tacz.guns.api.event.common.GunFirePostEvent.EVENT.register(com.tacz.guns.client.renderer.crosshair.GunCrosshair::onLocalFire);

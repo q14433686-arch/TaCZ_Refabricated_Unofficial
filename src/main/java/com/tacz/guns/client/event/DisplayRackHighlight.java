@@ -37,6 +37,7 @@ public final class DisplayRackHighlight {
                     .withLocation(Identifier.parse("tacz:pipeline/rack_cell_outline"))
                     .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
                     .withColorTargetState(ColorTargetState.DEFAULT).build();
+            com.tacz.guns.compat.iris.IrisCompat.assignRackOutlinePipeline(pipeline);
             return RenderType.create("tacz_rack_cell_outline", RenderSetup.builder(pipeline).createRenderSetup());
         }
     }

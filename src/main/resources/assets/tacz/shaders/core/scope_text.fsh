@@ -69,7 +69,7 @@ void main() {
 
 #ifdef IS_SEE_THROUGH
     fragColor = color * ColorModulator;
-#elif defined(IS_GUI)
+#elif defined(IS_GUI) || defined(SCOPE_FINAL)
     fragColor = color;
 #else
     fragColor = apply_fog(color, sphericalVertexDistance, cylindricalVertexDistance, FogEnvironmentalStart, FogEnvironmentalEnd, FogRenderDistanceStart, FogRenderDistanceEnd, FogColor);

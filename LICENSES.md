@@ -61,3 +61,9 @@ Compatibility with such content does not imply that this repository owns or reli
 This project is not affiliated with, endorsed by, or officially maintained by the original TaCZ development team or the LRTactical authors.
 
 If any license notice or attribution is missing or incorrect, please open an issue with details so it can be corrected.
+
+## SimpleBedrockModel particle/Molang source port
+
+The relocated particle data/runtime and Molang compiler derive from SimpleBedrockModel
+71ad526 (LGPL-3.0). See [source notice](LICENSES/SimpleBedrockModel.NOTICE.md) and
+[license text](LICENSES/SimpleBedrockModel-LGPL-3.0.txt). Default gun-pack artwork is not part of this port.

@@ -5,6 +5,7 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
@@ -125,8 +126,8 @@ public final class ScopeMaskRenderer {
             // 即 Globals + DynamicTransforms + Projection + Fog，
             // 正是 core/position 这套 shader 需要的全套。直接复用，不再手拼。
             .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_mask"))
-            .withVertexShader("core/position")
-            .withFragmentShader("core/position")
+            .withVertexShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_mask_coverage"))
+            .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_mask_coverage"))
             // 不混合、不写深度：掩码就是「盖到=白，没盖到=清空色」的二值图，
             // 直接覆写即可。Optional.empty() 表示【不启用 blend】
             // （对照 ColorTargetState 的两个构造：单参版是「带 blend」，
@@ -149,7 +150,7 @@ public final class ScopeMaskRenderer {
             // 目镜是【单层薄片】（实测 30/33 个瞄具的目镜 z 厚度 < 0.15），
             // 背面剔除可能因建模朝向把它整个剔掉。掩码只要投影形状，正反面都算。
             .withCull(false)
-            .withVertexBinding(0, DefaultVertexFormat.POSITION)
+            .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR)
             .withPrimitiveTopology(PrimitiveTopology.QUADS)
             .build();
 
@@ -283,6 +284,8 @@ public final class ScopeMaskRenderer {
      * 让绘制期继续走未裁剪管线，最坏回到「镜内见枪身」，绝不因裁剪特性画错模型。</p>
      */
     private static boolean viewmodelClipMaskThisFrame = false;
+    private static boolean viewmodelClipMaskLastFrame = false;
+    public static boolean wasViewmodelClipMaskLastFrame() { return viewmodelClipMaskLastFrame; }
 
     private ScopeMaskRenderer() {
     }
@@ -294,6 +297,8 @@ public final class ScopeMaskRenderer {
     public static boolean isInHandPass() {
         return inHandPass || IrisCompat.isHandRendererActive();
     }
+
+    static @Nullable ScopeLensConfig lensThisFrame, lensLastFrame;
 
     /**
      * 每帧开头调用一次，快照上一帧结果并把本帧归零。
@@ -307,9 +312,12 @@ public final class ScopeMaskRenderer {
      * 放那儿会被第二次抹掉，见 {@link #maskDrawnThisFrame} 的注释。</p>
      */
     public static void beginFrame() {
+        lensLastFrame = lensThisFrame;
+        lensThisFrame = null;
         maskDrawnLastFrame = maskDrawnThisFrame;
         maskDrawnThisFrame = false;
         compositedThisFrame = false;
+        viewmodelClipMaskLastFrame = viewmodelClipMaskThisFrame;
         viewmodelClipMaskThisFrame = false;
     }
 
@@ -475,6 +483,7 @@ public final class ScopeMaskRenderer {
                 // 走到这里 pass 已经关闭、绘制已提交 —— 掩码 target 里确实有东西了。
                 // 镜内画中画的合成阶段就等这一位。
                 maskDrawnThisFrame = true;
+                lensThisFrame = ScopeMaskGeometry.lens();
                 // 【必须在 renderAtPhaseBoundary 的 finally 清空几何之前记下】
                 // 这一位是 executeSolid 之后那些绘制期判据的唯一事实来源，
                 // 见 viewmodelClipMaskThisFrame 的类内说明。
@@ -597,7 +606,7 @@ public final class ScopeMaskRenderer {
      * @return 顶点网格；没有任何可画几何时返回 {@code null}
      */
     private static MeshData buildMesh() {
-        BufferBuilder builder = new BufferBuilder(SCRATCH, PrimitiveTopology.QUADS, DefaultVertexFormat.POSITION);
+        BufferBuilder builder = new BufferBuilder(SCRATCH, PrimitiveTopology.QUADS, DefaultVertexFormat.POSITION_COLOR);
         boolean hullFill = RenderConfig.SCOPE_MASK_HULL_FILL.get();
         // 每帧重算目镜屏幕包围盒（供合成阶段开硬件剪裁）。
         // 无论走凸包还是逐立方体描摹，都要算 —— 那道底线不能只在其中一条路上生效。
@@ -617,6 +626,10 @@ public final class ScopeMaskRenderer {
                 writeCube(builder, entry.pose(), cube);
             }
         }
+        // Remove opaque physical rim coverage from the optical aperture. Otherwise
+        // the lens vignette is drawn underneath the subsequently restored inner rim.
+        for (var rim : ScopeMaskGeometry.rims())
+            for (var cube : rim.cubes()) writeCube(builder, rim.pose(), cube, 0xff000000);
         // 一个顶点都没写时 build() 返回 null，调用方据此走「只清空」分支。
         return builder.build();
     }
@@ -817,7 +830,7 @@ public final class ScopeMaskRenderer {
         if (Math.abs(v.w) > 1.0e-6f) {
             v.div(v.w);
         }
-        builder.addVertex(v.x(), v.y(), v.z());
+        builder.addVertex(v.x(), v.y(), v.z()).setColor(0xffffffff);
     }
 
     /**
@@ -828,6 +841,10 @@ public final class ScopeMaskRenderer {
      * 否则掩码会与画面错位 —— 那种偏差极难排查。
      */
     private static void writeCube(BufferBuilder builder, Matrix4f pose, BedrockCube cube) {
+        writeCube(builder, pose, cube, 0xffffffff);
+    }
+
+    private static void writeCube(BufferBuilder builder, Matrix4f pose, BedrockCube cube, int color) {
         for (var polygon : cube.getPolygons()) {
             if (polygon == null) {
                 continue;
@@ -838,7 +855,7 @@ public final class ScopeMaskRenderer {
                 float z = vertex.pos.z() / 16.0F;
                 Vector4f v = new Vector4f(x, y, z, 1.0F);
                 v.mul(pose);
-                builder.addVertex(v.x(), v.y(), v.z());
+                builder.addVertex(v.x(), v.y(), v.z()).setColor(color);
             }
         }
     }
