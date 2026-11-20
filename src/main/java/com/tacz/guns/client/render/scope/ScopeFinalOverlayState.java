@@ -169,8 +169,15 @@ public final class ScopeFinalOverlayState {
             // 它的 PreparedFrame 已 close，renderAllFeatures 可安全重入。
             SubmitNodeStorage storage = new SubmitNodeStorage();
             var displayCollector = storage.order(FINAL_OCULAR_RING_ORDER - 1);
-            for (RingDraw draw : reticles) displayCollector.submitCustomGeometry(new PoseStack(), draw.renderType(),
-                    (pose, consumer) -> draw.snapshot().write(consumer));
+            var projection = ScopeProjection.current();
+            var clip = projection == null ? null : new Matrix4f(projection).mul(transform.modelView());
+            for (RingDraw draw : reticles) {
+                boolean coverage = ScopeBodyRenderTypes.usesReticleCoverage(draw.renderType());
+                displayCollector.submitCustomGeometry(new PoseStack(), draw.renderType(), (pose, consumer) -> {
+                    if (coverage) draw.snapshot().writeLuminousReticle(consumer, clip, main.width, main.height);
+                    else draw.snapshot().write(consumer);
+                });
+            }
             for (var task : text) task.accept(displayCollector);
             OrderedSubmitNodeCollector ringCollector = storage.order(FINAL_OCULAR_RING_ORDER);
             for (RingDraw draw : rings) {

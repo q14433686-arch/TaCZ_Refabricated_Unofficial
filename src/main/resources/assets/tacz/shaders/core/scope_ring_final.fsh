@@ -35,20 +35,51 @@ in vec4 overlayColor;
 
 in vec2 texCoord0;
 
+#ifdef RETICLE_COVERAGE
+in vec2 reticleFace;
+
+// A point sample can miss every stroke of a minified transparent atlas tile. Integrate
+// premultiplied colour AND coverage over the pixel, restricted to this authored face.
+vec4 coveredInk() {
+    vec2 dx = dFdx(texCoord0), dy = dFdy(texCoord0);
+    vec2 sx = dFdx(reticleFace), sy = dFdy(reticleFace);
+    vec2 edge = 0.5 * (abs(sx) + abs(sy));
+    vec2 texels = (abs(dx) + abs(dy)) * vec2(textureSize(Sampler0, 0));
+    if (all(greaterThan(reticleFace, edge)) && all(lessThan(reticleFace, 1.0-edge)) && max(texels.x,texels.y) <= 1.0)
+        return textureLod(Sampler0, texCoord0, 0.0);
+    vec4 sum = vec4(0.0);
+    for (int j=0; j<4; ++j) for (int i=0; i<4; ++i) {
+        vec2 offset = (vec2(i,j)+0.5)*0.25-0.5;
+        vec2 face = reticleFace + offset.x*sx + offset.y*sy;
+        if (any(lessThan(face, vec2(0.0))) || any(greaterThanEqual(face, vec2(1.0)))) continue;
+        vec4 sampleColor = textureLod(Sampler0, texCoord0 + offset.x*dx + offset.y*dy, 0.0);
+        sum += vec4(sampleColor.rgb * sampleColor.a, sampleColor.a);
+    }
+    return vec4(sum.rgb / max(sum.a, 1e-6), sum.a / 16.0);
+}
+#endif
+
 out vec4 fragColor;
 
 #ifdef SCOPE_MASK
 uniform sampler2D ScopeMaskSampler;
 #endif
 void main() {
+#ifdef RETICLE_COVERAGE
+    vec4 color = coveredInk(); // evaluate derivatives before any nonuniform discard
+    if (color.a == 0.0) discard;
+#endif
 #ifdef SCOPE_MASK
     if (texture(ScopeMaskSampler, gl_FragCoord.xy / vec2(textureSize(ScopeMaskSampler, 0))).r < 0.5) discard;
 #endif
+#ifndef RETICLE_COVERAGE
     vec4 color = texture(Sampler0, texCoord0);
 #ifdef ALPHA_CUTOUT
     if (color.a < ALPHA_CUTOUT) {
         discard;
     }
+#endif
+
 #endif
 
 #ifdef PER_FACE_LIGHTING

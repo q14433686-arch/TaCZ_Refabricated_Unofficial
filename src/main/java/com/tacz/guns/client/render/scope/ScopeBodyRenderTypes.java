@@ -249,18 +249,21 @@ public final class ScopeBodyRenderTypes {
                 .withCull(false).withDepthStencilState(new DepthStencilState(
                         com.mojang.blaze3d.platform.CompareOp.ALWAYS_PASS, false))
                 .withColorTargetState(ColorTargetState.DEFAULT);
-        if (emissive) b.withShaderDefine("EMISSIVE").withShaderDefine("NO_CARDINAL_LIGHTING");
+        if (emissive) b.withShaderDefine("EMISSIVE").withShaderDefine("NO_CARDINAL_LIGHTING")
+                .withShaderDefine("RETICLE_COVERAGE").withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT));
         else b.withShaderDefine("PER_FACE_LIGHTING");
         return b.build();
     }
     private static final RenderPipeline FINAL_RETICLE = finalReticlePipeline(false), FINAL_RETICLE_EMISSIVE = finalReticlePipeline(true);
     private static final Map<String, RenderType> FINAL_RETICLES = new HashMap<>();
+    static boolean usesReticleCoverage(RenderType type) { return type.pipeline() == FINAL_RETICLE_EMISSIVE; }
+
     public static RenderType finalReticle(Identifier texture, boolean emissive) {
         return FINAL_RETICLES.computeIfAbsent(texture + ":" + emissive, key -> RenderType.create("tacz_final_reticle",
                 RenderSetup.builder(emissive ? FINAL_RETICLE_EMISSIVE : FINAL_RETICLE)
-                        // Preserve sub-texel reticle strokes when minified, without smoothing enlarged art or the mask.
+                        // The luminous shader integrates covered texels itself; no bilinear bleed from adjacent UV islands.
                         .withTexture("Sampler0", texture, () -> RenderSystem.getSamplerCache().getSampler(
-                                AddressMode.REPEAT, AddressMode.REPEAT, FilterMode.LINEAR, FilterMode.NEAREST, false))
+                                AddressMode.REPEAT, AddressMode.REPEAT, emissive ? FilterMode.NEAREST : FilterMode.LINEAR, FilterMode.NEAREST, false))
                         .withTexture(MASK_SAMPLER, ScopeMaskTextureHandle.ID)
                         .useLightmap().useOverlay().createRenderSetup()));
     }

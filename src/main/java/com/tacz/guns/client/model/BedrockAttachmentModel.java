@@ -286,7 +286,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      */
     private ScopeNodeSet resolveReticleNodes() {
         List<BedrockPart> illuminated = new ArrayList<>();
-        List<BedrockPart> etched = new ArrayList<>();
+        List<BedrockPart> etched = new ArrayList<>(divisionByIndex.values());
+        var housing = modelMap.get("scope_body");
         for (Map.Entry<String, ModelRendererWrapper> entry : modelMap.entrySet()) {
             String name = entry.getKey();
             if (name == null) {
@@ -297,11 +298,12 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 continue;
             }
             if (RETICLE_ILLUMINATED_PATTERN.matcher(name).matches()
-                    && (divisionByIndex.isEmpty() || divisionByIndex.values().stream().anyMatch(root -> hasAncestor(part, root)))) {
+                    && (housing == null || !hasAncestor(part, housing.getModelRenderer())
+                    || divisionByIndex.values().stream().anyMatch(root -> hasAncestor(part, root)))) {
                 // E.g. TA31 also has red_illuminated on the *housing*. Replaying it here
                 // would punch it straight back through the aperture as a fake reticle.
                 illuminated.add(part);
-            } else if (RETICLE_ETCHED_PATTERN.matcher(name).matches()) {
+            } else if (divisionByIndex.isEmpty() && RETICLE_ETCHED_PATTERN.matcher(name).matches()) {
                 etched.add(part);
             }
         }

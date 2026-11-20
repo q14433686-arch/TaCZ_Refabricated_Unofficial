@@ -18,6 +18,8 @@ import com.tacz.guns.client.render.FlashMaterials;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +45,29 @@ public final class BedrockRenderSnapshot {
         this.functionalTasks = List.copyOf(builder.functionalTasks);
         this.skippedFunctionalNodeCount = builder.skippedFunctionalNodes;
         this.firstUnshaded = builder.firstUnshaded;
+    }
+
+    private BedrockRenderSnapshot(List<DrawCommand> draws, boolean unshaded) {
+        this.drawCommands = List.copyOf(draws);
+        this.firstUnshaded = unshaded ? 0 : -1;
+        this.functionalTasks = List.of();
+        this.skippedFunctionalNodeCount = 0;
+    }
+
+    /** Split a frozen division into ink and luminous markings. A dot inside a division
+     * does not make its etched scale disappear or turn the entire scale into an emitter. */
+    public void submitLayers(java.util.function.BiConsumer<BedrockRenderSnapshot, Boolean> submit) {
+        if (drawCommands.isEmpty()) return;
+        if (firstUnshaded < 0) { submit.accept(this, false); return; }
+        if (firstUnshaded == 0 && drawCommands.stream().allMatch(DrawCommand::unshaded)) {
+            submit.accept(this, true);
+            return;
+        }
+        var ink = new ArrayList<DrawCommand>();
+        var luminous = new ArrayList<DrawCommand>();
+        for (var draw : drawCommands) (draw.unshaded() ? luminous : ink).add(draw);
+        submit.accept(new BedrockRenderSnapshot(ink, false), false);
+        submit.accept(new BedrockRenderSnapshot(luminous, true), true);
     }
 
     public static BedrockRenderSnapshot capture(BedrockModel model,
@@ -138,6 +163,10 @@ public final class BedrockRenderSnapshot {
 
     /** Explicit single-material replay (e.g. the final reticle pass). */
     public void write(VertexConsumer consumer) { write(consumer, 0, drawCommands.size()); }
+
+    public void writeLuminousReticle(VertexConsumer consumer, @Nullable Matrix4fc clip, int width, int height) {
+        ReticleCoverage.write(drawCommands, consumer, clip, width, height);
+    }
 
     private void write(VertexConsumer consumer, int start, int end) { write(consumer, start, end, 1, false); }
 

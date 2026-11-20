@@ -37,6 +37,9 @@ public final class ShaderOpticSmoke {
     public static Identifier withoutIron;
     public static boolean withoutReticle, withoutCoating; // test mixin only
     private static final AttachmentType SLOT = AttachmentType.SCOPE;
+    private static final Set<String> REPORT_OPTICS = Set.of("scope_qmk152", "scope_standard_8x", "scope_vudu",
+            "sight_deltapoint_rifle", "sight_deltapoint_pistol", "sight_rmr_dot");
+    private static final Set<String> ETCHED_SCALES = Set.of("scope_qmk152", "scope_elcan_4x", "scope_lpvo_1_6", "scope_standard_8x");
     private static final String PACK = "ComplementaryReimagined_r5.8.1.zip";
     private record Mount(Identifier optic, Identifier host, boolean builtin) {}
     private record View(int slot, float zoom, int locator) {}
@@ -134,22 +137,43 @@ public final class ShaderOpticSmoke {
         var all=mounts(world);
         var failures=new ArrayList<String>(); int slots=0, count=0;
         try {
+            boolean pipGallery = suite.equals("pip"), large = suite.equals("report-size");
+            if (pipGallery) ctx.runOnClient(mc -> {
+                RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.set(true);
+                RenderConfig.SCOPE_PIP_ENABLE.set(true);
+            });
+            if (large) ctx.getInput().resizeWindow(2560,1417);
             for (var m:all) {
                 var views=views(ctx,m);
                 slots+=views.size();
                 String id=m.optic.getPath();
                 boolean thermal=id.equals("scope_reap_ir") || id.equals("scope_xl50");
-                if (suite.equals("thermal") ? !thermal : suite.equals("scopes") != id.startsWith("scope_")) continue;
+                boolean selected = switch (suite) {
+                    case "thermal" -> thermal;
+                    case "scopes" -> id.startsWith("scope_");
+                    case "sights" -> !id.startsWith("scope_");
+                    case "pip" -> true;
+                    case "report-size" -> REPORT_OPTICS.contains(id);
+                    default -> throw new IllegalArgumentException("Unknown ADS suite " + suite);
+                };
+                if (!selected) continue;
                 for (var v:views) {
+                    if (pipGallery && v.zoom < 4f) continue; // default PIP cutover
                     count++; equip(ctx,world,m,v);
+                    ctx.waitFor(mc -> Math.abs(ScopePipRenderer.currentMagnification()-v.zoom)<.01);
+                    if (pipGallery) ctx.waitFor(mc -> ScopePipRenderer.suppressesWorldFovZoom());
                     if (suite.equals("thermal")) heat(ctx,world,base,m,v,failures);
-                    else gallery(ctx,m,v,thermal,failures);
+                    else gallery(ctx,m,v,thermal,large,failures);
                 }
             }
-            if (all.size()!=46 || slots!=59 || count==0) throw new AssertionError("Incomplete catalog "+all.size()+"/"+slots+"/"+count);
+            int expected = switch (suite) { case "scopes" -> 34; case "sights" -> 25; case "pip" -> 20; case "thermal" -> 4; default -> 8; };
+            if (all.size()!=46 || slots!=59 || count!=expected) throw new AssertionError("Incomplete catalog "+all.size()+"/"+slots+"/"+count);
             if (!failures.isEmpty()) throw new AssertionError("ADS framebuffer failures: " + failures);
             GunMod.LOGGER.info("OPTIC_COMPLETE: {} {}/{} slots ({} indexed attachments)",suite,count,slots,all.size());
-        } finally { ctx.runOnClient(mc -> withoutReticle=false); ctx.getInput().releaseKey(AimKey.AIM_KEY); }
+        } finally {
+            ctx.runOnClient(mc -> { withoutCoating=withoutReticle=false; withoutIron=null; });
+            ctx.getInput().releaseKey(AimKey.AIM_KEY);
+        }
     }
 
     private static BufferedImage frame(ClientGameTestContext ctx, String name) {
@@ -175,10 +199,11 @@ public final class ShaderOpticSmoke {
         }
         return maximum;
     }
-    private static void gallery(ClientGameTestContext ctx, Mount m, View v, boolean thermal, List<String> failures) {
+    private static void gallery(ClientGameTestContext ctx, Mount m, View v, boolean thermal, boolean large, List<String> failures) {
         var key=m.optic.getPath()+"_"+v.slot;
         var bounds=ctx.computeOnClient(mc -> ScopeMaskRenderer.hasMaskThisFrame() && ScopeMaskRenderer.hasMaskBounds() ? ScopeMaskRenderer.maskBoundsNdc().clone() : null);
         var img=frame(ctx,key);
+        if (large && (img.getWidth()!=2560 || img.getHeight()!=1417)) throw new AssertionError("Wrong report-sized framebuffer");
         boolean iron=m.optic.getPath().startsWith("oem_sight_");
         ctx.runOnClient(mc -> { withoutReticle=true; withoutIron=iron?m.optic:null; }); ctx.waitTicks(3);
         var no=frame(ctx,key+(iron?"_no_iron":"_no_division"));
@@ -195,10 +220,15 @@ public final class ShaderOpticSmoke {
         }
         if (rad<3||cx-rad<0||cy-rad<0||cx+rad>w||cy+rad>h||(!iron && bounds==null)) failure="aperture";
         else {
-            int changed=0,coating=0,background=0,material=0;
+            int changed=0,coating=0,background=0,material=0,scaleInk=0,colouredInk=0;
             for (int y=cy-rad;y<cy+rad;y++) for (int x=cx-rad;x<cx+rad;x++) {
                 int a=img.getRGB(x,y),z=no.getRGB(x,y);
                 if (Math.max(Math.abs(r(a)-r(z)),Math.max(Math.abs(g(a)-g(z)),Math.abs(b(a)-b(z))))>38) changed++;
+                // A real chromatic stroke must introduce colour absent in the division-suppressed scene.
+                int redChroma = (r(a)-g(a))-(r(z)-g(z)), greenChroma = (g(a)-b(a))-(g(z)-b(z));
+                if ((r(a)>g(a)+12 && redChroma>50) || (g(a)>b(a)+12 && greenChroma>50)) colouredInk++;
+                int d2=(x-cx)*(x-cx)+(y-cy)*(y-cy);
+                if (d2>rad*rad*.04 && d2<rad*rad*.8 && b(z)-b(a)>45 && g(z)-g(a)>25 && !plate(a)) scaleInk++;
                 int uncoated=bare.getRGB(x,y);
                 if ((x-cx)*(x-cx)+(y-cy)*(y-cy)<rad*rad && Math.max(Math.abs(r(uncoated)-r(z)),
                         Math.max(Math.abs(g(uncoated)-g(z)),Math.abs(b(uncoated)-b(z))))>38) coating++;
@@ -209,9 +239,11 @@ public final class ShaderOpticSmoke {
             if (red>Math.max(5,rad*.15)) failure="red-plate";
             if (background<rad*rad*2) failure+=" obstructed";
             if (coating>Math.max(8,.02*Math.PI*rad*rad)) failure+=" coating-in-aperture";
+            if (ETCHED_SCALES.contains(m.optic.getPath()) && scaleInk<8) failure+=" missing-etched-scale";
+            if (large && colouredInk==0) failure+=" missing-coloured-ink";
             if (iron ? changed<15 : changed<2) failure+=" missing-mark";
-            GunMod.LOGGER.info("OPTIC_FRAME: {} {} {}x view={} centre={},{} r={} red={}/{} markDelta={} coatingDelta={} background={}/{} body={} {}",
-                    key,m.host,v.zoom,v.locator,cx,cy,rad,red,without,changed,coating,background,4*rad*rad,material,failure.isEmpty()?"PASS":failure);
+            GunMod.LOGGER.info("OPTIC_FRAME: {} {} {}x view={} centre={},{} r={} red={}/{} markDelta={} coatingDelta={} background={}/{} body={} scaleInk={} colouredInk={} {}",
+                    key,m.host,v.zoom,v.locator,cx,cy,rad,red,without,changed,coating,background,4*rad*rad,material,scaleInk,colouredInk,failure.isEmpty()?"PASS":failure);
         }
         if (!failure.isEmpty()) failures.add(key+":"+failure);
     }
@@ -234,7 +266,10 @@ public final class ShaderOpticSmoke {
                     var key=m.optic.getPath()+"_"+v.slot+(pip?"_pip_":"_classic_")+range;
                     // Place a real solid wall immediately in front of the slime, then remove it.
                     var wall=at.south(2); setWall(ctx,world,wall,true);
-                    var behind=frame(ctx,key+"_wall"); setWall(ctx,world,wall,false);
+                    var behind=frame(ctx,key+"_wall");
+                    move(ctx,world,id,at.east(12));
+                    var emptyWall=frame(ctx,key+"_wall_without_target");
+                    move(ctx,world,id,at); setWall(ctx,world,wall,false);
                     for(int angle:new int[]{0,45,90}) {
                         world.getServer().runOnServer(s->{var e=(LivingEntity)s.getPlayerList().getPlayers().getFirst().level().getEntity(id);
                             e.setYRot(angle);e.setYHeadRot(angle);e.yBodyRot=angle;});
@@ -248,8 +283,18 @@ public final class ShaderOpticSmoke {
                             int b=behind.getRGB(x,y); if(hot(b))wallHot++; if(!cold(b))continue;
                             n++; if (hot(image.getRGB(x,y)))lit++;
                         }
-                        boolean ok=n>=2*radius*radius && lit>=.83*n && wallHot<=.16*4*radius*radius;
-                        GunMod.LOGGER.info("OPTIC_HEAT: {} @{} face={}/{} wallBright={} radius={} {}",key,angle,lit,n,wallHot,radius,ok?"PASS":"FAIL");
+                        // Compare wall with/without the same entity across the whole central sensor region.
+                        // Keep the native white display strokes; don't mistake their small motion for heat.
+                        int leaks=0, wr=Math.min(h/9,range==16?h/8:h/12);
+                        for(int y=h/2-wr; y<h/2+wr; y++) for(int x=w/2-wr; x<w/2+wr; x++) {
+                            if (!hot(behind.getRGB(x,y))) continue;
+                            boolean allCold=true;
+                            for(int dy=-2;dy<=2 && allCold;dy++) for(int dx=-2;dx<=2;dx++)
+                                if (!cold(emptyWall.getRGB(x+dx,y+dy))) { allCold=false; break; }
+                            if(allCold)leaks++;
+                        }
+                        boolean ok=n>=2*radius*radius && lit>=.83*n && wallHot<=.16*4*radius*radius && leaks==0;
+                        GunMod.LOGGER.info("OPTIC_HEAT: {} @{} face={}/{} wallBright={} wallLeak={} radius={} {}",key,angle,lit,n,wallHot,leaks,radius,ok?"PASS":"FAIL");
                         if(!ok)failures.add(key+"@"+angle+":"+lit+"/"+n+" wall="+wallHot);
                     }
                 }
@@ -258,6 +303,11 @@ public final class ShaderOpticSmoke {
             ctx.runOnClient(mc->RenderConfig.SCOPE_PIP_ENABLE.set(false));
             world.getServer().runOnServer(s->s.getPlayerList().getPlayers().getFirst().level().getEntity(id).discard());
         }
+    }
+    private static void move(ClientGameTestContext ctx,TestSingleplayerContext world,UUID id,BlockPos to) {
+        world.getServer().runOnServer(s->s.getPlayerList().getPlayers().getFirst().level().getEntity(id).snapTo(Vec3.atBottomCenterOf(to)));
+        ctx.waitFor(mc->mc.level.getEntity(id).position().distanceToSqr(Vec3.atBottomCenterOf(to))<.01);
+        ctx.waitTicks(4);
     }
     private static void setWall(ClientGameTestContext ctx,TestSingleplayerContext world,BlockPos wall,boolean place) {
         world.getServer().runOnServer(s->{var level=s.getPlayerList().getPlayers().getFirst().level();

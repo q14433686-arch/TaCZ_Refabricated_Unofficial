@@ -50,6 +50,9 @@ out vec4 overlayColor;
 #endif
 
 out vec2 texCoord0;
+#ifdef RETICLE_COVERAGE
+out vec2 reticleFace;
+#endif
 
 void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
@@ -75,6 +78,9 @@ void main() {
     overlayColor = texelFetch(Sampler1, UV1, 0);
 #endif
 
+#ifdef RETICLE_COVERAGE
+    reticleFace = vec2(UV2) / 4096.0 - 2.0;
+#endif
     texCoord0 = UV0;
 
 #ifdef APPLY_TEXTURE_MATRIX
