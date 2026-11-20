@@ -19,5 +19,14 @@ final class ClientProbe {
         }
         throw new AssertionError("Server did not receive crouch=" + pressed);
     }
+    // Never pass the integrated ServerPlayer/Level to the client thread.
+    static void waitForServer(ClientGameTestContext client, TestSingleplayerContext world,
+                              java.util.function.Predicate<net.minecraft.server.MinecraftServer> predicate) {
+        for (int i = 0; i < 200; i++) {
+            if (world.getServer().computeOnServer(server -> predicate.test(server))) return;
+            client.waitTick();
+        }
+        throw new AssertionError("Timed out waiting for authoritative server state");
+    }
     private ClientProbe() {}
 }

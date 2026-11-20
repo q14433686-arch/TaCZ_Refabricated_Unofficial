@@ -352,6 +352,7 @@ gunpack.meta.json
 ## 7. 当前已知边界
 
 - LRTactical 是部分兼容框架，`flash_shield` 未实现；第三方包兼容性需要逐包验证。
+- 手柄桥接使用可选的 Fabric Controllable `0.26.1+26.2` / Framework `0.13.26+26.2`（SDL2）。两者不随 TaCZ 分发；没装时仍走原有键鼠路径。
 - 26.2 的瞄具裁剪默认仍是 branch-specific 的掩码实现，不应描述成上游行为；镜内画中画（PIP）
   是实验性可选开关（见第 4 节），不保证每个 shader pack 与渲染模组组合都得到完全相同的结果。
 - 26.2 的现有实测记录中，Player Animation Library 在经历 TaCZ 趴姿再站起后，下一次切枪的

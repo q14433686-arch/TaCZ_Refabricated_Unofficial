@@ -19,6 +19,8 @@ public final class PackClientSmoke implements FabricClientGameTest {
             context.runOnClient(mc -> DefaultClientCatalogSmoke.client());
             RackPreviewSmoke.equip(world, com.tacz.guns.api.item.builder.GunItemBuilder.create().setId(id).setAmmoCount(3).build());
             world.getClientLevel().waitForChunksRender();
+            if (Boolean.getBoolean("tacz.test.pal")) { PalRuntimeSmoke.run(context); return; }
+            if (Boolean.getBoolean("tacz.test.controller")) { ControllerSmoke.run(context, world); return; }
             ViewTuningSmoke.run(context, world);
             RackPreviewSmoke.run(context, world, id);
             ConversionReloadSmoke.run(context, world);

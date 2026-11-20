@@ -1,0 +1,39 @@
+name: PAL third-person runtime
+on:
+  push:
+    branches: ['arena/**', '26.2(main)']
+    paths: &pal-paths ['src/**/playeranimator/**', 'src/**/InnerThirdPersonManager.java', 'src/**/PlayerModelMixin.java', 'src/**/PalRuntimeSmoke.java', 'src/**/PackClientSmoke.java', 'scripts/ci-central.init.gradle', '.github/workflows/animation-smoke.yml', 'build.gradle']
+  pull_request:
+    paths: *pal-paths
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pal-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  pal:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '25'}
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Run PAL on the target client
+        env: {LIBGL_ALWAYS_SOFTWARE: 'true', ALSOFT_DRIVERS: 'null'}
+        run: |
+          set -o pipefail
+          xvfb-run -a ./gradlew --init-script scripts/ci-central.init.gradle -PtaczClientSmoke -PtaczPalSmoke runClientGameTest --console=plain 2>&1 | tee "$RUNNER_TEMP/tacz-client.log"
+          grep -F 'PORT_PAL: offscreen' build/run/clientGameTest/logs/latest.log | sed 's/^/::notice::/'
+      - if: failure()
+        run: python3 scripts/report_ci_failures.py "$RUNNER_TEMP/tacz-client.log" build/run/clientGameTest/logs/latest.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pal-${{ github.sha }}
+          retention-days: 7
+          path: |
+            build/run/clientGameTest/logs/latest.log
+            build/run/clientGameTest/screenshots/*_tacz_pal_*.png
+            ${{ runner.temp }}/tacz-client.log
