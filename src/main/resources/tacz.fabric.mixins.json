@@ -35,15 +35,15 @@
     "client.LivingEntityRendererMixin",
     "client.MinecraftMixin",
     "client.MinecraftUseRestartMixin",
-    "client.MouseHandlerMixin",
-    "client.TextureAtlasMixin",
-    "compat.controllable.BindingContextMixin",
+    "compat.jei.JeiClientLifecycleHandlerMixin",
     "compat.punchy.PunchyArmRendererMixin",
     "compat.punchy.PunchyHandEquipStateMachineMixin",
     "compat.punchy.PunchyHandRenderBobContextMixin",
-    "compat.punchy.PunchyMovementStateMachineMixin"
+    "compat.punchy.PunchyMovementStateMachineMixin",
+    "client.MouseHandlerMixin",
+    "client.TextureAtlasMixin"
   ],
-  "_comment": "26.1.2: obsolete RenderTargetMixin and AbstractSliderButtonAccessor targets were removed. LivingEntityRendererMixin is registered above after both injection descriptors were verified against 26.1.2. The optional Controllable mixin is gated by MixinPlugin.",
+  "_comment": "26.1.2: compatibility mixins are gated by MixinPlugin using the package segment as the target mod id; Punchy mixins route TACZ viewmodels through Punchy's supported blacklist/handoff semantics.",
   "injectors": {
     "defaultRequire": 1
   }

@@ -15,6 +15,7 @@ import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
@@ -22,14 +23,24 @@ import java.util.Collections;
 import java.util.List;
 
 public class GunSmithTableCategory implements DisplayCategory<GunSmithTableDisplay> {
+    private final Identifier table;
+    private final ItemStack workstation;
     private final Component title;
     private final Renderer icon;
     private final CategoryIdentifier<GunSmithTableDisplay> id;
 
-    public GunSmithTableCategory(Component title, ItemStack icon, CategoryIdentifier<GunSmithTableDisplay> id) {
+    public GunSmithTableCategory(Identifier table, Component title, ItemStack icon, CategoryIdentifier<GunSmithTableDisplay> id) {
+        this.table = table;
+        this.workstation = icon;
         this.title = title;
         this.icon = EntryStacks.of(icon);
         this.id = id;
+    }
+
+    public Identifier table() { return table; }
+
+    public boolean represents(Component name, ItemStack stack) {
+        return title.equals(name) && ItemStack.isSameItemSameComponents(workstation, stack);
     }
 
     @Override

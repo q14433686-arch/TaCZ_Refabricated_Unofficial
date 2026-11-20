@@ -2,12 +2,14 @@ package com.tacz.guns.client.renderer.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.client.model.BedrockAmmoModel;
 import com.tacz.guns.client.model.bedrock.BedrockModel;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.InternalAssetLoader;
+import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.entity.EntityKineticBullet;
 import net.minecraft.client.Camera;
@@ -30,12 +32,18 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, EntityBulletRenderer.BulletRenderState> {
+    private static final Map<Integer, Integer> TRACER_DEBUG_LAST_TICK = new HashMap<>();
+    private static long tracerDebugLastIntervalLogTime = 0L;
 
     public static class BulletRenderState extends EntityRenderState {
         public EntityKineticBullet bullet;
@@ -112,49 +120,80 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
             if (isFirstPerson && !RenderConfig.FIRST_PERSON_BULLET_TRACER_ENABLE.get()) {
                 return;
             }
+            // 【RecoilDebug 隔离】第 27.4 轮：运行时关闭曳光渲染，定位斜向"后坐力固定侧偏"的视觉载体
+            if (RenderConfig.DEBUG_DISABLE_TRACER != null && RenderConfig.DEBUG_DISABLE_TRACER.get()) {
+                return;
+            }
             poseStack.pushPose();
             {
                 float width = 0.005f;
                 Vec3 bulletPosition = bullet.getPosition(partialTicks);
-                double trailLength = 0.85 * bullet.getDeltaMovement().length();
-                double disToEye = bulletPosition.distanceTo(shooter.getEyePosition(partialTicks));
-                trailLength = Math.min(trailLength, disToEye * 0.8);
+                Vec3 eyePosition = shooter.getEyePosition(partialTicks);
+                Vec3 deltaMovement = bullet.getDeltaMovement();
+                double rawTrailLength = 0.85 * deltaMovement.length();
+                double disToEye = bulletPosition.distanceTo(eyePosition);
+                double trailLength = Math.min(rawTrailLength, disToEye * 0.8);
+                boolean debug = tracerDebugEnabled(bullet);
+                boolean offsetInitialized = false;
+                double offsetReducer = 0.0;
+                Vector3f globalMuzzleOffset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
+                Vector3f firstPersonOffsetBefore = bullet.getFirstPersonRenderOffset() == null
+                        ? null
+                        : new Vector3f(bullet.getFirstPersonRenderOffset());
+                Vector3f firstPersonOffsetAfter = firstPersonOffsetBefore == null ? null : new Vector3f(firstPersonOffsetBefore);
+                // 视图空间偏移经相机旋转后的世界轴向量，用于验证「起点是否真的落在枪口」。
+                Vector3f firstPersonWorldOffset = null;
+                Matrix4f poseBeforeOffset = new Matrix4f(poseStack.last().pose());
+                Matrix4f poseAfterOffset = null;
+                Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
 
                 if (isFirstPerson) {
-                    // 实体提交栈只含 entityPos-cameraPos 的世界轴平移；相机旋转由后续
-                    // world->view 绘制链统一施加。枪口缓存则经 GunItemRendererWrapper
-                    // 归一化为纯视图空间，因此必须用 camera.rotation()（view->world）
-                    // 旋到世界轴后再平移。直接使用视图向量会产生随 yaw 呈正弦变化的侧偏。
-                    Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-                    Vector3f viewOffset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
-                    if (bullet.getFirstPersonRenderOffset() == null) {
-                        // 保留精确出生帧的诊断快照；定位实际使用当帧枪口，避免转头后
-                        // 长时间沿用旧相机朝向下的缓存。
-                        bullet.setFirstPersonRenderOffset(new Vector3f(viewOffset));
+                    // Freeze both view-space origin and view-to-world frame on this tracer's first draw.
+                    // The hand-pass base has already been removed by cacheMuzzlePosition.
+                    Vector3f offset = bullet.getFirstPersonRenderOffset();
+                    if (offset == null) {
+                        offset = new Vector3f(globalMuzzleOffset);
                         bullet.setCameraXRot(camera.xRot());
                         bullet.setCameraYRot(camera.yRot());
+                        bullet.setFirstPersonCameraRotation(camera.rotation());
+                        bullet.setFirstPersonRenderOffset(offset);
+                        offsetInitialized = true;
                     }
-                    Vector3f worldOffset = viewOffset.rotate(camera.rotation());
-                    // 近端从枪口发出，随后平滑收敛到服务器的真实弹道。
-                    double offsetReducer = Math.max(0, (50.0 - disToEye)) / 50.0;
+                    firstPersonOffsetAfter = new Vector3f(offset);
+                    offsetReducer = Math.max(0, (50.0 - disToEye)) / 50.0;
+
+                    // 视图空间 -> 世界空间：camera.rotation() 即视图→世界，直接 rotate。
+                    var rotation = bullet.getFirstPersonCameraRotation();
+                    if (rotation == null) { // Offset supplied by an older add-on using the Euler API.
+                        rotation = new org.joml.Quaternionf().rotationY((float)Math.toRadians(-bullet.getCameraYRot() - 180))
+                                .rotateX((float)Math.toRadians(-bullet.getCameraXRot()));
+                    }
+                    Vector3f worldOffset = new Vector3f(offset).rotate(rotation);
+                    firstPersonWorldOffset = new Vector3f(worldOffset);
                     poseStack.translate(worldOffset.x() * offsetReducer,
                             worldOffset.y() * offsetReducer,
                             worldOffset.z() * offsetReducer);
+                    poseAfterOffset = new Matrix4f(poseStack.last().pose());
                 }
-                // 说是 override 其实默认值是 1
-                // 所以这里直接乘也没关系
                 width *= bullet.getTracerSizeOverride();
                 width *= (float) Math.max(1.0, disToEye / 3.5);
-                poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, bullet.yRotO, bullet.getYRot()) - 180.0F));
-                poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTicks, bullet.xRotO, bullet.getXRot())));
+                // 曳光弹轨迹条带的朝向来源是【实体 rot 字段】而非速度向量；
+                // 提起为本地变量并写进诊断日志，用于核对「条带朝向 == 速度反向」。
+                float bulletLerpYRot = Mth.lerp(partialTicks, bullet.yRotO, bullet.getYRot());
+                float bulletLerpXRot = Mth.lerp(partialTicks, bullet.xRotO, bullet.getXRot());
+                poseStack.mulPose(Axis.YP.rotationDegrees(bulletLerpYRot - 180.0F));
+                poseStack.mulPose(Axis.XP.rotationDegrees(bulletLerpXRot));
                 poseStack.translate(0, isFirstPerson ? 0 : -0.2, trailLength / 2.0);
                 poseStack.scale(width, width, (float) trailLength);
-                // 距离两格外才渲染，只在前 5 tick 判定
                 double bulletDistance = bulletPosition.distanceTo(shooter.getEyePosition());
+                debugTracer(bullet, isFirstPerson, partialTicks, bulletPosition, eyePosition, deltaMovement,
+                        rawTrailLength, trailLength, disToEye, bulletDistance, width, offsetReducer,
+                        globalMuzzleOffset, firstPersonOffsetBefore, firstPersonOffsetAfter,
+                        firstPersonWorldOffset,
+                        offsetInitialized, camera, bulletLerpYRot, bulletLerpXRot,
+                        poseBeforeOffset, poseAfterOffset,
+                        new Matrix4f(poseStack.last().pose()), debug);
                 if (bullet.tickCount >= 5 || bulletDistance > 2) {
-                    // 上游使用 energySwirl 渲染曳光弹；26.2 的 RenderTypes 仍提供该封装
-                    // （同类调用已在 MuzzleFlashRender 中使用）。entityTranslucent 会把这条
-                    // 拉伸后的方体当普通半透明实体画，视觉上更像“歪掉的实体块”而不是曳光。
                     RenderType type = RenderTypes.energySwirl(InternalAssetLoader.DEFAULT_BULLET_TEXTURE, 15, 15);
                     model.submit(poseStack, ItemDisplayContext.NONE, collector, type, packedLight, OverlayTexture.NO_OVERLAY,
                             tracerColor[0], tracerColor[1], tracerColor[2], 1);
@@ -162,6 +201,144 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
             }
             poseStack.popPose();
         });
+    }
+
+    private static boolean tracerDebugEnabled(EntityKineticBullet bullet) {
+        try {
+            if (RenderConfig.TRACER_DEBUG == null || !RenderConfig.TRACER_DEBUG.get()) {
+                return false;
+            }
+            String filter = RenderConfig.TRACER_DEBUG_GUN == null ? "" : RenderConfig.TRACER_DEBUG_GUN.get();
+            if (filter == null || filter.isBlank()) {
+                return true;
+            }
+            filter = filter.trim();
+            Identifier gunId = bullet.getGunId();
+            return filter.equalsIgnoreCase(gunId.toString()) || filter.equalsIgnoreCase(gunId.getPath());
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    private static int tracerDebugIntervalMs() {
+        try {
+            return RenderConfig.TRACER_DEBUG_INTERVAL_MS == null ? 500 : RenderConfig.TRACER_DEBUG_INTERVAL_MS.get();
+        } catch (Throwable ignored) {
+            return 500;
+        }
+    }
+
+    private static int tracerDebugFirstTicks() {
+        try {
+            return RenderConfig.TRACER_DEBUG_FIRST_TICKS == null ? 3 : RenderConfig.TRACER_DEBUG_FIRST_TICKS.get();
+        } catch (Throwable ignored) {
+            return 3;
+        }
+    }
+
+    private static boolean shouldLogTracer(EntityKineticBullet bullet, boolean enabled) {
+        if (!enabled) {
+            return false;
+        }
+        int firstTicks = tracerDebugFirstTicks();
+        if (bullet.tickCount <= firstTicks) {
+            Integer lastTick = TRACER_DEBUG_LAST_TICK.put(bullet.getId(), bullet.tickCount);
+            if (TRACER_DEBUG_LAST_TICK.size() > 1024) {
+                TRACER_DEBUG_LAST_TICK.clear();
+            }
+            return lastTick == null || lastTick != bullet.tickCount;
+        }
+        long now = System.currentTimeMillis();
+        if (now - tracerDebugLastIntervalLogTime >= tracerDebugIntervalMs()) {
+            tracerDebugLastIntervalLogTime = now;
+            return true;
+        }
+        return false;
+    }
+
+    private static void debugTracer(EntityKineticBullet bullet,
+                                    boolean isFirstPerson,
+                                    float partialTicks,
+                                    Vec3 bulletPosition,
+                                    Vec3 eyePosition,
+                                    Vec3 deltaMovement,
+                                    double rawTrailLength,
+                                    double trailLength,
+                                    double disToEye,
+                                    double bulletDistance,
+                                    float width,
+                                    double offsetReducer,
+                                    Vector3f globalMuzzleOffset,
+                                    @Nullable Vector3f firstPersonOffsetBefore,
+                                    @Nullable Vector3f firstPersonOffsetAfter,
+                                    @Nullable Vector3f firstPersonWorldOffset,
+                                    boolean offsetInitialized,
+                                    Camera camera,
+                                    float bulletLerpYRot,
+                                    float bulletLerpXRot,
+                                    Matrix4f poseBeforeOffset,
+                                    @Nullable Matrix4f poseAfterOffset,
+                                    Matrix4f finalPose,
+                                    boolean enabled) {
+        if (!shouldLogTracer(bullet, enabled)) {
+            return;
+        }
+        GunMod.LOGGER.info("[TACZ TracerDebug] bullet={} gun={} display={} ammo={} tick={} partial={} firstPerson={} shader={} irisHand={} tracer={} camera=({},{}) cachedCamera=({},{}) bulletRot=({},{}) offsetInit={} offsetReducer={} bulletPos={} eye={} delta={} disToEye={} bulletDistance={} rawTrail={} trail={} width={} globalMuzzle={} fpOffsetBefore={} fpOffsetAfter={} fpWorldOffset={} poseBefore={} poseAfterOffset={} finalPose={}",
+                bullet.getId(),
+                bullet.getGunId(),
+                bullet.getGunDisplayId(),
+                bullet.getAmmoId(),
+                bullet.tickCount,
+                trim(partialTicks),
+                isFirstPerson,
+                IrisCompat.isUsingRenderPack(),
+                IrisCompat.isHandRendererActive(),
+                bullet.isTracerAmmo(),
+                trim(camera.xRot()), trim(camera.yRot()),
+                trim(bullet.getCameraXRot()), trim(bullet.getCameraYRot()),
+                trim(bulletLerpYRot), trim(bulletLerpXRot),
+                offsetInitialized,
+                trim(offsetReducer),
+                vec(bulletPosition),
+                vec(eyePosition),
+                vec(deltaMovement),
+                trim(disToEye),
+                trim(bulletDistance),
+                trim(rawTrailLength),
+                trim(trailLength),
+                trim(width),
+                vec(globalMuzzleOffset),
+                vec(firstPersonOffsetBefore),
+                vec(firstPersonOffsetAfter),
+                vec(firstPersonWorldOffset),
+                translation(poseBeforeOffset),
+                translation(poseAfterOffset),
+                translation(finalPose));
+    }
+
+    private static String vec(@Nullable Vec3 vec) {
+        if (vec == null) {
+            return "null";
+        }
+        return "(" + trim(vec.x) + "," + trim(vec.y) + "," + trim(vec.z) + ")";
+    }
+
+    private static String vec(@Nullable Vector3f vec) {
+        if (vec == null) {
+            return "null";
+        }
+        return "(" + trim(vec.x()) + "," + trim(vec.y()) + "," + trim(vec.z()) + ")";
+    }
+
+    private static String translation(@Nullable Matrix4f matrix) {
+        if (matrix == null) {
+            return "null";
+        }
+        return "(" + trim(matrix.m30()) + "," + trim(matrix.m31()) + "," + trim(matrix.m32()) + ")";
+    }
+
+    private static String trim(double value) {
+        return String.format(Locale.ROOT, "%.4f", value);
     }
 
     @Override

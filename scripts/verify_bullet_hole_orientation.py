@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-"""Offline quaternion-model + source-wiring checks for the 26.1.2 bullet-hole backport.
+"""Offline quaternion-model + source-wiring checks for the 26.2 bullet-hole port.
 
-Backported from the 26.3 line on 2026-10-21. Direction rotations and XY vertex/UV order
-were checked against the Minecraft 26.1.2 `QuadParticleRenderState`/`SingleQuadParticle`
-API used by this checkout; legacy XZ corners were checked against upstream
-1.21.1 BulletHoleParticle.render.
-This models JOML's right-multiplication convention, NOT execution of Java/JOML, shader
-rendering, or a replacement for compilation and six-face in-game tests.
+Direction rotations and XY vertex/UV order were checked against the local 26.2
+merged jar; legacy XZ corners against upstream 1.21.1 BulletHoleParticle.render.
+This models JOML's right-multiplication convention, NOT execution of Java/JOML,
+shader rendering, or a replacement for compilation and six-face in-game tests.
 Run: python3 scripts/verify_bullet_hole_orientation.py
 """
 from math import cos, pi, sin
@@ -94,7 +92,9 @@ class BulletHoleOrientationChecks(unittest.TestCase):
         source = re.sub(r"/\*.*?\*/|//[^\n]*", "", SOURCE.read_text(), flags=re.S)
         source = re.sub(r"\s+", " ", source)
         self.assertIn("this.direction.getRotation() .mul(new Quaternionf().rotationX(-Mth.HALF_PI).rotateZ(Mth.PI))", source)
-        self.assertIn("float offset = 0.01F * this.getQuadSize(partialTicks);", source)
+        self.assertIn("float offset = this.surfaceOffset;", source)
+        self.assertIn("private final float surfaceOffset;", source)
+        self.assertIn("this.surfaceOffset = this.random.nextFloat() * .005f + .005f;", source)
         self.assertIn("Vec3 camPos = camera.position();", source)
         for coordinate, step in (("x", "X"), ("y", "Y"), ("z", "Z")):
             self.assertIn(
@@ -103,6 +103,19 @@ class BulletHoleOrientationChecks(unittest.TestCase):
             )
         self.assertIn("this.extractRotatedQuad(state, quaternion, x, y, z, partialTicks);", source)
         self.assertNotIn("this.extractRotatedQuad(state, camera, quaternion, partialTicks)", source)
+
+    def test_new_random_offset_is_size_independent_and_along_each_normal(self):
+        # The 1.2.0 change deliberately replaces the legacy .01*quadSize offset.
+        # Tangential corners and UVs stay unchanged; only separation from the plane changes.
+        for normal, direction in FACES.values():
+            for random_value in (0, .25, .999999):
+                offset = .005 + random_value * .005
+                self.assertGreaterEqual(offset, .005)
+                self.assertLess(offset, .01)
+                for size in (.025, .05, .2):
+                    tangent = rotate(mul(direction, BASIS), XY[0])
+                    point = tuple(t * size + n * offset for t,n in zip(tangent,normal))
+                    self.assertAlmostEqual(sum(p*n for p,n in zip(point,normal)), offset)
 
     def test_color_and_alpha_are_still_restored_after_extraction(self):
         source = SOURCE.read_text().split("} finally {", 1)[1].split("}", 1)[0]

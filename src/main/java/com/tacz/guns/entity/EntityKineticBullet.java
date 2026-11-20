@@ -142,6 +142,14 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
     private float cameraXRot;
     private float cameraYRot;
     private Vector3f firstPersonRenderOffset;
+    private org.joml.Quaternionf firstPersonCameraRotation;
+
+    @Nullable
+    public org.joml.Quaternionf getFirstPersonCameraRotation() { return firstPersonCameraRotation; }
+
+    public void setFirstPersonCameraRotation(org.joml.Quaternionfc rotation) {
+        firstPersonCameraRotation = new org.joml.Quaternionf(rotation);
+    }
     // 发射的枪械 ID
     private Identifier gunId = DefaultAssets.EMPTY_GUN_ID;
     // 枪械display ID
@@ -394,6 +402,7 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
     }
 
     protected void onHitEntity(TacHitResult result, Vec3 startVec, Vec3 endVec) {
+        if (EntityUtil.isBulletDamageIgnored(result.getEntity())) return;
         if (result.getEntity() instanceof ITargetEntity targetEntity) {
             DamageSource source = this.damageSources().thrown(this, this.getOwner());
             targetEntity.onProjectileHit(this, result, source, this.getDamage(result.getLocation()));
@@ -425,7 +434,7 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
         sources = Pair.of(preEvent.getDamageSource(NON_ARMOR_PIERCING), preEvent.getDamageSource(ARMOR_PIERCING));
         headshot = preEvent.isHeadShot();
         headShotMultiplier = preEvent.getHeadshotMultiplier();
-        if (entity == null) {
+        if (entity == null || EntityUtil.isBulletDamageIgnored(entity)) {
             return;
         }
         // 点燃
@@ -503,8 +512,8 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
         }
         // 弹孔与点燃特效
         if (this.level() instanceof ServerLevel serverLevel) {
-            BulletHoleOption bulletHoleOption = new BulletHoleOption(result.getDirection(), result.getBlockPos(), this.ammoId.toString(), this.gunId.toString(), this.gunDisplayId.toString());
-            serverLevel.sendParticles(bulletHoleOption, hitVec.x, hitVec.y, hitVec.z, 1, 0, 0, 0, 0);
+            new com.tacz.guns.network.message.ServerMessageBulletHitBlock(hitVec, result.getDirection(), result.getBlockPos(),
+                    this.ammoId.toString(), this.gunId.toString(), this.gunDisplayId.toString()).broadcast(serverLevel, getOwner(), this.igniteEntity);
             if (this.igniteBlock) {
                 serverLevel.sendParticles(ParticleTypes.LAVA, hitVec.x, hitVec.y, hitVec.z, 1, 0, 0, 0, 0);
             }
@@ -677,6 +686,7 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
 
     public void setCameraYRot(float cameraYRot) {
         this.cameraYRot = cameraYRot;
+        this.firstPersonCameraRotation = null;
     }
 
     public float getCameraXRot() {
@@ -685,6 +695,7 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
 
     public void setCameraXRot(float cameraXRot) {
         this.cameraXRot = cameraXRot;
+        this.firstPersonCameraRotation = null;
     }
 
     public Vector3f getFirstPersonRenderOffset() {
@@ -739,7 +750,7 @@ public class EntityKineticBullet extends Projectile implements IEntityAdditional
 
     @Override
     public boolean ownedBy(@Nullable Entity entity) {
-        if (entity == null) {
+        if (entity == null || EntityUtil.isBulletDamageIgnored(entity)) {
             return false;
         }
         return super.ownedBy(entity);

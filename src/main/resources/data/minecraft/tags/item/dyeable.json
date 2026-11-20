@@ -1,4 +1,6 @@
 {
   "replace": false,
-  "values": ["tacz:ammo_box"]
+  "values": [
+    "tacz:ammo_box"
+  ]
 }

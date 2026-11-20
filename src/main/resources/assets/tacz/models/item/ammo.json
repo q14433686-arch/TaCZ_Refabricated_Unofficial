@@ -1,0 +1,24 @@
+{
+  "_comment": "26.2 alignment: upstream parent was builtin/entity (identity transforms) plus this explicit display block. The minecraft:item/generated parent used during the port additionally injected ground/head/thirdperson/fixed/firstperson_righthand offsets, misaligning the held model. Parentless == builtin/entity semantics.",
+  "credit": "Made with Blockbench",
+  "gui_light": "front",
+  "display": {
+    "firstperson_righthand": {
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "firstperson_lefthand": {
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    }
+  },
+  "textures": {
+    "particle": "minecraft:item/barrier"
+  }
+}

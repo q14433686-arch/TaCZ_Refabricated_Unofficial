@@ -1,0 +1,21 @@
+{
+  "model": {
+    "type": "minecraft:condition",
+    "property": "minecraft:has_component",
+    "component": "minecraft:dyed_color",
+    "on_true": {
+      "type": "minecraft:model",
+      "model": "tacz:block/glow_gun_pegboard_dyed",
+      "tints": [
+        {
+          "type": "minecraft:dye",
+          "default": -1
+        }
+      ]
+    },
+    "on_false": {
+      "type": "minecraft:model",
+      "model": "tacz:block/glow_gun_pegboard"
+    }
+  }
+}

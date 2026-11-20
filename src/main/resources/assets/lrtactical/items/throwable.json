@@ -1,0 +1,24 @@
+{
+  "_comment": [
+    "结构与 items/melee.json 相同，说明见该文件。",
+    "on_true 走 lrtactical:dynamic_item（内容包的 Bedrock 模型 + 动画），",
+    "on_false 回退到原版占位模型，保证没装内容包时行为与移植此前完全一致。"
+  ],
+  "model": {
+    "type": "minecraft:condition",
+    "property": "lrtactical:has_custom_display",
+    "on_true": {
+      "type": "lrtactical:dynamic_item",
+      "base": "lrtactical:item/throwable_dynamic"
+    },
+    "on_false": {
+      "type": "minecraft:model",
+      "model": "lrtactical:item/throwable"
+    }
+  },
+  "properties": {
+    "oversized_in_gui": true,
+    "hand_animation_on_swap": false,
+    "swap_animation_scale": 0.0
+  }
+}

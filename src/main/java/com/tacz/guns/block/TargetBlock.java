@@ -3,18 +3,19 @@ package com.tacz.guns.block;
 import com.mojang.serialization.MapCodec;
 import com.tacz.guns.block.entity.TargetBlockEntity;
 import com.tacz.guns.entity.EntityKineticBullet;
+import com.tacz.guns.advancement.TargetHitTrigger;
 import com.tacz.guns.init.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
-import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -85,6 +86,11 @@ public class TargetBlock extends BaseEntityBlock {
 
     @Nullable
     @Override
+    protected BlockState rotate(BlockState state, net.minecraft.world.level.block.Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
         return state.getValue(HALF).equals(DoubleBlockHalf.LOWER) && level.isClientSide() ? createTickerHelper(blockEntityType, ModBlocks.TARGET_BE, TargetBlockEntity::clientTick) : null;
     }
@@ -135,6 +141,7 @@ public class TargetBlock extends BaseEntityBlock {
                 if (projectile instanceof EntityKineticBullet bullet) {
                     String formattedDamage = String.format("%.1f", bullet.getDamage(hit.getLocation()));
                     String formattedDistance = String.format("%.2f", hit.getLocation().distanceTo(player.position()));
+                    if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) TargetHitTrigger.INSTANCE.trigger(serverPlayer, hit.getLocation().distanceTo(player.position()));
                     player.sendOverlayMessage(Component.translatable("message.tacz.target_minecart.hit", formattedDamage, formattedDistance));
                 }
 
@@ -180,20 +187,31 @@ public class TargetBlock extends BaseEntityBlock {
         return null;
     }
 
+    /**
+     * 带名字放置标靶时，把名字同时记成「主人档案」与「自定义名」。
+     *
+     * <h2>26.2 必现崩溃（2026-10-27 修复）</h2>
+     * <p>这里原先是 {@code new GameProfile(null, stack.getHoverName().getString())}。authlib 9 的
+     * {@code GameProfile} 是 record，构造器对 id/name/properties 全部
+     * {@code Objects.requireNonNull}，所以<b>只要物品带自定义名就必抛 NPE</b>。而它抛在
+     * {@code BlockItem#place} 的中途：方块已经放好、随后原版 {@code BlockItem#place} 的物品消耗语句却
+     * 还没执行 ⇒ <b>标靶放下了、物品不被消耗</b>，而且异常被 {@code useItemOn} 吞掉，
+     * 玩家看不到任何提示。</p>
+     * <p>现在改用原版 {@link ResolvableProfile}（允许「只有名字」，和原版头颅的
+     * {@code SkullBlockEntity} 完全一致）：放置不会构造 UUID 为空的 {@code GameProfile}；
+     * 皮肤由客户端用 {@code PlayerSkinRenderCache} 异步解析，解析不到就是默认皮肤。
+     * 放置不等待服务端身份查询；只有仍是同一主人时，才用实际 UUID 替换名字。</p>
+     */
     @Override
     public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(world, pos, state, placer, stack);
         if (!world.isClientSide()) {
             BlockPos above = pos.above();
             world.setBlock(above, state.setValue(HALF, DoubleBlockHalf.UPPER), Block.UPDATE_ALL);
-            if (stack.getCustomName() != null) {
-                BlockEntity blockentity = world.getBlockEntity(pos);
-                if (blockentity instanceof TargetBlockEntity e) {
-                    ResolvableProfile profile = ResolvableProfile.createUnresolved(stack.getHoverName().getString());
-                    e.setOwner(profile);
-                    e.setCustomName(stack.getHoverName());
-                    e.refresh();
-                }
+            Component customName = stack.getCustomName();
+            if (customName != null && world.getBlockEntity(pos) instanceof TargetBlockEntity target) {
+                target.setCustomName(customName);
+                target.setOwnerName(customName.getString()); // publishes both values in one update
             }
         }
     }
@@ -204,7 +222,10 @@ public class TargetBlock extends BaseEntityBlock {
         BlockEntity blockentity = level.getBlockEntity(blockPos);
         if (blockentity instanceof TargetBlockEntity e) {
             ItemStack dropStack = new ItemStack(this);
-            dropStack.set(DataComponents.CUSTOM_NAME, e.getCustomName());
+            Component customName = e.getCustomName();
+            if (customName != null) {
+                dropStack.set(DataComponents.CUSTOM_NAME, customName);
+            }
             return dropStack;
         }
         return super.getCloneItemStack(level, pos, state, false);

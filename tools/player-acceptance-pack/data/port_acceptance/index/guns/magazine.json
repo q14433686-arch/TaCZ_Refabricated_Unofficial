@@ -1,0 +1,6 @@
+{
+  "name": "验收用 magazine",
+  "display": "port_acceptance:probe",
+  "data": "port_acceptance:magazine",
+  "type": "rifle"
+}

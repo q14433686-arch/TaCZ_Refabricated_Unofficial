@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check the 39JqB2p resource fixes; optionally verify the actual distributable JAR.
+"""Check the 39JqB2p resource fixes on top of the 1.2.0 default pack; optionally verify the distributable JAR.
 
 Usage: python3 scripts/check_visible_bug_resources.py [--jar build/libs/<mod>.jar]
 This is a static resource check, not an in-game compatibility test.
@@ -13,7 +13,6 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 ANIMATION = "assets/tacz/custom/tacz_default_gun/assets/tacz/animations/glock_17.animation.json"
 WHITELIST = "data/tacz/tags/entity_type/interact_key/whitelist.json"
-BUNDLE = ROOT / "resources/tacz-26.1.2-source-and-resource-bundle.jar"
 CHEST_BOATS = {
     f"minecraft:{wood}_chest_boat"
     for wood in (
@@ -44,11 +43,8 @@ def check_resources(read):
     animation = read(ANIMATION)
     assert b"golf17" not in animation, "Missing sound reference reintroduced"
     fixed = json.loads(animation)
-    with zipfile.ZipFile(BUNDLE) as bundle:
-        original = json.loads(bundle.read(ANIMATION))
-    removed = original["animations"]["draw"].pop("sound_effects")
-    assert removed == {"0.0": {"effect": "p24_pi_golf17_stockskel_raise"}}, removed
-    assert fixed == original, "Animation differs beyond removal of the missing draw sound"
+    assert "sound_effects" not in fixed["animations"]["draw"], "draw.sound_effects must remain absent"
+    assert fixed["animations"]["shoot"]["animation_length"] == 0.5167, "Expected 1.2.0 Glock 17 shoot curve"
 
 
 def main():
@@ -57,7 +53,7 @@ def main():
     args = parser.parse_args()
     source = ROOT / "src/main/resources"
     check_resources(lambda path: (source / path).read_bytes())
-    print("PASS: source whitelist and Glock 17 override (only draw.sound_effects removed)")
+    print("PASS: source whitelist and 1.2.0 Glock 17 override (draw.sound_effects absent)")
     if args.jar:
         with zipfile.ZipFile(args.jar) as jar:
             for path in (WHITELIST, ANIMATION):

@@ -1,0 +1,15 @@
+{
+  "ammo": "tacz:762x39",
+  "ammo_amount": 30,
+  "bolt": "open_bolt",
+  "fire_mode": [
+    "semi"
+  ],
+  "rpm": 300,
+  "reload": {
+    "type": "magazine"
+  },
+  "allow_attachment_types": [
+    "scope"
+  ]
+}

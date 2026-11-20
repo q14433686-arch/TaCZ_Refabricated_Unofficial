@@ -1,7 +1,7 @@
 package com.tacz.guns.mixin.client.voxy;
 
 import com.tacz.guns.GunMod;
-import com.tacz.guns.client.render.scope.ScopePipRerender;
+import com.tacz.guns.client.render.scope.ScopePipRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -65,7 +65,7 @@ public abstract class VoxyScopeViewportMixin {
         //
         // 所以无论绘不绘制，镜内那一遍都必须拿到<b>自己的</b>视口，
         // 主画面那个从头到尾不被碰。
-        if (tacz$resolveFailed || !ScopePipRerender.isInsideScopeLevelRender()) {
+        if (tacz$resolveFailed || !ScopePipRenderer.isScopePassActive()) {
             return;
         }
         try {

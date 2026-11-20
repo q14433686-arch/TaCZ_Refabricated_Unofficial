@@ -1,18 +1,13 @@
 name: build
 
-# ---------------------------------------------------------------------------
-# 【26.1.2 线副本（2026-09-02 同步自 26.2 线 docs/ci/）】
-# 本文件是按 26.2 线的正式件镜像过来的，差异只有：
-#   - 触发分支表保持原样（已含 26.1.2）；
-#   - Java 25（26.x 构建目标，与 26.1.2 的 build.gradle targetJavaVersion 一致）；
-#   - 本分支无 Loom remap，可选依赖走 cursemaven/modrinth（Actions 出网可达）。
-# 维护者在网页端上线后，本目录的副本即正式件的镜像，下次改动继续在这里迭代。
-# ---------------------------------------------------------------------------
 # 全量构建 + 产物上传（2026-08-31 新增）：
 # compile-check 只跑 compileJava，测不出 processResources / remapJar 阶段的失败，
 # 也不产 jar。本流程跑 ./gradlew build 并把 jar 上传为 Actions artifact（留 14 天）——
 # 直接用途：给 NV 卡征测者一个下载链接；每轮改动随手有可实测的构建。
-# 顺手跑三个便宜的静态校验（mixin 配置完整性 / 中英语言键齐平 / 版本一致性）。
+# 顺手跑五个便宜的静态校验（mixin 配置完整性 / 中英语言键齐平 /
+# 方块掉落接线 / 方块实体持久化 / 版本一致性）。后两个于 2026-10-27 加入，
+# 起因见 docs/investigations/MULTIBLOCK_DOUBLE_DROP_26_2_2026_10_26.md 与
+# BLOCK_ENTITY_DATA_LOSS_26_2_2026_10_27.md。
 
 permissions:
   contents: read
@@ -82,8 +77,14 @@ jobs:
           sys.exit(1 if bad else 0)
           EOF
 
+      - name: Block drops wiring (方块掉落只由战利品表负责 / 单人手工 popResource 会双份)
+        run: python3 scripts/verify_block_drops.py --strict
+
+      - name: Block entity persistence (存档键对称 / 判据键存在 / 移除时内容物不得静默丢失)
+        run: python3 scripts/verify_block_entity_persistence.py --strict
+
       - name: Version consistency (与 consistency.yml 同一脚本，arena 分支也守门)
-        run: bash scripts/check_release_consistency.sh
+        run: bash scripts/check_release_consistency.sh --strict
 
       - uses: actions/setup-java@v4
         with:
@@ -92,8 +93,54 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      - name: Verify pinned 1.2 source assets and recipe-viewer ownership
+        run: |
+          python3 scripts/verify_120_resources.py
+          python3 scripts/verify_recipe_viewer_reload.py
+          python3 scripts/test_block_guards.py
+          python3 scripts/verify_bullet_hole_orientation.py
+          python3 scripts/verify_ysm_compat.py
+          python3 scripts/verify_lr_assets.py --strict
+          python3 scripts/verify_lr_lua_context_api.py --strict
+
       - name: Full build
-        run: ./gradlew build --console=plain --stacktrace --no-daemon
+        run: |
+          set -o pipefail
+          ./gradlew --init-script scripts/ci-central.init.gradle build --console=plain --no-daemon 2>&1 | tee "$RUNNER_TEMP/build.log"
+
+      - name: Check dedicated survival receipts
+        run: |
+          grep -F '202 one-short no-output/no-debit controls' build/run/gameTest/logs/latest.log | sed 's/^/::notice::/'
+
+      - name: Audit the production JAR (not the dev classpath)
+        run: python3 scripts/audit_26_2_jar.py build/libs/*.jar
+
+      - name: Real integrated client (26.2 OpenGL / Mesa)
+        timeout-minutes: 24
+        env:
+          LIBGL_ALWAYS_SOFTWARE: 'true'
+          ALSOFT_DRIVERS: 'null'
+        run: |
+          set -o pipefail
+          xvfb-run -a ./gradlew --init-script scripts/ci-central.init.gradle -PtaczClientSmoke runClientGameTest --console=plain 2>&1 | tee "$RUNNER_TEMP/client.log"
+          grep -F 'exported ZIP loaded through /reload path' build/run/clientGameTest/logs/latest.log
+
+      - name: Annotate target failures
+        if: failure()
+        run: python3 scripts/report_ci_failures.py "$RUNNER_TEMP/build.log" "$RUNNER_TEMP/client.log" build/run/{gameTest,clientGameTest}/logs/latest.log
+
+      - name: Keep target screenshots and runtime receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: target-evidence-${{ github.sha }}
+          retention-days: 7
+          if-no-files-found: ignore
+          path: |
+            build/run/*/logs/latest.log
+            build/run/*/crash-reports/*.txt
+            build/run/clientGameTest/screenshots/**/*.png
+            ${{ runner.temp }}/client.log
 
       - name: Upload jars
         uses: actions/upload-artifact@v4

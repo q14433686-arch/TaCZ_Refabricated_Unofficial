@@ -1,0 +1,18 @@
+{
+  "type": "tacz:gun_smith_table_crafting",
+  "fabric:load_conditions": {
+    "condition": "fabric:true"
+  },
+  "materials": [
+    {
+      "item": "minecraft:stick"
+    }
+  ],
+  "result": {
+    "type": "ammo",
+    "id": "tacz:12g",
+    "components": {
+      "minecraft:custom_data": "{fixture:1b}"
+    }
+  }
+}

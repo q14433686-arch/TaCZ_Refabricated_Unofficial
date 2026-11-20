@@ -23,10 +23,9 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.tacz.guns.GunMod;
-import com.tacz.guns.client.render.scope.ScopeDepthCopyState;
-import com.tacz.guns.client.render.scope.ScopePipRenderState;
-import com.tacz.guns.client.render.scope.ScopeRenderTypes;
-import com.tacz.guns.client.render.scope.ScopePipRerender;
+import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
+import com.tacz.guns.client.render.scope.ScopeMaskTarget;
+import com.tacz.guns.client.render.scope.ScopePipRenderer;
 import com.tacz.guns.compat.iris.IrisCompat;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -174,25 +173,23 @@ public final class PolyMeshGpuRenderer {
     private static RenderPipeline makeLitClipPipeline() {
         RenderPipeline pipeline = RenderPipelines.register(
                 RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
-                        .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/mesh_entity_scope_clip"))
-                        .withVertexShader("core/entity")
-                        .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/mesh_entity_scope_clip"))
+                        .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/mesh_entity_scope_clipped"))
+                        .withVertexShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_body"))
+                        .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_body"))
                         .withShaderDefine("ALPHA_CUTOUT", 0.1F)
                         .withShaderDefine("NO_OVERLAY")
                         .withShaderDefine("NO_CARDINAL_LIGHTING")
+                        .withShaderDefine("SCOPE_MASK")
                         .withSampler("Sampler0")
                         .withSampler("Sampler2")
-                        .withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM)
-                        .withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM)
+                        .withSampler("ScopeMaskSampler")
                         .withCull(false)
                         .withVertexFormat(DefaultVertexFormat.ENTITY, VertexFormat.Mode.QUADS)
                         .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, true))
                         .withColorTargetState(new ColorTargetState(java.util.Optional.empty(),
                                 ColorTargetState.WRITE_COLOR))
                         .build());
-        // 与 ScopeRenderTypes 的 viewmodel-cutout 同一机制：光影下登记进 Iris 的 hand program，
-        // 让常驻 VBO 的孔外剔除批次收 gbuffers_hand 照明。
-        IrisCompat.assignPipelineToIris(pipeline, "HAND", "mesh_entity_scope_clip");
+        IrisCompat.assignPipelineToIris(pipeline, "HAND", "mesh_entity_scope_clipped");
         return pipeline;
     }
 
@@ -592,7 +589,7 @@ public final class PolyMeshGpuRenderer {
      * 「当前是否在开镜镜内那一遍 LevelRenderer 二次渲染里」。
      *
      * <p><b>26.1.2 适配（已随 PIP 深度线移植闭合）</b>：1211 源这里调
-     * {@code ScopePipRerender.isInsideScopeLevelRender()}（其 PIP 纪元设施）。此前 26.1.2
+     * {@code ScopePipRenderer.isInsideScopeLevelRender()}（其 PIP 纪元设施）。此前 26.1.2
      * 无镜内二次渲染，按「纪元差异文档化」裁定为常 false；现在 {@code ScopePipRerender}
      * 已移植（{@code GameRendererMixin} 的 PIP redirect 先跑窄 FOV 那遍），换回真实标志——
      * {@link #shouldSubmitGpuWorld} 的拒收分支与 {@link #renderAtWorldFlush} 的
@@ -600,7 +597,7 @@ public final class PolyMeshGpuRenderer {
      * （{@code ScopePipRerender} 默认关闭、镜内那遍不跑），主画面路径行为不变。</p>
      */
     private static boolean isInsideScopeLevelRender() {
-        return ScopePipRerender.isInsideScopeLevelRender();
+        return ScopePipRenderer.isInsideScopeLevelRender();
     }
 
     /** 世界钩子的存活证明（帧语义同手部，见 {@link #lastHandFlushFrame}）。 */
@@ -853,7 +850,7 @@ public final class PolyMeshGpuRenderer {
         // viewmodel，镜内画面必须是纯世界：表在此清空，主画面的手部阶段会重新提交。
         // （世界表在 26.1.2 也是每遍各自提交、各自清表 —— 见 renderAtWorldFlush 的更新说明；
         // 两遍的世界内容仍必须一致，而手部只属于主画面。）
-        if (ScopePipRerender.isInsideScopeLevelRender()) {
+        if (ScopePipRenderer.isInsideScopeLevelRender()) {
             HAND_DRAWS.clear();
             return;
         }
@@ -922,8 +919,7 @@ public final class PolyMeshGpuRenderer {
         // 低倍镜（含组合镜低倍档）没有镜内放大画面可让位，裁掉的是枪身自己 = 枪上破洞。
         boolean apertureClip = false;
         RenderPipeline pipeline;
-        if (lit && !worldPass && ScopeDepthCopyState.hasMaskCycleThisFrame()
-                && ScopeRenderTypes.magnificationSupportsLensClip()) {
+        if (lit && !worldPass && ScopeBodyRenderTypes.maskReadyForViewmodelAtDraw()) {
             pipeline = LIT_PIPELINE_CLIP;
             apertureClip = true;
         } else {
@@ -1068,28 +1064,14 @@ public final class PolyMeshGpuRenderer {
                 // prepareMaskDraw(mode 2)：身份守卫 + 绑 aperture 拷贝单元 + 置 mode，world
                 // 深度用 Iris 的 depthtex2）；注入分支缺失/掩码失效时 mode 恒 0 = 不裁剪，
                 // 失败语义与「今日的未裁剪外观」一致。
-                boolean meshMaskRouteActive = false;
-                if (apertureClip) {
-                    if (irisFlush) {
-                        ScopeDepthCopyState.beginExternalMaskOutsideDraw();
-                        meshMaskRouteActive = true;
+                if (apertureClip && !irisFlush) {
+                    var maskTarget = ScopeMaskTarget.current();
+                    var maskView = maskTarget != null ? maskTarget.getColorTextureView() : null;
+                    if (maskView != null) {
+                        pass.bindTexture("ScopeMaskSampler", maskView,
+                                RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
                     } else {
-                        // 本帧目镜序列的两份私有深度拷贝（world=目镜写入前、aperture=目镜写入后）。
-                        // 片元着色器按「孔内且比目镜远 → discard」裁掉镜内枪身，与 vanilla
-                        // viewmodel 的 MASK_OUTSIDE 分支同一比较式。
-                        var worldDepth = ScopeDepthCopyState.worldDepthTarget();
-                        var apertureDepth = ScopeDepthCopyState.apertureDepthTarget();
-                        var worldView = ScopePipRenderState.worldDepthViewFor(worldDepth);
-                        var apertureView = ScopePipRenderState.apertureDepthViewFor(apertureDepth);
-                        if (worldView != null && apertureView != null) {
-                            pass.bindTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, worldView,
-                                    RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
-                            pass.bindTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, apertureView,
-                                    RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
-                        } else {
-                            // 视图取不到（理论不可达：maskValid 蕴含 handles 可用）→ 保底换回普通管线。
-                            pass.setPipeline(lit ? LIT_PIPELINE : EMISSIVE_PIPELINE);
-                        }
+                        pass.setPipeline(lit ? LIT_PIPELINE : EMISSIVE_PIPELINE);
                     }
                 }
 
@@ -1123,11 +1105,6 @@ public final class PolyMeshGpuRenderer {
                         }
                     }
                 } finally {
-                    // 与 ScopeRenderTypes 的 setup/clear 配对同构：归还被 bindDepthTexture
-                    // 占用的纹理单元并清 CURRENT（GL-uniform 路线）；fsh 路线为 no-op。
-                    if (meshMaskRouteActive) {
-                        ScopeDepthCopyState.end();
-                    }
                 }
             }
         }

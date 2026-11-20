@@ -1,15 +1,11 @@
 package com.tacz.guns.inventory;
 
-import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
-import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.crafting.GunSmithTableIngredient;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.ServerMessageCraft;
 import com.tacz.guns.resource.CommonAssetsManager;
-import com.tacz.guns.resource.filter.RecipeFilter;
-import com.tacz.guns.resource.index.CommonBlockIndex;
 import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import net.fabricmc.fabric.api.menu.v1.ExtendedMenuType;
@@ -33,12 +29,11 @@ public class GunSmithTableMenu extends AbstractContainerMenu {
             Identifier.STREAM_CODEC);
 
     private final Identifier blockId;
-    private final RecipeFilter filter;
+    @Nullable private Identifier requestedRecipe;
 
     public GunSmithTableMenu(int id, Inventory inventory, @Nullable Identifier resourceLocation) {
         super(TYPE, id);
         this.blockId = resourceLocation;
-        this.filter = TimelessAPI.getCommonBlockIndex(getBlockId()).map(CommonBlockIndex::getFilter).orElse(null);
     }
 
     @Nullable
@@ -85,11 +80,11 @@ public class GunSmithTableMenu extends AbstractContainerMenu {
      */
     @Nullable
     private GunSmithTableRecipe getRecipe(Identifier recipeId) {
-        if (!DefaultAssets.DEFAULT_BLOCK_ID.equals(getBlockId()) || SyncConfig.ENABLE_TABLE_FILTER.get()) {
-            if (filter != null && !filter.contains(recipeId)) {
-                return null;
-            }
-        }
+        // Re-resolve the table, not just the recipe: /reload can change a filter while a menu is open.
+        if (blockId == null || recipeId == null) return null;
+        var table = TimelessAPI.getCommonBlockIndex(blockId).orElse(null);
+        if (table == null) return null;
+        if (!table.allowsRecipe(blockId, recipeId)) return null;
 
         TableRecipe pojo = CommonAssetsManager.get().getTableRecipe(recipeId);
         if (pojo == null || pojo.getResult() == null) {
@@ -101,16 +96,22 @@ public class GunSmithTableMenu extends AbstractContainerMenu {
         // 少了这一步 getTab() 恒为 null，下面的页签校验必然失败。
         gunSmithTableRecipe.init();
 
-        boolean flag = TimelessAPI.getCommonBlockIndex(getBlockId()).map(blockIndex -> {
-            return blockIndex.getData().getTabs().stream().noneMatch(tab -> tab.id().equals(gunSmithTableRecipe.getTab()));
-        }).orElse(true);
-        if (DefaultAssets.DEFAULT_BLOCK_ID.equals(getBlockId()) && !SyncConfig.ENABLE_TABLE_FILTER.get()) {
-            flag = false;
-        }
-        if (flag) {
-            return null;
-        }
-        return gunSmithTableRecipe;
+        var tabs = table.recipeTabs(blockId);
+        return tabs.stream().anyMatch(tab -> tab.id().equals(gunSmithTableRecipe.getTab())) ? gunSmithTableRecipe : null;
+    }
+
+    /** A viewer transfer is navigation only. A probe cannot queue a selection or send a craft packet. */
+    public boolean selectFromViewer(Identifier id, boolean commitSelection) {
+        if (getRecipe(id) == null) return false;
+        if (commitSelection) requestedRecipe = id;
+        return true;
+    }
+
+    @Nullable
+    public Identifier consumeRecipeSelection() {
+        var id = requestedRecipe;
+        requestedRecipe = null;
+        return id;
     }
 
     public void doCraft(Identifier recipeId, Player player) {

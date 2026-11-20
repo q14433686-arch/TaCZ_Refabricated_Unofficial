@@ -1,0 +1,16 @@
+{
+  "_comment": [
+    "动态渲染（lrtactical:dynamic_item）的 base 模型 —— 只提供 particle 贴图与 gui_light，不提供任何几何。",
+    "【必须无 parent】这一点与 TACZ 的 models/item/modern_kinetic_gun.json 出于同一原因：",
+    "上游 1.21.1 用 \"parent\": \"builtin/entity\"（不携带任何 display transform）；26.2 移除了 builtin/entity。",
+    "若改成继承 minecraft:item/generated，会静默继承它的 firstperson_righthand 变换",
+    "（rotation [0,-90,25] / translation [1.13,3.2,1.13] / scale 0.68）。",
+    "而 ItemStackRenderState.LayerRenderState#applyTransform 是在 special renderer 之前施加的，",
+    "于是这些原版偏移会叠加在本模块自己的第一人称摄像机变换之上 —— 手持模型会被转歪、推远。",
+    "无 parent 的模型才能复现 builtin/entity 的单位变换。"
+  ],
+  "gui_light": "front",
+  "textures": {
+    "particle": "minecraft:item/barrier"
+  }
+}

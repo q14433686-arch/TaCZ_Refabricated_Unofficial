@@ -1,5 +1,6 @@
 package com.tacz.guns.client.event;
 
+import com.tacz.guns.util.time.GunTime;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.tacz.guns.api.DefaultAssets;
@@ -8,6 +9,7 @@ import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.client.other.KeepingItemRenderer;
 import com.tacz.guns.api.event.common.GunFireEvent;
+import com.tacz.guns.api.event.common.GunFirePostEvent;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor;
@@ -17,7 +19,12 @@ import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.MuzzleFlashRender;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
+import com.tacz.guns.client.tuning.ViewmodelPosition;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
+import com.tacz.guns.client.resource.index.ClientAttachmentVariantIndex;
+import com.tacz.guns.client.resource.index.ClientSlotAdapterIndex;
+import com.tacz.guns.util.SlotAdapterHelper;
+import com.tacz.guns.client.resource.pojo.display.gun.AdsPath;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.util.math.Easing;
 import com.tacz.guns.util.math.MathUtil;
@@ -85,25 +92,31 @@ public class FirstPersonRenderGunEvent {
         }
     }
 
+    // Kept callable for 26.3 integrations. Our own listener only runs after all pre callbacks voted.
     public static void onGunFire(GunFireEvent event) {
-        if (event.getLogicalSide().isClient()) {
-            LivingEntity shooter = event.getShooter();
-            LocalPlayer player = Minecraft.getInstance().player;
-            if (!shooter.equals(player)) {
-                return;
-            }
-            ItemStack mainHandItem = player.getMainHandItem();
-            IGun iGun = IGun.getIGunOrNull(mainHandItem);
-            if (iGun == null) {
-                return;
-            }
-            TimelessAPI.getClientGunIndex(iGun.getGunId(mainHandItem)).ifPresent(gunIndex -> {
-                // 记录开火时间戳，用于后坐力程序动画
-                shootTimeStamp = System.currentTimeMillis();
-                // 记录枪口火焰数据
-                MuzzleFlashRender.onShoot();
-            });
+        if (!event.isCanceled() && event.getLogicalSide().isClient()) onGunFire(event.getShooter());
+    }
+
+    public static void onGunFirePost(GunFirePostEvent event) {
+        if (event.getLogicalSide().isClient()) onGunFire(event.getShooter());
+    }
+
+    private static void onGunFire(LivingEntity shooter) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (!shooter.equals(player)) {
+            return;
         }
+        ItemStack mainHandItem = player.getMainHandItem();
+        IGun iGun = IGun.getIGunOrNull(mainHandItem);
+        if (iGun == null) {
+            return;
+        }
+        TimelessAPI.getClientGunIndex(iGun.getGunId(mainHandItem)).ifPresent(gunIndex -> {
+            // 记录开火时间戳，用于后坐力程序动画
+            shootTimeStamp = GunTime.nowMillis();
+            // 记录枪口火焰数据
+            MuzzleFlashRender.onShoot();
+        });
     }
 
     private static boolean bulletFromPlayer(Entity entity) {
@@ -122,6 +135,10 @@ public class FirstPersonRenderGunEvent {
         applyGunMovements(model, aimingProgress, partialTicks);
         // 应用各种摄像机定位组的变换（默认持枪、瞄准、改装界面等）
         applyFirstPersonPositioningTransform(poseStack, model, gunItemStack, aimingProgress, refitScreenOpeningProgress);
+        // 【案例⑧ 探针 · 第三轮】分段点 P2：定位 lerp 之后、约束写入之前。
+        // ADS 辑拿显示 chainP1(基座段) 逐位干净而 gunRoot(链末端) 随朝向漂移 0.02~0.05，
+        // 本探针把「定位段 / 约束段」的注入归属当场劈开。
+        GunItemRendererWrapper.debugCase08ChainP2(poseStack);
         // 应用动画约束变换
         applyAnimationConstraintTransform(poseStack, model, aimingProgress * (1 - refitScreenOpeningProgress));
     }
@@ -148,8 +165,12 @@ public class FirstPersonRenderGunEvent {
         if (scopeId.equals(DefaultAssets.EMPTY_ATTACHMENT_ID)) {
             scopeId = iGun.getBuiltInAttachmentId(stack, AttachmentType.SCOPE);
         }
+        var scopeIndex = DefaultAssets.isEmptyAttachmentId(scopeId) ? Optional.<ClientAttachmentIndex>empty() : TimelessAPI.getClientAttachmentIndex(scopeId);
         CompoundTag scopeTag = iGun.getAttachmentTag(stack, AttachmentType.SCOPE);
         int zoomNumber = AttachmentItemDataAccessor.getZoomNumberFromTag(scopeTag);
+        var scopeVariant = TimelessAPI.getClientAttachmentVariantIndex(scopeId, scopeTag);
+        Vector3f mountOffset = null;
+        int mountInsert = -1;
         int viewIndex = 1;
         if (DefaultAssets.isEmptyAttachmentId(scopeId)) {
             // 未安装瞄具，使用机瞄定位组
@@ -159,17 +180,18 @@ public class FirstPersonRenderGunEvent {
             List<BedrockPart> scopeNodePath = model.getScopePosPath();
             if (scopeNodePath != null) {
                 aimingNodePath = new ArrayList<>(scopeNodePath);
-                Optional<ClientAttachmentIndex> indexOptional = TimelessAPI.getClientAttachmentIndex(scopeId);
-                if (indexOptional.isPresent()) {
-                    BedrockAttachmentModel attachmentModel = indexOptional.get().getAttachmentModel();
-                    int[] views = indexOptional.get().getViews();
-                    viewIndex = views[zoomNumber % views.length] - 1;
+                mountInsert = scopeNodePath.size() - 1;
+                mountOffset = getScopeMountOffset(stack, scopeId, scopeVariant);
+                if (scopeIndex.isPresent()) {
+                    BedrockAttachmentModel attachmentModel = scopeVariant.map(ClientAttachmentVariantIndex::getAttachmentModel).orElseGet(scopeIndex.get()::getAttachmentModel);
+                    int[] views = scopeVariant.map(ClientAttachmentVariantIndex::getViews).orElseGet(scopeIndex.get()::getViews);
+                    viewIndex = views[Math.floorMod(zoomNumber, views.length)] - 1;
                     if (attachmentModel != null) {
                         // 【第 35 轮】把"当前用的是哪一组镜"告诉模型，供组合镜过滤准星。
                         // views[] 里 1 = 红点分系统、2 = 筒镜分系统
                         // （scope_hamr_display.json: zoom[3.25, 1.25] / views[2, 1]）。
                         // 这里是全流程唯一同时知道 zoomNumber 与 views[] 的地方。
-                        attachmentModel.setActiveViewGroup(views[zoomNumber % views.length]);
+                        attachmentModel.setActiveViewGroup(views[Math.floorMod(zoomNumber, views.length)]);
                         List<BedrockPart> scopeViewPath = attachmentModel.getScopeViewPath(currentViewIndex == -1 ? viewIndex : currentViewIndex);
                         if (scopeViewPath != null) {
                             aimingNodePath.addAll(scopeViewPath);
@@ -178,7 +200,7 @@ public class FirstPersonRenderGunEvent {
                 }
             }
         }
-        Matrix4f aimingViewMatrix = getPositioningNodeInverse(aimingNodePath);
+        Matrix4f aimingViewMatrix = getPositioningNodeInverse(aimingNodePath, mountOffset, mountInsert);
         // 执行两个 scope view 之间的插值
         if (currentViewIndex == -1) {
             currentViewIndex = viewIndex;
@@ -195,9 +217,25 @@ public class FirstPersonRenderGunEvent {
             oldViewIndex = view_interpret;
             currentViewIndex = viewIndex;
         }
+        AdsPath adsPath = TimelessAPI.getGunDisplay(stack).map(display -> display.getAdsPath()).orElse(null);
         // 应用瞄准变换
-        MathUtil.applyMatrixLerp(transformMatrix, getPositioningNodeInverse(idleNodePath), transformMatrix, (1 - refitScreenOpeningProgress));
-        MathUtil.applyMatrixLerp(transformMatrix, aimingViewMatrix, transformMatrix, (1 - refitScreenOpeningProgress) * aimingProgress);
+        float idleScopeHeightAdjust = scopeIndex.map(ClientAttachmentIndex::getIdleScopeHeightAdjust).orElse(0f) / 16.0f;
+        Matrix4f idleViewMatrix = getPositioningNodeInverse(idleNodePath);
+        MathUtil.applyMatrixLerp(transformMatrix, idleViewMatrix, transformMatrix, (1 - refitScreenOpeningProgress));
+        float positioningWeight = 1 - refitScreenOpeningProgress;
+        float pathProgress = aimingProgress;
+        float rotationProgress = adsPath == null ? aimingProgress : adsPath.rotation(pathProgress);
+        MathUtil.applyMatrixLerp(transformMatrix, aimingViewMatrix, transformMatrix, positioningWeight * rotationProgress);
+        if (adsPath != null) {
+            // 保留原有旋转插值，位移各轴按自己的时间窗口到达同一瞄准终点。
+            // 共享已有的平滑开镜进度，避免短 ADS 时间导致模型瞬间横移。
+            transformMatrix.m30(transformMatrix.m30() + (aimingViewMatrix.m30() - idleViewMatrix.m30())
+                    * (adsPath.x(pathProgress) - rotationProgress) * positioningWeight);
+            transformMatrix.m31(transformMatrix.m31() + (aimingViewMatrix.m31() - idleViewMatrix.m31())
+                    * (adsPath.y(pathProgress) - rotationProgress) * positioningWeight);
+            transformMatrix.m32(transformMatrix.m32() + (aimingViewMatrix.m32() - idleViewMatrix.m32())
+                    * (adsPath.z(pathProgress) - rotationProgress) * positioningWeight);
+        }
         // 应用改装界面开启时的定位
         float refitTransformProgress = (float) Easing.easeOutCubic(RefitTransform.getTransformProgress());
         AttachmentType oldType = RefitTransform.getOldTransformType();
@@ -206,6 +244,9 @@ public class FirstPersonRenderGunEvent {
         List<BedrockPart> toNode = model.getRefitAttachmentViewPath(currentType);
         MathUtil.applyMatrixLerp(transformMatrix, getPositioningNodeInverse(fromNode), transformMatrix, refitScreenOpeningProgress);
         MathUtil.applyMatrixLerp(transformMatrix, getPositioningNodeInverse(toNode), transformMatrix, refitScreenOpeningProgress * refitTransformProgress);
+        float heightProgress = adsPath == null ? aimingProgress : adsPath.y(aimingProgress);
+        transformMatrix.m31(transformMatrix.m31() + idleScopeHeightAdjust * (1 - heightProgress));
+        ViewmodelPosition.apply(transformMatrix, aimingProgress, refitScreenOpeningProgress);
         // 应用变换到 PoseStack
         poseStack.translate(0, 1.5f, 0);
         poseStack.mulPose(transformMatrix);
@@ -217,10 +258,18 @@ public class FirstPersonRenderGunEvent {
      */
     @Nonnull
     private static Matrix4f getPositioningNodeInverse(List<BedrockPart> nodePath) {
+        return getPositioningNodeInverse(nodePath, null, -1);
+    }
+
+    @Nonnull
+    private static Matrix4f getPositioningNodeInverse(List<BedrockPart> nodePath, Vector3f mountOffset, int mountOffsetInsertIndex) {
         Matrix4f matrix4f = new Matrix4f();
         matrix4f.identity();
         if (nodePath != null) {
             for (int i = nodePath.size() - 1; i >= 0; i--) {
+                if (mountOffset != null && i == mountOffsetInsertIndex) {
+                    matrix4f.translate(-mountOffset.x() / 16.0F, mountOffset.y() / 16.0F, -mountOffset.z() / 16.0F);
+                }
                 BedrockPart part = nodePath.get(i);
                 // 计算反向的旋转
                 matrix4f.rotate(Axis.XN.rotation(part.xRot));
@@ -237,10 +286,34 @@ public class FirstPersonRenderGunEvent {
         return matrix4f;
     }
 
+    private static Vector3f getScopeMountOffset(ItemStack gunItem, Identifier scopeId,
+                                                Optional<ClientAttachmentVariantIndex> scopeVariant) {
+        Vector3f combinedOffset = new Vector3f();
+        boolean hasOffset = false;
+
+        Identifier adapterId = SlotAdapterHelper.getEffectiveSlotAdapter(gunItem, AttachmentType.SCOPE, scopeId);
+        if (adapterId != null) {
+            Vector3f adapterOffset = TimelessAPI.getClientSlotAdapterIndex(adapterId)
+                    .map(ClientSlotAdapterIndex::getMountOffset)
+                    .orElse(null);
+            if (adapterOffset != null) {
+                combinedOffset.add(adapterOffset);
+                hasOffset = true;
+            }
+        }
+
+        Vector3f variantOffset = scopeVariant.map(ClientAttachmentVariantIndex::getMountOffset).orElse(null);
+        if (variantOffset != null) {
+            combinedOffset.add(variantOffset);
+            hasOffset = true;
+        }
+        return hasOffset ? combinedOffset : null;
+    }
+
     private static void applyShootSwayAndRotation(BedrockGunModel model, float aimingProgress) {
         BedrockPart rootNode = model.getRootNode();
         if (rootNode != null) {
-            float progress = 1 - (System.currentTimeMillis() - shootTimeStamp) / (SHOOT_ANIMATION_TIME * 1000);
+            float progress = 1 - (GunTime.nowMillis() - shootTimeStamp) / (SHOOT_ANIMATION_TIME * 1000);
             if (progress < 0) {
                 progress = 0;
             }
@@ -254,7 +327,7 @@ public class FirstPersonRenderGunEvent {
 
     private static void applyJumpingSway(BedrockGunModel model, float partialTicks) {
         if (jumpingTimeStamp == -1) {
-            jumpingTimeStamp = System.currentTimeMillis();
+            jumpingTimeStamp = GunTime.nowMillis();
         }
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null) {
@@ -271,7 +344,7 @@ public class FirstPersonRenderGunEvent {
                     }
                     lastOnGround = true;
                 } else {
-                    jumpingSwayProgress -= (System.currentTimeMillis() - jumpingTimeStamp) / (LANDING_SWAY_TIME * 1000);
+                    jumpingSwayProgress -= (GunTime.nowMillis() - jumpingTimeStamp) / (LANDING_SWAY_TIME * 1000);
                     if (jumpingSwayProgress < 0) {
                         jumpingSwayProgress = 0;
                     }
@@ -285,14 +358,14 @@ public class FirstPersonRenderGunEvent {
                     }
                     lastOnGround = false;
                 } else {
-                    jumpingSwayProgress -= (System.currentTimeMillis() - jumpingTimeStamp) / (JUMPING_SWAY_TIME * 1000);
+                    jumpingSwayProgress -= (GunTime.nowMillis() - jumpingTimeStamp) / (JUMPING_SWAY_TIME * 1000);
                     if (jumpingSwayProgress < 0) {
                         jumpingSwayProgress = 0;
                     }
                 }
             }
         }
-        jumpingTimeStamp = System.currentTimeMillis();
+        jumpingTimeStamp = GunTime.nowMillis();
         float ySway = JUMPING_DYNAMICS.update(JUMPING_Y_SWAY * jumpingSwayProgress);
         BedrockPart rootNode = model.getRootNode();
         if (rootNode != null) {
@@ -380,41 +453,134 @@ public class FirstPersonRenderGunEvent {
         Vector3f translationICA = gunModel.getConstraintObject().translationConstraint;
         Vector3f rotationICA = gunModel.getConstraintObject().rotationConstraint;
         getAnimationConstraintTransform(nodePath, originTranslation, animatedTranslation, rotation);
-        // 配合约束系数，计算最终要加到 pose 平移槽的世界帧位移。
-        Vector3f constraintTranslation = new Vector3f(originTranslation);
-        constraintTranslation.sub(animatedTranslation);
-        constraintTranslation.mulDirection(poseStack.last().pose());
-        // 【通用终案：显式恢复 1.21.1 的净位移，不再让轴符号参与基座共轭】
+        // 配合约束系数，计算约束位移需要的反向位移
+        Vector3f inverseTranslation = new Vector3f(originTranslation);
+        inverseTranslation.sub(animatedTranslation);
+        // 【案例⑧探针 · 采样点1】骨骼链差值（authored 帧），仅在探针开启时分配
+        Vector3f case08Delta = case08DebugOn() ? new Vector3f(inverseTranslation) : null;
+        inverseTranslation.mulDirection(poseStack.last().pose());
+        // 【案例⑧探针 · 采样点2】经 mulDirection 进入写入帧的向量 v0
+        Vector3f case08V0 = case08Delta != null ? new Vector3f(inverseTranslation) : null;
+        // 【第 31 轮】mode 2（当前姿态帧共轭）用：与 mulDirection 同一时刻的姿态旋转 P_pre。
+        org.joml.Matrix3f case08PoseFrameR = new org.joml.Matrix3f(poseStack.last().pose());
+        // 【26.2 修复·终版：ADS 开枪/换弹时枪身随朝向整体偏移——
+        //  原始症状：斜向（东南/西南/东北/西北）固定向一侧横移（东南/西北偏左、东北/西南偏右），
+        //  正方向与腰射完全正常，开启 Iris 光影（手部 pass 无基座预乘）时一切正常】
         //
-        // 设 B 为 vanilla GameRenderer 预乘的纯相机 view-to-world 旋转（Iris hand pass
-        // 不预乘，故 B=I），H·F 为 hurt/view bob、定位与骨骼链。上行得到：
+        // 坐标系结构（经两轮朝向指纹实测锁定）：
+        // 26.2 vanilla 手部 pass 在 poseStack 进入物品渲染前就预乘了基座 B=R(q)
+        // （view→world 相机基座，含朝向 q；Iris 手部 pass 不预乘，B≈I）。
+        // 而 1.21.1 里该栈从单位阵开始。关键实测事实：本函数写入的 m30..m32 槽位，
+        // 其上方链在提交（ViewSnapshot→几何）时还会再左乘一次 B —— 即
+        //   最终视图位移 = B · v_written
+        // 上游 1.21.1 正确观感（authored）是：最终视图位移 = diag(c) · F · Δ
+        // （F=ZP 翻转等骨骼链内变换，Δ=约束骨骼位移差，c=(ICA_x−1, ICA_y−1, 1−ICA_z)）。
         //
-        //   rawWorld = B · H · F · Δ
+        // ——老 bug 的成因——：
+        // mulDirection(pose) 把 Δ 旋进「写入帧」：v0 = B·F·Δ；逐轴乘系数后 v = diag(c)·B·F·Δ；
+        // 提交时再被 B 带一次：最终 = B·diag(c)·B ·(FΔ)。注意是 B·diag·B 而非共轭
+        // （Y 轴旋转让 x/z 之一带负号）：非对角元 = (cx+cz)/2 · sin2θ —— 正方向归零，
+        // 斜向出现按象限对反号的纯横向泄漏，正是最初目击的全部特征。
         //
-        // 旧实现先乘 (ICAx-1, ICAy-1, 1-ICAz)，写 m30/m31 时再取负、m32 取正；
-        // 两步合起来的真实 authored 系数其实统一是：
+        // ——上一版修复为何反而更糟（26.2 复测确诊）——：
+        // 上一版做了 v = B·diag·Bᵀ·v0（共轭方向写反），净效果 = B²·diag·F·Δ = R(2θ)·authored：
+        // 正南/正北（2θ=0/360°）恰好恒等 → 正常；正东/正西（2θ=±180°）x/z 符号翻转
+        // → 后坐力"向后怼"、换弹跑到右后方；斜向（2θ=±90°）x/z 互换 → 纯平移。
+        // 与用户复测报告逐条吻合，此指纹是本坐标系模型的决定性证据。
         //
-        //   C = diag(1-ICAx, 1-ICAy, 1-ICAz)
-        //
-        // 若把旧的“x/y 写回取负”留在 B 的两侧，无论第二次用 B 还是 Bᵀ，都会把
-        // 隐含的 Q=diag(-1,-1,+1) 参与共轭：纯 yaw 时出现二倍角，yaw+pitch 时还因
-        // 旋转不交换而把整枪送到左上/后方。这正好解释「北向近似正常、东西左右反偏、
-        // 南向过度下压、抬头/低头整枪后移」，以及 Iris(B=I) 完全不复现。
-        //
-        // 正确做法是先用纯相机 Bᵀ 回到旧版 authored 视图帧，显式应用 C，再用 B
-        // 旋回 pose 的世界写入帧，最后三轴统一做加法：
-        //
-        //   authored = Bᵀ · rawWorld = H · F · Δ
-        //   world    = B · C · authored
-        //   screen   = Bᵀ · world    = C · H · F · Δ    （与 1.21.1 完全一致）
-        //
-        // 注意这里故意不用完整 handBasePose：它还含 H 的一部分，把 H 也逆掉会在
-        // 偏航与俯仰组合时制造新的帧混用。wrapper 单独提供本 pass 的纯 B。
-        Matrix3f cameraR = new Matrix3f();
-        GunItemRendererWrapper.copyHandCameraRotation(cameraR);
-        constraintTranslation.mulTranspose(cameraR);
-        constraintTranslation.mul(1 - translationICA.x(), 1 - translationICA.y(), 1 - translationICA.z());
-        constraintTranslation.mul(cameraR);
+        // ——正确修复——：
+        // 需要在写入前把向量变到「逆基座」帧：v = Bᵀ·diag(c)·Bᵀ·v0 = Bᵀ·diag(c)·F·Δ，
+        // 提交时被 B 带回：B·v = diag(c)·F·Δ = authored，全朝向与 1.21.1 完全一致；
+        // Iris 下 B≈I，两步均恒等、行为不变。AK47 shoot 的 constraint 位移动画
+        // [0.15, 0.05, 0.4] 给出系数 ≈(−0.85, −0.95, +0.6)，强各向异性，
+        // 故无修复时斜向横移可达 0.1~0.2 视图单位（~2-4°），肉眼显著；换弹动画同样
+        // 驱动 constraint 骨骼，故同路径一并修复。
+        // 【第 31 轮（案例⑧ 定案）约束位移写入的三档形态 —— 用户在场 A/B 实测裁决：
+        //   mode 0 = plain：diag·v0 直写（修复前原版）。用户实测：当前「整体随朝向转」
+        //            病根完全消失；代价 = 四方向斜向后坐力侧漏回来了（8/10 的原案）。
+        //   mode 1 = Bᵀ·diag·Bᵀ 三明治（8/10 终版存档）。用户实测：正朝向整枪随朝向转、
+        //            竖直「跑后方」、后坐过压 —— 即本案全部症状 ⇒ 三明治是该病灶注入源。
+        //   mode 2 = 姿态帧共轭 v = P_post·diag·P_preᵀ·v0。【默认】。推导依据：
+        //            ① plain（mode 0）在全部朝向/竖直的观感都正确 ⇒ 槽位带回乘子 X 满足
+        //               X·(姿态链旋转) = I（至多差一个产生斜向 sin2φ 泄漏的小残差）；
+        //            ② upstream/authored 要求最终视图位移 = diag(c)·F_pre·Δ；
+        //            ③ 唯一两条同时成立且不读任何外部矩阵（B/modelView 都被实测证伪过）
+        //               的写法 = 用当前姿态自身做共轭，各向异性系数被 Fold 进姿态帧内部，
+        //               与朝向/基座结构性解耦；斜向泄漏同型消除。
+        // Iris 手部 pass 基座≈I 时三档逐位等价 ⇒ 恒按 mode 0 执行（保持参照零介入）。
+        // 【第 33 轮判决补记】mode 2 首次真实生效即被用户在体否决——回报
+        // 「①整体随朝向转（复现）/ ②斜向不漏 / ③手感不自然」：斜向侧漏消除，
+        // 证明各向异性归位 authored 帧的思路本身有效，但换帧写入同时把本案
+        // 主症状带了回来 ⇒ mode 2 与 mode 1 并列归档（两枚公式修复全部实证
+        // 注入旋转），默认回落 mode 0 = plain = 用户两次全场实测确认的全消态。
+        // 【第 32 轮修正 · 档位判定唯一信源化】
+        // 第 31 轮的兼容映射「老布尔 ConstraintBaseCompensate=false 强制落 mode 0」
+        // 在现场被证明是配置陷阱：用户在第 30 轮 A/B 时把那枚布尔留在 false，
+        // 随后显式把 ConstraintCompensateMode 设为 2，布尔却静默否决了它——
+        // 用户当轮回报「整体不转 / 斜向漏 / 跟手自然」三项正是 mode 0 plain 的
+        // 已知指纹（斜向漏 = 本案最原始病灶复现），即 mode 2 从未真正运行。
+        // 判定从此只认 ConstraintCompensateMode 一个信源；老布尔保留注册
+        // （旧配置文件不出错），但代码中不再读取。
+        int case08Mode;
+        if (com.tacz.guns.config.client.RenderConfig.CONSTRAINT_COMPENSATE_MODE != null) {
+            case08Mode = com.tacz.guns.config.client.RenderConfig.CONSTRAINT_COMPENSATE_MODE.get();
+        } else {
+            case08Mode = 3; // 配置未加载完毕时的安全态 = 默认档 3（第 36 轮起在体验证通过）
+        }
+        if (case08Mode < 0 || case08Mode > 3) {
+            case08Mode = 3; // 文件被手改越界时回落默认档，绝不落到未定义形态
+        }
+        int case08EffMode = com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive() ? 0 : case08Mode;
+        // 【第 32 轮】生效档一次性播报：上一轮的静默降级让「这一局跑的到底是哪档」
+        // 完全不可感知、只能猜；每进程首帧约束写入时落一行日志，供不共享日志时自查。
+        if (!case08ModeAnnounced) {
+            case08ModeAnnounced = true;
+            com.tacz.guns.GunMod.LOGGER.info(
+                    "[TACZ Case08] ConstraintCompensateMode effective={} (config={}, irisHandActive={})",
+                    case08EffMode, case08Mode,
+                    com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive());
+        }
+        // 【第 35 轮 · mode 3 = 26.1.2 在体验证公式的本链转写】
+        // 隔壁 26.1.2 移植线同症修复已在体通过（用户提供其结论；其实现尚未推送，
+        // 以下为按其公式的忠实转写）。核心认识：代码里乘的 D=(ICAx−1, ICAy−1, 1−ICAz)
+        // 与槽位写回 (−x, −y, +z) 合并后的 C=(1−ICAx, 1−ICAy, 1−ICAz) 才是真正的
+        // authored 系数——写回里藏着 Q=diag(−1,−1,+1)。本案三条被拒形态（mode 1/2、
+        // 锁）共轭的全是 D，Q 被留在写入帧；Q 与旋转不可交换 ⇒ 纯偏航出二倍角/象限
+        // 指纹、偏航×俯仰组合出竖直后方/过压 —— 与本案例全部实测指纹逐条吻合。
+        // 隔壁验证链：authored = Wᵀ·v0；constrained = C·authored；world = W·constrained
+        // （W = mulDirection 当帧姿态 3x3 = 本文的 P_pre），此后槽位不再做 Q 翻号。
+        // 转写到本链（槽位写回保持旧约定含 Q）：写入向量
+        //     v = Q·W·C·Wᵀ·v0 = Ŵ·D·Wᵀ·v0     （Ŵ = Q·W·Q；C=Q·D 故 D 行原样沿用）
+        // 即与 mode 2 的唯一差别 = 左半姿态帧由 W_post 换成 Ŵ_pre；纯偏航/纯俯仰下
+        // Ŵ = Wᵀ，形态上等价于「c975748 三明治把入口基座快照换成写入当帧活姿态」——
+        // 三版被拒形态（入口 Bᵀ、活 W、W_post）之外从未测过的第四种排列。
+        // 【状态：26.1.2 + 26.2 双线在体验证通过（第 36 轮用户答卷「不转 / 不漏 /
+        //  自然」三项全过）⇒ 第 36 轮起翻为本仓默认；mode 0 留档可秒回退；
+        //  Iris 手部 pass 恒走 mode 0（基座≈I 时与 plain 逐位一致），不受影响】
+        org.joml.Matrix3f case08QConjW = null;
+        if (case08EffMode == 3) {
+            org.joml.Matrix3f qFlip = new org.joml.Matrix3f();
+            qFlip.m00(-1f);
+            qFlip.m11(-1f); // Q = diag(−1, −1, +1)，m22 保持 +1
+            case08QConjW = new org.joml.Matrix3f(qFlip).mul(case08PoseFrameR).mul(qFlip); // Ŵ = Q·W·Q
+        }
+        org.joml.Matrix3f baseR = new Matrix3f();
+        GunItemRendererWrapper.copyHandBaseRotation(baseR);
+        if (case08EffMode == 1) {
+            inverseTranslation.mulTranspose(baseR);  // Bᵀ·v0：写入帧 → 逆基座（authored）帧
+        } else if (case08EffMode == 2) {
+            inverseTranslation.mulTranspose(case08PoseFrameR);  // P_preᵀ·v0 = F_pre·Δ（姿态自身逆帧）
+        } else if (case08EffMode == 3) {
+            inverseTranslation.mulTranspose(case08PoseFrameR);  // Wᵀ·v0 → authored 帧（隔壁 authored = Bᵀ·rawWorld）
+        }
+        inverseTranslation.mul(translationICA.x() - 1, translationICA.y() - 1, 1 - translationICA.z()); // 基岩版模型的旋转导致 xy 轴要反过来
+        if (case08EffMode == 1) {
+            inverseTranslation.mulTranspose(baseR);  // 终版三明治右半（存档形态，勿作默认）
+        } else if (case08EffMode == 3) {
+            inverseTranslation.mul(case08QConjW);    // Ŵ·D·Wᵀ·v0 的左半 = Q 共轭姿态帧（C=Q·D 已含写回翻号）
+        }
+        // mode 2 的右半（P_post·…）必须等下面的约束旋转块执行完、拿到终态 3x3 后再补乘，
+        // 见下方写入前的 mul(new Matrix3f(poseMatrix))。
         // 计算约束旋转需要的反向旋转。因需要插值，获取的是欧拉角
         Vector3f inverseRotation = new Vector3f(rotation);
         inverseRotation.mul(rotationICA.x() - 1, rotationICA.y() - 1, rotationICA.z() - 1);
@@ -424,10 +590,99 @@ public class FirstPersonRenderGunEvent {
         poseStack.mulPose(Axis.YP.rotation(inverseRotation.y() * weight));
         poseStack.mulPose(Axis.ZP.rotation(inverseRotation.z() * weight));
         poseStack.translate(-animatedTranslation.x(), -animatedTranslation.y() - 1.5f, -animatedTranslation.z());
-        // 约束位移已经是 world 写入帧，三轴统一相加；旧版 x/y 的额外负号已吸收到 C。
+        // 约束位移
         Matrix4f poseMatrix = poseStack.last().pose();
-        poseMatrix.m30(poseMatrix.m30() + constraintTranslation.x() * weight);
-        poseMatrix.m31(poseMatrix.m31() + constraintTranslation.y() * weight);
-        poseMatrix.m32(poseMatrix.m32() + constraintTranslation.z() * weight);
+        if (case08EffMode == 2) {
+            // P_post·diag·P_preᵀ·v0 的右半：约束旋转块执行完之后的终态姿态帧。
+            inverseTranslation.mul(new org.joml.Matrix3f(poseMatrix));
+        }
+        poseMatrix.m30(poseMatrix.m30() - inverseTranslation.x() * weight);
+        poseMatrix.m31(poseMatrix.m31() - inverseTranslation.y() * weight);
+        poseMatrix.m32(poseMatrix.m32() + inverseTranslation.z() * weight);
+        // 【案例⑧探针 · 采样点3】最终写入向量 v3 与全部基座数据落日志
+        case08DebugConstraint(case08Delta, case08V0, inverseTranslation, baseR, poseMatrix, weight);
+    }
+
+    // ============================ 案例⑧ 取证探针（2026-08-11） ============================
+    //
+    // 症状（用户六朝向实测）：换弹时「手臂+枪体」作为整体的平移方向随玩家朝向旋转
+    // （北→偏左、南→~正常或偏下、西→偏右、东→偏左、仰视→左上+后方、俯视→后方）；
+    // 后坐力除正北外均「过分向下压」、正南最重；**开 Iris 光影时全部正常**。
+    //
+    // 静态审计已排除（数学或字节码级）：相机后坐力通道（setXRot/setYRot 增量，与朝向无关）、
+    // 普通骨骼动画（模型空间撰写，天然锁视角）、渲染全程的右乘局部复合（26.2 vanilla 手部链
+    // 经官方 jar 字节码核对：pose 预乘 invert(viewRotation)、modelView mul viewRotation，
+    // 提交时 C·base=I，静帧下任何纯右乘变换不可能产生朝向相关平移）。
+    // 唯一帧敏感操作 = 本函数的 m30..m32 绝对槽位写入（不能右乘复合，必须显式做基座归一化）。
+    // 但现状代码（两次 mulTranspose + diag）经数值拟合**注定在 N/S 双干净、E/W 同号**，
+    // 与用户指纹（N 偏、S 净、E/W 异号）不符 —— 说明还有第三处未被静态建模覆盖的写入/错位。
+    //
+    // 本探针把整条链的三个采样点 + 两张基座矩阵一起落日志，六朝向各打一发连点+一次换弹后，
+    // 离线直接算出真实残差旋转的轴与角，一次性锁定错误因子，杜绝再靠脑推改矩阵。
+    private static long case08LastLogMs = 0L;
+
+    // 【第 32 轮】生效档一次性播报的去重门闩（每 JVM 进程只打一行，见上方写入路径）
+    private static boolean case08ModeAnnounced = false;
+
+    private static boolean case08DebugOn() {
+        return com.tacz.guns.config.client.RenderConfig.RECOIL_DEBUG != null
+                && com.tacz.guns.config.client.RenderConfig.RECOIL_DEBUG.get();
+    }
+
+    private static String c8(double v) {
+        return String.format(java.util.Locale.ROOT, "%+.4f", v);
+    }
+
+    private static void case08DebugConstraint(Vector3f delta, Vector3f v0, Vector3f v3,
+                                              Matrix3f baseR, Matrix4f poseNow, float weight) {
+        try {
+            if (delta == null) {
+                return;
+            }
+            if (delta.lengthSquared() < 1.0e-6 && v3.lengthSquared() < 1.0e-6) {
+                return; // 静帧不打，避免刷屏
+            }
+            long now = GunTime.nowMillis();
+            if (now - case08LastLogMs < 150L) {
+                return;
+            }
+            case08LastLogMs = now;
+            LocalPlayer player = Minecraft.getInstance().player;
+            float fy = player == null ? Float.NaN : Mth.wrapDegrees(player.getYRot());
+            float fx = player == null ? Float.NaN : player.getXRot();
+            Matrix4f mv = new org.joml.Matrix4f(com.mojang.blaze3d.systems.RenderSystem.getModelViewMatrix());
+            com.tacz.guns.GunMod.LOGGER.info(
+                    "[TACZ Case08] ms={} facing=({},{}) w={} d=({},{},{}) v0=({},{},{}) v3=({},{},{}) "
+                            + "B=[{},{},{} {},{},{} {},{},{}] P=[{},{},{} {},{},{} {},{},{}] Pt=({},{},{}) "
+                            + "MV=[{},{},{} {},{},{} {},{},{}] irisHand={} pack={}",
+                    now,
+                    c8(fx), c8(fy), c8(weight),
+                    c8(delta.x()), c8(delta.y()), c8(delta.z()),
+                    c8(v0.x()), c8(v0.y()), c8(v0.z()),
+                    c8(v3.x()), c8(v3.y()), c8(v3.z()),
+                    c8(baseR.m00()), c8(baseR.m01()), c8(baseR.m02()),
+                    c8(baseR.m10()), c8(baseR.m11()), c8(baseR.m12()),
+                    c8(baseR.m20()), c8(baseR.m21()), c8(baseR.m22()),
+                    c8(poseNow.m00()), c8(poseNow.m01()), c8(poseNow.m02()),
+                    c8(poseNow.m10()), c8(poseNow.m11()), c8(poseNow.m12()),
+                    c8(poseNow.m20()), c8(poseNow.m21()), c8(poseNow.m22()),
+                    c8(poseNow.m30()), c8(poseNow.m31()), c8(poseNow.m32()),
+                    c8(mv.m00()), c8(mv.m01()), c8(mv.m02()),
+                    c8(mv.m10()), c8(mv.m11()), c8(mv.m12()),
+                    c8(mv.m20()), c8(mv.m21()), c8(mv.m22()),
+                    com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive(),
+                    com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack());
+        } catch (Throwable ignored) {
+        }
+    }
+
+    public static void resetTimestamps() {
+        shootTimeStamp = -1;
+        jumpingTimeStamp = -1;
+        jumpingSwayProgress = 0;
+        lastOnGround = false;
+        currentViewIndex = -1;
+        if (SWITCH_VIEW_DYNAMICS != null) SWITCH_VIEW_DYNAMICS.stop();
+        SWITCH_VIEW_DYNAMICS = null;
     }
 }

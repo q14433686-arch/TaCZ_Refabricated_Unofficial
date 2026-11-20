@@ -1,5 +1,6 @@
 package com.tacz.guns.init;
 
+import com.tacz.guns.inventory.AmmoStorageMenu;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.inventory.GunSmithTableMenu;
 import net.minecraft.core.Registry;
@@ -12,6 +13,8 @@ public class ModContainer {
     public static void init() {
 
     }
+
+    public static final MenuType<AmmoStorageMenu> AMMO_STORAGE_MENU = register("ammo_storage_menu", AmmoStorageMenu.TYPE);
 
     public static final MenuType<GunSmithTableMenu> GUN_SMITH_TABLE_MENU = register("gun_smith_table_menu", GunSmithTableMenu.TYPE);
 

@@ -1,0 +1,27 @@
+{
+  "_comment": [
+    "26.2 要求每个物品都有 assets/<ns>/items/<name>.json，否则该物品完全没有图标（见 docs/PORTING_NOTES.md 4.1）。",
+    "这里用 minecraft:condition 做【有无内容包】的分流：",
+    "  on_true  -> lrtactical:dynamic_item，走 Bedrock 模型 + Lua 动画状态机（内容包提供 display 时）；",
+    "  on_false -> 原版占位模型（本移植刻意不打包上游美术资源，其授权为 All Rights Reserved）。",
+    "属性 lrtactical:has_custom_display 由 HasCustomDisplayProperty 提供，注册点在 ModEntitiesRender#registerItemModels。",
+    "不做这个分流的话，没装内容包时 getModel() 返回 null，物品会变成隐形或紫黑块 —— 相对当前行为是明显退化。"
+  ],
+  "model": {
+    "type": "minecraft:condition",
+    "property": "lrtactical:has_custom_display",
+    "on_true": {
+      "type": "lrtactical:dynamic_item",
+      "base": "lrtactical:item/melee_dynamic"
+    },
+    "on_false": {
+      "type": "minecraft:model",
+      "model": "lrtactical:item/melee"
+    }
+  },
+  "properties": {
+    "oversized_in_gui": true,
+    "hand_animation_on_swap": false,
+    "swap_animation_scale": 0.0
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "namespace": "tacz",
+  "dependencies": {
+    "minecraft": "[26.1.2]"
+  }
+}

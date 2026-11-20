@@ -1,5 +1,6 @@
 package com.tacz.guns.client.renderer.item;
 
+import com.tacz.guns.util.time.GunTime;
 import cn.sh1rocu.simplebedrockmodel.api.event.ViewportEvent;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.animation.IFPAnimationInstance;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.renderer.IFPGeoItemRenderer;
@@ -56,12 +57,13 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
         // 第一人称<b>不</b>在这里处理。
         //
         // 该方法由 ItemModel(tacz:dynamic_item) 的 SpecialModelRenderer 调用，此时 vanilla 的
-        // ItemInHandRenderer#renderArmWithItem 已经施加了 applyItemArmTransform（±0.56/-0.52/-0.72）、
+        // ItemInHandRenderer#submitArmWithItem 已经施加了 applyItemArmTransform（±0.56/-0.52/-0.72）、
         // 挥动动画和装备抬手动画，PoseStack 不再是上游 1.21.1 所预期的干净矩阵 ——
         // 会导致枪相对摄像机位置/缩放错误，且移动时与 TACZ 动画叠加产生抖动。
         //
-        // 正确入口是 ItemInHandRendererMixin#tacz$submitArmWithAnimatedItem，它在 renderHandsWithItems
-        // 外部包裹调用，语义与 SimpleBedrockModel 的 RenderHandEvent 注入点一致。详见该 mixin 注释。
+        // 正确入口是 ItemInHandRendererMixin#tacz$submitArmWithAnimatedItem：它包裹
+        // submitHandsWithItems -> submitArmWithItem 的调用并跳过后者，语义与
+        // SimpleBedrockModel 的 RenderHandEvent 取消点一致。详见该 mixin 注释。
         //
         // 这里仍需处理 firstPerson 分支的兜底：正常情况下走不到（mixin 已 cancel），
         // 但如果 mixin 因故未生效，直接 return 也比画在错误位置好 —— 至少不会出现"双份枪"。
@@ -102,7 +104,7 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
         if (stateMachine == null) {
             return false;
         }
-        return !stateMachine.isInitialized() && stateMachine.getExitingTime() < System.currentTimeMillis();
+        return !stateMachine.isInitialized() && stateMachine.getExitingTime() < GunTime.nowMillis();
     }
 
     /**
@@ -220,14 +222,119 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
         yaw = Math.toDegrees(yaw);
         pitch = Math.toDegrees(pitch);
         roll = Math.toDegrees(roll);
-        event.setYaw((float) yaw + event.getYaw());
-        event.setPitch((float) pitch + event.getPitch());
-        event.setRoll((float) roll + event.getRoll());
+        float inYaw = event.getYaw();
+        float inPitch = event.getPitch();
+        float inRoll = event.getRoll();
+        event.setYaw((float) yaw + inYaw);
+        event.setPitch((float) pitch + inPitch);
+        event.setRoll((float) roll + inRoll);
+        if (com.tacz.guns.config.client.RenderConfig.RECOIL_DEBUG.get()) {
+            debugRecoilLevelCam(q, multiplier, (float) yaw, (float) pitch, (float) roll, inYaw, inPitch, inRoll);
+        }
+    }
+
+    /**
+     * 【RecoilDebug 探针 · 世界相机动画】开火动画驱动世界摄像机的逐帧取证。
+     *
+     * <p>已知疑点（待日志裁决）：此处把视空间动画四元数按 ZYX 顺序分解出
+     * (yaw,pitch,roll) 后**加在世界系欧拉角**上（yaw 叠在最外层世界 Y 轴），
+     * 而正确的选择子复合应对应 YXZ 内旋序。静态推导该错配的误差只随俯仰角耦合、
+     * 与朝向无关，与用户「对角朝向固定偏」症状指纹不符——日志将双向验证。</p>
+     */
+    private static void debugRecoilLevelCam(Quaternionf q, float mult, float dYaw, float dPitch, float dRoll,
+                                            float inYaw, float inPitch, float inRoll) {
+        try {
+            double angleDeg = Math.toDegrees(2 * Math.acos(Math.min(1, Math.abs(q.w()))));
+            if (angleDeg < 0.05) {
+                return;
+            }
+            LocalPlayer player = Minecraft.getInstance().player;
+            float facingY = player == null ? Float.NaN : Mth.wrapDegrees(player.getYRot());
+            float facingX = player == null ? Float.NaN : player.getXRot();
+            com.tacz.guns.GunMod.LOGGER.info(
+                    "[TACZ RecoilDebug] levelCam ms={} q=({},{},{},{}) mult={} ang={} eulerD=({},{},{}) in=({},{},{}) facing=({},{}) shader={} irisHand={}",
+                    GunTime.nowMillis(),
+                    f(q.x()), f(q.y()), f(q.z()), f(q.w()), f(mult), f(angleDeg),
+                    f(dYaw), f(dPitch), f(dRoll),
+                    f(inYaw), f(inPitch), f(inRoll),
+                    f(facingX), f(facingY),
+                    com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack(),
+                    com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive());
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * 【RecoilDebug 探针 · 手持相机动画】记录动画四元数左乘/右乘到手部基座之前的
+     * 完整状态：四元数、乘子、以及<b>叠加前</b>的手部基座矩阵（3x3 旋转 + 平移）。
+     *
+     * <p>若手部基座在 vanilla 管线混入非纯旋转内容（缩放/切变），
+     * 视空间后乘假设即被破坏，误差随朝向出场——对角朝向的固定侧偏正属此类指纹；
+     * Iris 手部 pass 基座≈单位阵时则天然豁免，与「开光影正常」的目击吻合。</p>
+     */
+    protected static void debugRecoilItemCam(Quaternionf q, float mult, PoseStack poseStack) {
+        try {
+            double angleDeg = Math.toDegrees(2 * Math.acos(Math.min(1, Math.abs(q.w()))));
+            if (angleDeg < 0.05) {
+                return;
+            }
+            Matrix4f b = poseStack.last().pose();
+            LocalPlayer player = Minecraft.getInstance().player;
+            float facingY = player == null ? Float.NaN : Mth.wrapDegrees(player.getYRot());
+            float facingX = player == null ? Float.NaN : player.getXRot();
+            com.tacz.guns.GunMod.LOGGER.info(
+                    "[TACZ RecoilDebug] itemCam ms={} q=({},{},{},{}) mult={} ang={} base3x3=[{},{},{}; {},{},{}; {},{},{}] baseT=({},{},{}) facing=({},{}) shader={} irisHand={}",
+                    GunTime.nowMillis(),
+                    f(q.x()), f(q.y()), f(q.z()), f(q.w()), f(mult), f(angleDeg),
+                    f(b.m00()), f(b.m01()), f(b.m02()),
+                    f(b.m10()), f(b.m11()), f(b.m12()),
+                    f(b.m20()), f(b.m21()), f(b.m22()),
+                    f(b.m30()), f(b.m31()), f(b.m32()),
+                    f(facingX), f(facingY),
+                    com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack(),
+                    com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive());
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static String f(double v) {
+        return String.format(java.util.Locale.ROOT, "%+.5f", v);
     }
 
     /**
      * 应用状态机的手持物品摄像机动画，暂时只用于玩家
      */
+    /**
+     * 开镜晃动缩放系数：腰射恒为 1，随开镜进度插值到 {@code AimingSwayIntensity}。
+     *
+     * <p>按开镜进度插值而不是「开镜就切换」，是为了避免抬镜那一瞬间晃动幅度突然跳一下 ——
+     * 那种跳变比晃动本身更容易被察觉。
+     *
+     * <p>整体包 try/catch：本方法在每帧的第一人称渲染路径上，
+     * 任何异常（配置尚未加载、玩家状态异常）都不该把持枪渲染带崩，
+     * 兜底返回 1 = 原有手感。
+     *
+     * @return 缩放系数；{@code 1} 表示与改动前完全一致
+     */
+    protected static float aimingSwayScale(LocalPlayer player, float partialTick) {
+        try {
+            if (com.tacz.guns.config.client.RenderConfig.AIMING_SWAY_INTENSITY == null) {
+                return 1.0F;
+            }
+            float intensity = com.tacz.guns.config.client.RenderConfig.AIMING_SWAY_INTENSITY.get().floatValue();
+            if (intensity == 1.0F) {
+                // 常见情形直接短路，省掉一次开镜进度查询。
+                return 1.0F;
+            }
+            float aimingProgress = Mth.clamp(
+                    com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator.fromLocalPlayer(player)
+                            .getClientAimingProgress(partialTick), 0.0F, 1.0F);
+            return Mth.lerp(aimingProgress, 1.0F, intensity);
+        } catch (Throwable ignored) {
+            return 1.0F;
+        }
+    }
+
     public void applyItemInHandCameraAnimation(BeforeRenderHandEvent event, ItemStack stack, LocalPlayer player) {
         applyItemInHandCameraAnimation(event, stack, 1);
     }
@@ -239,6 +346,9 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
         }
         Quaternionf quaternion = MathUtil.multiplyQuaternion(model.getCameraAnimationObject().rotationQuaternion, multiplier);
         PoseStack poseStack = event.getPoseStack();
+        if (com.tacz.guns.config.client.RenderConfig.RECOIL_DEBUG.get()) {
+            debugRecoilItemCam(quaternion, multiplier, poseStack);
+        }
         poseStack.mulPose(quaternion);
     }
 
@@ -258,14 +368,29 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
         M model = getModel(stack);
         if (model != null) {
             poseStack.pushPose();
+            // 【持枪晃动 sway】枪跟不上视角转动的那一份滞后：
+            // getViewXRot 是当前朝向，xBob/yBob 是 vanilla 维护的平滑滞后值，两者之差
+            // 就是「刚才甩了多少」。甩得越快差值越大，枪甩动、镜像也跟着晃。
             float xRotOffset = Mth.lerp(partialTick, player.xBobO, player.xBob);
             float yRotOffset = Mth.lerp(partialTick, player.yBobO, player.yBob);
             float xRot = player.getViewXRot(partialTick) - xRotOffset;
             float yRot = player.getViewYRot(partialTick) - yRotOffset;
+            // 开镜时把晃动按配置缩放：开镜进度 0 → 恒为 1（腰射手感一点不变），
+            // 满开镜 → 取到 AimingSwayIntensity。默认 1.5 = 比原来更明显一些。
+            //
+            // 为什么值得单独放大：开镜后视野被瞄具收窄（PIP 更是把镜内又放大了 Z 倍），
+            // 同样的角度抖动在镜内被放大成同样倍数的位移 —— 现实里高倍镜正是这样「越放大越难稳住」。
+            // 原实现对开镜与否一视同仁，镜内反而显得过于稳定。
+            // Keep the viewmodel sway identical to upstream.  In particular, do not
+            // scale it by aiming progress: the vanilla bob is already magnified by
+            // the ADS projection and applying a second ADS multiplier makes pitch and
+            // roll visibly larger than upstream.
             poseStack.mulPose(Axis.XP.rotationDegrees(xRot * -0.1F));
             poseStack.mulPose(Axis.YP.rotationDegrees(yRot * -0.1F));
             BedrockPart rootNode = model.getRootNode();
             if (rootNode != null) {
+                // tanh 饱和限幅保持在缩放【之前】：它的作用是防止快速转身时枪飞出画面，
+                // 那道保护必须先生效，缩放只放大限幅后的结果。
                 xRot = (float) Math.tanh(xRot / 25) * 25;
                 yRot = (float) Math.tanh(yRot / 25) * 25;
                 rootNode.offsetX += yRot * 0.1F / 16F / 3F;

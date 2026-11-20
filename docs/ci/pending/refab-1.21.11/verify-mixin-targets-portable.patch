@@ -1,0 +1,37 @@
+diff --git a/docs/verify_mixin_targets.py b/docs/verify_mixin_targets.py
+index dd24bf1..649997f 100644
+--- a/docs/verify_mixin_targets.py
++++ b/docs/verify_mixin_targets.py
+@@ -18,11 +18,28 @@ Run from the repo root:  python3 docs/verify_mixin_targets.py
+ """
+ import re, json, os, subprocess, glob, sys
+ 
+-JAVAP = '/usr/lib/jvm/java-21-openjdk-amd64/bin/javap'
+-_j = glob.glob('/home/user/.gradle/caches/fabric-loom/minecraftMaven/'
+-               'net/minecraft/minecraft-merged/1.21.11*/*.jar')
++# 【可移植化 2026-09-02】原先这两条是沙箱专属硬编码路径
++# （/usr/lib/jvm/java-21-openjdk-amd64 与 /home/user/.gradle），挂进 GitHub Actions 必然找不到：
++# Actions 上 javap 在 $JAVA_HOME/bin（setup-java 设的），Loom 缓存在 /home/runner/.gradle。
++# 现在 javap 依次找 JAVA_HOME → PATH；缓存根目录用 GRADLE_USER_HOME → ~/.gradle。
++def _find_javap():
++    home = os.environ.get('JAVA_HOME')
++    if home:
++        cand = os.path.join(home, 'bin', 'javap')
++        if os.path.exists(cand):
++            return cand
++    import shutil as _shutil
++    return _shutil.which('javap') or 'javap'
++
++
++JAVAP = _find_javap()
++_GRADLE_HOME = os.environ.get('GRADLE_USER_HOME') or os.path.expanduser('~/.gradle')
++_j = sorted(glob.glob(os.path.join(
++    _GRADLE_HOME, 'caches', 'fabric-loom', 'minecraftMaven',
++    'net', 'minecraft', 'minecraft-merged', '1.21.11*', '*.jar')))
+ if not _j:
+-    sys.exit('1.21.11 merged jar not found - run ./gradlew help first')
++    sys.exit('1.21.11 merged jar not found - run ./gradlew help first '
++             '(looked under %s)' % _GRADLE_HOME)
+ JAR = _j[0]
+ SRC = 'src/main/java'
+ VANILLA = ('net.minecraft', 'com.mojang')

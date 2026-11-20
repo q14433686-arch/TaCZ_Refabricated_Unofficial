@@ -1,3 +1,5 @@
+import java.security.MessageDigest
+
 plugins {
     id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT'
     id 'maven-publish'
@@ -7,143 +9,173 @@ version = project.mod_version
 group = project.maven_group
 
 base {
-    archivesName = "${archives_base_name}-${minecraft_version}"
+    archivesName = project.archives_base_name
 }
 
 fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = 'tacz_port_test'
+        enableGameTests = true
+        enableClientGameTests = project.hasProperty('taczClientSmoke')
+    }
     configureDataGeneration {
         client = true
     }
 }
 
 loom {
+    mods { tacz { sourceSet sourceSets.main } }
     accessWidenerPath = file("src/main/resources/tacz.accesswidener")
     // From Loom 1.17: mixin AP is no longer enabled by default.
     // The legacy mixin AP requires mappings, which don't exist in 26.1+.
-    // We must disable it and handle mixins differently.
-    // mixin {
-    //     useLegacyMixinAp = true
-    //     defaultRefmapName = "tacz.refmap.json"
-    // }
+    // Runtime Mixin handles @Mixin/@Inject/@Accessor/@Invoker directly on unobfuscated bytecode.
+
     runs {
         client {
             // The embedded default pack alone contains >80 MiB of textures, audio, and models.
             // 384 MiB consistently OOMs during its first resource reload under 26.1.2.
             vmArg "-Xmx768m"
-            // Step 2 lens diagnostic. Enable with: gradlew runClient -PtaczScopeDebug=true
-            // (The TACZ client config file does NOT contain this switch; it is a JVM property.)
-            vmArg "-Dtacz.scope.pip.debug.paint=${providers.gradleProperty('taczScopeDebug').getOrElse('false')}"
-            // Step 3 real scope PIP. Enable with: gradlew runClient -PtaczScopePip=true
-            // (JVM property, not a config-file option; same reason as Step 2.)
-            vmArg "-Dtacz.scope.pip.enable=${providers.gradleProperty('taczScopePip').getOrElse('false')}"
         }
         server {
             vmArg "-Xmx384m"
         }
         datagen {
-            property "fabric-api.datagen.modid", "tacz"
+            vmArg "-Xmx384m"
         }
     }
 }
 
 repositories {
+    // Pin Zigy's 26.1 release (PlayerAnimationLibMerged-1.2.5+mc.26.1.jar under tag v1.2.5+26.1),
+    // which is the official PAL 1.2.5 build for Minecraft 26.1.x (including 26.1.2).
+    exclusiveContent {
+        forRepository {
+            ivy {
+                url = uri('https://github.com/ZigyTheBird/PlayerAnimationLibrary/releases/download')
+                patternLayout { artifact("v[revision]/[artifact]-${player_animation_lib}+mc.26.1.[ext]") }
+                metadataSources { artifact() }
+            }
+        }
+        filter { includeModule('zigy.release', 'PlayerAnimationLibMerged') }
+    }
+    // Official signed Fabric releases; neither Controllable nor Framework is bundled into TaCZ.
+    ['Controllable', 'Framework'].each { mod ->
+        exclusiveContent {
+            forRepository {
+                ivy {
+                    name = "MrCrayfish${mod}Releases"
+                    url = uri("https://github.com/MrCrayfish/${mod}/releases/download")
+                    patternLayout { artifact('v[revision]/[artifact]-[revision]-signed.[ext]') }
+                    metadataSources { artifact() }
+                }
+            }
+            filter { includeModule('mrcrayfish.release', mod.toLowerCase(Locale.ROOT) + '-fabric') }
+        }
+    }
+    // Only for compiling the SDL2 virtual-device test. Controllable itself supplies it at runtime.
+    exclusiveContent {
+        forRepository {
+            ivy {
+                url = uri('https://github.com/MrCrayfish/ControllableSDL/releases/download')
+                patternLayout { artifact('v[revision]/[artifact]-[revision].[ext]') }
+                metadataSources { artifact() }
+            }
+        }
+        filter { includeModule('mrcrayfish.test', 'controllable-sdl') }
+    }
     maven {
         // 阿里云镜像，方便国内开发
         url = uri("https://maven.aliyun.com/repository/public/")
+    }
+    maven {
+        name = "MaydayMemory's Repo"
+        url = uri("https://colored-glaze.github.io")
         content {
-            includeGroup 'org.apache.commons'
+            includeGroup "com.maydaymemory"
         }
     }
     maven {
-        name = "Jared's maven"
-        url = "https://maven.blamejared.com/"
+        url = "https://maven.fabricmc.net/"
     }
     maven {
-        name = "Mod Maven"
-        url = "https://modmaven.k-4u.nl"
+        name = 'Ladysnake Mods'
+        url = 'https://maven.ladysnake.org/releases'
     }
     maven {
-        url "https://cursemaven.com"
+        name = "Forge Config API Port"
+        url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
+    }
+    maven {
+        name = "architectury"
+        url = "https://maven.architectury.dev/"
+    }
+    maven {
+        name = "shedaniel"
+        url = "https://maven.shedaniel.me/"
+    }
+    maven {
+        name = "ModMenu"
+        url = "https://maven.terraformersmc.com/releases/"
+    }
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+        content {
+            includeGroup "maven.modrinth"
+        }
+    }
+    maven {
+        url = "https://cursemaven.com"
         content {
             includeGroup "curse.maven"
         }
     }
     maven {
-        name = "Modrinth"
-        url "https://api.modrinth.com/maven"
-    }
-    maven { url "https://maven.shedaniel.me/" } // cloth config api
-    maven { url "https://dvs1.progwml6.com/files/maven/" }
-    maven { url "https://modmaven.dev" }
-    maven {
-        name = 'tterrag maven'
-        url = 'https://maven.tterrag.com/'
+        // Location of the maven that hosts JEI files since January 2023
+        name = "Jared's maven"
+        url = "https://maven.blamejared.com/"
     }
     maven {
-        url = "https://maven.architectury.dev"
-        content {
-            includeGroup "dev.architectury"
-        }
+        // Fallback for JEI
+        name = "ModMaven"
+        url = "https://modmaven.dev"
     }
     maven {
-        url "https://maven.latvian.dev/releases"
+        name = "KosmX's maven"
+        url = 'https://maven.kosmx.dev/'
+    }
+    maven {
+        url = "https://maven.saps.dev/releases"
         content {
             includeGroup "dev.latvian.mods"
-            includeGroup "dev.latvian.apps"
         }
     }
     maven {
-        url 'https://jitpack.io'
+        url = "https://jitpack.io"
         content {
             includeGroup "com.github.rtyley"
             includeGroup "com.github.FiguraMC.luaj"
         }
     }
     maven {
-        name "KosmX's maven"
-        url 'https://maven.kosmx.dev/'
-    }
-    maven {
-        name = "Ladysnake Mods"
-        url = 'https://maven.ladysnake.org/releases'
-    }
-    maven {
-        name = "Fuzs Mod Resources"
-        url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
-    }
-    maven {
-        name = "Terraformers"
-        url = "https://maven.terraformersmc.com/"
-    }
-    maven {
-        name = "devOSSnapshots"
-        url = uri("https://mvn.devos.one/snapshots")
+        name = "isXander maven"
+        url = "https://maven.isxander.dev/releases"
     }
     mavenCentral()
     mavenLocal()
-    flatDir {
-        dir 'libs'
-    }
 }
 
 dependencies {
-    // ================================================================
-    // 从 26.1+: Minecraft 不再混淆，Loom 使用未混淆模式
-    // 因此不再需要 mappings 依赖
-    // modImplementation → implementation (因为不再需要 mod 重映射)
-    // modCompileOnly → compileOnly
-    // modRuntimeOnly → runtimeOnly
-    // modApi → api
-    // ================================================================
+    testImplementation platform('org.junit:junit-bom:5.12.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    // Minecraft & Fabric
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    // No mappings needed — 26.1+ uses unobfuscated Minecraft
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
     // Opt-in compatibility run. Iris 1.11.2 + Sodium 0.9.1 are the current 26.1.2 pair.
-    // Keep them out of the distributable and normal server/client runs; enable with -PwithIris.
     if (project.hasProperty("withIris")) {
         runtimeOnly "curse.maven:irisshaders-455508:${project.iris_curse_file}"
         runtimeOnly "curse.maven:sodium-394468:${project.sodium_curse_file}"
@@ -152,103 +184,123 @@ dependencies {
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
     annotationProcessor 'com.google.code.findbugs:jsr305:3.0.2'
 
-    // ============================================================
-    // 26.1.2 dependency audit. Optional integrations stay compile-only so they are
-    // absent from the distributable and are guarded by FabricLoader at runtime.
-    // ============================================================
-
-    // simplebedrockmodel — the old library has no 26.1.2 build; the small API surface TACZ
-    // consumes is provided by local compatibility interfaces and the collector-backed renderer.
-
-    // MAE (Math Expression Evaluator)
+    // MAE (Math Expression Evaluator / animation pose API)
     implementation(include("com.maydaymemory:mae:1.1.1")) {
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
         exclude group: 'it.unimi.dsi', module: 'fastutil'
-        exclude group: 'org.joml', module: 'joml'
     }
 
-    // Apache Commons Math
-    implementation(include('org.apache.commons:commons-math3:3.6.1'))
-
-    // LuaJ
-    implementation(include('com.github.FiguraMC.luaj:luaj-core:3.0.8-figura')) {
+    implementation(include("org.apache.commons:commons-math3:3.6.1"))
+    implementation(include("com.github.FiguraMC.luaj:luaj-core:3.0.8-figura"))
+    implementation(include("com.github.FiguraMC.luaj:luaj-jse:3.0.8-figura")) {
         exclude group: 'org.apache.commons', module: 'commons-lang3'
     }
-    implementation(include('com.github.FiguraMC.luaj:luaj-jse:3.0.8-figura')) {
-        exclude group: 'org.apache.commons', module: 'commons-lang3'
-    }
-    implementation(include('org.apache.bcel:bcel:6.6.1')) {
+    implementation(include("org.apache.bcel:bcel:6.6.1")) {
         exclude group: 'org.apache.commons', module: 'commons-lang3'
     }
 
-    // ============================================================
-    // 以下为运行时/编译时 mod 依赖；无 26.1.2 构建的项保持注释
-    // ============================================================
-
-    // JEI — verified 26.1.2 Fabric release (kept on the previously compiled API line)
+    // JEI — verified 26.1.2 Fabric release
     compileOnly "maven.modrinth:jei:${jei_version}"
 
     // Cloth Config — 26.1.x
     implementation "me.shedaniel.cloth:cloth-config-fabric:${cloth_config_fabric}"
 
-    // Embeddium
-    // compileOnly "curse.maven:embeddium-908741:${embeddedt_id}"
+    // Player Animation Lib — PAL 1.2.5+mc.26.1
+    compileOnly "zigy.release:PlayerAnimationLibMerged:${player_animation_lib}+26.1"
 
-    // Carry On 2.10.0 supports 26.1.2. Its modern compatibility contract is the
-    // carryon:block_blacklist data tag, so TACZ needs no compile-time dependency.
+    // Controllable 0.26.0+26.1.2 & SDL2 test headers
+    compileOnly "mrcrayfish.release:controllable-fabric:${controllable_version}"
+    gametestCompileOnly 'mrcrayfish.test:controllable-sdl:2.32.10-1.1.0'
 
-    // Player Animation Library (PAL) is optional at runtime. TACZ's isolated PAL 1.2.5
-    // implementation replaces the unavailable KosmX API used by the 1.21.1 upstream.
-    compileOnly "maven.modrinth:player-animation-library:${player_animation_lib}"
-
-    // MrCrayfish's Controllable 0.26.0 and Shoulder Surfing 5.0.10 both publish
-    // Fabric 26.1.2 builds. These restore upstream controller bindings/rumble and
-    // adaptive shoulder-camera behavior without making either mod mandatory.
-    compileOnly "curse.maven:controllable-317269:${controllable_curse_file}"
-    compileOnly "maven.modrinth:shoulder-surfing-reloaded:${shoulder_surfing_version}"
-
-    // KubeJS
-    // compileOnly "dev.latvian.mods:kubejs-fabric:${kubejs_version}"
-    // compileOnly "dev.latvian.mods:rhino-fabric:${rhino_version}"
-    // compileOnly "dev.architectury:architectury-fabric:${architectury_version}"
-
-    // CCA (Cardinal Components API) - 26.1.2: 移除，与 Mojang 映射不兼容
-    // implementation(include("dev.onyxstudios.cardinal-components-api:cardinal-components-base:5.2.3"))
-    // implementation(include("dev.onyxstudios.cardinal-components-api:cardinal-components-entity:5.2.3"))
-
-    // MKB (Modern Keybinding)
-    // implementation(include("maven.modrinth:modernkeybinding:1.20.X-1.2.0"))
-
-    // Forge Config API Port - 26.1.2 compatible (ForgeConfigSpec + ForgeConfigRegistry)
-    // 26.1.5 Fabric: https://github.com/Fuzss/forge-config-api-port (branch 26.1.x)
+    // Forge Config API Port - 26.1.5 Fabric
     implementation "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:26.1.5"
-    // 备用 (如果上面 maven 仓库不可用): curse.maven:forge-config-api-port-547434:8292030
 
-    // ModMenu — 18.0.0-alpha.8 is the published 26.1–26.1.2 build.
+    // ModMenu — 18.0.0-alpha.8 (26.1–26.1.2)
     implementation "maven.modrinth:modmenu:${modmenu_version}"
 
-    // Zoomify — 2.16.0+26.1 supports 26.1–26.1.2.
+    // Zoomify — 2.16.0+26.1
     compileOnly "maven.modrinth:zoomify:${zoomify_version}"
 
-    // ImmediatelyFast supports 26.1.2, but its old public HUD batching API was removed.
-    // TACZ's delayed GuiItemAtlas path needs no direct compile-time integration.
+    // Shoulder Surfing Reloaded — 26.1.2 (plugin API 5.x, optional at runtime)
+    compileOnly("maven.modrinth:shoulder-surfing-reloaded:${shoulder_surfing_version}") {
+        transitive = false
+    }
 
-    // REI — 26.1.2
+    // REI — 26.1.2 (indexed per-display removal via full RoughlyEnoughItems-fabric jar)
     compileOnly "dev.architectury:architectury-fabric:${architectury_version}"
-    compileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:$rei_version"
-    compileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei_version"
-
-    // Spark
-    // runtimeOnly "curse.maven:spark-361579:4738953"
-
-    // Accelerated Rendering
-    // implementation "maven.modrinth:accrelatedrendering-refabricated:1.0.8-1.20.1-alpha-fabric.1"
+    compileOnly("me.shedaniel:RoughlyEnoughItems-fabric:${rei_version}") { transitive = false }
 }
 
-// The initial 26.1.2 checkout only retained the full resource tree inside its tracked sources JAR.
-// Keep that compressed, immutable bundle as the fallback resource source instead of checking ~80 MiB and
-// thousands of generated/default-pack files into src/main/resources a second time. Explicit source resources
-// win for metadata and future hand-edited files.
+// An installed JEI or REI is tested in its own client. No viewer in the baseline runtime or nested JAR.
+configurations.gametestCompileOnly.extendsFrom(configurations.compileOnly)
+if (project.hasProperty('taczPalSmoke')) {
+    loom.runs.clientGameTest.property 'tacz.test.pal', 'true'
+    dependencies { gametestRuntimeOnly "zigy.release:PlayerAnimationLibMerged:${player_animation_lib}+26.1" }
+    tasks.named('runClientGameTest') {
+        doFirst {
+            def pal = configurations.gametestRuntimeClasspath.resolvedConfiguration.resolvedArtifacts.find { it.moduleVersion.id.group == 'zigy.release' }
+            def digest = MessageDigest.getInstance('SHA-256').digest(pal.file.bytes).encodeHex().toString()
+            if (digest != '42118eb455e63cef0e8622716b07810a5fb9f5a82c8df3027ec0c2951bc6a11a')
+                throw new GradleException("Wrong target PAL binary: $digest")
+            logger.lifecycle("Target PAL file: ${pal.file.name} SHA-256 $digest")
+        }
+    }
+}
+if (project.hasProperty('taczControllerSmoke')) {
+    loom.runs.clientGameTest.property 'tacz.test.controller', 'true'
+    dependencies {
+        gametestRuntimeOnly "mrcrayfish.release:controllable-fabric:${controllable_version}"
+        gametestRuntimeOnly "mrcrayfish.release:framework-fabric:${framework_version}"
+    }
+}
+if (project.hasProperty('taczViewerSmoke')) {
+    if (!project.hasProperty('taczClientSmoke')) throw new GradleException('Viewer smoke needs a client')
+    def viewer = project.property('taczViewerSmoke')
+    loom.runs.clientGameTest.property 'tacz.test.viewer', viewer
+    dependencies {
+        if (viewer == 'jei') gametestRuntimeOnly "maven.modrinth:jei:${jei_version}"
+        else if (viewer == 'rei') {
+            gametestRuntimeOnly("me.shedaniel:RoughlyEnoughItems-fabric:${rei_version}") { transitive = false }
+            gametestRuntimeOnly("dev.architectury:architectury-fabric:${architectury_version}") { transitive = false }
+        } else throw new GradleException("Unknown viewer: $viewer")
+    }
+}
+
+if (project.hasProperty('taczClientSuite')) {
+    loom.runs.clientGameTest.property 'tacz.test.suite', project.property('taczClientSuite')
+}
+if (project.hasProperty('taczIrisSmoke')) {
+    dependencies { gametestRuntimeOnly files('build/iris-smoke/iris.jar', 'build/iris-smoke/sodium.jar') }
+    loom.runs.clientGameTest.property 'tacz.test.iris', 'true'
+    if (project.hasProperty('taczIrisColor')) loom.runs.clientGameTest.property 'tacz.test.irisColor', project.property('taczIrisColor')
+    if (project.hasProperty('taczOpticSuite')) loom.runs.clientGameTest.property 'tacz.test.optics', project.property('taczOpticSuite')
+    def installPack = tasks.register('installTestShaderPack', Copy) {
+        dependsOn tasks.named('deleteGameTestRunDir')
+        into layout.buildDirectory.dir('run/clientGameTest')
+        if (project.hasProperty('taczIrisColor') || project.hasProperty('taczOpticSuite')) from 'build/iris-smoke/complementary'
+        else from 'src/gametest/irisConfig'
+    }
+    tasks.named('runClientGameTest') { dependsOn installPack }
+}
+
+// External game-test pack, never a production classpath resource.
+['gameTest', 'clientGameTest'].each { run ->
+    if (run == 'clientGameTest' && !project.hasProperty('taczClientSmoke')) return
+    def zip = tasks.register("zip${run.capitalize()}Pack", Zip) {
+        from 'src/gametest/fixtures/overlay'
+        from('tools/player-acceptance-pack') { exclude 'gunpack.meta.json', 'README.md' }
+        archiveFileName = 'tacz-port-smoke.zip'
+        destinationDirectory = layout.buildDirectory.dir("run/${run}/tacz")
+        if (run == 'clientGameTest') dependsOn tasks.named('deleteGameTestRunDir')
+    }
+    tasks.named("run${run.capitalize()}") { dependsOn zip }
+}
+
+test { useJUnitPlatform() }
+
+// Compressed immutable fallback resource archive for unchanged 1.1.8 assets; explicit
+// src/main/resources files override modified 1.2.0 entries via DuplicatesStrategy.EXCLUDE,
+// and the 8 upstream 1.1.8 files retired in 1.2.0 are excluded explicitly.
 def bundledSourcesAndResources = file("resources/tacz-26.1.2-source-and-resource-bundle.jar")
 
 processResources {
@@ -263,6 +315,14 @@ processResources {
         exclude "*.mixins.json"
         exclude "tacz.accesswidener"
         exclude "shouldersurfing_plugin.json"
+        exclude "assets/tacz/custom/tacz_default_gun/assets/tacz/tacz_sounds/rpk/rpk_inspect.ogg"
+        exclude "assets/tacz/custom/tacz_default_gun/assets/tacz/tacz_sounds/rpk/rpk_reload_empty.ogg"
+        exclude "assets/tacz/custom/tacz_default_gun/assets/tacz/tacz_sounds/rpk/rpk_reload_tactical.ogg"
+        exclude "assets/tacz/custom/tacz_default_gun/assets/tacz/textures/attachment/uv/grip_magpul_afg_2_n.png"
+        exclude "assets/tacz/custom/tacz_default_gun/assets/tacz/textures/attachment/uv/sight_sro_dot_n.png"
+        exclude "assets/tacz/custom/tacz_default_gun/data/tacz/recipe/attachments/oem_stock_heavy.json"
+        exclude "assets/tacz/custom/tacz_default_gun/data/tacz/recipe/attachments/oem_stock_light.json"
+        exclude "assets/tacz/custom/tacz_default_gun/data/tacz/recipe/attachments/oem_stock_tactical.json"
     }
     inputs.property "minecraft_version", project.minecraft_version
     inputs.property "loader_version", project.loader_version
@@ -280,12 +340,9 @@ tasks.withType(JavaCompile).configureEach {
     it.options.encoding = "UTF-8"
     if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
         it.options.release.set(targetJavaVersion)
-        it.options.compilerArgs << "-Xmaxerrs" << "5000"
     }
 }
 
-// Dependency-free regression for the mesh/Iris render-pass boundary. Compile the actual policy
-// with a standalone harness; no client, OpenGL context, or additional test library is required.
 def meshPassTestClasses = layout.buildDirectory.dir("classes/meshRenderPassTest")
 tasks.register("compileMeshRenderPassTest", JavaCompile) {
     source files(
@@ -309,26 +366,15 @@ tasks.named("check") {
     dependsOn "meshRenderPassTest"
 }
 
-// Source selection for integrations whose APIs genuinely have no 26.1.2 equivalent.
-// PAL, Controllable, Shoulder Surfing and Iris are compiled above and guarded at runtime;
-// only obsolete KosmX/OptiFine/KubeJS-Fabric/Accelerated Rendering implementations remain excluded.
 sourceSets {
     main {
         java {
-            // AR(Accelerated Rendering)：仅排除硬依赖 argon4w 的 IMPL，保留 ARCompat/BeamRenderContext 门面（改为禁用态）
             exclude 'com/tacz/guns/compat/ar/ARCompatImpl.java'
             exclude 'com/tacz/guns/compat/ar/AcceleratedBeamRenderer.java'
-            // Controllable 0.26.0 now has a verified 26.1.2 Fabric build; its isolated
-            // implementation is compiled again and only loaded when the mod is installed.
-            // KubeJS：26.1.2 only has NeoForge builds; the Fabric event poster remains a disabled facade.
             exclude 'com/tacz/guns/compat/kubejs/**'
-            // The obsolete KosmX implementation is replaced by compat/playeranimator/pal/**.
             exclude 'com/tacz/guns/compat/playeranimator/animation/**'
             exclude 'com/tacz/guns/compat/playeranimator/PlayerAnimatorAssetManager.java'
-            // Optifine：非 Fabric，待评估永久废弃
             exclude 'com/tacz/guns/compat/optifine/**'
-            // Carry On 2.10 uses a data-tag contract; its old Java config hook is intentionally absent.
-            // Accelerated Rendering mixin：随 AR 模块禁用
             exclude 'com/tacz/guns/mixin/client/ar/**'
         }
     }
@@ -343,6 +389,8 @@ java {
 }
 
 jar {
+    from("LICENSES") { into "META-INF/licenses" }
+    from("LICENSES.md") { into "META-INF/licenses" }
     from("LICENSE") {
         rename { "${it}_${base.archivesName.get()}" }
     }
@@ -351,14 +399,10 @@ jar {
 publishing {
     publications {
         create("mavenJava", MavenPublication) {
-            artifactId = "${archives_base_name}-${minecraft_version}"
+            artifactId = project.archives_base_name
             from components.java
         }
     }
-
     repositories {
-        maven {
-            url "file:///D:/github_maven/Sh1roCu_MCRepo/repository"
-        }
     }
 }

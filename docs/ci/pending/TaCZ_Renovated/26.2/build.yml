@@ -1,0 +1,149 @@
+name: build
+
+# ---------------------------------------------------------------------------
+# 【TaCZ_Renovated（NeoForge）26.2 线 · 待上线稿】
+# 代拟：refab 26.2(main) 侧 arena/01a061a4 会话，2026-09-02。
+# 目标：TaCZ_Renovated 仓库 `26.2` 分支 → 新建 `.github/workflows/build.yml`（本文件全文）。
+# 上线方式与其它线一致：GitHub 网页 → Add file → Create new file → 粘贴 → commit 到该分支
+# （沙箱 Agent 的 token 无 `workflows` 权限，推不动正式件）。
+#
+# 为什么需要它：本仓三条线现在只有 compile-check（只跑 compileJava），**没有 jar 产物** ——
+# 「发个 Actions 链接就能征测」这条基础设施在 renov 侧完全缺失（refab 26.2 侧 2026-08-31 起有）。
+#
+# 与 refab 侧 build.yml 的差异（NeoForge / ModDevGradle 专属，逐条按本仓实际树核对过）：
+#   * 构建插件 net.neoforged.moddev 2.0.144，**没有 Loom** ⇒ 没有 remapJar 阶段；
+#   * java toolchain 25（= 本分支 build.gradle 的 java.toolchain.languageVersion）；
+#   * 「mixin 配置注册性」检查读 `src/main/templates/META-INF/neoforge.mods.toml`
+#     （正式件 neoforge.mods.toml 由 generateModMetadata 生成，checkout 时不存在，
+#      所以 refab 那版读 fabric.mod.json 的写法在这里必须换掉）；
+#   * gradle.properties 里 `org.gradle.jvmargs=-Xmx512M`：compileJava 够用，但 build 还要
+#     JarJar / 打包 / sourcesJar。**首跑若 OOM**，把该行提到 `-Xmx2G`（refab 1.21.11 的
+#     runClient 就是 512m→768m 才不 OOM 的，同一类问题）；
+#   * 本分支 libs/ 里只有 commons-math3 与 luaj（已提交）；Controllable / Shoulder Surfing 等
+#   可选依赖走 cursemaven / modrinth（Actions 出网可达，compile-check 已证明能拉到）。
+#
+# 静态校验已于 2026-09-02 对本分支源码树逐条实跑（gh api 拉取真实文件比对）：
+# mixin 完整性 7/7 通过、注册性（对 templates/neoforge.mods.toml）0 孤儿 0 缺失、
+# en_us↔zh_cn 语言键 tacz + lrtactical 均齐平 ⇒ **首跑预期全绿**。
+# ---------------------------------------------------------------------------
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - 'arena/**'
+      - '26.2'
+    paths-ignore:
+      - 'build-reports/**'
+      - 'docs/**'
+      - '**/*.md'
+  pull_request:
+    paths-ignore:
+      - 'build-reports/**'
+      - 'docs/**'
+      - '**/*.md'
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Mixin config integrity (json 里列的类必须真实存在)
+        run: |
+          python3 - <<'EOF'
+          import json, glob, os, sys
+          bad = []
+          for cfg in glob.glob('src/main/resources/*mixins*.json'):
+              d = json.load(open(cfg))
+              pkg = d.get('package', '').replace('.', '/')
+              for section in ('mixins', 'client', 'server'):
+                  for m in d.get(section, []):
+                      p = 'src/main/java/' + pkg + '/' + m.replace('.', '/') + '.java'
+                      if not os.path.exists(p):
+                          bad.append(f'{cfg}: {m} -> {p} 不存在')
+          for b in bad:
+              print('::error::' + b)
+          sys.exit(1 if bad else 0)
+          EOF
+
+      - name: Mixin configs registered (templates/neoforge.mods.toml 里列的与磁盘一一对应)
+        run: |
+          python3 - <<'EOF'
+          import glob, os, re, sys
+          tpl = 'src/main/templates/META-INF/neoforge.mods.toml'
+          if not os.path.exists(tpl):
+              print('::error::' + tpl + ' 不存在（本检查失去意义，请改用实际的 mod 元数据来源）')
+              sys.exit(1)
+          declared = set(re.findall(r'config\s*=\s*"([^"]+)"', open(tpl, encoding='utf-8').read()))
+          ondisk = {os.path.basename(f) for f in glob.glob('src/main/resources/*mixins*.json')}
+          bad = []
+          for name in sorted(declared - ondisk):
+              bad.append(f'{tpl} 声明了 {name}，但 src/main/resources/ 下没有这个文件')
+          for name in sorted(ondisk - declared):
+              bad.append(f'{name}: 存在但 {tpl} 没声明它（孤儿配置，永不生效）')
+          for b in bad:
+              print('::error::' + b)
+          sys.exit(1 if bad else 0)
+          EOF
+
+      - name: Lang key parity (en_us 与 zh_cn 键集合必须一致)
+        run: |
+          python3 - <<'EOF'
+          import json, os, sys
+          bad = []
+          for ns in ('tacz', 'lrtactical'):
+              base = f'src/main/resources/assets/{ns}/lang/'
+              if not os.path.exists(base + 'en_us.json'):
+                  continue
+              en = set(json.load(open(base + 'en_us.json')))
+              if not os.path.exists(base + 'zh_cn.json'):
+                  bad.append(f'{ns}: zh_cn.json 缺失')
+                  continue
+              zh = set(json.load(open(base + 'zh_cn.json')))
+              for k in sorted(en - zh):
+                  bad.append(f'{ns}: {k} 只在 en_us')
+              for k in sorted(zh - en):
+                  bad.append(f'{ns}: {k} 只在 zh_cn')
+          for b in bad:
+              print('::error::' + b)
+          sys.exit(1 if bad else 0)
+          EOF
+
+      - name: Version consistency (与 consistency.yml 同一脚本)
+        run: |
+          if [ -f scripts/check_release_consistency.sh ]; then
+            bash scripts/check_release_consistency.sh
+          else
+            echo "::notice::本分支没有 scripts/check_release_consistency.sh，跳过版本一致性校验"
+          fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Full build
+        run: ./gradlew build --console=plain --stacktrace --no-daemon
+
+      - name: Upload jars
+        uses: actions/upload-artifact@v4
+        with:
+          # artifact 名不能含 '/'（arena 分支名带斜杠，refab 26.2 首跑就是这样红的），
+          # 所以只放 MC 版本 + sha；分支名在 run 页面本来就有。
+          name: TaCZ-Renovated-26.2-${{ github.sha }}
+          path: |
+            build/libs/*.jar
+            !build/libs/*-sources.jar
+          retention-days: 14
+          if-no-files-found: error

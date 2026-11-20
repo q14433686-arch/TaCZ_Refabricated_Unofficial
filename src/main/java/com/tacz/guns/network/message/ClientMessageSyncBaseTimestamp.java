@@ -1,5 +1,6 @@
 package com.tacz.guns.network.message;
 
+import com.tacz.guns.util.time.GunTime;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
@@ -37,7 +38,7 @@ public class ClientMessageSyncBaseTimestamp implements CustomPacketPayload {
     }
 
     public void handle(ServerPlayer player, PacketSender responseSender) {
-        long timestamp = System.currentTimeMillis();
+        long timestamp = GunTime.nowMillis();
         ShooterDataHolder dataHolder = IGunOperator.fromLivingEntity(player).getDataHolder();
         dataHolder.baseTimestamp = timestamp;
         GunMod.LOGGER.debug(MARKER, "Update server base timestamp: {}", dataHolder.baseTimestamp);

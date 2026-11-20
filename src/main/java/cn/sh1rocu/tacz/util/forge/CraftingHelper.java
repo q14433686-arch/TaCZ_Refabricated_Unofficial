@@ -4,12 +4,12 @@ import com.google.gson.*;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.resources.RegistryOps;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -31,6 +31,16 @@ public class CraftingHelper {
 
     public static ItemStack getItemStack(JsonObject json, boolean readNBT) {
         return getItemStack(json, readNBT, false);
+    }
+
+    public static JsonElement encodeItemStack(ItemStack stack) {
+        var ops = RegistryOps.create(JsonOps.INSTANCE, RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY));
+        return ItemStack.OPTIONAL_CODEC.encodeStart(ops, stack).getOrThrow();
+    }
+
+    public static net.minecraft.core.component.DataComponentPatch parseComponents(JsonObject json) {
+        var ops = RegistryOps.create(JsonOps.INSTANCE, RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY));
+        return net.minecraft.core.component.DataComponentPatch.CODEC.parse(ops, json).getOrThrow();
     }
 
     public static Item getItem(String itemName, boolean disallowsAirInRecipe) {
@@ -56,9 +66,15 @@ public class CraftingHelper {
     }
 
     public static ItemStack getItemStack(JsonObject json, boolean readNBT, boolean disallowsAirInRecipe) {
+        // Current data-component form (1.21.1 upstream and Minecraft 26.2):
+        // {"id":"minecraft:painting","components":{...},"count":1}
+        //
+        // Custom gun-table results are parsed lazily, after component binding, so using
+        // ItemStack.CODEC here is safe. The old helper only accepted {item,nbt}; that
+        // silently stripped ITEM_NAME/ENTITY_DATA from the Blood Strike painting and
+        // turned its recipe into a generic painting.
         if (json.has("id")) {
-            var ops = RegistryOps.create(
-                    JsonOps.INSTANCE,
+            var ops = RegistryOps.create(JsonOps.INSTANCE,
                     RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY));
             ItemStack stack = ItemStack.CODEC.parse(ops, json).getOrThrow();
             if (disallowsAirInRecipe && stack.is(Items.AIR)) {
@@ -67,6 +83,8 @@ public class CraftingHelper {
             return stack;
         }
 
+        // Legacy Forge/TACZ form retained for third-party packs:
+        // {"item":"minecraft:painting","nbt":{...},"count":1}
         String itemName = GsonHelper.getAsString(json, "item");
         Item item = getItem(itemName, disallowsAirInRecipe);
         int count = GsonHelper.getAsInt(json, "count", 1);

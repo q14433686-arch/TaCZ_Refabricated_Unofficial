@@ -1,5 +1,6 @@
 package com.tacz.guns.entity.shooter;
 
+import com.tacz.guns.util.time.GunTime;
 import cn.sh1rocu.tacz.api.LogicalSide;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
@@ -78,7 +79,7 @@ public class LivingEntityShoot {
             }
             // 26.2: MinecraftServer.tickTimes removed, use fixed 50ms tick time
             double tickTime = 50;
-            long alpha = System.currentTimeMillis() - data.baseTimestamp - timestamp;
+            long alpha = GunTime.nowMillis() - data.baseTimestamp - timestamp;
             if (alpha < -300 || alpha > 300 + tickTime * 2) { // 允许 +- 300ms 的网络波动、窗口下限再扩大 2 个 tick time 时间(最坏情况射击会延迟2个 tick)
                 if (shooter instanceof ServerPlayer player) {
                     NetworkHandler.sendToClientPlayer(new ServerMessageSyncBaseTimestamp(), player);
@@ -132,6 +133,17 @@ public class LivingEntityShoot {
         if (boltType == Bolt.MANUAL_ACTION && !hasAmmoInBarrel) {
             return ShootResult.NEED_BOLT;
         }
+        // 触发射击事件
+        long acceptedDraw = data.drawGeneration();
+        GunShootEvent gunShootEvent = new GunShootEvent(shooter, currentGunItem, LogicalSide.SERVER);
+        GunShootEvent.CALLBACK.invoker().post(gunShootEvent);
+        if (gunShootEvent.isCanceled()) {
+            return ShootResult.FORGE_EVENT_CANCEL;
+        }
+
+        // A cancelled trigger must not move ammo into the chamber. Listeners may also replace the held stack.
+        if (acceptedDraw != data.drawGeneration() || data.gunScriptFailed || currentGunItem != shooter.getMainHandItem()
+                || !gunId.equals(iGun.getGunId(currentGunItem))) return ShootResult.UNKNOWN_FAIL;
         // 闭膛的膛内检查逻辑
         if (boltType == Bolt.CLOSED_BOLT && !hasAmmoInBarrel) {
             // 两种不同的上膛情况
@@ -142,16 +154,9 @@ public class LivingEntityShoot {
             }
             iGun.setBulletInBarrel(currentGunItem, true);
         }
-        // 触发射击事件
-        GunShootEvent gunShootEvent = new GunShootEvent(shooter, currentGunItem, LogicalSide.SERVER);
-        GunShootEvent.CALLBACK.invoker().post(gunShootEvent);
-        if (gunShootEvent.isCanceled()) {
-            return ShootResult.FORGE_EVENT_CANCEL;
-        }
-
         NetworkHandler.sendToTrackingEntity(new ServerMessageGunShoot(shooter.getId(), currentGunItem), shooter);
         data.lastShootTimestamp = data.shootTimestamp;
-        data.heatTimestamp = System.currentTimeMillis();
+        data.heatTimestamp = GunTime.nowMillis();
         data.shootTimestamp = timestamp;
         data.chargeProgress = validateChargeProgress(chargeData, chargeProgress, hasChargeContext);
         // 执行枪械射击逻辑
@@ -227,10 +232,10 @@ public class LivingEntityShoot {
     protected long getChargeElapsedMillis() {
         if (data.shootTimestamp >= 0) {
             long startTimestamp = data.baseTimestamp + data.shootTimestamp;
-            return System.currentTimeMillis() - startTimestamp;
+            return GunTime.nowMillis() - startTimestamp;
         }
         if (data.drawTimestamp >= 0) {
-            return System.currentTimeMillis() - data.drawTimestamp;
+            return GunTime.nowMillis() - data.drawTimestamp;
         }
         return 0L;
     }
@@ -256,7 +261,7 @@ public class LivingEntityShoot {
      * @return 射击冷却
      */
     public long getShootCoolDown() {
-        return getShootCoolDown(System.currentTimeMillis() - data.baseTimestamp);
+        return getShootCoolDown(GunTime.nowMillis() - data.baseTimestamp);
     }
 
     /**

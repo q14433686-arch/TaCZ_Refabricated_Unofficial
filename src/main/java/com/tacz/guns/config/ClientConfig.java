@@ -5,10 +5,14 @@ import com.tacz.guns.config.client.*;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 public class ClientConfig {
+    private static ForgeConfigSpec spec;
+    public static boolean isLoaded() { return spec != null && spec.isLoaded(); }
+
     public static ForgeConfigSpec init() {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
         KeyConfig.init(builder);
         RenderConfig.init(builder);
+        ViewTuningConfig.init(builder);
         ResourceConfig.init(builder);
         SoundConfig.init(builder);
         ZoomConfig.init(builder);
@@ -16,6 +20,7 @@ public class ClientConfig {
         // 挂在本 spec 的 mesh_loader 段下；与 RenderClothConfig / 语言键三方齐平
         // （docs/check_mesh_config_parity.py）。
         MeshyConfig.init(builder);
-        return builder.build();
+        spec = builder.build();
+        return spec;
     }
 }

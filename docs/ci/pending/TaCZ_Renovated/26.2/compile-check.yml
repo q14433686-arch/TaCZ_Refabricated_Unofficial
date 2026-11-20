@@ -1,0 +1,82 @@
+name: compile-check
+
+# ---------------------------------------------------------------------------
+# 【TaCZ_Renovated（NeoForge）26.2 线 · 待上线稿（v4）】
+# 代拟：refab 26.2(main) 侧 arena/01a061a4 会话，2026-09-02。
+# 目标：TaCZ_Renovated 仓库 `26.2` 分支 → 替换 `.github/workflows/compile-check.yml`（本文件全文）。
+#
+# 与本线现役件的差异 = refab 26.2 侧 2026-08-31 的 v4 三点（那边已跑通一个月）：
+#   1) 补主分支 push + pull_request 触发 —— 此前只有 arena/**，PR 合并进 `26.2` 的
+#      合并 commit 从来没人编译过（refab 侧就是这个盲区漏过东西）；
+#   2) 日志回推**只**在 arena/** —— 长期分支不能被 ci-log 提交污染，状态看 Actions 页面即可；
+#   3) concurrency 取消同分支过期 run，省配额。
+# 另外保留本线 26.2 侧已暂存的 paths-ignore（docs/** 与 **/*.md 不改编译结果，白跑 2 分钟）。
+# Java 25 = 本分支 build.gradle 的 java.toolchain.languageVersion。
+# ---------------------------------------------------------------------------
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - 'arena/**'
+      - '26.2'
+    # 防止“日志回推 commit”再次触发本流程造成死循环；文档改动由 consistency 流程守着
+    paths-ignore:
+      - 'build-reports/**'
+      - 'docs/**'
+      - '**/*.md'
+  pull_request:
+    paths-ignore:
+      - 'build-reports/**'
+      - 'docs/**'
+      - '**/*.md'
+  workflow_dispatch:
+
+concurrency:
+  group: compile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: compileJava
+        run: |
+          mkdir -p build-reports
+          echo "commit: ${{ github.sha }}" > build-reports/compile-java.log
+          ./gradlew compileJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
+
+      - name: Push compile log back via contents API
+        # 只在 arena/** 的 push 上回推 —— 长期分支与 PR 不产生 ci-log commit
+        if: always() && github.event_name == 'push' && startsWith(github.ref_name, 'arena/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LOG=build-reports/compile-java.log
+          LINES=$(wc -l < "$LOG")
+          if [ "$LINES" -gt 1000 ]; then
+            { head -n 200 "$LOG"; echo "...[truncated ${LINES} lines total]..."; tail -n 800 "$LOG"; } > /tmp/log-trimmed
+            mv /tmp/log-trimmed "$LOG"
+          fi
+          echo "" >> "$LOG"
+          echo "== job status: ${{ job.status }} ==" >> "$LOG"
+          BRANCH="${{ github.ref_name }}"
+          SHA=$(gh api "repos/${{ github.repository }}/contents/$LOG?ref=$BRANCH" --jq .sha 2>/dev/null || true)
+          ARGS=(-X PUT "repos/${{ github.repository }}/contents/$LOG"
+                -f message="ci-log: compile result (${{ job.status }}) for ${{ github.sha }}"
+                -f branch="$BRANCH"
+                -f content="$(base64 -w0 "$LOG")")
+          if [ -n "$SHA" ]; then ARGS+=(-f sha="$SHA"); fi
+          gh api "${ARGS[@]}" --jq .commit.sha

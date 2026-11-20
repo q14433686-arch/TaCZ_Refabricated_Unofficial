@@ -35,9 +35,9 @@ public class SecondOrderDynamics {
     private float pyd;
     private float px;
 
-    private float target;
+    private volatile float target, sample;
 
-    private boolean stop = false;
+    private volatile boolean stop = false;
 
     /**
      * @param f  Natural frequency
@@ -53,7 +53,7 @@ public class SecondOrderDynamics {
         py = px = x0;
         pyd = 0;
 
-        target = x0;
+        target = sample = x0;
 
         executorService.execute(this::update);
     }
@@ -67,14 +67,7 @@ public class SecondOrderDynamics {
     }
 
     public float get() {
-        // 修正罕见的 NAN 错误
-        if (Float.isNaN(py)) {
-            py = 0;
-        }
-        if (Float.isNaN(pyd)) {
-            pyd = 0;
-        }
-        return py + 0.05f * pyd;
+        return sample;
     }
 
     public void stop() {
@@ -83,26 +76,31 @@ public class SecondOrderDynamics {
 
     private void update() {
         while (!stop) {
-            // 修正罕见的 NAN 错误
-            if (Float.isNaN(py)) {
-                py = 0;
-            }
-            if (Float.isNaN(pyd)) {
-                pyd = 0;
-            }
+            if (com.tacz.guns.util.time.GunTime.shouldTick()) {
+                // 修正罕见的 NAN 错误
+                if (Float.isNaN(py)) {
+                    py = 0;
+                }
+                if (Float.isNaN(pyd)) {
+                    pyd = 0;
+                }
 
-            float t = 0.05f;
-            float xd = (target - px) / t;
-            float y = py + t * pyd;
+                float t = 0.05f;
+                float xd = (target - px) / t;
+                float y = py + t * pyd;
 
-            pyd = pyd + t * (px + k3 * xd - py - k1 * pyd) / k2;
-            px = target;
-            py = y;
+                pyd = pyd + t * (px + k3 * xd - py - k1 * pyd) / k2;
+                px = target;
+                py = y;
+                float next = py + 0.05f * pyd;
+                sample = Float.isFinite(next) ? next : 0f;
+            }
 
             try {
                 Thread.sleep(6);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                return;
             }
         }
     }

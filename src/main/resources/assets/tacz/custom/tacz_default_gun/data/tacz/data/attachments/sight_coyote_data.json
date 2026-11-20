@@ -1,0 +1,6 @@
+{
+  "weight": 0.25,
+  "aim_inaccuracy": {
+    "multiplier": 0.9
+  }
+}

@@ -111,29 +111,6 @@ public final class VoxyScopePipelineCompat {
         return resolveOnce() && !unavailable;
     }
 
-    /**
-     * 主 Voxy 渲染栈当前绑的 Iris 管线是否就是 {@code irisPipeline}。
-     *
-     * <p>这是「绝不能销毁那套 Iris 管线」的判据：Iris 的管线被销毁后，绑着它的
-     * Voxy 栈在下次绘制时会摸到已销毁的 RenderTargets（实机崩溃 2026-09-01）。
-     * 查不出来时返回 {@code false} —— 宁可放行销毁，也不要因为保护性检查本身
-     * 失败而把释放功能整个废掉。</p>
-     */
-    public static boolean isMainStackBoundTo(Object irisPipeline) {
-        if (irisPipeline == null) {
-            return false;
-        }
-        try {
-            Object voxySystem = com.tacz.guns.compat.voxy.VoxyCompat.renderSystem();
-            if (voxySystem == null || !resolveOnce() || unavailable) {
-                return false;
-            }
-            return fPipeline.get(voxySystem) == irisPipeline;
-        } catch (Throwable t) {
-            return false;
-        }
-    }
-
     /** 第二套渲染栈是否已经为这个 {@code VoxyRenderSystem} 建好且仍然有效。 */
     public static boolean isBuiltFor(Object voxySystem) {
         if (scopePipeline == null || voxySystem == null || builtForSystem != voxySystem) {
@@ -212,6 +189,41 @@ public final class VoxyScopePipelineCompat {
      *
      * <p>查不出来时返回 {@code true}（当作已绑）：宁可不建，也不能冒险去撞那个异常。
      */
+    /**
+     * 【释放前的保险带 —— 05170 实机 ESC 崩溃 d3f0fdc 移植】这个 Iris 管线上
+     * 是否绑着一个<b>不是我们第二套栈</b>的 Voxy 管线。
+     *
+     * <p>正常情况下瞄具管线的 voxy 数据要么为空、要么绑的是我们自己建的第二套
+     * （{@code scopePipeline}）。若绑的是别的 —— 那就是 Voxy 的<b>主</b>渲染栈
+     * 在某个没被闸住的重建窗口里绑了上来（05170 实机链条：预热窗口的
+     * allChanged 漏网 ⇒ Voxy 全量重建绑到瞄具管线）。这时销毁瞄具管线 =
+     * 主画面下一帧在 Voxy 里崩 "Tried to use destroyed RenderTargets"。
+     * 判不出来时返回 true（宁可不释放，也不能销毁别人还在用的管线）。</p>
+     */
+    public static boolean isForeignVoxyBoundTo(Object irisPipeline) {
+        if (irisPipeline == null) {
+            return false;
+        }
+        try {
+            Class<?> getData = Class.forName("me.cortex.voxy.client.iris.IGetIrisVoxyPipelineData");
+            if (!getData.isInstance(irisPipeline)) {
+                return false;
+            }
+            Object data = getData.getMethod("voxy$getPipelineData").invoke(irisPipeline);
+            if (data == null) {
+                return false;
+            }
+            Object bound = data.getClass().getField("thePipeline").get(data);
+            return bound != null && bound != scopePipeline;
+        } catch (Throwable t) {
+            // Voxy 没装时 Class.forName 直接抛 —— 没有 Voxy 就没有这种绑定，放行。
+            if (!FabricLoader.getInstance().isModLoaded("voxy")) {
+                return false;
+            }
+            return true;
+        }
+    }
+
     private static boolean irisDataAlreadyBound() {
         try {
             Class<?> iris = Class.forName("net.irisshaders.iris.Iris");

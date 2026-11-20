@@ -1,5 +1,6 @@
 package com.tacz.guns.entity.shooter;
 
+import com.tacz.guns.util.time.GunTime;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
@@ -80,8 +81,9 @@ public class LivingEntityBolt {
         if (noAmmo) {
             return;
         }
-        data.boltTimestamp = System.currentTimeMillis();
+        data.boltTimestamp = GunTime.nowMillis();
         data.isBolting = iGun.startBolt(data, currentGunItem, shooter);
+        if (data.isBolting && gunIndex.getGunData().isForceAimExitOnBolt()) data.isAiming = false;
     }
 
     public void tickBolt() {

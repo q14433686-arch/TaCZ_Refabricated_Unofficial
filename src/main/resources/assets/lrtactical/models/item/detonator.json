@@ -1,0 +1,7 @@
+{
+  "_comment": "Placeholder model for the remote detonator. The original LRTactical art assets are All Rights Reserved and are not shipped in this port.",
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "minecraft:item/redstone"
+  }
+}

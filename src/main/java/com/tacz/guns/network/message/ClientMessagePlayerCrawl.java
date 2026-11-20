@@ -35,7 +35,7 @@ public class ClientMessagePlayerCrawl implements CustomPacketPayload {
     }
 
     public void handle(ServerPlayer player, PacketSender responseSender) {
-        if (!SyncConfig.ENABLE_CRAWL.get()) {
+        if (isCrawl && !SyncConfig.ENABLE_CRAWL.get()) {
             return;
         }
         IGunOperator.fromLivingEntity(player).crawl(isCrawl);

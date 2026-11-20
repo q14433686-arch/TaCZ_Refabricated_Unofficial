@@ -13,7 +13,6 @@ import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.bedrock.ModelRendererWrapper;
 import com.tacz.guns.client.model.functional.*;
 import com.tacz.guns.client.model.listener.model.ModelAdditionalMagazineListener;
-import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.resource.pojo.display.gun.TextShow;
 import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
 import com.tacz.guns.client.resource.pojo.model.BedrockVersion;
@@ -32,6 +31,7 @@ import static com.tacz.guns.client.model.GunModelConstant.*;
 public class BedrockGunModel extends BedrockAnimatedModel {
     protected final EnumMap<AttachmentType, List<BedrockPart>> refitAttachmentViewPath = Maps.newEnumMap(AttachmentType.class);
     private final EnumMap<AttachmentType, ItemStack> currentAttachmentItem = Maps.newEnumMap(AttachmentType.class);
+    private @Nullable ImpactMarkerRender impactMarker;
     private final Set<String> adapterToRender = Sets.newHashSet();
     private final ArrayList<ShellRender> shellRenderList = new ArrayList<>();
 
@@ -141,8 +141,9 @@ public class BedrockGunModel extends BedrockAnimatedModel {
         ModelRendererWrapper rendererWrapper = modelMap.get(SHELL_ORIGIN_NODE);
         int i = 1;
         while (rendererWrapper != null) {
-            ShellRender shellRender = new ShellRender(this);
-            this.setFunctionalRenderer(rendererWrapper.getModelRenderer().name, bedrockPart -> shellRender);
+            String shellNodeName = rendererWrapper.getModelRenderer().name;
+            ShellRender shellRender = new ShellRender(this, shellNodeName, shellRenderList.size());
+            this.setFunctionalRenderer(shellNodeName, bedrockPart -> shellRender);
             shellRenderList.add(shellRender);
             rendererWrapper = modelMap.get(SHELL_ORIGIN_NODE_PREFIX + i);
             i++;
@@ -241,8 +242,8 @@ public class BedrockGunModel extends BedrockAnimatedModel {
      * 添加枪械自定义的文本显示
      */
     public void setTextShowList(Map<String, TextShow> textShowList) {
-        // 枪身文字（非瞄具 ocular 子树）不走目镜掩码：vanilla 管线按场景内容正常处理。
-        textShowList.forEach((name, textShow) -> this.setFunctionalRenderer(name, bedrockPart -> new TextShowRender(this, textShow, currentGunItem, false)));
+        impactMarker = ImpactMarkerRender.of(getPath(modelMap.get(ImpactMarkerRender.NODE)), textShowList);
+        textShowList.forEach((name, textShow) -> this.setFunctionalRenderer(name, bedrockPart -> new TextShowRender(this, textShow, currentGunItem)));
     }
 
     /** Prepares all stack-dependent visibility state before an immediate render or snapshot extraction. */
@@ -253,6 +254,7 @@ public class BedrockGunModel extends BedrockAnimatedModel {
         }
         currentGunItem = gunItem;
         currentExtendMagLevel = 0;
+        renderMount = false;
         adapterToRender.clear();
         // 更新配件物品的缓存，以供渲染使用
         for (AttachmentType type : AttachmentType.values()) {
@@ -298,15 +300,17 @@ public class BedrockGunModel extends BedrockAnimatedModel {
     }
 
     /**
-     * First-person overload carrying the gun texture so the body can switch to an aperture-clipped
-     * clone after (and only after) the scope attachment has queued this frame's depth mask.
+     * 带贴图参数的提交：枪身可能要在「开镜当帧」换成被目镜掩码裁剪的 RenderType，
+     * 而裁剪版按贴图构造（见 {@code ScopeBodyRenderTypes#clipForViewmodel}）。
+     *
+     * @param gunTexture 枪身贴图；为 {@code null} 时不做镜内裁剪（回退旧行为）
      */
     public void submit(PoseStack poseStack,
                        ItemStack gunItem,
                        ItemDisplayContext transformType,
                        SubmitNodeCollector collector,
                        RenderType renderType,
-                       @Nullable Identifier gunTexture,
+                       @javax.annotation.Nullable net.minecraft.resources.Identifier gunTexture,
                        int light,
                        int overlay) {
         if (!prepareRenderState(gunItem)) {
@@ -316,9 +320,9 @@ public class BedrockGunModel extends BedrockAnimatedModel {
             BeamRenderer.renderLaserBeam(gunItem, poseStack, transformType, laserBeamPaths, collector);
         }
 
-        // The scope must submit first: depthAperture() marks whether this exact viewmodel has an
-        // active ocular. Gun body and later functional attachments can then select the outside-mask
-        // pipeline without importing the unrelated 26.2 off-screen-mask architecture.
+        // A6 baseline: submit the scope as normal geometry without raw-GL stencil clipping. This
+        // keeps the scope body/ring/reticle visible on both backends; a PIP implementation can
+        // replace this ordered fallback later without blocking the core gun model.
         ItemStack scope = currentAttachmentItem.get(AttachmentType.SCOPE);
         if (scopePosPath != null && scope != null && !scope.isEmpty()) {
             PoseStack scopePose = new PoseStack();
@@ -331,11 +335,17 @@ public class BedrockGunModel extends BedrockAnimatedModel {
                     transformType, collector, light, overlay);
         }
 
-        RenderType bodyType = gunTexture == null
-                ? renderType
-                : ScopeRenderTypes.clipForViewmodel(renderType, gunTexture,
-                        transformType != null && transformType.firstPerson());
-        super.submit(poseStack, transformType, collector, bodyType, light, overlay);
+        // 【镜内裁切 · 枪身】这一步必须排在瞄具提交之后：是否裁剪取决于
+        // 「本帧有没有目镜几何登记进掩码清单」，而登记发生在上面瞄具提交的内部。
+        // （调用方 wrapper 在调本方法之前就组好了 renderType，那时清单还是空的，
+        //  所以裁剪判断只能在这里做，不能上提到 wrapper。）
+        super.submit(poseStack, transformType, collector,
+                com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.clipForViewmodel(
+                        renderType, gunTexture, transformType != null && transformType.firstPerson()),
+                light, overlay);
+        com.tacz.guns.client.particle.AnimationParticleDispatcher.submit(gunItem, this, poseStack, transformType, collector, light);
+        if (impactMarker != null && transformType != null && transformType.firstPerson())
+            impactMarker.submit(gunItem, poseStack, collector, false, overlay);
     }
 
 

@@ -1,0 +1,29 @@
+{
+  "_comment": [
+    "把 lrtactical:mob_effect/blinded 这个精灵指向【原版自己的】 blindness 贴图。",
+    "",
+    "为什么放在 assets/minecraft/atlases/ 下而不是 assets/lrtactical/：",
+    "SpriteSourceList#load 用的是 ResourceManager#getResourceStack（字节码确认），",
+    "它会把所有资源包里【同一个 id】的 atlas 定义全部读出来并 addAll 合并。",
+    "GUI 图集的 id 固定是 minecraft:gui，所以要往里追加 source 就必须用这个路径。",
+    "这是原版支持的合并机制，不会覆盖掉 vanilla 自带的那两条 directory source。",
+    "",
+    "为什么用 single 而不是直接放一张我们自己的 png：",
+    "single 的 codec 有 resource / sprite 两个字段（字节码确认），",
+    "run() 里 output.add(spriteId.orElse(resourceId), resource) ——",
+    "也就是可以【读取原版的贴图文件、但注册成我们自己的精灵名】。",
+    "这样既满足『致盲图标直接复用失明图标』，又不必把 Mojang 的美术资源",
+    "复制进本仓库再分发。原版贴图缺失时只会 warn 一行 Missing sprite，不会崩。",
+    "",
+    "耳鸣（deafened）不在这里 —— 它用我们自己生成的贴图，",
+    "走 assets/lrtactical/textures/mob_effect/deafened.png，",
+    "由 vanilla gui.json 里那条 prefix=mob_effect/ 的 directory source 自动收录。"
+  ],
+  "sources": [
+    {
+      "type": "minecraft:single",
+      "resource": "minecraft:mob_effect/blindness",
+      "sprite": "lrtactical:mob_effect/blinded"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 package com.tacz.guns.mixin.client.voxy;
 
 import com.tacz.guns.GunMod;
-import com.tacz.guns.client.render.scope.ScopePipRerender;
+import com.tacz.guns.client.render.scope.ScopePipRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -53,7 +53,7 @@ public abstract class VoxyRenderSystemMixin {
 
     @Inject(method = "renderOpaque", at = @At("HEAD"), cancellable = true, require = 0)
     private void tacz$skipVoxyDrawInIsolatedScopePass(CallbackInfo ci) {
-        if (!ScopePipRerender.shouldSuppressVoxyDraw()) {
+        if (!ScopePipRenderer.shouldSuppressVoxyDraw()) {
             return;
         }
         if (!tacz$logged) {

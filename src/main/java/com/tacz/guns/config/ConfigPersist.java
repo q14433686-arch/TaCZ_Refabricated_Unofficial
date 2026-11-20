@@ -132,6 +132,16 @@ public final class ConfigPersist {
         }
     }
 
+    /** 仅落盘客户端配置（比如快捷键或游戏内瞄具切换）。 */
+    public static void saveClient() {
+        String clientName = fileName(ModConfig.Type.CLIENT);
+        for (Target target : TARGETS) {
+            if (clientName.equals(target.label())) {
+                save(target);
+            }
+        }
+    }
+
     /** 把登记过的所有 spec 落盘。单个文件失败只记日志并跳过，不连带拖垮另一份。 */
     public static void saveAll() {
         if (TARGETS.isEmpty()) {

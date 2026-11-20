@@ -1,0 +1,28 @@
+{
+  "ammo": "tacz:762x39",
+  "bolt": "closed_bolt",
+  "fire_mode": [
+    "semi"
+  ],
+  "allow_attachment_types": [
+    "muzzle"
+  ],
+  "builtin_attachments": {
+    "muzzle": "tacz:muzzle_brake_cyclone_d2"
+  },
+  "exclusive_attachments": {
+    "tacz:muzzle_brake_cyclone_d2": {
+      "silence": {
+        "use_silence_sound": true,
+        "distance_addend": 0
+      }
+    },
+    "port_test:less_flash": {
+      "flash_hider": 0.0
+    },
+    "port_test:more_flash": {
+      "flash_hider": 1.2,
+      "smoke_hider": 0.0
+    }
+  }
+}

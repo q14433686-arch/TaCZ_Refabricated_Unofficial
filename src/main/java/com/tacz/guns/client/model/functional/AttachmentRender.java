@@ -8,9 +8,11 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.IFunctionalSubmitter;
-import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.renderer.item.AttachmentItemRenderer;
 import com.tacz.guns.util.RenderDistance;
+import com.tacz.guns.util.SlotAdapterHelper;
+import com.tacz.guns.client.resource.index.RefitOptionModel;
+import org.joml.Vector3f;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -47,20 +49,41 @@ public class AttachmentRender implements IFunctionalSubmitter {
         TimelessAPI.getClientAttachmentIndex(attachmentId).ifPresentOrElse(attachmentIndex -> {
             BedrockAttachmentModel model = attachmentIndex.getAttachmentModel();
             Identifier texture = attachmentIndex.getModelTexture();
+            var variant = TimelessAPI.getClientAttachmentVariantIndex(attachmentItem).orElse(null);
+            var adapterId = SlotAdapterHelper.getEffectiveSlotAdapter(gunItem, iAttachment.getType(attachmentItem), attachmentId);
+            if (adapterId != null) TimelessAPI.getClientSlotAdapterIndex(adapterId).ifPresent(adapter -> {
+                submitOption(adapter, ItemStack.EMPTY, gunItem, poseStack, transformType, collector, light, overlay);
+                applyMountOffset(poseStack, adapter.getMountOffset());
+            });
+            boolean replaced = false;
+            if (variant != null) {
+                if (variant.isOverlayMode()) {
+                    submitOption(variant, attachmentItem, gunItem, poseStack, transformType, collector, light, overlay);
+                    applyMountOffset(poseStack, variant.getMountOffset());
+                } else if (variant.getAttachmentModel() != null && variant.getModelTexture() != null) {
+                    model = variant.getAttachmentModel();
+                    texture = variant.getModelTexture();
+                    applyMountOffset(poseStack, variant.getMountOffset());
+                    replaced = true;
+                }
+            }
             if (model != null && texture != null) {
                 Pair<BedrockAttachmentModel, Identifier> lodModel = attachmentIndex.getLodModel();
-                if (lodModel != null && !RenderDistance.inRenderHighPolyModelDistance(poseStack) && !transformType.firstPerson()) {
+                if (!replaced && lodModel != null && !RenderDistance.inRenderHighPolyModelDistance(poseStack) && !transformType.firstPerson()) {
                     model = lodModel.getLeft();
                     texture = lodModel.getRight();
                 }
-                RenderType renderType = RenderTypes.entityCutout(texture);
-                // The scope itself reaches this call before it marks the aperture, so it keeps its
-                // dedicated depth-body sequence. Non-scope attachments are traversed afterwards and
-                // use the same screen-space outside mask as the gun body when the aperture is active.
-                renderType = ScopeRenderTypes.clipForViewmodel(renderType, texture,
-                        transformType != null && transformType.firstPerson());
+                // 多传一个 texture：瞄具镜身可能要换成「被目镜掩码裁剪」的 RenderType，
+                // 而那需要按贴图构造。model 内部会自行判断要不要用（见 resolveBodyRenderType）。
+                RenderType bodyType = RenderTypes.entityCutout(texture);
+                // 【镜内裁切 · 非瞄具配件】「透视瞄具」成立的条件是目镜投影内一切视模像素
+                // 都 discard（颜色+深度都不写），否则镜片里看得见护木/激光盒等穿过镜面。
+                // 瞄具自身的镜身裁剪在 BedrockAttachmentModel 内部处理；这里给其余配件
+                // （握把/枪口/激光盒…）接上同一张掩码。不满足条件时原样返回 entityCutout。
+                bodyType = com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.clipForViewmodel(
+                        bodyType, texture, transformType.firstPerson());
                 model.submit(attachmentItem, gunItem, poseStack, transformType, collector,
-                        renderType, texture, light, overlay);
+                        bodyType, texture, light, overlay);
             }
         }, () -> collector.submitCustomGeometry(
                 poseStack,
@@ -69,6 +92,22 @@ public class AttachmentRender implements IFunctionalSubmitter {
                         poseStack, buffer, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F
                 )
         ));
+    }
+
+    private static void applyMountOffset(PoseStack pose, Vector3f offset) {
+        if (offset != null) pose.translate(offset.x / 16f, -offset.y / 16f, offset.z / 16f);
+    }
+
+    private static void submitOption(RefitOptionModel option, ItemStack part, ItemStack gun, PoseStack pose,
+                                     ItemDisplayContext context, SubmitNodeCollector collector, int light, int overlay) {
+        var model = option.getModel();
+        var texture = option.getModelTexture();
+        if (model == null || texture == null) return;
+        var body = com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.clipForViewmodel(
+                RenderTypes.entityCutout(texture), texture, context.firstPerson());
+        pose.pushPose();
+        model.submit(part, gun, pose, context, collector, body, texture, light, overlay);
+        pose.popPose();
     }
 
     @Override

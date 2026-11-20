@@ -42,11 +42,12 @@ public final class PolyMeshSupport {
         return Minecraft.getInstance().getResourceManager().getResource(toGeoPath(modelId)).isPresent();
     }
 
-    private static final Map<Identifier, Map<String, List<PolyMesh>>> PARSE_CACHE = new ConcurrentHashMap<>();
+    private static volatile Map<Identifier, Map<String, List<PolyMesh>>> parseCache = new ConcurrentHashMap<>();
     private static final Set<Identifier> LOGGED_GEO = ConcurrentHashMap.newKeySet();
 
     public static void invalidateParseCache() {
-        PARSE_CACHE.clear();
+        // A parse already in flight can only publish into its old map.
+        parseCache = new ConcurrentHashMap<>();
         LOGGED_GEO.clear();
     }
 
@@ -57,14 +58,8 @@ public final class PolyMeshSupport {
 
     @Nullable
     public static PolyMeshModel load(Identifier geoPath, Supplier<List<IPolyMeshBone>> rootChildren) {
-        Map<String, List<PolyMesh>> meshMap = PARSE_CACHE.get(geoPath);
-        if (meshMap == null) {
-            meshMap = parseMeshMap(geoPath);
-            if (meshMap == null) {
-                return null;
-            }
-            PARSE_CACHE.put(geoPath, meshMap);
-        }
+        var meshMap = parseCache.computeIfAbsent(geoPath, PolyMeshSupport::parseMeshMap);
+        if (meshMap == null || meshMap.isEmpty()) return null;
         return new PolyMeshModel(dummyRoot(rootChildren), meshMap);
     }
 

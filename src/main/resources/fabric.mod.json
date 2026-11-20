@@ -6,10 +6,15 @@
     "taczmeshloader"
   ],
   "version": "${version}",
-  "name": "[UNOFFICIAL] TaCZ Refabricated (26.1.2 R3-hotfix4)",
-  "description": "An unofficial Fabric port of Timeless & Classics Guns: Zero, based on upstream 1.1.8-hotfix. R3 for Minecraft 26.1.2 adds the depth-aperture scope picture-in-picture (PIP), the mesh-GPU world/hand paths under shader packs (on by default), and in-scope ammo-counter text; R2 added a replaceable ammunition source API, stable gameplay behavior hooks, multi-block workbench Carry On compatibility, and built-in JEI/REI Ammo Query integration with automatic reload bridge. The R3-hotfix4 build includes the R3-hotfix2 first-person arm zRot correction, bullet-hole quad orientation fixes, multi-block workbench drop fixes, statue item-drop handling, and named target profile rendering through the vanilla asynchronous skin cache. It is not affiliated with or endorsed by the TACZ Dev Team. The version keeps 1.1.8 as its SemVer core and uses '+fabric.26.1.2.R3-hotfix4' build metadata so existing pack version requirements continue to work.",
+  "name": "[UNOFFICIAL] TaCZ Refabricated (26.1.2 R1)",
+  "description": "Unofficial Fabric port of Timeless & Classics Guns: Zero for Minecraft ${minecraft_version}. Includes the TaCZ 1.2.0 feature and default-pack backport, with 26.1.2-specific gun-pack conversion, optics and thermal rendering. Compatibility with third-party packs depends on their data, scripts and version constraints. Not affiliated with or endorsed by the TACZ Dev Team. Build: ${version}.",
   "authors": [
     "Sh1roCu"
+  ],
+  "contributors": [
+    "TACZ Dev Team (upstream Timeless & Classics Guns: Zero)",
+    "LesRaisins (LRTactical, ported portions)",
+    "VellEagle (TacZ Mesh Loader, ported portions)"
   ],
   "contact": {},
   "license": "GPL3 / CC BY-NC-ND 4.0",
@@ -53,17 +58,13 @@
   ],
   "accessWidener": "tacz.accesswidener",
   "depends": {
-    "fabricloader": ">=${loader_version}",
-    "fabric-api": ">=0.155.2",
-    "minecraft": "${minecraft_version}",
+    "fabricloader": ">=0.19.3",
+    "fabric-api": "*",
+    "minecraft": "26.1.2",
     "java": ">=25",
     "forgeconfigapiport": ">=26.1.5"
   },
   "suggests": {
-    "carryon": ">=2.10.0",
-    "controllable": ">=0.26.0",
-    "shouldersurfing": ">=5.0.0",
-    "iris": ">=1.11.2",
-    "sodium": ">=0.9.1"
+    "carryon": ">=2.10.0"
   }
 }

@@ -50,7 +50,7 @@ public class GuiMixin {
             return;
         }
 
-        RenderCrosshairEvent.onRenderOverlay(context, Minecraft.getInstance().getWindow());
+        RenderCrosshairEvent.onRenderOverlay(context, Minecraft.getInstance().getWindow(), deltaTracker.getGameTimeDeltaPartialTick(true));
 
         ci.cancel();
     }

@@ -146,11 +146,18 @@ public final class TaczDynamicItemModel implements ItemModel {
             state.setAnimated();
         }
 
-        RenderArgument argument = new RenderArgument(stack.copy(), displayContext);
         layer.setExtents(EXTENTS);
         layer.setLocalTransform(this.transformation);
-        layer.setupSpecialModel(SPECIAL_RENDERER, argument);
         this.properties.applyToLayer(layer, displayContext);
+
+        Identifier sprite = DroppedGunSprite.select(stack, displayContext, owner);
+        if (sprite != null) {
+            // Freeze only the appearance, not the entity, a mutable stack, or a high-detail rig.
+            layer.setupSpecialModel(DroppedGunSprite.INSTANCE, sprite);
+            state.appendModelIdentityElement(sprite);
+            return;
+        }
+        layer.setupSpecialModel(SPECIAL_RENDERER, new RenderArgument(stack.copy(), displayContext));
 
         // 26.2 修复：物品栏图标空白的根因。
         //
@@ -200,6 +207,10 @@ public final class TaczDynamicItemModel implements ItemModel {
     public record RenderArgument(ItemStack stack, ItemDisplayContext displayContext) {
     }
 
+    static void visitExtents(Consumer<Vector3fc> output) {
+        for (var extent : EXTENTS.get()) output.accept(extent);
+    }
+
     private static final class TaczSpecialRenderer implements SpecialModelRenderer<RenderArgument> {
         @Override
         public void submit(RenderArgument argument,
@@ -218,9 +229,7 @@ public final class TaczDynamicItemModel implements ItemModel {
 
         @Override
         public void getExtents(Consumer<Vector3fc> output) {
-            for (Vector3fc extent : EXTENTS.get()) {
-                output.accept(extent);
-            }
+            visitExtents(output);
         }
 
         @Override

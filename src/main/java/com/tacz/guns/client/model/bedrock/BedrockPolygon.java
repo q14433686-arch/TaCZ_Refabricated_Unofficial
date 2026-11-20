@@ -7,6 +7,16 @@ public class BedrockPolygon {
     public final BedrockVertex[] vertices;
     public final Vector3f normal;
 
+    // Public readers historically see six non-null directional polygons, each with four vertices.
+    // Distinguish the degenerate omitted-face placeholder from a real zero-area UV tile.
+    private static final BedrockVertex ZERO = new BedrockVertex(0, 0, 0, 0, 0);
+    private static final BedrockVertex[] OMITTED = { ZERO, ZERO, ZERO, ZERO };
+    BedrockPolygon(Direction missingDirection) {
+        vertices = OMITTED;
+        normal = missingDirection.step();
+    }
+    public boolean isPresent() { return vertices != OMITTED; }
+
     public BedrockPolygon(BedrockVertex[] vertices, float u1, float v1, float u2, float v2, float texWidth, float texHeight, boolean mirror, Direction direction) {
         this.vertices = vertices;
         float f = 0.0F / texWidth;

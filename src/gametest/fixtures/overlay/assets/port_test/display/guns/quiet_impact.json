@@ -1,0 +1,5 @@
+{
+  "model": "tacz:gun/ak47_geo",
+  "texture": "tacz:gun/uv/ak47",
+  "ammo": { "enable_bullet_hole": false, "hit_surface_particles": [] }
+}

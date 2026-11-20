@@ -1,0 +1,7 @@
+{
+  "_comment": "26.2 alignment: upstream 1.21.1 used \"parent\": \"builtin/entity\", which carries NO display transforms. 26.2 removed builtin/entity, and porting it to minecraft:item/generated silently inherited that model's firstperson_righthand transform (rotation [0,-90,25], translation [1.13,3.2,1.13], scale 0.68). ItemStackRenderState.LayerRenderState#applyTransform applies itemTransform BEFORE the special renderer runs, so those vanilla offsets were stacked on top of TACZ's own first-person camera transform -> the held gun was rotated/offset away from the camera. A parentless model reproduces builtin/entity's identity transforms.",
+  "gui_light": "front",
+  "textures": {
+    "particle": "minecraft:item/barrier"
+  }
+}

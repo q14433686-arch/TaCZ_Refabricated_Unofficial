@@ -1,5 +1,7 @@
 package com.tacz.guns.entity;
 
+import com.mojang.authlib.GameProfile;
+import com.tacz.guns.advancement.TargetHitTrigger;
 import cn.sh1rocu.tacz.api.LogicalSide;
 import cn.sh1rocu.tacz.api.extension.IMinecart;
 import com.tacz.guns.api.entity.ITargetEntity;
@@ -43,7 +45,15 @@ public class TargetMinecart extends AbstractMinecart implements ITargetEntity, I
             .clientTrackingRange(8)
             .build(ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath("tacz", "target_minecart")));
 
-    private @Nullable ResolvableProfile resolvableProfile = null;
+    /**
+     * 标靶矿车的「主人档案」，由自定义名派生（名字就是皮肤名）。
+     *
+     * <p>与原版头颅一致地使用 {@link ResolvableProfile}：允许「只有名字」，服务端不解析。
+     * 缓存 + 记录派生的名字，避免每帧都重建（渲染线程每帧读一次）。</p>
+     */
+    private @Nullable ResolvableProfile ownerProfile = null;
+    /** {@link #ownerProfile} 是由哪个自定义名算出来的；名字一变就重建。 */
+    private @Nullable Component ownerProfileSource = null;
 
     public TargetMinecart(EntityType<TargetMinecart> type, Level world) {
         super(type, world);
@@ -68,6 +78,7 @@ public class TargetMinecart extends AbstractMinecart implements ITargetEntity, I
             this.markHurt();
             this.setDamage(10);
             double dis = this.position().distanceTo(sourceEntity.position());
+            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) TargetHitTrigger.INSTANCE.trigger(serverPlayer, dis);
             player.sendSystemMessage(Component.translatable("message.tacz.target_minecart.hit", String.format("%.1f", damage), String.format("%.2f", dis)));
             // 原版的声音传播距离由 volume 决定
             // 当声音大于 1 时，距离为 = 16 * volume
@@ -132,18 +143,48 @@ public class TargetMinecart extends AbstractMinecart implements ITargetEntity, I
         return itemStack;
     }
 
+    /** Partial identity for integrations. The native skin cache, not this getter, resolves textures. */
+    public @Nullable GameProfile getGameProfile() {
+        var profile = getOwnerProfile();
+        return profile == null ? null : profile.partialProfile();
+    }
+
+    /**
+     * 取标靶矿车的主人档案（皮肤名）。没有自定义名时返回 {@code null}。
+     *
+     * <h2>26.2 必现崩渲染线程（2026-10-27 修复）</h2>
+     * <p>这里是 {@code new GameProfile(null, 自定义名)}。authlib 9 的 {@code GameProfile}
+     * 是 record，id/name/properties 全部 {@code Objects.requireNonNull} ⇒ 改名过的标靶矿车
+     * 必抛 NPE。而本方法<b>在客户端每帧、在渲染线程上</b>被
+     * {@code TargetMinecartRenderer#extractRenderState} 调用，于是不是「偶尔崩」，
+     * 是一靠近就<b>把整个渲染线程崩掉</b>（游戏直接卡死/崩溃）。</p>
+     * <p>现在返回原版 {@link ResolvableProfile}：构造它不需要 UUID，也不会校验/联网；
+     * 真正的皮肤解析交给客户端的 {@code PlayerSkinRenderCache} 异步完成，
+     * 解析不到就是默认皮肤 —— 与原版头颅同一套机制。</p>
+     */
     @Nullable
-    public ResolvableProfile getResolvableProfile() {
+    public ResolvableProfile getOwnerProfile() {
         Component customName = this.getCustomName();
         if (customName == null) {
-            this.resolvableProfile = null;
+            this.ownerProfile = null;
+            this.ownerProfileSource = null;
             return null;
         }
-        String name = customName.getString();
-        if (this.resolvableProfile == null || this.resolvableProfile.name().filter(name::equals).isEmpty()) {
-            this.resolvableProfile = ResolvableProfile.createUnresolved(name);
+        // 名字没变就复用缓存：本方法在渲染线程每帧调用，不能每次都新建对象。
+        if (this.ownerProfile == null || !customName.equals(this.ownerProfileSource)) {
+            String name = customName.getString();
+            this.ownerProfile = name.isEmpty() ? null : ResolvableProfile.createUnresolved(name);
+            this.ownerProfileSource = customName;
         }
-        return this.resolvableProfile;
+        return this.ownerProfile;
+    }
+
+    @Override
+    public void setCustomName(@Nullable Component name) {
+        // 自定义名变了，派生的档案必须作废，否则换名字后皮肤不跟着变。
+        this.ownerProfile = null;
+        this.ownerProfileSource = null;
+        super.setCustomName(name);
     }
 
     @Override
