@@ -200,19 +200,19 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
         return data;
     }
 
-    private void resolveAttachmentTags(Map<Identifier, String> data) {
-        for (Map.Entry<Identifier, String> entry : data.entrySet()) {
-            List<String> tags = CommonAssetsManager.GSON.fromJson(entry.getValue(), new TypeToken<>() {
-            });
-            if (entry.getKey().getPath().startsWith("allow_attachments/") && entry.getKey().getPath().length() > 18) {
-                Identifier gunId = entry.getKey().withPath(entry.getKey().getPath().substring(18));
-                allowAttachmentTags.computeIfAbsent(gunId, (v) -> new HashSet<>()).addAll(tags);
-            } else {
-                attachmentTags.computeIfAbsent(entry.getKey(), (v) -> new HashSet<>()).addAll(tags);
-            }
+    private void resolveAttachmentTag(Identifier id, String json) {
+        List<String> tags = CommonAssetsManager.GSON.fromJson(json, new TypeToken<>() {});
+        if (tags == null || tags.stream().anyMatch(Objects::isNull)) {
+            throw new JsonParseException("Invalid attachment tag list: " + id);
+        }
+        Set<String> ordered = Collections.unmodifiableSet(new LinkedHashSet<>(tags));
+        String prefix = "allow_attachments/";
+        if (id.getPath().startsWith(prefix) && id.getPath().length() > prefix.length()) {
+            allowAttachmentTags.put(id.withPath(id.getPath().substring(prefix.length())), ordered);
+        } else {
+            attachmentTags.put(id, ordered);
         }
     }
-
 
     private void fromNetwork(DataType type, Map<Identifier, String> data) {
         for (Map.Entry<Identifier, String> entry : data.entrySet()) {
@@ -224,7 +224,7 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
                     case ATTACHMENT_DATA -> attachmentData.put(entry.getKey(), parseAttachmentData(entry.getValue()));
                     case ATTACHMENT_INDEX ->
                             attachmentIndex.put(entry.getKey(), parse(entry.getValue(), CommonAttachmentIndex.class));
-                    case ATTACHMENT_TAGS -> resolveAttachmentTags(data);
+                    case ATTACHMENT_TAGS -> resolveAttachmentTag(entry.getKey(), entry.getValue());
                     case BLOCK_INDEX -> blockIndex.put(entry.getKey(), parse(entry.getValue(), CommonBlockIndex.class));
                     case RECIPE_FILTER -> recipeFilter.put(entry.getKey(), parse(entry.getValue(), RecipeFilter.class));
                     // 第 12 轮：接上此前只声明未接线的 RECIPES 通道

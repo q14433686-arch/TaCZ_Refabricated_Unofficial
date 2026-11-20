@@ -44,7 +44,11 @@ public class PathPackResources extends AbstractPackResources {
      * @param source    the root path of the pack. This needs to point to the folder that contains "assets" and/or "data", not the asset folder itself!
      */
     public PathPackResources(String packId, boolean isBuiltin, final Path source) {
-        super(new PackLocationInfo(packId, Component.literal(packId), PackSource.DEFAULT, Optional.empty()));
+        this(packId, Component.literal(packId), isBuiltin, source);
+    }
+
+    public PathPackResources(String packId, Component title, boolean isBuiltin, Path source) {
+        super(new PackLocationInfo(packId, title, PackSource.DEFAULT, Optional.empty()));
         this.source = source;
     }
 

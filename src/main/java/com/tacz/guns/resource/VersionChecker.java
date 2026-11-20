@@ -5,10 +5,7 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import com.tacz.guns.GunMod;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
-import net.fabricmc.loader.api.metadata.version.VersionPredicate;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
@@ -56,7 +53,7 @@ public final class VersionChecker {
         try (InputStream stream = Files.newInputStream(packInfoFilePath)) {
             Info info = CommonAssetsManager.GSON.fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), Info.class);
             return modVersionAllMatch(info);
-        } catch (IOException | JsonSyntaxException | JsonIOException | VersionParsingException exception) {
+        } catch (IOException | JsonSyntaxException | JsonIOException | VersionParsingException | IllegalArgumentException exception) {
             GunMod.LOGGER.warn(MARKER, "Failed to read info json: {}", packInfoFilePath);
             GunMod.LOGGER.warn(exception.getMessage());
         }
@@ -83,7 +80,7 @@ public final class VersionChecker {
                     return false;
                 }
             } catch (IOException | JsonSyntaxException | JsonIOException |
-                     VersionParsingException exception) {
+                     VersionParsingException | IllegalArgumentException exception) {
                 GunMod.LOGGER.warn(MARKER, "Failed to read info json: {}", path);
                 GunMod.LOGGER.warn(exception.getMessage());
             }
@@ -92,27 +89,7 @@ public final class VersionChecker {
     }
 
     private static boolean modVersionAllMatch(Info info) throws VersionParsingException {
-        HashMap<String, String> dependencies = info.getDependencies();
-        for (String modId : dependencies.keySet()) {
-            if (!modVersionMatch(modId, dependencies.get(modId))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static boolean modVersionMatch(String modId, String version) throws VersionParsingException {
-        VersionPredicate versionRange = VersionPredicate.parse(version);
-        if ("lrtactical".equals(modId)) {
-            // LRTactical is bundled into this 26.2 test build, not shipped as a separate Fabric mod jar.
-            // Old-format packs may still declare a dependency on mod id "lrtactical"; satisfy that
-            // check with the upstream LRTactical version this port is based on.
-            return versionRange.test(Version.parse("0.3.0"));
-        }
-        return FabricLoader.getInstance().getModContainer(modId).map(mod -> {
-            Version modVersion = mod.getMetadata().getVersion();
-            return versionRange.test(modVersion);
-        }).orElse(false);
+        return info != null && GunPackVersions.dependenciesMatch(info.getDependencies(), false);
     }
 
     private static class Info {

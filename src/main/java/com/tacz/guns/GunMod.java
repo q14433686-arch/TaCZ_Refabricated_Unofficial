@@ -2,11 +2,8 @@ package com.tacz.guns;
 
 import com.tacz.guns.api.resource.ResourceManager;
 import com.tacz.guns.init.*;
-import com.tacz.guns.resource.GunPackLoader;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
-import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.server.packs.PackType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,9 +16,6 @@ public class GunMod {
     public static final String DEFAULT_GUN_PACK_NAME = "tacz_default_gun";
 
     public static void setup() {
-        EnvType side = FabricLoader.getInstance().getEnvironmentType();
-        GunPackLoader.INSTANCE.packType = side == EnvType.CLIENT ? PackType.CLIENT_RESOURCES : PackType.SERVER_DATA;
-
         CommonRegistry.onSetupEvent();
 
         ModBlocks.init();

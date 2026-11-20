@@ -25,6 +25,6 @@ public final class CommonRegistry {
     }
 
     public static void onAddPackFinders(AddPackFindersEvent event) {
-        event.addRepositorySource(GunPackLoader.INSTANCE);
+        event.addRepositorySource(GunPackLoader.forType(event.getPackType()));
     }
 }

@@ -3,6 +3,8 @@ package cn.sh1rocu.tacz.util.forge;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.network.chat.Component;
 import com.google.common.collect.ImmutableMap;
+import com.tacz.guns.resource.filter.RecipeFilter;
+import com.tacz.guns.util.AttachmentTagLayers;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.AbstractPackResources;
 import net.minecraft.server.packs.PackResources;
@@ -25,14 +27,21 @@ public class DelegatingPackResources extends AbstractPackResources {
     private static final String LEGACY_RECIPE_DIRECTORY = "recipes";
 
     private final PackMetadataSection packMeta;
+    private final List<List<PackResources>> gunPacks;
     private final List<PackResources> delegates;
     private final Map<String, List<PackResources>> namespacesAssets;
     private final Map<String, List<PackResources>> namespacesData;
 
     public DelegatingPackResources(String packId, boolean isBuiltin, PackMetadataSection packMeta, List<? extends PackResources> packs) {
+        this(packId, packMeta, packs.stream().map(p -> List.<PackResources>of(p)).toList());
+    }
+
+    /** Each gun pack has zero or more overlay layers, followed by its base. */
+    public DelegatingPackResources(String packId, PackMetadataSection packMeta, List<List<PackResources>> gunPacks) {
         super(new PackLocationInfo(packId, Component.literal(packId), PackSource.DEFAULT, Optional.empty()));
         this.packMeta = packMeta;
-        this.delegates = ImmutableList.copyOf(packs);
+        this.gunPacks = gunPacks.stream().map(List::copyOf).toList();
+        this.delegates = this.gunPacks.stream().flatMap(List::stream).toList();
         this.namespacesAssets = this.buildNamespaceMap(PackType.CLIENT_RESOURCES, delegates);
         this.namespacesData = this.buildNamespaceMap(PackType.SERVER_DATA, delegates);
     }
@@ -68,10 +77,21 @@ public class DelegatingPackResources extends AbstractPackResources {
     @Override
     public void listResources(PackType type, String resourceNamespace, String paths, ResourceOutput resourceOutput) {
         String legacyPath = getLegacyRecipePath(type, paths);
-        for (PackResources delegate : this.delegates) {
+        Set<Identifier> seen = new HashSet<>();
+        ResourceOutput emitOnce = (location, supplier) -> {
+            if (seen.add(location)) {
+                if (isAttachmentTag(type, location) || isRecipeFilter(type, location)) {
+                    var merged = getResource(type, location);
+                    if (merged != null) resourceOutput.accept(location, merged);
+                } else {
+                    resourceOutput.accept(location, supplier);
+                }
+            }
+        };
+        for (PackResources delegate : getCandidatePacks(type, resourceNamespace)) {
             if (legacyPath == null) {
                 delegate.listResources(type, resourceNamespace, paths,
-                        (location, supplier) -> resourceOutput.accept(location,
+                        (location, supplier) -> emitOnce.accept(location,
                                 migrateRecipeResultIfNeeded(type, location, supplier)));
                 continue;
             }
@@ -81,7 +101,7 @@ public class DelegatingPackResources extends AbstractPackResources {
             Set<Identifier> currentLocations = new HashSet<>();
             delegate.listResources(type, resourceNamespace, paths, (location, supplier) -> {
                 currentLocations.add(location);
-                resourceOutput.accept(location, migrateRecipeResultIfNeeded(type, location, supplier));
+                emitOnce.accept(location, migrateRecipeResultIfNeeded(type, location, supplier));
             });
             delegate.listResources(type, resourceNamespace, legacyPath, (legacyLocation, supplier) -> {
                 Identifier modernLocation = toModernRecipeLocation(legacyLocation);
@@ -95,7 +115,7 @@ public class DelegatingPackResources extends AbstractPackResources {
                         LegacyGunPackRecipeMigrator.migrateLegacyVanillaRecipe(modernLocation, supplier);
                 if (migrated != null) {
                     currentLocations.add(modernLocation);
-                    resourceOutput.accept(modernLocation, migrated);
+                    emitOnce.accept(modernLocation, migrated);
                 }
             });
         }
@@ -123,8 +143,31 @@ public class DelegatingPackResources extends AbstractPackResources {
     @Nullable
     @Override
     public IoSupplier<InputStream> getResource(PackType type, Identifier location) {
+        if (isRecipeFilter(type, location)) {
+            // Merge across independent packs but keep only the effective filter of each pack.
+            List<IoSupplier<InputStream>> filters = new ArrayList<>();
+            for (var layers : gunPacks) {
+                for (var layer : layers) {
+                    var supplier = layer.getResource(type, location);
+                    if (supplier != null) {
+                        filters.add(supplier);
+                        break;
+                    }
+                }
+            }
+            if (filters.isEmpty()) return null;
+            return filters.size() == 1 ? filters.getFirst() : () -> RecipeFilter.mergeLayers(location, filters);
+        }
+        if (isAttachmentTag(type, location)) {
+            List<IoSupplier<InputStream>> tags = new ArrayList<>();
+            for (var layer : getCandidatePacks(type, location.getNamespace())) {
+                var supplier = layer.getResource(type, location);
+                if (supplier != null) tags.add(supplier);
+            }
+            return tags.isEmpty() ? null : () -> AttachmentTagLayers.merge(location.toString(), tags);
+        }
         Identifier legacyLocation = toLegacyRecipeLocation(type, location);
-        for (PackResources pack : getCandidatePacks(type, location)) {
+        for (PackResources pack : getCandidatePacks(type, location.getNamespace())) {
             // Prefer the current path in each pack, then transparently fall back to the old plural
             // path. Doing this per pack preserves the aggregate pack's existing priority order.
             IoSupplier<InputStream> currentSupplier = pack.getResource(type, location);
@@ -197,9 +240,17 @@ public class DelegatingPackResources extends AbstractPackResources {
         return supplier;
     }
 
-    private List<PackResources> getCandidatePacks(PackType type, Identifier location) {
+    private static boolean isRecipeFilter(PackType type, Identifier id) {
+        return type == PackType.SERVER_DATA && id.getPath().startsWith("recipe_filters/") && id.getPath().endsWith(".json");
+    }
+
+    private static boolean isAttachmentTag(PackType type, Identifier id) {
+        return type == PackType.SERVER_DATA && id.getPath().startsWith("tacz_tags/attachments/") && id.getPath().endsWith(".json");
+    }
+
+    private List<PackResources> getCandidatePacks(PackType type, String namespace) {
         Map<String, List<PackResources>> map = type == PackType.CLIENT_RESOURCES ? namespacesAssets : namespacesData;
-        List<PackResources> packsWithNamespace = map.get(location.getNamespace());
+        List<PackResources> packsWithNamespace = map.get(namespace);
         return packsWithNamespace == null ? Collections.emptyList() : packsWithNamespace;
     }
 }

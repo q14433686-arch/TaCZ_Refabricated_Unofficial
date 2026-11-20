@@ -1,4 +1,5 @@
 {
+  "tacz.network.pack_sync_incompatible": "此服务器的枪包需要支持分片同步的 TaCZ 客户端。",
   "attribute.name.tacz.bullet_resistance": "子弹抗性",
   "block.tacz.gun_smith_table": "枪械工作台",
   "block.tacz.statue": "石像",

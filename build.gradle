@@ -130,6 +130,10 @@ repositories {
 }
 
 dependencies {
+    testImplementation platform('org.junit:junit-bom:5.12.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
     // ================================================================
     // 1.21.11 是混淆版本，Loom 回到 remap 模式：
     //   * 必须声明 mappings（官方 Mojang 映射）
@@ -342,6 +346,10 @@ tasks.register("meshRenderPassTest", JavaExec) {
         languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }
 }
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
 tasks.named("check") {
     dependsOn "meshRenderPassTest"
 }
