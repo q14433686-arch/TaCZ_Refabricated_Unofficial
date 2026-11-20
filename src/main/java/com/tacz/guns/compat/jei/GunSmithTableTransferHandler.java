@@ -23,16 +23,9 @@ record GunSmithTableTransferHandler(IRecipeType<GunSmithTableRecipe> type, IReci
         return helper.createUserErrorWithTooltip(Component.translatable("jei.tacz.gun_smith_table.recipe_unavailable"));
     }
 
-    // JEI 31 still requires the legacy overload; both entry points share the same read-only probe.
-    @SuppressWarnings("removal")
+    // JEI 30.13 uses this overload; checking feasibility must not change selection.
     @Override public @Nullable IRecipeTransferError transferRecipe(GunSmithTableMenu menu, GunSmithTableRecipe recipe,
             IRecipeSlotsView slots, Player player, boolean maxTransfer, boolean doTransfer) {
         return select(menu, recipe, doTransfer);
-    }
-
-    @Override public @Nullable IRecipeTransferError transferRecipe(IRecipeTransferContext<GunSmithTableRecipe, GunSmithTableMenu> context, boolean doTransfer) {
-        var error = select(context.getContainer(), context.getRecipe(), doTransfer);
-        if (doTransfer) context.completeRecipeTransfer(error == null ? RecipeTransferResult.SUCCESS : RecipeTransferResult.REJECTED);
-        return error;
     }
 }

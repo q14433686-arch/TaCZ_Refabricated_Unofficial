@@ -47,12 +47,12 @@ public class ModBlocks {
     public static final BlockEntityType<GunPegboardBlockEntity> GUN_PEGBOARD_BE = registerBlockEntity("gun_pegboard", GunPegboardBlockEntity.TYPE);
 
     private static BlockBehaviour.Properties displayProperties(String name, SoundType sound) {
-        return BlockBehaviour.Properties.of().setId(blockKey(name)).sound(sound).strength(5f, 6f).noOcclusion().pushReaction(PushReaction.POPPED);
+        return BlockBehaviour.Properties.of().setId(blockKey(name)).sound(sound).strength(5f, 6f).noOcclusion().pushReaction(PushReaction.DESTROY);
     }
 
     private static Block storage(String name, int capacity) {
         return registerBlock(name, new AmmoStorageBlock(capacity, BlockBehaviour.Properties.of().setId(blockKey(name)).sound(SoundType.METAL)
-                .strength(2f).pushReaction(PushReaction.POPPED)));
+                .strength(2f).pushReaction(PushReaction.DESTROY)));
     }
 
     public static BlockEntityType<GunSmithTableBlockEntity> GUN_SMITH_TABLE_BE = registerBlockEntity("gun_smith_table", GunSmithTableBlockEntity.TYPE);
