@@ -1,0 +1,34 @@
+name: 26.2 distribution TCP join
+on:
+  push:
+    branches: ['arena/**', '26.2(main)']
+    paths: &paths ['src/main/**', 'gradle.properties', 'build.gradle', 'verification/packaged-runtime/**', 'scripts/test_packaged_connection.py', '.github/workflows/distribution-smoke.yml']
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: distribution-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  distribution:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 38
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '25'}
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build and inspect the distributable
+        run: |
+          ./gradlew --init-script scripts/ci-central.init.gradle jar --console=plain
+          python3 scripts/audit_26_2_jar.py build/libs/*.jar
+      - name: Connect a separate client to the disposable dedicated server
+        env: {LIBGL_ALWAYS_SOFTWARE: 'true', ALSOFT_DRIVERS: 'null'}
+        run: xvfb-run -a python3 scripts/test_packaged_connection.py --accept-test-eula build/libs/*.jar
+      - if: failure()
+        run: python3 scripts/report_ci_failures.py build/packaged-evidence/{server,client}.log build/packaged-evidence/{server,client}/logs/latest.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: 'packaged-tcp-${{ github.sha }}', path: build/packaged-evidence, retention-days: 7}

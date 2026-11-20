@@ -15,6 +15,7 @@
     "client.LevelRendererReceiverLightMixin",
     "client.DetonationLightMixin",
     "client.GameRendererProjectionAccessor",
+    "client.ScopeProjectionUploadMixin",
     "client.CreativeModeInventoryScreenMixin",
     "client.ThermalRenderSetupAccessor",
     "client.ThermalRenderTypeAccessor",

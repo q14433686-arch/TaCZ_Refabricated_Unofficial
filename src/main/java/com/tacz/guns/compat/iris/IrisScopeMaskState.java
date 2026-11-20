@@ -510,6 +510,8 @@ public final class IrisScopeMaskState {
             }
             if (FLASH_TRANSLUCENT_PIPELINE.equals(normalized)
                     || FLASH_SWIRL_PIPELINE.equals(normalized)
+                    || "pipeline/muzzle_strip_clipped".equals(normalized)
+                    || "pipeline/muzzle_swirl_clipped".equals(normalized)
                     || "pipeline/snowstorm_add_clipped".equals(normalized)
                     || "pipeline/snowstorm_emissive_clipped".equals(normalized)) {
                 return 1;

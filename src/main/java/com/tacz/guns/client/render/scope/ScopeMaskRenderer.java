@@ -1,7 +1,6 @@
 package com.tacz.guns.client.render.scope;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
@@ -214,8 +213,6 @@ public final class ScopeMaskRenderer {
 
     private static boolean failed = false;
     private static boolean loggedSuccess = false;
-    /** 凸包模式读投影 UBO 失败只喊一次（之后每帧静默回退逐立方体描摹）。 */
-    private static boolean loggedProjReadFailure = false;
     /** 「开着调试却没有任何目镜几何」只警告一次，避免刷屏。 */
     private static boolean loggedEmpty = false;
 
@@ -611,9 +608,10 @@ public final class ScopeMaskRenderer {
         // 每帧重算目镜屏幕包围盒（供合成阶段开硬件剪裁）。
         // 无论走凸包还是逐立方体描摹，都要算 —— 那道底线不能只在其中一条路上生效。
         maskBoundsValid = false;
-        computeMaskBounds();
+        var projection = ScopeProjection.current();
+        if (projection != null) computeMaskBounds(projection);
         for (ScopeMaskGeometry.Entry entry : ScopeMaskGeometry.entries()) {
-            if (hullFill && writeHullFill(builder, entry.pose(), entry.cubes())) {
+            if (hullFill && projection != null && writeHullFill(builder, entry.pose(), entry.cubes(), projection)) {
                 continue;
             }
             for (BedrockCube cube : entry.cubes()) {
@@ -657,27 +655,8 @@ public final class ScopeMaskRenderer {
      *
      * @return 有效点不足（凸包退化，如全重合）时返回 false，调用方回退逐立方体描摹
      */
-    private static boolean writeHullFill(BufferBuilder builder, Matrix4f pose, java.util.List<BedrockCube> cubes) {
+    private static boolean writeHullFill(BufferBuilder builder, Matrix4f pose, java.util.List<BedrockCube> cubes, org.joml.Matrix4fc proj) {
         java.util.List<float[]> pts = new java.util.ArrayList<>();
-        // 【26.2 取证】RenderSystem 已没有 getProjectionMatrix()——投影矩阵只以
-        // GpuBufferSlice（UBO）形式躺在 GPU 侧（字段投影 PROJECTION_MATRIX_UBO_SIZE，
-        // 布局即一个 std140 mat4：列主序 16 个 float）。CPU 侧做凸包就必须把它
-        // 读回来：slice.map(read, write) 拿到 MappedView.data()，读 64 字节。
-        // 关键在同源：掩码 pass 稍后 bindDefaultUniforms 用的就是
-        // RenderSystem.getProjectionMatrixBuffer() 这同一个 slice，所以这里读到的
-        // 与着色器实际消费的是【同一份字节】，凸包与画面严丝合缝。
-        // 成本是每帧至多一次 64B 的读回；UBO 是本帧刚上传的 ring 段，不是重同步。
-        // 读失败（驱动/Iris 怪异状态）一次 warn，本帧该条目回退逐立方体描摹。
-        Matrix4f proj = new Matrix4f();
-        try (GpuBufferSlice.MappedView view = RenderSystem.getProjectionMatrixBuffer().map(true, false)) {
-            proj.set(view.data());
-        } catch (Exception e) {
-            if (!loggedProjReadFailure) {
-                loggedProjReadFailure = true;
-                GunMod.LOGGER.warn("[TACZ Scope] Hull-fill: could not read back the projection UBO; this entry falls back to legacy per-cube tracing.", e);
-            }
-            return false;
-        }
         Vector4f tmp = new Vector4f();
         for (BedrockCube cube : cubes) {
             for (var polygon : cube.getPolygons()) {
@@ -767,22 +746,9 @@ public final class ScopeMaskRenderer {
     }
 
     /**
-     * 算出本帧全部目镜几何在 NDC 里的包围盒。
-     *
-     * <p>投影矩阵的取法与 {@link #writeHullFill} 完全同源（读同一份投影 UBO），
-     * 所以盒子与掩码画出来的形状严格在同一个坐标系里，不会错位。
-     * 读不到投影就不设包围盒 —— 合成阶段随之跳过剪裁，退回纯掩码约束（= 旧行为）。
+     * NDC bounds use the very same projection as the hull and the current mask draw.
      */
-    private static void computeMaskBounds() {
-        if (ScopeMaskGeometry.isEmpty()) {
-            return;
-        }
-        Matrix4f proj = new Matrix4f();
-        try (GpuBufferSlice.MappedView view = RenderSystem.getProjectionMatrixBuffer().map(true, false)) {
-            proj.set(view.data());
-        } catch (Exception e) {
-            return;
-        }
+    private static void computeMaskBounds(org.joml.Matrix4fc proj) {
         Vector4f tmp = new Vector4f();
         for (ScopeMaskGeometry.Entry entry : ScopeMaskGeometry.entries()) {
             for (BedrockCube cube : entry.cubes()) {

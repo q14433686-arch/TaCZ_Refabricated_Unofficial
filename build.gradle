@@ -1,3 +1,5 @@
+import java.security.MessageDigest
+
 plugins {
     id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT'
     id 'maven-publish'
@@ -288,6 +290,15 @@ configurations.gametestCompileOnly.extendsFrom(configurations.compileOnly)
 if (project.hasProperty('taczPalSmoke')) {
     loom.runs.clientGameTest.property 'tacz.test.pal', 'true'
     dependencies { gametestRuntimeOnly "zigy.release:PlayerAnimationLibMerged:${player_animation_lib}+${minecraft_version}" }
+    tasks.named('runClientGameTest') {
+        doFirst {
+            def pal = configurations.gametestRuntimeClasspath.resolvedConfiguration.resolvedArtifacts.find { it.moduleVersion.id.group == 'zigy.release' }
+            def digest = MessageDigest.getInstance('SHA-256').digest(pal.file.bytes).encodeHex().toString()
+            if (digest != '67f08c8d383d8982c53d6c99e0e0dd6bec5e2f47bd4ed210ab034583787960bf')
+                throw new GradleException("Wrong target PAL binary: $digest")
+            logger.lifecycle("Target PAL file: ${pal.file.name} SHA-256 $digest")
+        }
+    }
 }
 if (project.hasProperty('taczControllerSmoke')) {
     loom.runs.clientGameTest.property 'tacz.test.controller', 'true'

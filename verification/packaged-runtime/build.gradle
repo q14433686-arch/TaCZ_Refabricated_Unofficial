@@ -1,0 +1,40 @@
+plugins { id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT' }
+
+// An independent consumer: no TaCZ source sets, development dependencies, or nested-library
+// substitutes. Fabric loads the audited file as a mod, exactly as it would from mods/.
+Properties pins = new Properties()
+file(property('taczRoot') + '/gradle.properties').withInputStream { pins.load(it) }
+File product = file(property('productJar'))
+boolean clientProbe = project.hasProperty('probeClient')
+if (clientProbe) fabricApi.configureTests {
+    createSourceSet = true
+    modId = 'tacz_packaged_probe'
+    enableGameTests = false
+    enableClientGameTests = true
+}
+repositories {
+    mavenCentral()
+    maven { url = uri('https://raw.githubusercontent.com/Fuzss/modresources/main/maven/'); content { includeGroup 'fuzs.forgeconfigapiport' } }
+}
+dependencies {
+    minecraft "com.mojang:minecraft:${pins.minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${pins.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${pins.fabric_version}"
+    implementation 'fuzs.forgeconfigapiport:forgeconfigapiport-fabric:26.2.1'
+    if (clientProbe) gametestCompileOnly files(product)
+}
+loom.runs.server {
+    runDir 'build/dedicated'
+    property 'fabric.addMods', product.absolutePath
+    vmArg '-Xmx1G'
+    programArg '--nogui'
+}
+if (clientProbe) loom.runs.clientGameTest {
+    property 'fabric.addMods', product.absolutePath
+    property 'tacz.probe.jar', product.absolutePath
+    property 'tacz.probe.ready', project.property('probeReady')
+    property 'tacz.probe.port', project.property('probePort')
+    vmArg '-Xmx1500m'
+}
+// The supervisor writes ordinary console commands, not packets or a test-only server API.
+tasks.named('runServer') { standardInput = System.in }

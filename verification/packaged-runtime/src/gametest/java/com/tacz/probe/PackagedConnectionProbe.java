@@ -1,0 +1,86 @@
+package com.tacz.probe;
+
+import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.resource.network.CommonNetworkCache;
+import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
+import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ConnectScreen;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.client.multiplayer.resolver.ServerAddress;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Items;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+
+/** The server JVM has its own game directory and no test mod. Only a real S2C install
+ * can introduce these indexes in the consumer. Never read the dedicated server's files. */
+public final class PackagedConnectionProbe implements FabricClientGameTest {
+    private static final Identifier FIRST = Identifier.parse("net_probe:first"), SECOND = Identifier.parse("net_probe:second");
+    private static final Identifier ADAPTER = Identifier.parse("tacz:riser_pistol_high");
+    private static final CommonNetworkCache CACHE = CommonNetworkCache.INSTANCE;
+
+    @Override public void runTest(ClientGameTestContext ctx) {
+        var loader = FabricLoader.getInstance();
+        try {
+            Path jar = Path.of(System.getProperty("tacz.probe.jar"));
+            if (loader.getModContainer("tacz").orElseThrow().getOrigin().getPaths().stream()
+                    .noneMatch(p -> Files.isRegularFile(p) && sameFile(p, jar))) throw new AssertionError("TaCZ was not loaded from " + jar);
+            for (String id : List.of("jei", "roughlyenoughitems", "controllable", "player_animation_library", "iris", "sodium", "modmenu", "cloth-config")) {
+                if (loader.isModLoaded(id)) throw new AssertionError("Unexpected optional mod: " + id);
+            }
+            connect(ctx);
+            ctx.waitFor(mc -> online(mc) && CACHE.getGunIndex(FIRST) != null && CACHE.getSlotAdapterIndex(ADAPTER) != null
+                    && TimelessAPI.getClientGunIndex(FIRST).isPresent(), 1200);
+            if (ctx.computeOnClient(mc -> CACHE.getGunIndex(SECOND) != null)) throw new AssertionError("Stale reload fixture");
+            Files.createFile(Path.of(System.getProperty("tacz.probe.ready")));
+            ctx.waitFor(mc -> CACHE.getGunIndex(FIRST) == null && CACHE.getGunIndex(SECOND) != null && hasNamedStock(mc), 1200);
+            var before = ctx.computeOnClient(mc -> CACHE.getGunIndex(SECOND));
+            disconnect(ctx);
+            ctx.waitFor(mc -> CACHE.getGunIndex(SECOND) == null && CACHE.getSlotAdapterIndex(ADAPTER) == null);
+            connect(ctx);
+            ctx.waitFor(mc -> online(mc) && CACHE.getGunIndex(SECOND) != null && CACHE.getGunIndex(SECOND) != before
+                    && CACHE.getGunIndex(FIRST) == null && CACHE.getSlotAdapterIndex(ADAPTER) != null && hasNamedStock(mc), 1200);
+            ctx.takeScreenshot("tacz_distribution_rejoined");
+            disconnect(ctx);
+            System.out.println("PORT_DISTRIBUTION: production JAR, dedicated TCP join, server-only index replacement, disconnect and fresh rejoin with 7 named items passed");
+        } catch (IOException ex) { throw new UncheckedIOException(ex); }
+    }
+    private static boolean sameFile(Path p, Path jar) {
+        try { return Files.isSameFile(p, jar); } catch (IOException ex) { throw new UncheckedIOException(ex); }
+    }
+    private static boolean online(Minecraft mc) {
+        return mc.player != null && mc.level != null && mc.getSingleplayerServer() == null && mc.getConnection() != null
+                && !mc.getConnection().getConnection().isMemoryConnection();
+    }
+    private static boolean hasNamedStock(Minecraft mc) {
+        if (!online(mc)) return false;
+        var inv = mc.player.getInventory();
+        int count = 0;
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            var stack = inv.getItem(i);
+            if (stack.is(Items.PAPER) && stack.getHoverName().getString().equals("target receipt")) count += stack.getCount();
+        }
+        return count == 7;
+    }
+    private static void connect(ClientGameTestContext ctx) {
+        String addr = "127.0.0.1:" + Integer.parseInt(System.getProperty("tacz.probe.port"));
+        ctx.runOnClient(mc -> ConnectScreen.startConnecting(new TitleScreen(), mc, ServerAddress.parseString(addr),
+                new ServerData("TaCZ target", addr, ServerData.Type.OTHER), false, null));
+    }
+    private static void disconnect(ClientGameTestContext ctx) {
+        ctx.runOnClient(mc -> {
+            mc.level.disconnect(Component.literal("distribution test"));
+            mc.disconnectWithSavingScreen();
+        });
+        ctx.waitFor(mc -> mc.level == null);
+        ctx.setScreen(TitleScreen::new);
+    }
+}
