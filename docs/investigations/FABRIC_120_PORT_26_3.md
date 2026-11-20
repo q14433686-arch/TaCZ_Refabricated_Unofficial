@@ -2,7 +2,7 @@
 
 **不是 release notes。** 目标是同等玩法/内容包语义，不是把 1.21.1 的 jar、mixin 或资源目录直接覆盖上来。以下是 1.1.8 阶段的历史记录。当前 26.3 源码已单独升为 `1.2.0+fabric.26.3.R1`；不改第三方 `dependencies.tacz`，也不以版本号代替功能验收。
 
-**最近通过整套门禁的源码：[`e92a998`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/commit/e92a998a576fe909ac68c34b78a8c46bc1ac8d95)。** [编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608818) · [完整构建 / 专服 / Mesa 客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608846/job/134600441865) · [测试 JAR](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608846/artifacts/14401960049) · [日志和原始截图](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608846/artifacts/14401181401)。本次新增 XL50 的镜内偏色、白热实体、遮挡和重投影倍率对照；不是所有瞄具、光影、独显或独立多人的验收。下文按提交顺序保留较早阶段结果。
+现行 R1 见[全树与行为复核](PORT_STATUS_26_3_R1.md)。**本页历史审计通过整套门禁的源码：[`e92a998`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/commit/e92a998a576fe909ac68c34b78a8c46bc1ac8d95)。** [编译](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608818) · [完整构建 / 专服 / Mesa 客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608846/job/134600441865) · [测试 JAR](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608846/artifacts/14401960049) · [日志和原始截图](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44244608846/artifacts/14401181401)。本次新增 XL50 的镜内偏色、白热实体、遮挡和重投影倍率对照；不是所有瞄具、光影、独显或独立多人的验收。下文按提交顺序保留较早阶段结果。
 
 **按玩家操作查状态**：[玩家可感变化清单](FABRIC_120_PLAYER_CHECKLIST.md)（射手位移、枪口火烟、枪声引怪、移动、命中、改装和界面）。**按工程路径查**：[全量对比与当前门禁](FABRIC_120_COMPARISON.md)（含未变化与本地独有文件）。以下历史表不随新提交回写。
 

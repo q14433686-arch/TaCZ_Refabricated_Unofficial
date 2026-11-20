@@ -12,12 +12,12 @@ import cn.sh1rocu.tacz.compat.rei.display.AttachmentQueryDisplay;
 import cn.sh1rocu.tacz.compat.rei.display.GunSmithTableDisplay;
 import cn.sh1rocu.tacz.compat.rei.entry.AttachmentQueryEntry;
 import com.tacz.guns.GunMod;
-import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.resource.network.CommonNetworkCache;
 import com.tacz.guns.api.item.builder.BlockItemBuilder;
 import com.tacz.guns.compat.recipeviewer.AmmoQueryEntry;
 import com.tacz.guns.compat.recipeviewer.AttachmentQueryData;
 import com.tacz.guns.compat.recipeviewer.GunAmmoQueryEntry;
-import com.tacz.guns.crafting.GunSmithTableRecipe;
+import com.tacz.guns.compat.recipeviewer.ClientWorkbenchRecipes;
 import dev.architectury.event.EventResult;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
 import me.shedaniel.rei.api.client.registry.entry.EntryRegistry;
@@ -33,9 +33,7 @@ import net.minecraft.world.item.ItemStack;
 import me.shedaniel.rei.api.common.display.Display;
 import java.util.function.Consumer;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIClientPlugin {
     public static final CategoryIdentifier<AttachmentQueryDisplay> ATTACHMENT_QUERY =
@@ -53,7 +51,7 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
         // The category API has no unregister. A table removed by a later pack sync has neither a
         // visible tab nor recipes; the next natural REI registration drops the empty key entirely.
         registry.registerVisibilityPredicate(category -> category instanceof GunSmithTableCategory table
-                && TimelessAPI.getCommonBlockIndex(table.table()).isEmpty() ? EventResult.interruptFalse() : EventResult.pass());
+                && CommonNetworkCache.INSTANCE.getBlockIndex(table.table()) == null ? EventResult.interruptFalse() : EventResult.pass());
         registerTables(registry);
         registry.add(new AttachmentQueryCategory());
         registry.add(new AmmoQueryCategory());
@@ -63,7 +61,7 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
 
     static Map<Identifier, CategoryIdentifier<GunSmithTableDisplay>> registerTables(CategoryRegistry registry) {
         Map<Identifier, CategoryIdentifier<GunSmithTableDisplay>> displays = new HashMap<>();
-        var map = TimelessAPI.getAllCommonBlockIndex();
+        var map = CommonNetworkCache.INSTANCE.getAllBlocks();
         for (var entry : map) {
             BlockItem item = entry.getValue().getBlock();
             ItemStack icon = BlockItemBuilder.create(item).setId(entry.getKey()).build();
@@ -98,29 +96,10 @@ public class REIClientPlugin implements me.shedaniel.rei.api.client.plugins.REIC
 
     /** Only displays authored here get PACK_ORIGIN (never vanilla crafting, even when its output is a TaCZ item). */
     static void collect(Map<Identifier, CategoryIdentifier<GunSmithTableDisplay>> displays, Consumer<Display> add) {
-        List<GunSmithTableRecipe> recipes = new java.util.ArrayList<>();
-        for (var e : com.tacz.guns.resource.CommonAssetsManager.get().getAllTableRecipes()) {
-            if (e.getValue() != null && e.getValue().getResult() != null) {
-                GunSmithTableRecipe r = new GunSmithTableRecipe(e.getKey(), e.getValue());
-                try {
-                    r.init();
-                } catch (RuntimeException ex) {
-                    // 一条坏配方绝不能中断整个循环 —— 否则全部工作台配方都会从 REI 消失。
-                    GunMod.LOGGER.error("Failed to init gun smith table recipe {} for REI, skipping it", e.getKey(), ex);
-                    continue;
-                }
-                recipes.add(r);
-            }
-        }
-
-        for (var entry : displays.entrySet()) {
-            TimelessAPI.getCommonBlockIndex(entry.getKey()).ifPresent(blockIndex -> {
-                List<GunSmithTableRecipe> recipeList = blockIndex.getFilter().filter(recipes, GunSmithTableRecipe::getId);
-                recipeList.removeIf(recipe ->
-                        blockIndex.getData().getTabs().stream().noneMatch(tab -> Objects.equals(tab.id(), recipe.getResult().getGroup())));
-                recipeList.forEach(recipe -> add.accept(new GunSmithTableDisplay(recipe, entry)));
-            });
-        }
+        ClientWorkbenchRecipes.byTable().forEach((table, recipes) -> {
+            var category = displays.get(table);
+            if (category != null) recipes.forEach(recipe -> add.accept(new GunSmithTableDisplay(recipe, Map.entry(table, category))));
+        });
 
         var attachments = AttachmentQueryData.load();
         attachments.attachmentQueries().forEach(entry -> add.accept(new AttachmentQueryDisplay(new AttachmentQueryEntry(entry))));

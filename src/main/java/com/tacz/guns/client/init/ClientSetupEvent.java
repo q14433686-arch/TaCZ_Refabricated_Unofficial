@@ -4,6 +4,7 @@ import com.tacz.guns.client.tooltip.ClientAmmoStorageTooltip;
 import com.tacz.guns.inventory.tooltip.AmmoStorageTooltip;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.client.other.ThirdPersonManager;
+import com.tacz.guns.client.gui.overlay.DisplayCaseLockHint;
 import com.tacz.guns.client.gui.overlay.GunHudOverlay;
 import com.tacz.guns.client.gui.overlay.HeatBarOverlay;
 import com.tacz.guns.client.gui.overlay.InteractKeyTextOverlay;
@@ -86,6 +87,7 @@ public class ClientSetupEvent {
         HudElementRegistry.addLast(id("gun_hud"), (graphics, deltaTracker) -> GunHudOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
         HudElementRegistry.addLast(id("heat_bar"), (graphics, deltaTracker) -> HeatBarOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
         HudElementRegistry.addLast(id("interact_key_text"), (graphics, deltaTracker) -> InteractKeyTextOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
+        HudElementRegistry.addLast(id("display_case_lock_hint"), DisplayCaseLockHint::render);
         HudElementRegistry.addLast(id("kill_amount"), (graphics, deltaTracker) -> KillAmountOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
         // 【Step 1 调试】瞄具掩码预览，由 RenderConfig.SCOPE_MASK_DEBUG 控制，默认关闭。
         HudElementRegistry.addLast(id("scope_mask_debug"), (graphics, deltaTracker) -> ScopeMaskDebugOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));

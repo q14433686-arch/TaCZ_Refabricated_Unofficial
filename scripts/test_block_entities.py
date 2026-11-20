@@ -658,6 +658,7 @@ STUBS.update({
         import net.minecraft.world.item.ItemDisplayContext;
         public class BedrockPart {
             public boolean visible; public float xRot;
+            public void translateAndRotateAndScale(PoseStack pose) {}
             public void render(PoseStack pose, ItemDisplayContext context, Object consumer, int light, int overlay) {}
         }
     """,
@@ -669,6 +670,18 @@ STUBS.update({
         public class BedrockModel {
             public BedrockPart getNode(String name) { return new BedrockPart(); }
             public void submit(PoseStack pose, ItemDisplayContext context, SubmitNodeCollector collector, RenderType type, int light, int overlay) {}
+        }
+    """,
+    "com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot": """
+        import com.mojang.blaze3d.vertex.PoseStack;
+        import com.tacz.guns.client.model.bedrock.BedrockPart;
+        import net.minecraft.client.renderer.SubmitNodeCollector;
+        import net.minecraft.client.renderer.rendertype.RenderType;
+        import net.minecraft.world.item.ItemDisplayContext;
+        public class BedrockRenderSnapshot {
+            public static BedrockRenderSnapshot captureSubtree(BedrockPart head, PoseStack pose, ItemDisplayContext context,
+                    int light, int overlay, float r, float g, float b, float a) { return new BedrockRenderSnapshot(); }
+            public void submitGeometry(SubmitNodeCollector collector, RenderType type, boolean hand) { collector.geometryCount++; }
         }
     """,
     "com.tacz.guns.client.resource.InternalAssetLoader": """
@@ -802,6 +815,7 @@ STUBS.update({
     "net.minecraft.util.RandomSource": "public class RandomSource {}",
     "net.minecraft.util.Mth": """
         public class Mth {
+            public static float lerp(float t, float a, float b) { return a + t * (b - a); }
             public static double frac(double value) { return value - Math.floor(value); }
             public static double clamp(double value, double min, double max) { return Math.max(min, Math.min(max, value)); }
             public static int ceil(double value) { return (int) Math.ceil(value); }
@@ -1178,7 +1192,12 @@ public class BlockEntityRegressionTest {
         TargetRenderer blockRenderer = new TargetRenderer(new BlockEntityRendererProvider.Context(cache));
         TargetRenderer.TargetRenderState blockState = blockRenderer.createRenderState();
         TargetBlockEntity block = new TargetBlockEntity(POS, new BlockState().setValue(TargetBlock.FACING, Direction.NORTH));
-        blockRenderer.extractRenderState(block, blockState, 0, new Vec3(), null);
+        block.rot = 45;
+        blockRenderer.extractRenderState(block, blockState, .5f, new Vec3(), null);
+        check(blockState.tiltDegrees == -22.5f, "falling target should extract a half-tick pose");
+        block.oRot = 90; block.rot = 72;
+        blockRenderer.extractRenderState(block, blockState, .5f, new Vec3(), null);
+        check(blockState.tiltDegrees == -81, "rising target should extract a half-tick pose");
         check(!blockState.hasOwner && blockState.skinTexture == null && cache.requests == 0, "unnamed block must clear the render state");
         block.setOwnerName("Alex"); cache.pending = true;
         blockRenderer.extractRenderState(block, blockState, 0, new Vec3(), null);

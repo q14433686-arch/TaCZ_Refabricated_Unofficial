@@ -81,6 +81,12 @@ public class PackServerSmoke {
                 "Viewer selection must belong to this menu and be consumed once");
         var ammoTable = new com.tacz.guns.inventory.GunSmithTableMenu(2, inv, Identifier.parse("tacz:ammo_workbench"));
         helper.assertTrue(!ammoTable.selectFromViewer(gunId, true) && ammoTable.consumeRecipeSelection() == null, "Viewer bypassed the table filter");
+        var specialist = new com.tacz.guns.inventory.GunSmithTableMenu(3, inv, Identifier.parse("port_test:specialist"));
+        var addonRecipe = Identifier.parse("port_test:condition_true");
+        var shell = Identifier.parse("tacz:ammo/12g");
+        helper.assertTrue(ammoTable.selectFromViewer(shell, false) && !specialist.selectFromViewer(shell, false)
+                && !ammoTable.selectFromViewer(addonRecipe, false) && specialist.selectFromViewer(addonRecipe, false),
+                "A shared filter contribution or the specialist blacklist was lost");
         helper.succeed();
     }
 

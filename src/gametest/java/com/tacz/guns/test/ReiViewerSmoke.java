@@ -1,6 +1,8 @@
 package com.tacz.guns.test;
 
 import cn.sh1rocu.tacz.compat.rei.REIClientPlugin;
+import cn.sh1rocu.tacz.compat.rei.display.GunSmithTableDisplay;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.compat.RecipeViewerReloadBridge;
 import me.shedaniel.rei.api.client.registry.entry.EntryRegistry;
@@ -19,6 +21,9 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.jetbrains.annotations.Nullable;
 
 final class ReiViewerSmoke implements ViewerSmoke {
     private static Display syncedCrafting(String id) {
@@ -58,6 +63,16 @@ final class ReiViewerSmoke implements ViewerSmoke {
         return !PluginManager.areAnyReloading() && DisplayRegistry.getInstance().get(REIClientPlugin.AMMO_QUERY).stream()
                 .flatMap(display -> display.getEntry().getGunStacks().stream()).anyMatch(stack -> ViewerSmoke.isGun(stack, id));
     }
+    @Override public Set<Identifier> workbenchRecipes(Identifier table, @Nullable ItemStack outputFocus) {
+        if (PluginManager.areAnyReloading()) return Set.of();
+        CategoryIdentifier<GunSmithTableDisplay> category = CategoryIdentifier.of("tacz", "plugins/gun_smith_table/" + table.toString().replace(':', '_'));
+        var query = ViewSearchBuilder.builder().filterCategory(category).mergingDisplays(false);
+        if (outputFocus == null) query.addCategory(category);
+        else query.addRecipesFor(EntryStacks.of(outputFocus));
+        return query.streamDisplays().map(s -> s.provideInternalDisplay()).filter(GunSmithTableDisplay.class::isInstance)
+                .map(d -> ((GunSmithTableDisplay) d).getRecipe().getId()).collect(Collectors.toSet());
+    }
+
     @Override public void open(Identifier gun) {
         var matches = DisplayRegistry.getInstance().get(REIClientPlugin.GUN_AMMO_QUERY).stream()
                 .filter(display -> ViewerSmoke.isGun(display.getEntry().getGunStack(), gun)).toList();

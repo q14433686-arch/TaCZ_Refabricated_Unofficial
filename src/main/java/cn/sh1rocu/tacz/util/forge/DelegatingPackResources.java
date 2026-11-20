@@ -1,6 +1,7 @@
 package cn.sh1rocu.tacz.util.forge;
 
 import cn.sh1rocu.tacz.util.GunPackLangCompat;
+import com.tacz.guns.resource.filter.RecipeFilter;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.network.chat.Component;
 import com.google.common.collect.ImmutableMap;
@@ -21,14 +22,21 @@ import java.util.*;
 
 public class DelegatingPackResources extends AbstractPackMetadataResources implements PackResources {
     private final PackMetadataSection packMeta;
+    private final List<List<PackResources>> gunPacks;
     private final List<PackResources> delegates;
     private final Map<String, List<PackResources>> namespacesAssets;
     private final Map<String, List<PackResources>> namespacesData;
 
     public DelegatingPackResources(String packId, boolean isBuiltin, PackMetadataSection packMeta, List<? extends PackResources> packs) {
+        this(packId, packMeta, packs.stream().map(p -> List.<PackResources>of(p)).toList());
+    }
+
+    /** Each gun pack contributes its highest matching overlay, then its base if no overlay supplies the file. */
+    public DelegatingPackResources(String packId, PackMetadataSection packMeta, List<List<PackResources>> gunPacks) {
         super(new PackLocationInfo(packId, Component.literal(packId), PackSource.DEFAULT, Optional.empty()));
         this.packMeta = packMeta;
-        this.delegates = ImmutableList.copyOf(packs);
+        this.gunPacks = gunPacks.stream().map(List::copyOf).toList();
+        this.delegates = this.gunPacks.stream().flatMap(List::stream).toList();
         this.namespacesAssets = this.buildNamespaceMap(PackType.CLIENT_RESOURCES, delegates);
         this.namespacesData = this.buildNamespaceMap(PackType.SERVER_DATA, delegates);
     }
@@ -57,7 +65,7 @@ public class DelegatingPackResources extends AbstractPackMetadataResources imple
         // All disk/zip layers now go through PathPackResources, which already normalizes recipes.
         Set<Identifier> seen = new HashSet<>();
         ResourceOutput emitOnce = (id, supplier) -> {
-            if (seen.add(id)) resourceOutput.accept(id, isAttachmentTag(type, id)
+            if (seen.add(id)) resourceOutput.accept(id, (isAttachmentTag(type, id) || isRecipeFilter(type, id))
                     ? getResource(type, id) : supplier);
         };
         for (PackResources pack : getCandidatePacks(type, resourceNamespace)) {
@@ -88,6 +96,22 @@ public class DelegatingPackResources extends AbstractPackMetadataResources imple
     @Nullable
     @Override
     public IoSupplier<InputStream> getResource(PackType type, Identifier location) {
+        if (isRecipeFilter(type, location)) {
+            // RecipeFilterManager normally merges a resource stack. The repository exposes all
+            // gun packs as ONE pack, so return one effective filter per contributing gun pack.
+            List<IoSupplier<InputStream>> parts = new ArrayList<>();
+            for (var pack : gunPacks) {
+                for (var layer : pack) {
+                    var part = layer.getResource(type, location);
+                    if (part != null) {
+                        parts.add(part);
+                        break;
+                    }
+                }
+            }
+            if (parts.isEmpty()) return null;
+            return parts.size() == 1 ? parts.getFirst() : () -> RecipeFilter.mergeLayers(location, parts);
+        }
         if (isAttachmentTag(type, location)) {
             List<IoSupplier<InputStream>> parts = new ArrayList<>();
             for (PackResources pack : getCandidatePacks(type, location.getNamespace())) {
@@ -107,6 +131,10 @@ public class DelegatingPackResources extends AbstractPackMetadataResources imple
             }
         }
         return null;
+    }
+
+    private static boolean isRecipeFilter(PackType type, Identifier id) {
+        return type == PackType.SERVER_DATA && id.getPath().startsWith("recipe_filters/") && id.getPath().endsWith(".json");
     }
 
     private static boolean isAttachmentTag(PackType type, Identifier id) {

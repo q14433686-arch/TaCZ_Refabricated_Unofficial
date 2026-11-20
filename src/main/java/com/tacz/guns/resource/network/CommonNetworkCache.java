@@ -224,7 +224,7 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
                     case ATTACHMENT_INDEX ->
                             attachmentIndex.put(entry.getKey(), parse(entry.getValue(), CommonAttachmentIndex.class));
                     case ATTACHMENT_TAGS -> resolveAttachmentTag(entry.getKey(), entry.getValue());
-                    case BLOCK_INDEX -> blockIndex.put(entry.getKey(), parse(entry.getValue(), CommonBlockIndex.class));
+                    case BLOCK_INDEX -> blockIndex.put(entry.getKey(), CommonBlockIndex.getInstance(parse(entry.getValue(), com.tacz.guns.resource.pojo.BlockIndexPOJO.class), this));
                     case RECIPE_FILTER -> recipeFilter.put(entry.getKey(), parse(entry.getValue(), RecipeFilter.class));
                     // 第 12 轮：接上此前只声明未接线的 RECIPES 通道
                     case RECIPES -> tableRecipe.put(entry.getKey(), parse(entry.getValue(), TableRecipe.class));

@@ -24,7 +24,7 @@
 - [ ] 目标 commit 的 CI 编译绿（`build-reports/compile-java.log` 首行 commit 与
       HEAD 一致，末行 `job status: success`）。
 - [ ] 若有 build.yml（全量构建流程）：Actions artifact 里的 jar 存在且大小正常。
-- [ ] CHANGELOG（`docs/CHANGELOG_26_2_R*.md`）已有本版本段落，且区分
+- [ ] CHANGELOG（26.3 见[开发增量／历史分栏](../CHANGELOG_26_3_R1.md)）已有本版本段落，且区分
       「实机 PASS」与「源码级未实测」——措辞纪律见 `AGENTS.md` §2。
 - [ ] 已知边界（README §7）没有因本版本改动而失真。
 
@@ -48,6 +48,7 @@
 
 - [ ] `docs/publish/CurseForge.md` / `Modrinth.md` / `MCMOD.md` 的版本号、
       changelog 块已刷到本版本；`[[ ]]` 占位符全部替换（发布前搜 `[[`）。
+- [ ] 平台正文与 Gallery 使用[有图注的实机 PNG](README.md#截图上传)，绝对链接可在站外打开；不把 CI 截图／测试 JAR 记为已发布文件。
 - [ ] 三站红线复核（项目名不带版本号、NC 许可、非官方声明）见
       `docs/publish/README.md`。
 

@@ -6,6 +6,7 @@ import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.gui.GunRefitScreen;
 import com.tacz.guns.client.gui.ViewTuningScreen;
+import com.tacz.guns.client.gui.overlay.DisplayCaseLockHint;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -67,6 +68,8 @@ public final class GunInputHandler {
             return;
         }
         if (action != InputConstants.PRESS || closeRefit(key) || !isInGame()) return;
+        var mc = Minecraft.getInstance();
+        if (matches(mc.options.keyUse, key)) DisplayCaseLockHint.onEmptyHandUse(mc);
         if (matches(UNLOAD_KEY, key) || (matches(ReloadKey.RELOAD_KEY, key)
                 && (InputConstants.isKeyDown(InputConstants.KEY_LALT) || InputConstants.isKeyDown(InputConstants.KEY_RALT)))) {
             var player = Minecraft.getInstance().player;

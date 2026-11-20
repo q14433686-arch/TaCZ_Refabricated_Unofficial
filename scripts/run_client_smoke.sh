@@ -48,12 +48,28 @@ case ${TACZ_SMOKE_VIEWER:-} in
     *) echo 'Expected jei or rei' >&2; exit 2;;
 esac
 timeout -k 20s 10m ./gradlew "${args[@]}" runClientGameTest --console=plain --stacktrace 2>&1 | tee "$RUNNER_TEMP/tacz-client.log"
+surface_frames() {
+    for marker in 'live AK wall left/right' 'tracked RPG7 enabled=false' 'tracked RPG7 enabled=true' 'live RPG7 wall +/-5 blocks' 'server LR frag'; do
+        grep -Fq "$marker" "$run/logs/latest.log"
+    done
+    grep -Fq 'PORT_RECEIVER: complete' "$run/logs/latest.log"
+    printf '::notice::PORT_RECEIVER: %s\n' "$(sed -n 's/.*PORT_RECEIVER: //p' "$run/logs/latest.log" | paste -sd ';' -)"
+    if [[ -z ${TACZ_IRIS_COLOR:-} ]]; then
+        test "$(grep -Fc 'PORT_RECEIVER_COST:' "$run/logs/latest.log")" = 4
+        printf '::notice::PORT_RECEIVER_COST: %s\n' "$(sed -n 's/.*PORT_RECEIVER_COST: //p' "$run/logs/latest.log" | paste -sd ';' -)"
+    fi
+    for frame in objects_rest objects_off objects_on objects_expired objects_blocked_rest objects_blocked ak_off ak_on muzzle_behind muzzle_expired rpg_off rpg_on blast_early_expired blast_expired blast_behind; do
+        test -s "$run/screenshots/tacz_surface_${frame}.png"
+    done
+    printf '::notice::PORT_SURFACE: %s\n' "$(sed -n 's/.*PORT_SURFACE: //p' "$run/logs/latest.log" | paste -sd ';' -)"
+}
 if [[ -n ${TACZ_IRIS_COLOR:-} ]]; then
     grep -Fq 'PORT_REIMAGINED: complete' "$run/logs/latest.log"
     for marker in 'removed caster residual=' 'stock locator changed=' 'same stock white strip texel' 'timed exposure held'; do
         grep -Fq "PORT_REIMAGINED: $marker" "$run/logs/latest.log"
     done
     grep -Fq 'material=energy_swirl' "$run/logs/latest.log"
+    surface_frames
     # Avoid the Checks per-step notice cap hiding the final verdict: count/material/colour first.
     grep -E 'PORT_REIMAGINED: (metal |skin |ground |stock locator|same stock|removed caster)|PORT_SCOPE_PARTICLE:' "$run/logs/latest.log" | sed 's/^/::notice::/'
     grep -E 'PORT_REIMAGINED: (shadow |.*caster bounds|Complementary)|program match for tacz:pipeline/(illuminated|muzzle)' "$run/logs/latest.log"
@@ -66,6 +82,13 @@ if [[ ${TACZ_SMOKE_PAL:-} == true ]]; then
 fi
 # Require both material paths, not just a generic "rendered" message. Frame data stays in the job artifact.
 if [[ -z ${TACZ_SMOKE_VIEWER:-} && ${TACZ_SMOKE_CONTROLLER:-} != true ]]; then
+    surface_frames
+    for marker in 'spill=false, 64' 'spill=true, 64' 'third 3 blocks away retains its own'; do grep -Fq "$marker" "$run/logs/latest.log"; done
+    # Geometry counts (deferred replay) and live frame samples are different measurements.
+    grep -Fq 'new cyan slot pixels in the pile' "$run/logs/latest.log"
+    # Keep all paired samples in one Checks notice (GitHub caps notices per step).
+    printf '::notice::PORT_DROPPED_GUN: %s\n' "$(sed -n 's/.*PORT_DROPPED_GUN: //p' "$run/logs/latest.log" | paste -sd ';' -)"
+    for mode in on off; do test -s "$(find "$run/screenshots" -name "*tacz_dropped_guns_${mode}.png" -print -quit)"; done
     for marker in PORT_HUD_PRECISION PORT_HUD_SHOTS PORT_ACCOUNT_HUD; do grep -F "$marker:" "$run/logs/latest.log" | sed 's/^/::notice::/'; done
     grep -F 'PORT_HUD_PRESETS:' "$run/logs/latest.log" | sed 's/^/::notice::/'
     grep -F 'PORT_HUD_PROFILES: AK stand/sneak/zero-cache radii=' "$run/logs/latest.log" | sed 's/^/::notice::/'
@@ -103,6 +126,13 @@ if [[ ${TACZ_SMOKE_CONTROLLER:-} == true ]]; then
     exit
 fi
 if [[ -n ${TACZ_SMOKE_VIEWER:-} ]]; then
+    grep -F '[TaCZ Workbench Sync]' "$run/logs/latest.log" | tail -1 | sed 's/^/::notice::/'
+    if [[ $TACZ_SMOKE_VIEWER == rei ]]; then
+        grep -F 'distinct tacz workbench recipes displayed:' "$run/logs/latest.log" | tail -1 | sed 's/^/::notice::/'
+    fi
+    for state in false true; do
+        grep -F 'PORT_WORKBENCH_VIEWER:' "$run/logs/latest.log" | grep -F "(reloaded=$state)" | sed 's/^/::notice::/'
+    done
     if [[ $TACZ_SMOKE_VIEWER == rei ]]; then grep -F 'PORT_REI_CRAFTING:' "$run/logs/latest.log" | sed 's/^/::notice::/'; fi
     grep -Fq "PORT_VIEWER: $TACZ_SMOKE_VIEWER showed the reloaded gun; both query directions changed" "$run/logs/latest.log"
     verdict=$(grep -Eo 'PORT_VIEWER: [[:digit:]]+ of [[:digit:]]+ central samples show the recipe panel against the world control' "$run/logs/latest.log")
@@ -110,6 +140,10 @@ if [[ -n ${TACZ_SMOKE_VIEWER:-} ]]; then
     test -s "$(find "$run/screenshots" -name "*tacz_viewer_$TACZ_SMOKE_VIEWER.png" -print -quit)"
     exit
 fi
+grep -F 'PORT_TARGET_POSE: fall' "$run/logs/latest.log" | sed 's/^/::notice::/'
+grep -F 'PORT_TARGET_POSE: rise' "$run/logs/latest.log" | sed 's/^/::notice::/'
+grep -F 'PORT_CASE_HINT:' "$run/logs/latest.log" | sed 's/^/::notice::/'
+grep -Fq 'PORT_DROPPED_GUN: reloaded same display' "$run/logs/latest.log"
 grep -E 'PORT_RACK_PREVIEW:|PORT_RACK_LOAD:|PORT_OUTLINE:' "$run/logs/latest.log" | sed 's/^/::notice::/'
 for frame in tacz_{rack,case,corner,vanilla_quad,mesh}_{empty,ghost,placed} tacz_hover_{en_us,zh_cn}_{scope_xm157,scope_mk5hd,scope_standard_8x,less_flash,more_flash,gun_display_case} tacz_hand_filter_{empty,cleared} tacz_held_default_gun tacz_held_variant tacz_default_refit tacz_range_readout tacz_display_wall tacz_xm157_{entity,control,restored,occluded} \
         tacz_lens_pip_1x tacz_lens_{classic,pip}_{bare,optical,hot,wall,restored,tagged}; do

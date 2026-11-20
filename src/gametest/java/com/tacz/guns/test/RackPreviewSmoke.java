@@ -5,11 +5,13 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.block.GunDisplayCaseBlock;
 import com.tacz.guns.block.entity.DisplayRackBlockEntity;
+import com.tacz.guns.client.input.InteractKey;
 import com.tacz.guns.client.renderer.block.DisplayRackRenderer;
 import com.tacz.guns.init.ModBlocks;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
@@ -68,11 +70,8 @@ final class RackPreviewSmoke {
             equip(world, gun.copy());
             ctx.waitFor(mc -> mc.player.getMainHandItem().getItem() instanceof IGun);
             requireSlot(ctx, pos, false, "locked cabinet");
+            DisplayCaseHintSmoke.run(ctx, world, pos); // unlocks via the real crouch + Use interaction
             equip(world, new ItemStack(Items.STICK));
-            world.getServer().runOnServer(s -> {
-                var l = world.getConnection().getServerPlayer().level();
-                l.setBlock(pos, l.getBlockState(pos).setValue(GunDisplayCaseBlock.LOCKED, false), Block.UPDATE_ALL);
-            });
             ctx.waitFor(mc -> mc.player.getMainHandItem().is(Items.STICK) && !mc.level.getBlockState(pos).getValue(GunDisplayCaseBlock.LOCKED));
             requireSlot(ctx, pos, false, "ineligible held item");
             equip(world, ItemStack.EMPTY);
@@ -168,6 +167,12 @@ final class RackPreviewSmoke {
         ctx.waitFor(mc -> mc.player.getMainHandItem().isEmpty() && !((DisplayRackBlockEntity)mc.level.getBlockEntity(pos)).getItem(slot).isEmpty());
         ctx.waitTicks(10);
         var placed = ctx.takeScreenshot("tacz_" + name + "_placed");
+        if (name.equals("case")) {
+            int prompt = ctx.computeOnClient(mc -> mc.font.width(Component.translatable("gui.tacz.interact_key.text.desc",
+                    org.apache.commons.lang3.StringUtils.capitalize(InteractKey.INTERACT_KEY.getTranslatedKeyMessage().getString()))));
+            DisplayCaseHintSmoke.checkBand(ctx, SnowstormMaterialSmoke.read(ghost), "valid gun slot", -25, prompt);
+            DisplayCaseHintSmoke.checkBand(ctx, SnowstormMaterialSmoke.read(placed), "unlocked gun interact", 32, 0);
+        }
         compare(empty, ghost, placed);
         equip(world, item.copy());
         ctx.waitFor(mc -> !mc.player.getMainHandItem().isEmpty());
@@ -182,7 +187,7 @@ final class RackPreviewSmoke {
         });
     }
 
-    private static void equip(TestSingleplayerContext w, ItemStack stack) {
+    static void equip(TestSingleplayerContext w, ItemStack stack) {
         w.getServer().runOnServer(s -> {
             var p = w.getConnection().getServerPlayer();
             p.setItemInHand(InteractionHand.MAIN_HAND, stack);

@@ -1,15 +1,15 @@
-# e2380d1 production build / plain Mesa: matching editor, viewport crop and three genuine burst frames.
-44475620919	smoke	tacz_view_tuning_reported_crop
-44475620919	smoke	tacz_view_tuning_ring_editor
-44475620919	smoke	tacz_view_tuning_ring_rest
-44475620919	smoke	tacz_view_tuning_ring_ellipse
-44475620919	smoke	tacz_view_tuning_burst_rest
-44475620919	smoke	tacz_view_tuning_burst_open
-44475620919	smoke	tacz_view_tuning_burst_return
-# de43f82 account HUD: one rpg category, an exact-gun override, original plain Mesa frames.
-44482591156	smoke	tacz_view_tuning_m320_rule
-44482591156	smoke	tacz_view_tuning_m320_ladder
-44482591156	smoke	tacz_view_tuning_rpg7_type
-# PR 122: same-frame scale diagnostic (green = full-facing reference, magenta = upright).
-44563511559	iris	tacz_billboard_roll_0_control
-44563511559	iris	tacz_billboard_roll_0_rotate_y_pair
+# a2f53dda: first real rendered frame after each funded local shot / tracked server hit. No frozen time.
+44626162907	smoke	tacz_surface_ak_off
+44626162907	smoke	tacz_surface_ak_on
+44626162907	smoke	tacz_surface_rpg_off
+44626162907	smoke	tacz_surface_rpg_on
+44626162782	reimagined-act	tacz_surface_ak_off
+44626162782	reimagined-act	tacz_surface_ak_on
+44626162782	reimagined-act	tacz_surface_rpg_off
+44626162782	reimagined-act	tacz_surface_rpg_on
+# a3847d0d: both frames following real shots, successful ACT 128 receiver job.
+44639006524	reimagined-act	tacz_surface_objects_off
+44639006524	reimagined-act	tacz_surface_objects_on
+# a28882da: same occupied lane, no shader pack, real local shots.
+44640438182	smoke	tacz_surface_objects_off
+44640438182	smoke	tacz_surface_objects_on

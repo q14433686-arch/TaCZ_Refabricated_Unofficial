@@ -1,6 +1,6 @@
 # CurseForge 发布文案
 
-> 更新项目页时只复制 §② Summary 和 §③ 链接的双语正文。§⑤ 是历史文件的 changelog，不是项目介绍。
+> 更新项目页时只复制 §② Summary 和 §③ 链接的双语正文；Screenshots 按图题另传。§⑤ 将当前测试包说明与历史文件 changelog 分开。
 > 所有规则依据均为 CurseForge 官方
 > [Moderation Policies](https://support.curseforge.com/support/solutions/articles/9000197279-moderation-policies)（2025-12-31 版）原文。
 
@@ -46,12 +46,12 @@
 ## ② Summary（一句话）
 
 ```
-Craft workbenches, fit attachments and load community gun packs on Fabric. This unofficial TaCZ port has separate files for each supported Minecraft version.
+Craft guns at specialized benches, fit attachments and load community gun packs on Fabric. Choose the file for your exact Minecraft version.
 ```
 
 ## ③ Description（项目页正文）
 
-打开 [CurseForge-Description.md](CurseForge-Description.md)，复制**全文**到项目的 Description（英文在前、中文在后，无占位符）。Summary 单独填上一栏。不要把仓库指南、历史 changelog 或 Actions 下载链接贴进去。此操作只更新项目介绍，不上传文件。
+打开 [CurseForge-Description.md](CurseForge-Description.md)，复制**全文**到项目的 Description（英文在前、中文在后，无占位符）。Summary 单独填上一栏。不要把仓库指南、历史 changelog 或 Actions 下载链接贴进去。此操作只更新项目介绍，不上传模组文件。正文已经嵌入原图，图址固定到公开提交；若编辑器不保留 Markdown 表格或外链图片，用[截图上传单](README.md#截图上传)的同一批 PNG 和开／关图注上传至站内 Images，不拿测试用青色方片作封面。
 
 ## ④ 文件上传（仅在另行发版时）
 
@@ -71,6 +71,8 @@ Craft workbenches, fit attachments and load community gun packs on Fabric. This 
 ---
 
 ## ⑤ Changelog
+
+**26.3 当前测试文件（不是线上 Release）**：[可复用英文说明](26.3-1.2.0-R1-notes.md) · [中文完整增量](../CHANGELOG_26_3_R1.md#120-r1)。今后确实上传文件时，先核对所发提交，不把 #124 内容贴到更早的同号 JAR。下方 §⑤ 各旧块仅为 26.2 历史。
 
 ```markdown
 Beta 3 Hotfix – public test build of this Fabric port.
@@ -136,7 +138,7 @@ based on TACZ `1.1.8-hotfix`.
 
 ---
 
-## ⑤-bis 次回发布用 Changelog 草稿（案例⑧ 正式修复 · 2026-08-12）
+## ⑤-bis 26.2 历史文件草稿（案例⑧ 正式修复 · 2026-08-12）
 
 > R1 发布时用本块替换线上 changelog；§⑤ 里的 Beta 3 Hotfix 块是已发布原文，留档勿动。
 
@@ -180,7 +182,7 @@ R1 – first release build of this Fabric port.
 
 ---
 
-## ⑤-ter 次回发布用 Changelog 草稿（R3 · 2026-09-02）
+## ⑤-ter 26.2 历史文件草稿（R3 · 2026-09-02）
 
 > 依据 `docs/archive/CHANGELOG_26_2_R2.md` 的 R3 段撰写，替换 ⑤-bis 的 R1 草稿。
 > 标 *(Pending in-game verification)* 的两项**尚未实机验证**，发布前若已验证请

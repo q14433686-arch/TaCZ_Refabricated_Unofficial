@@ -94,9 +94,12 @@ public class GunDisplay implements IDisplay {
     @Nullable
     @SerializedName("ammo")
     private GunAmmo gunAmmo;
+    // Gson leaves an omitted field alone, but writes null for an explicit JSON null.
+    // Both remain "no native effect"; only an omitted field may opt into launcher spill.
+    private static final MuzzleFlash ABSENT_FLASH = new MuzzleFlash();
     @Nullable
     @SerializedName("muzzle_flash")
-    private MuzzleFlash muzzleFlash;
+    private MuzzleFlash muzzleFlash = ABSENT_FLASH;
     @SerializedName("offhand_show")
     private LayerGunShow offhandShow = new LayerGunShow();
     @Nullable
@@ -215,7 +218,11 @@ public class GunDisplay implements IDisplay {
 
     @Nullable
     public MuzzleFlash getMuzzleFlash() {
-        return muzzleFlash;
+        return omitsMuzzleFlash() ? null : muzzleFlash;
+    }
+
+    public boolean omitsMuzzleFlash() {
+        return muzzleFlash == ABSENT_FLASH;
     }
 
     public LayerGunShow getOffhandShow() {

@@ -4,19 +4,27 @@
 [![CurseForge Versions](https://cf.way2muchnoise.eu/versions/1627909.svg)](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated/files)
 [![GitHub Downloads](https://img.shields.io/github/downloads/q14433686-arch/TaCZ_Refabricated_Unofficial/total?logo=github&label=GitHub%20Downloads)](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 
-> **Unofficial Fabric port of TaCZ (Timeless & Classics Guns: Zero).** Craft at gunsmithing tables, fit attachments and load community gun packs. The **26.3 development build** adds display racks, tiered ammo storage and per-account HUD settings. The other Minecraft versions have separate builds; see the table below. Not an official TaCZ release.
+> **Unofficial Fabric port of TaCZ (Timeless & Classics Guns: Zero).** Craft at gunsmithing tables, fit attachments and load community gun packs. In the **26.3 development build**, refit the QR-24, fill an ammo cabinet, preview a gun on your pegboard or set a reticle for just one gun. Optional muzzle and explosion flashes light nearby walls. [In-game gallery](docs/SCREENSHOTS_26_3.md). The other Minecraft versions have separate builds; see the table below. Not an official TaCZ release.
 
 这是一款把 TaCZ 带到新版 Minecraft 的**非官方 Fabric 移植**，基于 [TACZ Dev Team 的原作](https://github.com/MCModderAnchor/TACZ)和 [Sh1roCu 的 Fabric 移植](https://github.com/Sh1roCu/TACZ-Refabricated)。随包提供默认枪包、内置 TML 高模加载和部分 LRTactical 兼容；代码与美术的[许可不同](LICENSES.md)。本项目未获原作者审核或背书，遇到移植问题请到[本仓库反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)。
 
 ### 26.3 开发版里可以做什么？
 
+**[从第一张工作台开始：玩家图文指南](docs/PLAYER_GUIDE_26_3.md)** · [实机图册](docs/SCREENSHOTS_26_3.md) · [枪包 Wiki：26.3 与上游的差异](docs/wiki/GUNPACK_26_3.md) · [开发版变更清单](docs/CHANGELOG_26_3_R1.md#120-r1)
+
 - **陈列和收纳**：对准挂板空格，先看手中物品的放置预览；也能用可锁展示柜陈列，用分级弹药库收纳。[展示墙实图](build-reports/visual/44417531060-tacz_display_wall.png) · [功能与测试范围](docs/investigations/PORT_GAPS_26_3_VALIDATION.md)。
 - **调自己的持枪位置与准星**：持枪按 **Esc → TaCZ 持枪与准星**。位置按本机启动器账号保存；准星可以只改一把枪，或给整个类别设默认。[玩家设置指南](#玩家设置与普通合成) · [两把同类枪的 HUD 对照](build-reports/visual/44482591156-hud-rules.png)。
-- **合成和查配方**：枪械制造台本身在原版 3×3 工作台制作；取得铁块可解锁配方书条目。枪包晚于进服同步时，REI 只更新本插件的展示，不清掉服务器普通配方。[三种情况怎么区分](docs/investigations/ORDINARY_CRAFTING_26_3.md)。
+- **制作和改装**：先在原版 3×3 合成枪械制造台，再到专用台制作枪、配件或弹药。多装几个枪包时，同名工作台过滤规则不再互盖，客机也不会因为服主只写黑名单就看到空台子。新默认内容包括 QR-24、SVD、.300 BLK 与瞄具增高座。[操作与配方排查](docs/PLAYER_GUIDE_26_3.md#做台子找配方装配件)。
+- **看清镜内与墙面**：UH-1 显示距离，XL50 的白热目标会被墙挡住。想在夜间看枪口和爆点附近的墙地一闪，可分别打开「枪口近场散射」「爆炸近场散射」（默认关）；保留枪包镭射光束，不另画落点。[开关与远墙对照](docs/PLAYER_GUIDE_26_3.md#在暗处试墙面和地面的补光)。
+- **地上的枪仍可见**：没有可用低模时，默认从 8 格起改用枪包槽位图；近处、手持和墙上展品不受这个回退影响。[远处的 3D／图标对照](docs/SCREENSHOTS_26_3.md#第三人称与地上的枪)。
 
-**下载要分清：**下表链接的是已发布文件。要试 1.2.0 R1，请在 [26.3 构建记录](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/workflows/build.yml?query=branch%3A26.3)中选择成功的构建，解压 Artifacts 的 ZIP，核对 JAR 文件名；也可[从源码构建](#9-从源码构建)。测试产物有保留期限，旧 Release 不会随源码升级。
+| 改装完成的 QR-24 | 原包 RPG-7 的游戏内爆点补光（Reimagined） |
+|---|---|
+| ![QR-24 持枪与改装进度](build-reports/visual/44417531060-tacz_default_refit.png) | ![引爆瞬间照亮爆点附近的墙地](build-reports/visual/44626162782-reimagined-act-tacz_surface_rpg_on.png) |
 
-本分支当前源码版本为 **`1.2.0+fabric.26.3.R1`**。26.3 从这一版重新以 R1 计数。以 `0.7.0-forge1.1.8-hotfix` 为基线，已移入上游 **1.2.0-hotfix 的部分能力**，不声明完整 1.2.0 枪包兼容，也不需要安装 1.21.1 的 SimpleBedrockModel。[玩家可感变化](docs/investigations/FABRIC_120_PLAYER_CHECKLIST.md) · [移植账本](docs/investigations/FABRIC_120_PORT_26_3.md) · [三条旧线的平行移植指南](docs/lineage/26.3-backports/README.md)。
+**下载要分清：**下表是已发布文件。复现本页的工作台、掉落枪和实体补光，请用 [PR #124 的 `a28882da` 测试 ZIP](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44640438182/artifacts/14587040861)，解压取 JAR；也可[从对应源码构建](#9-从源码构建)。`a14e06e3` 只有墙地补光，没有盔甲架和展品这一层。测试产物有保留期限，版本字符串相同不代表内容相同。
+
+本分支当前源码版本为 **`1.2.0+fabric.26.3.R1`**。26.3 从这一版重新以 R1 计数。以 `0.7.0-forge1.1.8-hotfix` 为基线，已移入上游 **1.2.0-hotfix 的部分能力**，不声明完整 1.2.0 枪包兼容，也不需要安装 1.21.1 的 SimpleBedrockModel。[26.3 移植现状与剩余差异](docs/investigations/PORT_STATUS_26_3_R1.md) · [早期玩家验收台账](docs/investigations/FABRIC_120_PLAYER_CHECKLIST.md) · [移植账本](docs/investigations/FABRIC_120_PORT_26_3.md) · [三条旧线的平行移植指南](docs/lineage/26.3-backports/README.md)。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [CurseForge](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated)
@@ -155,6 +163,8 @@ authored 对齐（实机验证待补）；其余内容不变。
   世界语境有近距全模豁免与顶点预算保护。依赖外置 TML 的枪包在本 mod 下
   视为依赖满足（`provides: ["taczmeshloader"]`）。范围、配置与已知边界见
   [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md)）；
+- **实验性近场光效（默认关闭）**：客户端「渲染」中可分别开启枪口墙地补光、旧枪包击发曝光和爆点墙地补光；RPG 发射和远处爆点分开。除不透明整面地形外，附近的盔甲架、装备、普通展品和架体也可受光；原本全亮的内容保持原样。不放光源方块，不额外绘制镭射落点或全屏闪白。[配置、公式与多人预算](docs/investigations/SURFACE_LIGHT_26_3.md)。
+- **无 LOD 的掉落枪**：默认从 8 格起用该枪包的 `slot` 图标，不隐藏掉落物。有作者低模时沿用原选模，没有图标则保留 3D。近处堆枪也卡可把客户端 `DroppedGunSpriteDistance` 设为 `0`；`-1` 关闭图标回退。见[选路、实测方法与取舍](docs/investigations/DROPPED_GUN_LOD_26_3.md)；
 - 若干可选模组的兼容接线。
 
 这不代表本项目是 TaCZ 或 LRTactical 的官方版本，也不代表所有第三方枪包、
@@ -221,7 +231,7 @@ Sulkan 目前没有等价接线，检测到时会回退到不启用镜内掩码�
 
 **这些项都在游戏内配置界面里**，正常情况下不需要手动改文件。
 
-1. 装 [Mod Menu](https://modrinth.com/mod/modmenu)（本模组的配置入口）；
+1. 装 [Mod Menu](https://modrinth.com/mod/modmenu) 与匹配的 Cloth Config API（配置齿轮的界面）；
    要在光影下开 PIP 再装 [Iris](https://modrinth.com/mod/iris)。
 2. **Mod 列表 → Timeless and Classics Guns → 齿轮（配置）→「渲染」分类**
    （界面是一个全局列表，可直接搜条目名；没有「客户端」这一层），
@@ -394,7 +404,7 @@ Minecraft 26.3 收紧了翻译加载：**任意一个**资源包里的 `assets/<
 - 明确依赖 Arcana 的内容不受支持；其他枪包也不能仅凭“能被扫描到”就视为完全兼容。
 - 镜内文字裁剪对 ttf/unihex 灰度字体（第三方资源包替换默认字体时）回退 vanilla
   管线：文字照常显示但不参与镜内裁剪，属可接受降级。
-- TML 高模（poly_mesh）：世界语境（第三人称/掉落物/展示台）在
+- 对仍按 3D 渲染的 TML 高模（poly_mesh）：世界语境（第三人称/掉落物/展示台）在
   `MeshWorldFullDetailDistance`（默认 16 格）内始终画全模，超出后受
   `MeshWorldMaxVertices` 顶点预算保护（超预算只画立方体）；这是刻意的
   远近取舍，不是渲染缺失。mesh 目镜不支持（与外置 TML 一致）。
@@ -421,7 +431,7 @@ Minecraft 26.3 收紧了翻译加载：**任意一个**资源包里的 `assets/<
   本仓在其之上另写的第一人称 / 世界语境 GPU 烘焙层、光照量化缓存与瞄具相关适配
   为本仓原创，同样以 GPL-3.0 释出；
 - 默认枪包的 `gunpack_info.json` 声明其资源为 CC BY-NC-ND 4.0；
-- 随 jar 打包的 Mayday Animation Engine 使用 MIT；
+- 随 26.3 开发版打包的 Mayday Animation Engine 1.1.4 使用 MIT；从 SimpleBedrockModel 移入的粒子／Molang 代码为 [LGPL-3.0](LICENSES/SimpleBedrockModel.NOTICE.md)；
 - 其他第三方库、资源和外部内容包可能有各自许可。
 
 详见 [`LICENSE`](LICENSE) 与 [`LICENSES.md`](LICENSES.md)。代码许可不会自动覆盖美术资源，

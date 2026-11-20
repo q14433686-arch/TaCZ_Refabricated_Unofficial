@@ -95,7 +95,12 @@ class YsmContractChecks(unittest.TestCase):
         # that only shows a gun if the dynamic item model forwards the context.
         source = code(JAVA / "com/tacz/guns/client/renderer/item/TaczDynamicItemModel.java")
         self.assertIn("ItemDisplayContext displayContext", source)
-        self.assertIn("layer.setupSpecialModel(SPECIAL_RENDERER, argument)", source)
+        self.assertRegex(source, r"layer\.setupSpecialModel\(SPECIAL_RENDERER,\s*new RenderArgument\(stack\.copy\(\),\s*displayContext\)\)")
+        # The only replacement before normal dispatch is the actual GROUND ItemEntity
+        # stand-in. In particular a YSM FIXED submission cannot be diverted into it.
+        self.assertIn("DroppedGunSprite.select(stack, displayContext, owner)", source)
+        sprite = code(JAVA / "com/tacz/guns/client/renderer/item/DroppedGunSprite.java")
+        self.assertRegex(sprite, r"if \(context != ItemDisplayContext\.GROUND \|\| !\(owner instanceof ItemEntity")
         self.assertIn("renderer.render(argument.stack(), argument.displayContext(),", source)
 
     # ---- 2. our side of the adapter -------------------------------------

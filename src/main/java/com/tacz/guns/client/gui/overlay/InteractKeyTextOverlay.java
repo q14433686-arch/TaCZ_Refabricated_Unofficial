@@ -103,12 +103,7 @@ public class InteractKeyTextOverlay {
         BlockState block = player.level().getBlockState(blockPos);
         if (block.getBlock() instanceof GunDisplayCaseBlock) {
             if (blockHitResult.getType() != HitResult.Type.BLOCK) return;
-            boolean locked = block.getValue(GunDisplayCaseBlock.LOCKED);
-            if (player.getMainHandItem().isEmpty() || locked && IGun.mainHandHoldGun(player)) {
-                var chord = mc.options.keyShift.getTranslatedKeyMessage().getString() + " + " + mc.options.keyUse.getTranslatedKeyMessage().getString();
-                var hint = Component.translatable(locked ? "gui.tacz.display_case.locked_hint" : "gui.tacz.display_case.unlocked_hint", chord);
-                graphics.text(mc.font, hint, (width - mc.font.width(hint)) / 2, height / 2 - 25, 0xffffff55, false);
-            } else if (!locked && IGun.mainHandHoldGun(player) && InteractKeyConfigRead.canInteractBlock(block)
+            if (!block.getValue(GunDisplayCaseBlock.LOCKED) && IGun.mainHandHoldGun(player) && InteractKeyConfigRead.canInteractBlock(block)
                     && player.level().getBlockEntity(blockPos) instanceof GunDisplayCaseBlockEntity rack) {
                 int slot = GunDisplayCaseSlotHelper.getSlot(block, blockPos, blockHitResult.getLocation());
                 if (slot >= 0 && (!rack.getItem(slot).isEmpty() || GunPegboardItemConfigRead.canPlace(player.getMainHandItem())))

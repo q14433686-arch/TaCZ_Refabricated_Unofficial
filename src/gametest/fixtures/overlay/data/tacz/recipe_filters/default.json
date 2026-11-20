@@ -1,0 +1,5 @@
+{
+  "blacklist": [
+    "port_test:condition_true"
+  ]
+}

@@ -2,6 +2,6 @@
   "required": true,
   "package": "com.tacz.guns.test.mixin",
   "compatibilityLevel": "JAVA_21",
-  "client": ["RangeTextObserver", "ImpactDrawObserver", "FeedbackObservers", "HurtTiltObserver", "ImpactPacketObserver", "SurfaceFragmentObserver", "TracerModelObserver", "WorldTracerObserver", "InventoryOrigin", "AttachmentTooltipObserver", "RackExtractionTimer", "AvatarModelObserver", "ConstraintPoseObserver", "MaterialTransformObserver", "MuzzleSnapshotObserver", "MuzzleSnapshotInvoker", "MuzzleVertexObserver", "LegacyFlashObserver", "ReimaginedExposure", "ReimaginedShadowControl", "ReimaginedLocatorControl", "ReimaginedShotControl", "ReimaginedCasterControl"],
+  "client": ["RangeTextObserver", "ImpactDrawObserver", "FeedbackObservers", "HurtTiltObserver", "ImpactPacketObserver", "SurfaceFragmentObserver", "SurfaceLightObserver", "ReceiverStateObserver", "TracerModelObserver", "WorldTracerObserver", "InventoryOrigin", "AttachmentTooltipObserver", "RackExtractionTimer", "AvatarModelObserver", "ConstraintPoseObserver", "MaterialTransformObserver", "MuzzleSnapshotObserver", "MuzzleSnapshotInvoker", "MuzzleVertexObserver", "LegacyFlashObserver", "ReimaginedExposure", "ReimaginedShadowControl", "ReimaginedLocatorControl", "ReimaginedShotControl", "ReimaginedCasterControl"],
   "injectors": { "defaultRequire": 1 }
 }

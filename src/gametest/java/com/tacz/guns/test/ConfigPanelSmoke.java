@@ -19,7 +19,9 @@ final class ConfigPanelSmoke {
             var category=root.getOrCreateCategory(Component.translatable("config.tacz.client.render"));
             Map<String,Object> expected=Map.of(
                 "disable_third_person_offhand_and_hotbar_gun_render",false,
-                "gun_hurt_bob_multiplier",.1D,"muzzle_smoke",true);
+                "gun_hurt_bob_multiplier",.1D,"muzzle_smoke",true,
+                "dropped_gun_sprite_distance",RenderConfig.DEFAULT_DROPPED_GUN_SPRITE_DISTANCE,
+                "muzzle_surface_light",false,"legacy_muzzle_light",false,"explosion_surface_light",false);
             int checked=0;
             for(Object candidate:category.getEntries()) {
                 if(!(candidate instanceof AbstractConfigListEntry<?> entry))continue;
@@ -31,7 +33,7 @@ final class ConfigPanelSmoke {
                     }
                 }
             }
-            if(checked!=3)throw new AssertionError("Missing or duplicate new render settings: "+checked);
+            if(checked!=expected.size())throw new AssertionError("Missing or duplicate new render settings: "+checked);
             var ammo=root.getOrCreateCategory(Component.translatable("config.tacz.common.ammo"));
             Map<String,Object> rules=Map.of(
                     "destroy_blocks",com.tacz.guns.config.common.AmmoConfig.DEFAULT_DESTROY_BLOCKS,
@@ -89,7 +91,7 @@ final class ConfigPanelSmoke {
                 common.set(team);hardness.set(threshold);blockList.set(blocks);
                 ConfigPersist.saveAll();
             }
-            GunMod.LOGGER.info("PORT_CONFIG: 9 Cloth render/ammo controls built with correct defaults and save consumers; client/common FCAP TOML persistence passed");
+            GunMod.LOGGER.info("PORT_CONFIG: 14 Cloth render/ammo controls built with correct defaults and save consumers; client/common FCAP TOML persistence passed");
         });
     }
 }

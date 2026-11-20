@@ -1,9 +1,11 @@
 package cn.sh1rocu.tacz.compat.rei;
 
+import cn.sh1rocu.tacz.compat.rei.display.GunSmithTableDisplay;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.item.GunTabType;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
+import com.tacz.guns.resource.network.WorkbenchRecipeCounts;
 import com.tacz.guns.item.AmmoItem;
 import com.tacz.guns.item.AttachmentItem;
 import com.tacz.guns.item.GunSmithTableItem;
@@ -22,6 +24,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /** Optional REI 26.3 adapter. A gun-pack packet is NOT a server recipe update. */
 public final class ReiPackRefresh {
@@ -65,7 +68,10 @@ public final class ReiPackRefresh {
         if (!removed.isEmpty()) entries.removeEntryIf(removed::contains);
         entries.addEntries(current.stream().filter(e -> !entries.alreadyContain(e)).toList());
         previousVariants = current;
-        GunMod.LOGGER.info("[TACZ Recipe Viewer] Replaced {} pack displays with {}; server crafting displays left in place.", owned.size(), newDisplays.size());
+        var tableRecipes = newDisplays.stream().filter(GunSmithTableDisplay.class::isInstance)
+                .map(d -> ((GunSmithTableDisplay) d).getRecipe().getId()).collect(Collectors.toSet());
+        GunMod.LOGGER.info("[TACZ Recipe Viewer] Replaced {} pack displays with {}; distinct tacz workbench recipes displayed: {}; server crafting displays left in place.",
+                owned.size(), newDisplays.size(), WorkbenchRecipeCounts.inTaczNamespace(tableRecipes));
         return true;
     }
 

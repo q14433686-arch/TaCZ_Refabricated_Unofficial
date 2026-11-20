@@ -2,10 +2,17 @@ package com.tacz.guns.resource.filter;
 
 import com.google.gson.*;
 import com.tacz.guns.GunMod;
+import com.tacz.guns.resource.CommonAssetsManager;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.IoSupplier;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -18,6 +25,23 @@ public class RecipeFilter {
     public void merge(RecipeFilter other) {
         this.whitelist.addAll(other.whitelist);
         this.blacklist.addAll(other.blacklist);
+    }
+
+    /** Same additive rules as RecipeFilterManager for ordinary data-pack stacks; blacklists still win. */
+    public static InputStream mergeLayers(Identifier id, List<IoSupplier<InputStream>> layers) throws IOException {
+        RecipeFilter merged = null;
+        for (var layer : layers) {
+            try (var reader = new InputStreamReader(layer.get(), StandardCharsets.UTF_8)) {
+                RecipeFilter filter = CommonAssetsManager.GSON.fromJson(reader, RecipeFilter.class);
+                if (filter == null) throw new JsonParseException("Empty filter");
+                if (merged == null) merged = filter;
+                else merged.merge(filter);
+            } catch (IOException | RuntimeException ex) {
+                GunMod.LOGGER.warn("Ignoring invalid workbench filter layer {}: {}", id, ex.toString());
+            }
+        }
+        if (merged == null) throw new IOException("No readable workbench filter for " + id);
+        return new ByteArrayInputStream(CommonAssetsManager.GSON.toJson(merged).getBytes(StandardCharsets.UTF_8));
     }
 
     public boolean contains(Identifier location) {
@@ -74,6 +98,10 @@ public class RecipeFilter {
         }
 
         private void loadFilters(JsonArray array, @NotNull List<IFilter<Identifier>> list) {
+            // A missing or empty whitelist means unrestricted (before the blacklist). The wire
+            // serializer writes [] even if the author omitted the key. An empty LiteralFilter
+            // here would make whitelist.isEmpty() false and reject every recipe on remote clients.
+            if (array.isEmpty()) return;
             LiteralFilter.Builder<Identifier> builder = new LiteralFilter.Builder<>();
             for (JsonElement element : array) {
                 if (element.isJsonPrimitive()) {
@@ -115,7 +143,9 @@ public class RecipeFilter {
                     list.add(regexFilter.getPattern().pattern());
                 }
             }
-            return list;
+            // A *nonempty*, wholly malformed list matched nothing before serialization. Do not
+            // turn it into an unrestricted whitelist when transferred or merged across packs.
+            return !filter.isEmpty() && list.isEmpty() ? List.of("^(?!)$") : list;
         }
     }
 }

@@ -36,7 +36,11 @@ public class PackClientSmoke implements FabricClientGameTest {
             context.waitFor(client -> CommonNetworkCache.INSTANCE.getGunIndex(id) != null
                     && TimelessAPI.getClientGunIndex(id).isPresent());
             GunMod.LOGGER.info("PORT_SMOKE_CLIENT: default client index and sync installed");
-            if (System.getProperty("tacz.test.irisColor") != null) { ReimaginedSmoke.run(context, world); return; }
+            if (System.getProperty("tacz.test.irisColor") != null) {
+                ReimaginedSmoke.run(context, world); // verifies the actual selected pack and ACT setting
+                SurfaceLightSmoke.run(context, world, false);
+                return;
+            }
             context.runOnClient(mc -> DefaultClientCatalogSmoke.client());
             world.getServer().runOnServer(server -> world.getConnection().getServerPlayer().setItemInHand(
                     InteractionHand.MAIN_HAND, GunItemBuilder.create().setId(id).setAmmoCount(3).build()));
@@ -46,8 +50,13 @@ public class PackClientSmoke implements FabricClientGameTest {
             saveFrame(context, "tacz_held_default_gun");
             if (Boolean.getBoolean("tacz.test.pal")) { PalRuntimeSmoke.run(context); return; }
             if (Boolean.getBoolean("tacz.test.controller")) { ControllerSmoke.run(context, world); return; }
+            SurfaceLightSmoke.run(context, world, true);
+            DroppedGunSmoke.run(context, world);
             ViewTuningSmoke.run(context, world);
-            if (!Boolean.getBoolean("tacz.test.iris")) RackPreviewSmoke.run(context, world, id);
+            if (!Boolean.getBoolean("tacz.test.iris")) {
+                context.runOnClient(TargetPoseSmoke::run);
+                RackPreviewSmoke.run(context, world, id);
+            }
             PortInputSmoke.run(context, world);
             ScopeUserRegressionSmoke.run(context, world);
             if (Boolean.getBoolean("tacz.test.iris")) {
@@ -111,7 +120,7 @@ public class PackClientSmoke implements FabricClientGameTest {
             CoreCompletionSmoke.run(context, world);
             SnowstormSmoke.run(context, world);
             RemoteParticleSmoke.run(context, world);
-            TooltipSmoke.run(context, world);
+            DroppedGunSmoke.acrossReload(context, () -> TooltipSmoke.run(context, world));
             RackLoadSmoke.run(context, world);
             world.getServer().runOnServer(server -> world.getConnection().getServerPlayer().setGameMode(GameType.CREATIVE));
             context.waitFor(client -> client.player.isCreative());

@@ -6,10 +6,13 @@ import net.minecraftforge.common.ForgeConfigSpec;
 public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue ENABLE_LASER_FADE_OUT;
     public static ForgeConfigSpec.BooleanValue RENDER_MUZZLE_SMOKE;
+    public static ForgeConfigSpec.BooleanValue MUZZLE_SURFACE_LIGHT, LEGACY_MUZZLE_LIGHT, EXPLOSION_SURFACE_LIGHT;
     public static ForgeConfigSpec.BooleanValue DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER;
     public static ForgeConfigSpec.DoubleValue GUN_HURT_BOB_MULTIPLIER;
     public static ForgeConfigSpec.BooleanValue ILLUMINATED_REAL_SKY;
     public static ForgeConfigSpec.IntValue GUN_LOD_RENDER_DISTANCE;
+    public static final int DEFAULT_DROPPED_GUN_SPRITE_DISTANCE = 8;
+    public static ForgeConfigSpec.IntValue DROPPED_GUN_SPRITE_DISTANCE;
     public static ForgeConfigSpec.BooleanValue HIT_PARTICLE_ENABLE;
     public static ForgeConfigSpec.BooleanValue HIT_EXTRA_PARTICLE_ENABLE;
     public static ForgeConfigSpec.IntValue HIT_PARTICLE_MAX_DISTANCE;
@@ -283,6 +286,9 @@ public class RenderConfig {
         builder.push("render");
         DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER = builder.comment("Hide third-person offhand and unselected hotbar guns; keep main hand visible").define("DisableThirdPersonOffhandAndHotbarGunRender", false);
         GUN_HURT_BOB_MULTIPLIER = builder.comment("First-person ordinary hurt tilt while holding a gun; front/back hits are additionally halved").defineInRange("GunHurtBobMultiplier", 0.1, 0, 1);
+        MUZZLE_SURFACE_LIGHT = builder.comment("Briefly light nearby terrain, world entities and displayed objects on a successful shot (client visual only).").define("MuzzleSurfaceLight", false);
+        LEGACY_MUZZLE_LIGHT = builder.comment("Estimate shot exposure for old textured flashes and explosive launchers that omit the flash. Never enables disabled renew effects.").define("LegacyMuzzleLight", false);
+        EXPLOSION_SURFACE_LIGHT = builder.comment("Project a short-range pulse for standard explosion notifications (including TNT) and tracked LR stun bursts.").define("ExplosionSurfaceLight", false);
         RENDER_MUZZLE_SMOKE = builder.comment("Render detached renew muzzle smoke independently of flash").define("RenderMuzzleSmoke", true);
 
         builder.comment("Whether or not apply fadeout effect on the laser beam. Close this may improve laser performance under some shaders.");
@@ -302,6 +308,10 @@ public class RenderConfig {
 
         builder.comment("How far to display the lod model, 0 means always display");
         GUN_LOD_RENDER_DISTANCE = builder.defineInRange("GunLodRenderDistance", 0, 0, Integer.MAX_VALUE);
+
+        DROPPED_GUN_SPRITE_DISTANCE = builder.comment("Without a usable pack LOD, draw dropped guns as their slot icon from this distance (blocks).",
+                "-1: disable, 0: even nearby. Does not affect held guns, previews or racks.")
+                .defineInRange("DroppedGunSpriteDistance", DEFAULT_DROPPED_GUN_SPRITE_DISTANCE, -1, Integer.MAX_VALUE);
 
         HIT_PARTICLE_ENABLE = builder.comment("Show block impact particles").define("HitParticleEnable", true);
         HIT_EXTRA_PARTICLE_ENABLE = builder.comment("Show gun pack hit_surface_particles in addition to block fragments").define("HitExtraParticleEnable", true);
