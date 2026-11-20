@@ -44,8 +44,7 @@ public class TargetRenderer implements BlockEntityRenderer<TargetBlockEntity, Ta
     /** Custom render state for target block entity */
     public static class TargetRenderState extends BlockEntityRenderState {
         public Direction facing = Direction.NORTH;
-        public float rot;
-        public float oRot;
+        public float tiltDegrees;
         /** 主人档案（可能只有名字）：{@code null} 表示这个标靶没有主人，不画头。 */
         public ResolvableProfile profile;
     }
@@ -64,8 +63,7 @@ public class TargetRenderer implements BlockEntityRenderer<TargetBlockEntity, Ta
         BlockEntityRenderState.extractBase(blockEntity, state, crumblingOverlay);
         BlockState blockState = blockEntity.getBlockState();
         state.facing = blockState.getValue(TargetBlock.FACING);
-        state.rot = blockEntity.rot;
-        state.oRot = blockEntity.oRot;
+        state.tiltDegrees = -net.minecraft.util.Mth.lerp(partialTick, blockEntity.oRot, blockEntity.rot);
         // 只把「档案」带进渲染状态，皮肤解析推迟到 submit（这一步每帧都会跑，
         // 任何阻塞式的查询都会卡住渲染线程 —— 那正是矿车标靶崩溃的同款问题）。
         state.profile = blockEntity.getOwnerProfile();
@@ -100,36 +98,37 @@ public class TargetRenderer implements BlockEntityRenderer<TargetBlockEntity, Ta
         getModel().ifPresent(model -> {
             int combinedLightIn = state.lightCoords;
             int combinedOverlayIn = OverlayTexture.NO_OVERLAY;
-            // partialTick is not available in submit; use 1.0f (latest tick state)
-            float deg = -state.rot;
-
-            BedrockPart headModel = model.getNode(HEAD_NAME);
-            BedrockPart upperModel = model.getNode(UPPER_NAME);
-            upperModel.xRot = (float) Math.toRadians(deg);
-            headModel.visible = false;
-
+            BedrockPart head = model.getNode(HEAD_NAME);
+            BedrockPart upper = model.getNode(UPPER_NAME);
+            float oldRotation = upper.xRot;
+            boolean oldHeadVisible = head.visible;
             poseStack.pushPose();
-            poseStack.translate(0.5, 0.225, 0.5);
-            poseStack.mulPose(Axis.YN.rotationDegrees(state.facing.get2DDataValue() * 90));
-            poseStack.mulPose(Axis.ZN.rotationDegrees(180));
-            poseStack.translate(0, -1.275, 0.0125);
-            RenderType renderType = RenderTypes.entityTranslucent(InternalAssetLoader.TARGET_TEXTURE_LOCATION);
-            model.submit(poseStack, ItemDisplayContext.NONE, collector, renderType, combinedLightIn, combinedOverlayIn);
+            try {
+                upper.xRot = (float) Math.toRadians(state.tiltDegrees);
+                head.visible = false;
+                poseStack.translate(0.5, 0.225, 0.5);
+                poseStack.mulPose(Axis.YN.rotationDegrees(state.facing.get2DDataValue() * 90));
+                poseStack.mulPose(Axis.ZN.rotationDegrees(180));
+                poseStack.translate(0, -1.275, 0.0125);
+                RenderType body = RenderTypes.entityTranslucent(InternalAssetLoader.TARGET_TEXTURE_LOCATION);
+                model.submit(poseStack, ItemDisplayContext.NONE, collector, body, combinedLightIn, combinedOverlayIn);
 
-            if (state.profile != null) {
-                poseStack.translate(0, 1.25, 0);
-                poseStack.mulPose(Axis.XP.rotationDegrees(deg));
-                headModel.visible = true;
-                RenderType skullRenderType = this.skinRenderType(state.profile);
-                // Use submitCustomGeometry to render the head part with a VertexConsumer
-                collector.submitCustomGeometry(poseStack, skullRenderType, (entryPose, consumer) -> {
-                    PoseStack working = new PoseStack();
-                    working.last().pose().set(entryPose.pose());
-                    working.last().normal().set(entryPose.normal());
-                    headModel.render(working, ItemDisplayContext.NONE, consumer, combinedLightIn, combinedOverlayIn);
-                });
+                if (state.profile != null) {
+                    poseStack.translate(0, 1.25, 0);
+                    poseStack.mulPose(Axis.XP.rotationDegrees(state.tiltDegrees));
+                    head.visible = true;
+                    // Capture now, just like the plate. Another target can hide or rotate
+                    // bones on this shared model before the collector replays its draws.
+                    head.translateAndRotateAndScale(poseStack);
+                    var snapshot = com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot.captureSubtree(head, poseStack, ItemDisplayContext.NONE,
+                            combinedLightIn, combinedOverlayIn, 1, 1, 1, 1);
+                    collector.submitCustomGeometry(new PoseStack(), skinRenderType(state.profile), (ignored, consumer) -> snapshot.write(consumer));
+                }
+            } finally {
+                head.visible = oldHeadVisible;
+                upper.xRot = oldRotation;
+                poseStack.popPose();
             }
-            poseStack.popPose();
         });
     }
 

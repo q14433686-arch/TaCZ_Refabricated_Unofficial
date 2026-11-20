@@ -233,8 +233,8 @@ dependencies {
 
     // REI — 26.2
     compileOnly "dev.architectury:architectury-fabric:${architectury_version}"
-    compileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:$rei_version"
-    compileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei_version"
+    // Access to .820's indexed, per-display removal. Never nest REI or require it at startup.
+    compileOnly("me.shedaniel:RoughlyEnoughItems-fabric:$rei_version") { transitive = false }
 
     // Spark
     // runtimeOnly "curse.maven:spark-361579:4738953"

@@ -4,8 +4,18 @@
   "version": "1.0.0",
   "name": "TaCZ 26.2 backport tests (development only)",
   "entrypoints": {
-    "fabric-gametest": ["com.tacz.guns.test.PackConversionSmoke", "com.tacz.guns.util.ExportUpgradeSmoke"],
-    "fabric-client-gametest": ["com.tacz.guns.test.PackClientSmoke"]
+    "fabric-gametest": [
+      "com.tacz.guns.test.PackConversionSmoke",
+      "com.tacz.guns.util.ExportUpgradeSmoke",
+      "com.tacz.guns.test.AmmoStorageSmoke",
+      "com.tacz.guns.test.DisplayRackSmoke",
+      "com.tacz.guns.test.PegboardCommandSmoke"
+    ],
+    "fabric-client-gametest": [
+      "com.tacz.guns.test.PackClientSmoke"
+    ]
   },
-  "depends": {"tacz":"*"}
+  "depends": {
+    "tacz": "*"
+  }
 }

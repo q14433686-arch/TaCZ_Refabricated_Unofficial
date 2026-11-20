@@ -7,6 +7,8 @@ import java.util.List;
 
 public class SyncConfig {
     // 交互键的判断是在客户端执行的，但是需要服务端来控制
+    public static ForgeConfigSpec.ConfigValue<List<String>> GUN_PEGBOARD_WHITELIST_ITEMS;
+    public static ForgeConfigSpec.ConfigValue<List<String>> GUN_PEGBOARD_BLACKLIST_ITEMS;
     public static ForgeConfigSpec.ConfigValue<List<String>> INTERACT_KEY_WHITELIST_BLOCKS;
     public static ForgeConfigSpec.ConfigValue<List<String>> INTERACT_KEY_WHITELIST_ENTITIES;
     public static ForgeConfigSpec.ConfigValue<List<String>> INTERACT_KEY_BLACKLIST_BLOCKS;
@@ -37,6 +39,10 @@ public class SyncConfig {
     }
 
     public static void interactKey(ForgeConfigSpec.Builder builder) {
+        builder.push("gun_pegboard");
+        GUN_PEGBOARD_WHITELIST_ITEMS = builder.comment("Additional item ids permitted on display walls").define("GunPegboardWhitelistItems", Lists.newArrayList());
+        GUN_PEGBOARD_BLACKLIST_ITEMS = builder.comment("Denied display item ids (overrides whitelist and built-ins)").define("GunPegboardBlacklistItems", Lists.newArrayList());
+        builder.pop();
         builder.push("interact_key");
 
         builder.comment("These whitelist blocks can be interacted with when the interact key is pressed");

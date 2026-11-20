@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Static regression checks for the lGmrtNC recipe-viewer failure (no JVM needed).
+"""Static regression checks for the 26.2 recipe-viewer refresh hook (no JVM needed).
 
-Checks the reported built-in recipes and the optional JEI hook wiring. This is NOT
-an in-game crafting test, a codec decode test, or a Mixin application test.
+Synced from 26.2 R3-hotfix3 (commit 4397753) on 2026-10-21. Checks the ten reported
+built-in recipes and the optional JEI lifecycle listener wiring. This is NOT an in-game
+crafting test, a codec decode test, or a Mixin application test.
 Run: python3 scripts/verify_recipe_viewer_reload.py
 """
 from pathlib import Path
@@ -63,9 +64,23 @@ class RecipeViewerChecks(unittest.TestCase):
 
     def test_refresh_does_not_forge_recipe_sync_or_write_jei_recipe_cache(self):
         source = code(BRIDGE)
-        for forbidden in ("AFTER_RECIPES_UPDATED", "clearClientRecipes", "setClientSyncedRecipes"):
+        for forbidden in ("AFTER_RECIPES_UPDATED", "clearClientRecipes", "setClientSyncedRecipes",
+                          "restartJei", "JeiLifecycleEvents"):
             self.assertNotIn(forbidden, source)
         self.assertIn("jeiReloadListener.onResourceManagerReload(client.getResourceManager())", source)
+
+    def test_rei_refresh_does_not_rebuild_the_server_display_holder(self):
+        self.assertNotIn("reloadPlugins", code(BRIDGE))
+        rei = code(JAVA / "cn/sh1rocu/tacz/compat/rei/ReiPackRefresh.java")
+        self.assertIn("registry.getDisplayOrigin(d) == REIClientPlugin.PACK_ORIGIN", rei)
+        self.assertNotIn("startReload(", rei)
+
+    def test_book_unlocks_reward_real_ordinary_recipes(self):
+        for recipe in (RESOURCES / "data").glob("*/recipe/*.json"):
+            recipe_id = f"{recipe.parents[1].name}:{recipe.stem}"
+            unlock = json.loads((recipe.parents[1] / "advancement/recipes" / recipe.name).read_text())
+            self.assertEqual(unlock["rewards"]["recipes"], [recipe_id])
+            self.assertEqual(unlock["criteria"]["has_material"]["trigger"], "minecraft:inventory_changed")
 
     def test_optional_mixin_captures_safe_listener(self):
         config = json.loads((RESOURCES / "tacz.fabric.mixins.json").read_text())
@@ -80,6 +95,18 @@ class RecipeViewerChecks(unittest.TestCase):
         self.assertIn("RecipeViewerReloadBridge.setJeiReloadListener(cir.getReturnValue())", source)
         # Existing MixinPlugin derives the optional mod id from this package segment.
         self.assertEqual(("cn.sh1rocu.tacz.mixin." + MIXIN_NAME).split(".")[5], "jei")
+
+    def test_legacy_and_chunked_sync_share_one_current_connection_install(self):
+        base = JAVA / "com/tacz/guns/network/message"
+        legacy = code(base / "ServerMessageSyncGunPack.java")
+        parts = code(base / "ServerMessageSyncGunPackPart.java")
+        self.assertIn("isCurrent(connection)", legacy)
+        self.assertIn("isCurrent(connection)", parts)
+        self.assertIn("ServerMessageSyncGunPack.installCache(", parts)
+        install = legacy.split("static void installCache(", 1)[1]
+        calls = [install.index(call) for call in ("CommonNetworkCache.INSTANCE.fromNetwork(",
+                 "ClientIndexManager.reload()", "RecipeViewerReloadBridge.requestReload()")]
+        self.assertEqual(calls, sorted(calls))
 
     def test_listener_is_client_lifetime_not_connection_lifetime(self):
         source = code(BRIDGE)

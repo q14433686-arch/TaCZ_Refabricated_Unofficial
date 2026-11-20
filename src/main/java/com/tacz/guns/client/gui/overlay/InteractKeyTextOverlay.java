@@ -4,6 +4,11 @@ import com.tacz.guns.api.item.IAmmo;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.block.AbstractGunSmithTableBlock;
+import com.tacz.guns.block.AmmoStorageBlock;
+import com.tacz.guns.block.GunDisplayCaseBlock;
+import com.tacz.guns.block.GunDisplayCaseSlotHelper;
+import com.tacz.guns.block.entity.GunDisplayCaseBlockEntity;
+import com.tacz.guns.config.util.GunPegboardItemConfigRead;
 import com.tacz.guns.client.input.InteractKey;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.config.util.InteractKeyConfigRead;
@@ -96,6 +101,21 @@ public class InteractKeyTextOverlay {
                                         BlockHitResult blockHitResult, LocalPlayer player, Minecraft mc) {
         BlockPos blockPos = blockHitResult.getBlockPos();
         BlockState block = player.level().getBlockState(blockPos);
+        if (block.getBlock() instanceof GunDisplayCaseBlock) {
+            if (blockHitResult.getType() != HitResult.Type.BLOCK) return;
+            if (!block.getValue(GunDisplayCaseBlock.LOCKED) && IGun.mainHandHoldGun(player) && InteractKeyConfigRead.canInteractBlock(block)
+                    && player.level().getBlockEntity(blockPos) instanceof GunDisplayCaseBlockEntity rack) {
+                int slot = GunDisplayCaseSlotHelper.getSlot(block, blockPos, blockHitResult.getLocation());
+                if (slot >= 0 && (!rack.getItem(slot).isEmpty() || GunPegboardItemConfigRead.canPlace(player.getMainHandItem())))
+                    renderText(graphics, width, height, mc.font, InteractKey.INTERACT_KEY.getTranslatedKeyMessage().getString(), false);
+            }
+            return;
+        }
+        if (block.getBlock() instanceof AmmoStorageBlock && IGun.mainHandHoldGun(player)) {
+            renderText(graphics, width, height, mc.font, InteractKey.INTERACT_KEY.getTranslatedKeyMessage().getString(),
+                    Component.translatable("gui.tacz.interact_key.text.ammo_storage_pickup"));
+            return;
+        }
         if (!InteractKeyConfigRead.canInteractBlock(block)) {
             return;
         }
@@ -136,13 +156,18 @@ public class InteractKeyTextOverlay {
 
     private static void renderText(GuiGraphicsExtractor graphics, int width, int height,
                                    Font font, String keyName, boolean willFilterByHand) {
+        renderText(graphics, width, height, font, keyName,
+                willFilterByHand ? Component.translatable("gui.tacz.interact_key.text.gun_smith_table_filter") : null);
+    }
+
+    private static void renderText(GuiGraphicsExtractor graphics, int width, int height,
+                                   Font font, String keyName, Component filter) {
         Component title = Component.translatable("gui.tacz.interact_key.text.desc", StringUtils.capitalize(keyName));
         // 颜色补 alpha：TextColor#getValue 给的是六位色，26.2 会把 alpha=0 的整段丢弃。
         graphics.text(font, title,
                 (int) ((width - font.width(title)) / 2.0f), (int) (height / 2.0f - 25),
                 0xFF000000 | TextColor.YELLOW.getValue(), false);
-        if (willFilterByHand) {
-            Component filter = Component.translatable("gui.tacz.interact_key.text.gun_smith_table_filter");
+        if (filter != null) {
             graphics.text(font, filter,
                     (int) ((width - font.width(filter)) / 2.0f), (int) (height / 2.0f - 14),
                     0xFF000000 | TextColor.GRAY.getValue(), false);

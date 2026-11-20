@@ -63,6 +63,8 @@ public class ClientSetupEvent {
     public static void registerClientTooltips() {
         // 注册文本提示 (26.2: TooltipComponentCallback → ClientTooltipComponentCallback)
         ClientTooltipComponentCallback.EVENT.register(tooltip -> {
+            if (tooltip instanceof com.tacz.guns.inventory.tooltip.AmmoStorageTooltip storage)
+                return new com.tacz.guns.client.tooltip.ClientAmmoStorageTooltip(storage);
             if (tooltip instanceof GunTooltip gunTooltip) {
                 return new ClientGunTooltip(gunTooltip);
             }
@@ -91,6 +93,7 @@ public class ClientSetupEvent {
     public static void registerGuiOverlays() {
         HudElementRegistry.addLast(id("gun_hud"), (graphics, deltaTracker) -> GunHudOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
         HudElementRegistry.addLast(id("heat_bar"), (graphics, deltaTracker) -> HeatBarOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
+        HudElementRegistry.addLast(id("display_case_lock_hint"), com.tacz.guns.client.gui.overlay.DisplayCaseLockHint::render);
         HudElementRegistry.addLast(id("interact_key_text"), (graphics, deltaTracker) -> InteractKeyTextOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
         HudElementRegistry.addLast(id("kill_amount"), (graphics, deltaTracker) -> KillAmountOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
         // 【Step 1 调试】瞄具掩码预览，由 RenderConfig.SCOPE_MASK_DEBUG 控制，默认关闭。

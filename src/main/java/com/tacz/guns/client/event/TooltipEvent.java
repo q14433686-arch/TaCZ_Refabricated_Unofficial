@@ -15,6 +15,9 @@ import java.util.List;
 
 public class TooltipEvent {
     public static void onTooltip(ItemStack stack, TooltipFlag context, List<Component> lines) {
+        if (stack.is(ModItems.GUN_DISPLAY_CASE)) {
+            lines.add(Component.translatable("tooltip.tacz.gun_display_case").withStyle(net.minecraft.ChatFormatting.GRAY));
+        }
         if (context.isAdvanced() && RenderConfig.ENABLE_TACZ_ID_IN_TOOLTIP.get()) {
             if (stack.getItem() instanceof GunItemDataAccessor item) {
                 lines.add(formatTooltip(GunItemDataAccessor.GUN_ID_TAG, item.getGunId(stack)));

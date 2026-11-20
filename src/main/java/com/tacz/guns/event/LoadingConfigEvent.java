@@ -17,6 +17,7 @@ public class LoadingConfigEvent {
         if (CONFIG_NAME.equals(fileName)) {
             HeadShotAABBConfigRead.init();
             InteractKeyConfigRead.init();
+            com.tacz.guns.config.util.GunPegboardItemConfigRead.init();
         }
     }
 
@@ -29,6 +30,7 @@ public class LoadingConfigEvent {
         if (CONFIG_NAME.equals(fileName)) {
             HeadShotAABBConfigRead.init();
             InteractKeyConfigRead.init();
+            com.tacz.guns.config.util.GunPegboardItemConfigRead.init();
 //            if (FabricLoader.getInstance().getEnvironmentType()== EnvType.CLIENT) ClientGunPackDownloadManager::downloadClientGunPack;
         }
     }
