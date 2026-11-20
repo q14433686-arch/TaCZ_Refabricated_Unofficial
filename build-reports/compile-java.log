@@ -1,276 +1,252 @@
-commit: e0e696f16d644364556ebefc5fced81918ab60e8
-cn/sh1rocu/tacz/compat/rei/ReiPackRefresh.java:19: error: package me.shedaniel.rei.impl.client.registry.display does not exist
-cn/sh1rocu/tacz/compat/rei/ReiPackRefresh.java:20: error: cannot find symbol | symbol:   class ReloadManagerImpl
-com/tacz/guns/client/renderer/snapshot/BedrockRenderSnapshot.java:15: error: cannot find symbol | symbol:   class IlluminatedLights
-cn/sh1rocu/tacz/client/TaCZFabricClient.java:23: error: cannot find symbol | symbol:   class TaczFeatureRenderers
-com/tacz/guns/inventory/AmmoStorageMenu.java:3: error: package net.fabricmc.fabric.api.menu.v1 does not exist
-com/tacz/guns/inventory/AmmoStorageMenu.java:23: error: cannot find symbol | symbol:   class ExtendedMenuType
-com/tacz/guns/block/entity/AmmoStorageBlockEntity.java:10: error: package net.fabricmc.fabric.api.menu.v1 does not exist
-com/tacz/guns/block/entity/AmmoStorageBlockEntity.java:33: error: cannot find symbol | symbol: class ExtendedMenuProvider
-com/tacz/guns/block/entity/DisplayRackBlockEntity.java:4: error: package net.fabricmc.fabric.api.serialization.v1.value does not exist
-com/tacz/guns/block/entity/DisplayRackBlockEntity.java:5: error: package net.fabricmc.fabric.api.serialization.v1.value does not exist
-com/tacz/guns/client/init/ClientSetupEvent.java:9: error: cannot find symbol | symbol:   class ScopeMaskDebugOverlay
-com/tacz/guns/client/init/ClientSetupEvent.java:30: error: package net.fabricmc.fabric.api.client.keymapping.v1 does not exist
-com/tacz/guns/client/init/ClientSetupEvent.java:31: error: cannot find symbol | symbol:   class ClientTooltipComponentCallback
-com/tacz/guns/client/renderer/item/DroppedGunSprite.java:7: error: cannot find symbol | symbol:   class ScopePipRenderer
-com/tacz/guns/client/input/GunInputHandler.java:10: error: package net.fabricmc.fabric.api.client.keymapping.v1 does not exist
-com/tacz/guns/client/input/InteractKey.java:17: error: package net.fabricmc.fabric.api.client.keymapping.v1 does not exist
-com/tacz/guns/client/event/CameraSetupEvent.java:20: error: cannot find symbol | symbol:   class ScopePipRenderer
-com/tacz/guns/client/event/DisplayRackHighlight.java:8: error: package net.fabricmc.fabric.api.client.rendering.v1.level does not exist
-com/tacz/guns/client/event/DisplayRackHighlight.java:9: error: package net.fabricmc.fabric.api.client.rendering.v1.level does not exist
-com/tacz/guns/client/event/DisplayRackHighlight.java:11: error: cannot find symbol | symbol:   class ColorTargetState
-com/tacz/guns/client/event/DisplayRackHighlight.java:12: error: cannot find symbol | symbol:   class CompareOp
-com/tacz/guns/client/event/DisplayRackHighlight.java:13: error: cannot find symbol | symbol:   class DepthStencilState
-com/tacz/guns/client/event/PackCompatibilityNotice.java:7: error: cannot find symbol | symbol:   class ClientCommands
-com/tacz/guns/client/event/PackCompatibilityNotice.java:7: error: static import only from classes and interfaces
-com/tacz/guns/client/model/bedrock/IlluminatedMaterials.java:4: error: cannot find symbol | symbol:   class ColorTargetState
-com/tacz/guns/client/model/bedrock/IlluminatedMaterials.java:6: error: cannot find symbol | symbol:   class ScopeBodyRenderTypes
-com/tacz/guns/client/model/bedrock/IlluminatedMaterials.java:7: error: cannot find symbol | symbol:   class ScopeMaskTextureHandle
-com/tacz/guns/client/model/bedrock/IlluminatedMaterials.java:12: error: cannot find symbol | symbol:   class BindGroupLayouts
-com/tacz/guns/client/model/functional/ImpactMarkerRender.java:9: error: cannot find symbol | symbol:   class ScopeBodyRenderTypes
-com/tacz/guns/client/model/functional/ImpactMarkerRender.java:10: error: cannot find symbol | symbol:   class ScopePipRenderer
-com/tacz/guns/client/render/FlashMaterials.java:4: error: cannot find symbol | symbol:   class BlendFactor
-com/tacz/guns/client/render/FlashMaterials.java:5: error: cannot find symbol | symbol:   class CompareOp
-com/tacz/guns/client/render/FlashMaterials.java:6: error: cannot find symbol | symbol:   class ScopeBodyRenderTypes
-com/tacz/guns/client/render/FlashMaterials.java:7: error: cannot find symbol | symbol:   class ScopeMaskTextureHandle
-com/tacz/guns/client/render/FlashMaterials.java:9: error: cannot find symbol | symbol:   class BindGroupLayouts
-com/tacz/guns/client/render/light/WorldFlashFrame.java:22: error: ScopedValue is a preview API and is disabled by default.
-com/tacz/guns/client/render/light/SurfaceLights.java:8: error: cannot find symbol | symbol:   class ScopePipRenderer
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:6: error: cannot find symbol | symbol:   class GpuFormat
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:7: error: cannot find symbol | symbol:   class DepthStencilState
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:13: error: package net.minecraft.client.renderer.feature.submit does not exist
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:76: error: cannot find symbol | symbol:   class SubmitNode
-com/tacz/guns/client/render/scope/ScopeThermalMaterial.java:3: error: cannot find symbol | symbol:   class ColorTargetState
-com/tacz/guns/client/render/scope/ScopeThermalMaterial.java:4: error: cannot find symbol | symbol:   class BindGroupLayout
-com/tacz/guns/client/render/scope/ScopeThermalMaterial.java:5: error: cannot find symbol | symbol:   class DepthStencilState
-com/tacz/guns/client/render/scope/ScopeThermalMaterial.java:6: error: cannot find symbol | symbol:   class CompareOp
-com/tacz/guns/client/render/scope/ScopeThermalMaterial.java:49: error: cannot find symbol | symbol:   class Submit
-com/tacz/guns/client/render/scope/ScopeThermalMaterial.java:57: error: cannot find symbol | symbol:   class Submit
-com/tacz/guns/client/render/ViewmodelFlash.java:12: error: ScopedValue is a preview API and is disabled by default.
-com/tacz/guns/client/particle/bedrock/particle/world/WorldEmitterManager.java:10: error: package net.fabricmc.fabric.api.client.rendering.v1.level does not exist
-com/tacz/guns/client/particle/bedrock/particle/world/SnowstormMaterials.java:8: error: cannot find symbol | symbol:   class BindGroupLayouts
-com/tacz/guns/client/particle/NativeMuzzleEffects.java:14: error: cannot find symbol | symbol:   class ScopeBodyRenderTypes
-com/tacz/guns/client/particle/NativeMuzzleEffects.java:21: error: package net.fabricmc.fabric.api.client.rendering.v1.level does not exist
-com/tacz/guns/util/RenderHelper.java:6: error: cannot find symbol | symbol:   class ScopeBodyRenderTypes
-com/tacz/guns/mixin/client/GameRendererProjectionAccessor.java:4: error: cannot find symbol | symbol:   class Projection
-com/tacz/guns/mixin/client/GameRendererProjectionAccessor.java:14: error: cannot find symbol | symbol:   class Projection
-com/tacz/guns/mixin/client/ScopeProjectionUploadMixin.java:5: error: cannot find symbol | symbol:   class ProjectionMatrixBuffer
-com/tacz/guns/mixin/client/ThermalBodyNodesMixin.java:6: error: package net.minecraft.client.renderer.feature.phase does not exist
-com/tacz/guns/mixin/client/ThermalBodyNodesMixin.java:7: error: package net.minecraft.client.renderer.feature.phase does not exist
-com/tacz/guns/mixin/client/ThermalBodyNodesMixin.java:8: error: package net.minecraft.client.renderer.feature.submit does not exist
-com/tacz/guns/mixin/client/ThermalBodyNodesMixin.java:9: error: package net.minecraft.client.renderer.feature.submit does not exist
-com/tacz/guns/mixin/client/ThermalBodyNodesMixin.java:17: error: cannot find symbol | symbol:   class SimpleFeatureRenderPhase
-com/tacz/guns/mixin/client/ThermalBodyNodesMixin.java:17: error: cannot find symbol | symbol:   class SubmitNode
-com/tacz/guns/mixin/client/ThermalBodyNodesMixin.java:26: error: cannot find symbol | symbol:   class TranslucentFeatureRenderPhase
-com/tacz/guns/mixin/client/ThermalBodyNodesMixin.java:26: error: cannot find symbol | symbol:   class TranslucentSubmit
-com/tacz/guns/mixin/client/ScopeProjectionUploadMixin.java:12: error: cannot find symbol | symbol: class ProjectionMatrixBuffer
-com/tacz/guns/client/model/bedrock/BedrockPart.java:69: error: cannot find symbol | symbol:   class IlluminatedLights
-cn/sh1rocu/tacz/TaCZFabric.java:73: error: cannot find symbol | symbol:   method record(Type,ForgeConfigSpec)
-cn/sh1rocu/tacz/TaCZFabric.java:77: error: cannot find symbol | symbol:   method record(Type,ForgeConfigSpec)
-cn/sh1rocu/tacz/compat/rei/ReiPackRefresh.java:49: error: cannot find symbol | symbol:   variable ReloadManagerImpl
-cn/sh1rocu/tacz/compat/rei/ReiPackRefresh.java:54: error: cannot find symbol | symbol:   class DisplayRegistryImpl
-com/tacz/guns/client/model/BedrockAttachmentModel.java:769: error: no suitable constructor found for Context(PoseStack,OrderedSubmitNodeCollector,ItemDisplayContext,RenderType,RenderType,int,int,float,boolean,boolean,boolean)
-com/tacz/guns/client/model/BedrockAttachmentModel.java:826: error: cannot find symbol | symbol:   method functionalTasks()
-com/tacz/guns/client/renderer/snapshot/BedrockRenderSnapshot.java:112: error: cannot find symbol | symbol:   variable IlluminatedLights
-com/tacz/guns/client/renderer/snapshot/BedrockRenderSnapshot.java:265: error: cannot find symbol | symbol:   variable IlluminatedLights
-com/tacz/guns/client/renderer/snapshot/BedrockRenderSnapshot.java:298: error: cannot find symbol | symbol:   variable IlluminatedLights
-cn/sh1rocu/tacz/compat/meshloader/model/TaczPolyMeshGunModel.java:385: error: cannot find symbol | symbol:   class IlluminatedLights
-cn/sh1rocu/tacz/compat/meshloader/model/TaczPolyMeshGunModel.java:386: error: method bakeBone in class PolyMeshGpuRenderer cannot be applied to given types; | required: List<PolyMesh>,int,VertexFormat | found:    List<PolyMesh>,int | reason: actual and formal argument lists differ in length
-cn/sh1rocu/tacz/compat/meshloader/model/TaczPolyMeshGunModel.java:445: error: method tryReserveBake in class PolyMeshGpuRenderer cannot be applied to given types; | required: int | found:    no arguments | reason: actual and formal argument lists differ in length
-cn/sh1rocu/tacz/compat/meshloader/model/TaczPolyMeshGunModel.java:459: error: cannot find symbol | symbol:   class IlluminatedLights
-cn/sh1rocu/tacz/compat/meshloader/model/TaczPolyMeshGunModel.java:460: error: method bakeBone in class PolyMeshGpuRenderer cannot be applied to given types; | required: List<PolyMesh>,int,VertexFormat | found:    List<PolyMesh>,int | reason: actual and formal argument lists differ in length
-com/tacz/guns/client/model/functional/ShellRender.java:145: error: cannot find symbol | symbol:   method itemCutout(Identifier)
-cn/sh1rocu/tacz/client/TaCZFabricClient.java:100: error: cannot find symbol | symbol:   variable TaczFeatureRenderers
-cn/sh1rocu/tacz/client/TaCZFabricClient.java:107: error: cannot find symbol | symbol:   class PictureInPictureRendererRegistry
-cn/sh1rocu/tacz/client/TaCZFabricClient.java:108: error: constructor GunPreviewRenderer in class GunPreviewRenderer cannot be applied to given types; | required: BufferSource | found:    no arguments | reason: actual and formal argument lists differ in length
-cn/sh1rocu/tacz/client/TaCZFabricClient.java:214: error: invalid method reference | symbol:   method onRenderEntity()
-com/tacz/guns/inventory/AmmoStorageMenu.java:24: error: cannot find symbol | symbol:   class ExtendedMenuType
-com/tacz/guns/block/entity/AmmoStorageBlockEntity.java:34: error: <T>BlockEntityType(BlockEntitySupplier<? extends T>,Set<Block>) has private access in BlockEntityType
-com/tacz/guns/block/entity/AmmoStorageBlockEntity.java:34: error: BlockEntitySupplier has private access in BlockEntityType
-com/tacz/guns/block/entity/AmmoStorageBlockEntity.java:104: error: method does not override or implement a method from a supertype
-com/tacz/guns/block/entity/AmmoStorageBlockEntity.java:109: error: method does not override or implement a method from a supertype
-com/tacz/guns/block/entity/AmmoStorageBlockEntity.java:115: error: method does not override or implement a method from a supertype
-com/tacz/guns/network/message/ClientMessagePlayerUnloadGun.java:68: error: cannot find symbol | symbol:   method sendOverlayMessage(MutableComponent)
-com/tacz/guns/network/message/ClientMessagePlayerUnloadGun.java:74: error: cannot find symbol | symbol:   method sendOverlayMessage(MutableComponent)
-com/tacz/guns/network/message/ClientMessagePlayerUnloadGun.java:94: error: cannot find symbol | symbol:   method sendOverlayMessage(MutableComponent)
-com/tacz/guns/network/message/ClientMessageAmmoStorageInteract.java:95: error: cannot find symbol | symbol:   method sendOverlayMessage(MutableComponent)
-com/tacz/guns/network/message/ClientMessageAmmoStorageInteract.java:99: error: cannot find symbol | symbol:   method sendOverlayMessage(MutableComponent)
-com/tacz/guns/crafting/AmmoStorageUpgradeRecipe.java:22: error: AmmoStorageUpgradeRecipe is not abstract and does not override abstract method assemble(CraftingInput,Provider) in Recipe
-com/tacz/guns/crafting/AmmoStorageUpgradeRecipe.java:52: error: method does not override or implement a method from a supertype
-com/tacz/guns/crafting/AmmoStorageUpgradeRecipe.java:67: error: RecipeSerializer is abstract; cannot be instantiated
-com/tacz/guns/crafting/AmmoStorageUpgradeRecipe.java:68: error: cannot find symbol | symbol:   method readBoolean()
-com/tacz/guns/crafting/AmmoStorageUpgradeRecipe.java:68: error: cannot find symbol | symbol:   method writeBoolean(boolean)
-com/tacz/guns/block/entity/DisplayRackBlockEntity.java:99: error: cannot find symbol | symbol:   class FabricValueInput
-com/tacz/guns/block/entity/DisplayRackBlockEntity.java:112: error: cannot find symbol | symbol:   class FabricValueOutput
-com/tacz/guns/block/entity/GunDisplayCaseBlockEntity.java:13: error: <T>BlockEntityType(BlockEntitySupplier<? extends T>,Set<Block>) has private access in BlockEntityType
-com/tacz/guns/block/entity/GunDisplayCaseBlockEntity.java:13: error: BlockEntitySupplier has private access in BlockEntityType
-com/tacz/guns/block/entity/GunPegboardBlockEntity.java:22: error: <T>BlockEntityType(BlockEntitySupplier<? extends T>,Set<Block>) has private access in BlockEntityType
-com/tacz/guns/block/entity/GunPegboardBlockEntity.java:22: error: BlockEntitySupplier has private access in BlockEntityType
-com/tacz/guns/compat/jei/GunModPlugin.java:91: error: cannot find symbol | symbol:   class GunSmithTableTransferHandler
-com/tacz/guns/compat/iris/IrisSensorProgram.java:12: error: cannot find symbol | symbol:   method hasActiveIrisPack()
-com/tacz/guns/client/init/ClientSetupEvent.java:54: error: package ClientTooltipComponentCallback does not exist
-com/tacz/guns/client/init/ClientSetupEvent.java:89: error: cannot find symbol | symbol:   variable ScopeMaskDebugOverlay
-com/tacz/guns/client/resource/ClientAssetsManager.java:133: error: cannot find symbol | symbol:   class ScopePipRenderer
-com/tacz/guns/client/resource/index/RefitOptionModel.java:33: error: cannot find symbol | symbol:   method setScopeLens(ScopeLensConfig)
-com/tacz/guns/client/resource/index/ClientAttachmentIndex.java:169: error: cannot find symbol | symbol:   method setScopeLens(ScopeLensConfig)
-com/tacz/guns/client/renderer/crosshair/GunSpread.java:36: error: cannot find symbol | symbol:   method gameRenderState()
-com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java:123: error: cannot find symbol | symbol:   method mainCamera()
-com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java:135: error: cannot find symbol | symbol:   method mainCamera()
-com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java:254: error: cannot find symbol | symbol:   method debugRecoilItemCam(Quaternionf,float,PoseStack)
-com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java:328: error: cannot find symbol | symbol:   method getModelViewMatrixCopy()
-com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java:507: error: cannot find symbol | symbol:   method mainCamera()
-com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java:508: error: cannot find symbol | symbol:   method getModelViewMatrixCopy()
-com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java:656: error: cannot find symbol | symbol:   method getModelViewMatrixCopy()
-com/tacz/guns/client/renderer/item/DroppedGunSprite.java:27: error: DroppedGunSprite is not abstract and does not override abstract method submit(Identifier,ItemDisplayContext,PoseStack,SubmitNodeCollector,int,int,boolean,int) in SpecialModelRenderer
-com/tacz/guns/client/renderer/item/DroppedGunSprite.java:38: error: cannot find symbol | symbol:   variable ScopePipRenderer
-com/tacz/guns/client/renderer/item/DroppedGunSprite.java:39: error: cannot find symbol | symbol:   method mainCamera()
-com/tacz/guns/client/renderer/item/DroppedGunSprite.java:44: error: method does not override or implement a method from a supertype
-com/tacz/guns/client/renderer/item/DroppedGunSprite.java:55: error: cannot find symbol | symbol:   method mainCamera()
-com/tacz/guns/client/renderer/item/TaczDynamicItemModel.java:153: error: cannot find symbol | symbol:   method setLocalTransform(Matrix4fc)
-com/tacz/guns/client/renderer/item/TaczDynamicItemModel.java:217: error: TaczSpecialRenderer is not abstract and does not override abstract method submit(RenderArgument,ItemDisplayContext,PoseStack,SubmitNodeCollector,int,int,boolean,int) in SpecialModelRenderer
-com/tacz/guns/client/renderer/item/TaczDynamicItemModel.java:218: error: method does not override or implement a method from a supertype
-com/tacz/guns/client/renderer/item/TaczDynamicItemModel.java:245: error: com.tacz.guns.client.renderer.item.TaczDynamicItemModel.Unbaked is not abstract and does not override abstract method bake(BakingContext) in net.minecraft.client.renderer.item.ItemModel.Unbaked
-com/tacz/guns/client/renderer/item/TaczDynamicItemModel.java:256: error: method does not override or implement a method from a supertype
-com/tacz/guns/client/renderer/item/TaczDynamicItemModel.java:258: error: no suitable method found for compose(Matrix4fc,Optional<Transformation>)
-com/tacz/guns/client/gui/overlay/DisplayCaseLockHint.java:51: error: cannot find symbol | symbol:   variable YELLOW
-com/tacz/guns/client/gui/overlay/InteractKeyTextOverlay.java:169: error: cannot find symbol | symbol:   variable YELLOW
-com/tacz/guns/client/gui/overlay/InteractKeyTextOverlay.java:173: error: cannot find symbol | symbol:   variable GRAY
-com/tacz/guns/client/gui/ViewTuningScreen.java:73: error: cannot find symbol | symbol:   method getWidgets(Screen)
-com/tacz/guns/client/input/GunInputHandler.java:37: error: cannot find symbol | symbol:   variable KeyMappingHelper
-com/tacz/guns/client/input/GunInputHandler.java:38: error: cannot find symbol | symbol:   variable KeyMappingHelper
-com/tacz/guns/client/input/GunInputHandler.java:39: error: cannot find symbol | symbol:   variable KeyMappingHelper
-com/tacz/guns/client/input/GunInputHandler.java:51: error: incompatible types: Key cannot be converted to KeyEvent
-com/tacz/guns/client/input/GunInputHandler.java:56: error: cannot find symbol | symbol:   method overlay()
-com/tacz/guns/client/input/ConfigKey.java:39: error: cannot find symbol | symbol:   method sendSystemMessage(MutableComponent)
-com/tacz/guns/client/input/InteractKey.java:39: error: incompatible types: Key cannot be converted to KeyEvent
-com/tacz/guns/client/input/InteractKey.java:51: error: cannot find symbol | symbol:   variable KeyMappingHelper
-com/tacz/guns/client/event/CameraSetupEvent.java:119: error: cannot find symbol | symbol:   variable ScopePipRenderer
-com/tacz/guns/client/event/CameraSetupEvent.java:128: error: cannot find symbol | symbol:   variable ScopePipRenderer
-com/tacz/guns/client/event/DisplayRackHighlight.java:39: error: cannot find symbol | symbol:   variable ColorTargetState
-com/tacz/guns/client/event/DisplayRackHighlight.java:38: error: cannot find symbol | symbol:   class DepthStencilState
-com/tacz/guns/client/event/DisplayRackHighlight.java:38: error: cannot find symbol | symbol:   variable CompareOp
-com/tacz/guns/client/event/DisplayRackHighlight.java:46: error: package LevelExtractionEvents does not exist
-com/tacz/guns/client/event/DisplayRackHighlight.java:66: error: package LevelRenderEvents does not exist
-com/tacz/guns/client/event/PackCompatibilityNotice.java:37: error: cannot find symbol | symbol:   method sendSystemMessage(MutableComponent)
-com/tacz/guns/client/event/PackCompatibilityNotice.java:40: error: cannot find symbol | symbol:   method literal(String)
-com/tacz/guns/client/event/PackCompatibilityNotice.java:41: error: cannot find symbol | symbol:   method literal(String)
-com/tacz/guns/client/event/PackCompatibilityNotice.java:42: error: cannot find symbol | symbol:   method literal(String)
-com/tacz/guns/client/event/ClientGunTimeLifecycle.java:32: error: cannot find symbol | symbol:   class ScopePipRenderer
-com/tacz/guns/client/event/FirstPersonRenderGunEvent.java:653: error: cannot find symbol | symbol:   method getModelViewMatrixCopy()
-com/tacz/guns/client/gameplay/LocalPlayerUnload.java:28: error: cannot find symbol | symbol:   method sendOverlayMessage(MutableComponent)
-com/tacz/guns/client/gameplay/LocalPlayerUnload.java:52: error: cannot find symbol | symbol:   method sendOverlayMessage(MutableComponent)
-com/tacz/guns/client/gameplay/LocalPlayerUnload.java:57: error: cannot find symbol | symbol:   method sendOverlayMessage(MutableComponent)
-com/tacz/guns/client/gameplay/LocalPlayerUnload.java:78: error: cannot find symbol | symbol:   method sendOverlayMessage(MutableComponent)
-com/tacz/guns/client/model/bedrock/IlluminatedMaterials.java:53: error: method entityCutout in class RenderTypes cannot be applied to given types; | required: Identifier | found:    Identifier,boolean | reason: actual and formal argument lists differ in length
-com/tacz/guns/client/model/bedrock/IlluminatedMaterials.java:55: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/client/model/bedrock/IlluminatedMaterials.java:74: error: cannot find symbol | symbol:   variable ScopeMaskTextureHandle
-com/tacz/guns/client/model/bedrock/IlluminatedMaterials.java:74: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/client/model/bedrock/IlluminatedMaterials.java:90: error: cannot find symbol | symbol:   variable BindGroupLayouts
-com/tacz/guns/client/model/bedrock/IlluminatedMaterials.java:91: error: cannot find symbol | symbol:   class ColorTargetState
-com/tacz/guns/client/model/bedrock/IlluminatedMaterials.java:91: error: cannot find symbol | symbol:   variable ColorTargetState
-com/tacz/guns/client/model/bedrock/IlluminatedMaterials.java:95: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/client/model/functional/ImpactMarkerRender.java:39: error: cannot find symbol | symbol:   method gameRenderState()
-com/tacz/guns/client/model/functional/ImpactMarkerRender.java:42: error: cannot find symbol | symbol:   variable ScopePipRenderer
-com/tacz/guns/client/model/functional/ImpactMarkerRender.java:56: error: cannot find symbol | symbol:   method getModelViewMatrixCopy()
-com/tacz/guns/client/model/functional/ImpactMarkerRender.java:69: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/client/model/functional/MuzzleFlashRender.java:127: error: cannot find symbol | symbol:   class ScopeBodyRenderTypes
-com/tacz/guns/client/model/functional/MuzzleFlashRender.java:139: error: cannot find symbol | symbol:   method shouldDisableScopeMaskUnderShaderPack()
-com/tacz/guns/client/model/functional/MuzzleFlashRender.java:140: error: cannot find symbol | symbol:   class ScopeMaskGeometry
-com/tacz/guns/client/model/functional/MuzzleFlashRender.java:141: error: cannot find symbol | symbol:   class ScopeMaskTextureHandle
-com/tacz/guns/client/model/functional/AttachmentRender.java:104: error: cannot find symbol | symbol:   class ScopeBodyRenderTypes
-com/tacz/guns/client/model/FunctionalBedrockPart.java:51: error: cannot find symbol | symbol:   class IlluminatedLights
-com/tacz/guns/client/render/FlashMaterials.java:28: error: cannot find symbol | symbol:   method hasActiveIrisPack()
-com/tacz/guns/client/render/FlashMaterials.java:28: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/client/render/FlashMaterials.java:34: error: cannot find symbol | symbol:   method hasActiveIrisPack()
-com/tacz/guns/client/render/FlashMaterials.java:34: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/client/render/FlashMaterials.java:56: error: cannot find symbol | symbol:   variable ScopeMaskTextureHandle
-com/tacz/guns/client/render/FlashMaterials.java:56: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/client/render/FlashMaterials.java:71: error: cannot find symbol | symbol:   class ColorTargetState
-com/tacz/guns/client/render/FlashMaterials.java:66: error: cannot find symbol | symbol:   variable BindGroupLayouts
-com/tacz/guns/client/render/FlashMaterials.java:74: error: cannot find symbol | symbol:   class ColorTargetState
-com/tacz/guns/client/render/FlashMaterials.java:74: error: cannot find symbol | symbol:   variable BlendFactor
-com/tacz/guns/client/render/FlashMaterials.java:73: error: cannot find symbol | symbol:   class DepthStencilState
-com/tacz/guns/client/render/FlashMaterials.java:73: error: package DepthStencilState does not exist
-com/tacz/guns/client/render/FlashMaterials.java:76: error: cannot find symbol | symbol:   class DepthStencilState
-com/tacz/guns/client/render/FlashMaterials.java:76: error: cannot find symbol | symbol:   variable CompareOp
-com/tacz/guns/client/render/FlashMaterials.java:77: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/client/render/light/WorldFlashFrame.java:36: error: ScopedValue is a preview API and is disabled by default.
-com/tacz/guns/client/render/light/WorldFlashFrame.java:75: error: cannot find symbol | symbol:   method withBlock(int,int)
-com/tacz/guns/client/render/light/SurfaceLights.java:86: error: cannot find symbol | symbol:   method mainCamera()
-com/tacz/guns/client/render/light/SurfaceLights.java:90: error: cannot find symbol | symbol:   variable ScopePipRenderer
-com/tacz/guns/client/render/light/SurfaceLights.java:110: error: cannot find symbol | symbol:   variable ScopePipRenderer
-com/tacz/guns/client/render/light/SurfaceLights.java:125: error: cannot find symbol | symbol:   variable ScopePipRenderer
-com/tacz/guns/client/render/light/SurfaceLights.java:202: error: cannot find symbol | symbol:   variable ScopePipRenderer
-com/tacz/guns/client/render/light/SurfaceLights.java:211: error: cannot find symbol | symbol:   method gameRenderState()
-com/tacz/guns/client/render/light/SurfaceLights.java:215: error: cannot find symbol | symbol:   method hasActiveIrisPack()
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:50: error: cannot find symbol | symbol:   method hasActiveIrisPack()
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:80: error: cannot find symbol | symbol:   class Submit
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:81: error: cannot find symbol | symbol:   class DepthStencilState
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:82: error: cannot find symbol | symbol:   class CompareOp
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:90: error: cannot find symbol | symbol:   variable solid
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:94: error: cannot find symbol | symbol:   variable solid
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:109: error: cannot find symbol | symbol:   variable GpuFormat
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:112: error: cannot find symbol | symbol:   variable solid
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:115: error: incompatible types: no instance(s) of type variable(s) T exist so that Optional<T> conforms to OptionalInt
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:124: error: cannot find symbol | symbol:   variable viewRotationMatrix
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:125: error: cannot find symbol | symbol:   method featureRenderDispatcher()
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:133: error: incompatible types: Vector4f cannot be converted to int
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:146: error: cannot find symbol | symbol:   method sendSystemMessage(MutableComponent)
-com/tacz/guns/client/render/scope/ScopeLensFrame.java:21: error: cannot find symbol | symbol:   variable ScopeMaskRenderer
-com/tacz/guns/client/render/scope/ScopeLensFrame.java:25: error: cannot find symbol | symbol:   method shouldDisableScopeMaskUnderShaderPack()
-com/tacz/guns/client/render/scope/ScopeLensFrame.java:36: error: cannot find symbol | symbol:   variable ScopeMaskRenderer
-com/tacz/guns/client/render/scope/ScopeLensFrame.java:37: error: cannot find symbol | symbol:   variable ScopeMaskRenderer
-com/tacz/guns/client/render/scope/ScopeLensFrame.java:43: error: cannot find symbol | symbol:   variable ScopeMaskRenderer
-com/tacz/guns/client/render/scope/ScopeParticleClipping.java:13: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/client/render/scope/ScopeParticleClipping.java:16: error: cannot find symbol | symbol:   method shouldDisableScopeMaskUnderShaderPack()
-com/tacz/guns/client/render/scope/ScopeParticleClipping.java:18: error: cannot find symbol | symbol:   variable ScopeMaskRenderer
-com/tacz/guns/client/render/scope/ScopeParticleClipping.java:19: error: cannot find symbol | symbol:   variable ScopeMaskTextureHandle
-com/tacz/guns/client/render/scope/ScopeFinalOverlayState.java:201: error: cannot find symbol | symbol:   method writeFiltered(VertexConsumer,ReticleMar[...]nMark)
-com/tacz/guns/client/render/scope/IReticleRenderer.java:96: error: cannot find symbol | symbol:   variable ScopePipRenderer
-com/tacz/guns/client/render/scope/IReticleRenderer.java:97: error: cannot find symbol | symbol:   method hasActiveIrisPack()
-com/tacz/guns/client/render/scope/IReticleRenderer.java:98: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/client/render/scope/ScopeLateReticleState.java:118: error: cannot find symbol | symbol:   method deferToIrisFinalOverlay()
-com/tacz/guns/client/render/scope/ScopeLateReticleState.java:122: error: cannot find symbol | symbol:   method deferToIrisTranslucent()
-com/tacz/guns/client/render/scope/ScopeLateReticleState.java:135: error: cannot find symbol | symbol:   method writeFiltered(VertexConsumer,ReticleMar[...]nMark)
-com/tacz/guns/client/render/scope/ScopeThermalMaterial.java:31: error: cannot find symbol | symbol:   variable ColorTargetState
-com/tacz/guns/client/render/scope/ScopeThermalMaterial.java:33: error: cannot find symbol | symbol:   variable BindGroupLayout
-com/tacz/guns/client/render/scope/ScopeThermalMaterial.java:35: error: cannot find symbol | symbol:   class DepthStencilState
-com/tacz/guns/client/render/scope/ScopeThermalMaterial.java:35: error: cannot find symbol | symbol:   variable CompareOp
-com/tacz/guns/client/render/scope/ScopeThermalMaterial.java:58: error: cannot find symbol | symbol:   class Submit
-com/tacz/guns/client/render/ViewmodelFlash.java:16: error: cannot find symbol | symbol:   method hasActiveIrisPack()
-com/tacz/guns/client/render/ViewmodelFlash.java:24: error: ScopedValue is a preview API and is disabled by default.
-com/tacz/guns/client/particle/bedrock/particle/world/WorldEmitterManager.java:63: error: cannot find symbol | symbol:   method mainCamera()
-com/tacz/guns/client/particle/bedrock/particle/world/WorldEmitterManager.java:64: error: cannot find symbol | symbol:   method mainCamera()
-com/tacz/guns/client/particle/bedrock/particle/world/WorldEmitterManager.java:82: error: package LevelRenderEvents does not exist
-com/tacz/guns/client/particle/bedrock/particle/world/WorldEmitterManager.java:154: error: cannot find symbol | symbol:   method mainCamera()
-com/tacz/guns/client/particle/bedrock/particle/world/SnowstormMaterials.java:26: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/client/particle/bedrock/particle/world/SnowstormMaterials.java:27: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/client/particle/bedrock/particle/world/SnowstormMaterials.java:33: error: cannot find symbol | symbol:   variable ScopeMaskTextureHandle
-com/tacz/guns/client/particle/bedrock/particle/world/SnowstormMaterials.java:33: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/client/particle/bedrock/particle/world/SnowstormMaterials.java:47: error: cannot find symbol | symbol:   class ColorTargetState
-com/tacz/guns/client/particle/bedrock/particle/world/SnowstormMaterials.java:45: error: cannot find symbol | symbol:   variable BindGroupLayouts
-com/tacz/guns/client/particle/bedrock/particle/world/SnowstormMaterials.java:49: error: cannot find symbol | symbol:   variable DepthStencilState
-com/tacz/guns/client/particle/bedrock/particle/world/SnowstormMaterials.java:50: error: cannot find symbol | symbol:   class DepthStencilState
-com/tacz/guns/client/particle/bedrock/particle/world/SnowstormMaterials.java:50: error: package DepthStencilState does not exist
-com/tacz/guns/client/particle/bedrock/particle/world/SnowstormMaterials.java:51: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/client/particle/AnimationParticleDispatcher.java:51: error: cannot find symbol | symbol:   method mainCamera()
-com/tacz/guns/client/particle/AnimationParticleDispatcher.java:52: error: cannot find symbol | symbol:   method mainCamera()
-com/tacz/guns/client/particle/NativeMuzzleEffects.java:80: error: package LevelRenderEvents does not exist
-com/tacz/guns/client/particle/NativeMuzzleEffects.java:200: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/client/particle/NativeMuzzleEffects.java:220: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/client/particle/NativeMuzzleEffects.java:230: error: cannot find symbol | symbol:   method mainCamera()
-com/tacz/guns/client/particle/NativeMuzzleEffects.java:295: error: cannot find symbol | symbol:   method mainCamera()
-com/tacz/guns/client/particle/NativeMuzzleEffects.java:311: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/util/AmmoStorageInteractionHelper.java:37: error: cannot find symbol | symbol:   method sendOverlayMessage(MutableComponent)
-com/tacz/guns/util/RenderHelper.java:182: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/util/RenderHelper.java:186: error: cannot find symbol | symbol:   variable ScopeBodyRenderTypes
-com/tacz/guns/config/PreLoadConfig.java:43: error: cannot find symbol | symbol:   method recordNamed(ForgeConfigSpec,String)
-com/tacz/guns/block/AmmoStorageBlock.java:118: error: incompatible types: AmmoStorageBlockEntity cannot be converted to MenuProvider
-com/tacz/guns/block/AmmoStorageBlock.java:126: error: cannot find symbol | symbol:   method sendOverlayMessage(MutableComponent)
-com/tacz/guns/block/AmmoStorageBlock.java:138: error: cannot find symbol | symbol:   method sendOverlayMessage(MutableComponent)
-com/tacz/guns/block/AmmoStorageBlock.java:142: error: cannot find symbol | symbol:   method sendOverlayMessage(MutableComponent)
-com/tacz/guns/mixin/client/CreativeModeInventoryScreenMixin.java:31: error: constructor AbstractContainerScreen in class AbstractContainerScreen<T> cannot be applied to given types; | required: ItemPickerMenu,Inventory,Component | found:    ItemPickerMenu,Inventory,Component,int,int | reason: actual and formal argument lists differ in length
-com/tacz/guns/mixin/client/ThermalBodyNodesMixin.java:19: error: cannot find symbol | symbol:   variable solid
+commit: 7da553f22d0c79a045aa4a8fb8276667268dfa5a
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+Fabric Loom: 1.17.19
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using of the official minecraft mappings is at your own risk!
+Please make sure to read and understand the following license:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# (c) 2020 Microsoft Corporation. These mappings are provided "as-is" and you bear the risk of using them. You may copy and use the mappings for development purposes, but you may not redistribute the mappings complete and unmodified. Microsoft makes no warranties, express or implied, with respect to the mappings provided here.  Use and modification of this document or the source code (in any form) of Minecraft: Java Edition is governed by the Minecraft End User License Agreement available at https://account.mojang.com/documents/minecraft_eula.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Cannot remap modifiers because it does not exist in any of the targets [] or their parents.
+Cannot remap navigation because it does not exist in any of the targets [] or their parents.
+Cannot remap ingredientGrid because it does not exist in any of the targets [] or their parents.
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap enumClass because it does not exist in any of the targets [] or their parents.
+Cannot remap push because it does not exist in any of the targets [net/minecraft/class_287]
+Cannot remap ingredientListRenderer because it does not exist in any of the targets [] or their parents.
+Cannot remap lambda$submit$0 because it does not exist in any of the targets [net/minecraft/class_840]
+Cannot remap lambda$tick$1 because it does not exist in any of the targets [net/minecraft/class_4897]
+Cannot remap buffers because it does not exist in any of the targets [] or their parents.
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
+Cannot remap contents because it does not exist in any of the targets [mezz/jei/gui/overlay/IngredientListOverlay] or their parents.
+Cannot remap lambda$reload$3 because it does not exist in any of the targets [net/minecraft/class_1060]
+Cannot remap tick because it does not exist in any of the targets [net/minecraft/class_11890]
+Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap valueFormatter because it does not exist in any of the targets [] or their parents.
+
+> Task :compileJava
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/event/FirstPersonRenderGunEvent.java:653: error: '(' expected
+            Matrix4f mv = com.mojang.blaze3d.systems.new org.joml.Matrix4f(RenderSystem.getModelViewMatrix());
+                                                            ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java:328: error: '(' expected
+                    org.joml.Matrix4f mvNow = com.mojang.blaze3d.systems.new org.joml.Matrix4f(RenderSystem.getModelViewMatrix());
+                                                                                ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java:656: error: '(' expected
+                org.joml.Matrix4f mv4 = com.mojang.blaze3d.systems.new org.joml.Matrix4f(RenderSystem.getModelViewMatrix());
+                                                                          ^
+3 errors
+
+> Task :compileJava FAILED
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795155562243.json
+
+[Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
+> Compilation failed; see the compiler output below.
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/event/FirstPersonRenderGunEvent.java:653: error: '(' expected
+              Matrix4f mv = com.mojang.blaze3d.systems.new org.joml.Matrix4f(RenderSystem.getModelViewMatrix());
+                                                              ^
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java:328: error: '(' expected
+                      org.joml.Matrix4f mvNow = com.mojang.blaze3d.systems.new org.joml.Matrix4f(RenderSystem.getModelViewMatrix());
+                                                                                  ^
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java:656: error: '(' expected
+                  org.joml.Matrix4f mv4 = com.mojang.blaze3d.systems.new org.joml.Matrix4f(RenderSystem.getModelViewMatrix());
+                                                                            ^
+  3 errors
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+* Exception is:
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':compileJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:135)
+	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:288)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:133)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:121)
+	at org.gradle.api.internal.tasks.execution.ProblemsTaskPathTrackingTaskExecuter.execute(ProblemsTaskPathTrackingTaskExecuter.java:41)
+	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+	at org.gradle.execution.plan.DefaultNodeExecutor.executeLocalTaskNode(DefaultNodeExecutor.java:55)
+	at org.gradle.execution.plan.DefaultNodeExecutor.execute(DefaultNodeExecutor.java:34)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:355)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:343)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:339)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:84)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:339)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:328)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Compilation failed; see the compiler output below.
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/event/FirstPersonRenderGunEvent.java:653: error: '(' expected
+            Matrix4f mv = com.mojang.blaze3d.systems.new org.joml.Matrix4f(RenderSystem.getModelViewMatrix());
+                                                            ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java:328: error: '(' expected
+                    org.joml.Matrix4f mvNow = com.mojang.blaze3d.systems.new org.joml.Matrix4f(RenderSystem.getModelViewMatrix());
+                                                                                ^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java:656: error: '(' expected
+                org.joml.Matrix4f mv4 = com.mojang.blaze3d.systems.new org.joml.Matrix4f(RenderSystem.getModelViewMatrix());
+                                                                          ^
+3 errors
+	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:89)
+	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:50)
+	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.delegateAndHandleErrors(NormalizingJavaCompiler.java:98)
+	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.execute(NormalizingJavaCompiler.java:52)
+	at org.gradle.api.internal.tasks.compile.NormalizingJavaCompiler.execute(NormalizingJavaCompiler.java:38)
+	at org.gradle.api.internal.tasks.compile.AnnotationProcessorDiscoveringCompiler.execute(AnnotationProcessorDiscoveringCompiler.java:52)
+	at org.gradle.api.internal.tasks.compile.AnnotationProcessorDiscoveringCompiler.execute(AnnotationProcessorDiscoveringCompiler.java:38)
+	at org.gradle.api.internal.tasks.compile.ModuleApplicationNameWritingCompiler.execute(ModuleApplicationNameWritingCompiler.java:46)
+	at org.gradle.api.internal.tasks.compile.ModuleApplicationNameWritingCompiler.execute(ModuleApplicationNameWritingCompiler.java:36)
+	at org.gradle.jvm.toolchain.internal.DefaultToolchainJavaCompiler.execute(DefaultToolchainJavaCompiler.java:57)
+	at org.gradle.api.tasks.compile.JavaCompile.lambda$createToolchainCompiler$3(JavaCompile.java:206)
+	at org.gradle.api.internal.tasks.compile.CleaningJavaCompiler.execute(CleaningJavaCompiler.java:53)
+	at org.gradle.api.internal.tasks.compile.incremental.IncrementalCompilerFactory.lambda$createRebuildAllCompiler$0(IncrementalCompilerFactory.java:55)
+	at org.gradle.api.internal.tasks.compile.incremental.SelectiveCompiler.execute(SelectiveCompiler.java:70)
+	at org.gradle.api.internal.tasks.compile.incremental.SelectiveCompiler.execute(SelectiveCompiler.java:44)
+	at org.gradle.api.internal.tasks.compile.incremental.IncrementalResultStoringCompiler.execute(IncrementalResultStoringCompiler.java:66)
+	at org.gradle.api.internal.tasks.compile.incremental.IncrementalResultStoringCompiler.execute(IncrementalResultStoringCompiler.java:52)
+	at org.gradle.api.internal.tasks.compile.CompileJavaBuildOperationReportingCompiler$1.call(CompileJavaBuildOperationReportingCompiler.java:64)
+	at org.gradle.api.internal.tasks.compile.CompileJavaBuildOperationReportingCompiler$1.call(CompileJavaBuildOperationReportingCompiler.java:48)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.api.internal.tasks.compile.CompileJavaBuildOperationReportingCompiler.execute(CompileJavaBuildOperationReportingCompiler.java:48)
+	at org.gradle.api.tasks.compile.JavaCompile.performCompilation(JavaCompile.java:224)
+	at org.gradle.api.tasks.compile.JavaCompile.performIncrementalCompilation(JavaCompile.java:165)
+	at org.gradle.api.tasks.compile.JavaCompile.compile(JavaCompile.java:150)
+	at org.gradle.internal.reflect.JavaMethod.invoke(JavaMethod.java:125)
+	at org.gradle.api.internal.project.taskfactory.IncrementalTaskAction.doExecute(IncrementalTaskAction.java:45)
+	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:51)
+	at org.gradle.api.internal.project.taskfactory.IncrementalTaskAction.execute(IncrementalTaskAction.java:26)
+	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:29)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:259)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:30)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:27)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:48)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeAction(TaskExecution.java:244)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeActions(TaskExecution.java:227)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeWithPreviousOutputFiles(TaskExecution.java:210)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.execute(TaskExecution.java:176)
+	at org.gradle.internal.execution.steps.ExecuteStep.executeInternal(ExecuteStep.java:167)
+	at org.gradle.internal.execution.steps.ExecuteStep.access$000(ExecuteStep.java:47)
+	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:137)
+	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:134)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:134)
+	at org.gradle.internal.execution.steps.ExecuteStep$Mutable.execute(ExecuteStep.java:80)
+	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:42)
+	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:75)
+	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
+	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:51)
+	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:29)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:67)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.executeMutable(RemovePreviousOutputsStep.java:39)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:42)
+	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:24)
+	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:69)
+	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:46)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:39)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.executeMutable(ResolveInputChangesStep.java:28)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:189)
+	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:76)
+	at org.gradle.internal.Either$Right.fold(Either.java:176)
+	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:62)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:74)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:49)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:46)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.executeMutable(StoreExecutionStateStep.java:35)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:75)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:53)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:53)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:35)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
+	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:70)
+	at org.gradle.internal.execution.steps.ResolveMutableCachingStateStep.executeDelegate(ResolveMutableCachingStateStep.java:32)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:69)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:37)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:63)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.executeMutable(ResolveChangesStep.java:34)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:79)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.executeDelegate(ValidateStep.java:65)
+	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:99)
+	at org.gradle.internal.execution.steps.ValidateStep$Mutable.execute(ValidateStep.java:65)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.executeMutable(CaptureMutableStateBeforeExecutionStep.java:86)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:65)
+	at org.gradle.internal.execution.steps.CaptureMutableStateBeforeExecutionStep.execute(CaptureMutableStateBeforeExecutionStep.java:45)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeWithNonEmptySources(SkipEmptyMutableWorkStep.java:210)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:90)
+	at org.gradle.internal.execution.steps.SkipEmptyMutableWorkStep.executeMutable(SkipEmptyMutableWorkStep.java:53)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:36)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.executeMutable(LoadPreviousExecutionStateStep.java:23)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:77)
+	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.executeMutable(HandleStaleOutputsStep.java:43)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.lambda$executeMutable$0(AssignMutableWorkspaceStep.java:34)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:305)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:30)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.executeMutable(AssignMutableWorkspaceStep.java:21)
+	at org.gradle.internal.execution.steps.MutableStep.execute(MutableStep.java:26)
+	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:40)
+	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:23)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:67)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:67)
 	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)
 	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)
 	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)
@@ -287,6 +263,6 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 1m
+BUILD FAILED in 1m 28s
 1 actionable task: 1 executed
 == job status: failure ==
