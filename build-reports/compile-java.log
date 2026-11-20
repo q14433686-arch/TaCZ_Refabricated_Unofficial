@@ -1,43 +1,41 @@
-commit: 457e86376b58029b36e592502c3098ad1f2fb48e
-com/tacz/guns/mixin/client/ScopeProjectionUploadMixin.java:12: error: Mixin has no targets
-com/tacz/guns/mixin/client/GameRendererProjectionAccessor.java:13: error: Could not locate @Accessor target hudProjection in target net.minecraft.client.renderer.GameRenderer
-cn/sh1rocu/tacz/compat/rei/ReiPackRefresh.java:19: error: package me.shedaniel.rei.impl.client.registry.display does not exist
-cn/sh1rocu/tacz/compat/rei/ReiPackRefresh.java:20: error: cannot find symbol | symbol:   class ReloadManagerImpl
-com/tacz/guns/client/init/ClientSetupEvent.java:9: error: cannot find symbol | symbol:   class ScopeMaskDebugOverlay
-com/tacz/guns/client/event/DisplayRackHighlight.java:8: error: package net.fabricmc.fabric.api.client.rendering.v1.level does not exist
-com/tacz/guns/client/event/DisplayRackHighlight.java:9: error: package net.fabricmc.fabric.api.client.rendering.v1.level does not exist
-com/tacz/guns/client/event/DisplayRackHighlight.java:11: error: cannot find symbol | symbol:   class ColorTargetState
-com/tacz/guns/client/event/DisplayRackHighlight.java:12: error: cannot find symbol | symbol:   class CompareOp
-com/tacz/guns/client/event/DisplayRackHighlight.java:13: error: cannot find symbol | symbol:   class DepthStencilState
-com/tacz/guns/client/model/functional/ImpactMarkerRender.java:9: error: cannot find symbol | symbol:   class ScopeBodyRenderTypes
-com/tacz/guns/client/model/functional/ImpactMarkerRender.java:10: error: cannot find symbol | symbol:   class ScopePipRenderer
-com/tacz/guns/client/render/light/SurfaceLights.java:8: error: cannot find symbol | symbol:   class ScopePipRenderer
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:6: error: cannot find symbol | symbol:   class GpuFormat
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:7: error: cannot find symbol | symbol:   class DepthStencilState
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:13: error: package net.minecraft.client.renderer.feature.submit does not exist
-com/tacz/guns/client/render/scope/ScopeThermalCapture.java:76: error: cannot find symbol | symbol:   class SubmitNode
-com/tacz/guns/client/render/scope/ScopeThermalMaterial.java:3: error: cannot find symbol | symbol:   class ColorTargetState
-com/tacz/guns/client/render/scope/ScopeThermalMaterial.java:4: error: cannot find symbol | symbol:   class BindGroupLayout
-com/tacz/guns/client/render/scope/ScopeThermalMaterial.java:5: error: cannot find symbol | symbol:   class DepthStencilState
-com/tacz/guns/client/render/scope/ScopeThermalMaterial.java:6: error: cannot find symbol | symbol:   class CompareOp
-com/tacz/guns/client/render/scope/ScopeThermalMaterial.java:49: error: cannot find symbol | symbol:   class Submit
-com/tacz/guns/client/render/scope/ScopeThermalMaterial.java:57: error: cannot find symbol | symbol:   class Submit
-com/tacz/guns/client/particle/bedrock/particle/world/WorldEmitterManager.java:10: error: package net.fabricmc.fabric.api.client.rendering.v1.level does not exist
-com/tacz/guns/client/particle/NativeMuzzleEffects.java:14: error: cannot find symbol | symbol:   class ScopeBodyRenderTypes
-com/tacz/guns/client/particle/NativeMuzzleEffects.java:21: error: package net.fabricmc.fabric.api.client.rendering.v1.level does not exist
-com/tacz/guns/util/RenderHelper.java:6: error: cannot find symbol | symbol:   class ScopeBodyRenderTypes
-com/tacz/guns/mixin/client/GameRendererProjectionAccessor.java:4: error: cannot find symbol | symbol:   class Projection
-com/tacz/guns/mixin/client/GameRendererProjectionAccessor.java:14: error: cannot find symbol | symbol:   class Projection
-com/tacz/guns/mixin/client/ScopeProjectionUploadMixin.java:5: error: cannot find symbol | symbol:   class ProjectionMatrixBuffer
-com/tacz/guns/mixin/client/ThermalBodyNodesMixin.java:6: error: package net.minecraft.client.renderer.feature.phase does not exist
-com/tacz/guns/mixin/client/ThermalBodyNodesMixin.java:7: error: package net.minecraft.client.renderer.feature.phase does not exist
-com/tacz/guns/mixin/client/ThermalBodyNodesMixin.java:8: error: package net.minecraft.client.renderer.feature.submit does not exist
-com/tacz/guns/mixin/client/ThermalBodyNodesMixin.java:9: error: package net.minecraft.client.renderer.feature.submit does not exist
-com/tacz/guns/mixin/client/ThermalBodyNodesMixin.java:17: error: cannot find symbol | symbol:   class SimpleFeatureRenderPhase
-com/tacz/guns/mixin/client/ThermalBodyNodesMixin.java:17: error: cannot find symbol | symbol:   class SubmitNode
-com/tacz/guns/mixin/client/ThermalBodyNodesMixin.java:26: error: cannot find symbol | symbol:   class TranslucentFeatureRenderPhase
-com/tacz/guns/mixin/client/ThermalBodyNodesMixin.java:26: error: cannot find symbol | symbol:   class TranslucentSubmit
-com/tacz/guns/mixin/client/ScopeProjectionUploadMixin.java:12: error: cannot find symbol | symbol: class ProjectionMatrixBuffer
+commit: a8f6b6c9d3e5ecc62351706c5d2022fff27abf9f
+com/tacz/guns/client/model/BedrockAttachmentModel.java:769: error: no suitable constructor found for Context(PoseStack,OrderedSubmitNodeCollector,ItemDisplayContext,RenderType,RenderType,int,int,float,boolean,boolean,boolean)
+com/tacz/guns/client/model/BedrockAttachmentModel.java:826: error: cannot find symbol | symbol:   method functionalTasks()
+cn/sh1rocu/tacz/compat/meshloader/model/TaczPolyMeshGunModel.java:386: error: method bakeBone in class PolyMeshGpuRenderer cannot be applied to given types; | required: List<PolyMesh>,int,VertexFormat | found:    List<PolyMesh>,int | reason: actual and formal argument lists differ in length
+cn/sh1rocu/tacz/compat/meshloader/model/TaczPolyMeshGunModel.java:445: error: method tryReserveBake in class PolyMeshGpuRenderer cannot be applied to given types; | required: int | found:    no arguments | reason: actual and formal argument lists differ in length
+cn/sh1rocu/tacz/compat/meshloader/model/TaczPolyMeshGunModel.java:460: error: method bakeBone in class PolyMeshGpuRenderer cannot be applied to given types; | required: List<PolyMesh>,int,VertexFormat | found:    List<PolyMesh>,int | reason: actual and formal argument lists differ in length
+com/tacz/guns/client/model/functional/ShellRender.java:145: error: cannot find symbol | symbol:   method itemCutout(Identifier)
+com/tacz/guns/compat/jei/GunModPlugin.java:91: error: cannot find symbol | symbol:   class GunSmithTableTransferHandler
+com/tacz/guns/client/resource/index/RefitOptionModel.java:33: error: cannot find symbol | symbol:   method setScopeLens(ScopeLensConfig)
+com/tacz/guns/client/resource/index/ClientAttachmentIndex.java:169: error: cannot find symbol | symbol:   method setScopeLens(ScopeLensConfig)
+com/tacz/guns/client/renderer/crosshair/GunSpread.java:36: error: cannot find symbol | symbol:   method gameRenderState()
+com/tacz/guns/client/renderer/item/GunItemRendererWrapper.java:254: error: cannot find symbol | symbol:   method debugRecoilItemCam(Quaternionf,float,PoseStack)
+com/tacz/guns/client/renderer/item/TaczDynamicItemModel.java:153: error: cannot find symbol | symbol:   method setLocalTransform(Matrix4fc)
+com/tacz/guns/client/renderer/item/TaczDynamicItemModel.java:217: error: TaczSpecialRenderer is not abstract and does not override abstract method submit(RenderArgument,ItemDisplayContext,PoseStack,SubmitNodeCollector,int,int,boolean,int) in SpecialModelRenderer
+com/tacz/guns/client/renderer/item/TaczDynamicItemModel.java:218: error: method does not override or implement a method from a supertype
+com/tacz/guns/client/renderer/item/TaczDynamicItemModel.java:245: error: com.tacz.guns.client.renderer.item.TaczDynamicItemModel.Unbaked is not abstract and does not override abstract method bake(BakingContext) in net.minecraft.client.renderer.item.ItemModel.Unbaked
+com/tacz/guns/client/renderer/item/TaczDynamicItemModel.java:256: error: method does not override or implement a method from a supertype
+com/tacz/guns/client/renderer/item/TaczDynamicItemModel.java:258: error: no suitable method found for compose(Matrix4fc,Optional<Transformation>)
+com/tacz/guns/client/gui/overlay/DisplayCaseLockHint.java:51: error: cannot find symbol | symbol:   variable YELLOW
+com/tacz/guns/client/gui/overlay/InteractKeyTextOverlay.java:169: error: cannot find symbol | symbol:   variable YELLOW
+com/tacz/guns/client/gui/overlay/InteractKeyTextOverlay.java:173: error: cannot find symbol | symbol:   variable GRAY
+com/tacz/guns/client/gui/ViewTuningScreen.java:73: error: cannot find symbol | symbol:   method getWidgets(Screen)
+com/tacz/guns/client/input/GunInputHandler.java:51: error: incompatible types: Key cannot be converted to KeyEvent
+com/tacz/guns/client/input/GunInputHandler.java:56: error: cannot find symbol | symbol:   method overlay()
+com/tacz/guns/client/input/ConfigKey.java:39: error: cannot find symbol | symbol:   method sendSystemMessage(MutableComponent)
+com/tacz/guns/client/input/InteractKey.java:39: error: incompatible types: Key cannot be converted to KeyEvent
+com/tacz/guns/client/event/DisplayRackHighlight.java:86: error: cannot find symbol | symbol:   method submitShapeOutline(PoseStack,VoxelShape,RenderType,int,float,boolean)
+com/tacz/guns/client/model/functional/ImpactMarkerRender.java:40: error: cannot find symbol | symbol:   method gameRenderState()
+com/tacz/guns/client/model/functional/MuzzleFlashRender.java:140: error: cannot find symbol | symbol:   method shouldDisableScopeMaskUnderShaderPack()
+com/tacz/guns/client/render/light/SurfaceLights.java:111: error: cannot find symbol | symbol:   method frameNumber()
+com/tacz/guns/client/render/light/SurfaceLights.java:126: error: cannot find symbol | symbol:   method frameNumber()
+com/tacz/guns/client/render/light/SurfaceLights.java:212: error: cannot find symbol | symbol:   method gameRenderState()
+com/tacz/guns/client/render/scope/ScopeParticleClipping.java:21: error: cannot find symbol | symbol:   method shouldDisableScopeMaskUnderShaderPack()
+com/tacz/guns/client/render/scope/ScopeFinalOverlayState.java:201: error: cannot find symbol | symbol:   method writeFiltered(VertexConsumer,ReticleMar[...]nMark)
+com/tacz/guns/client/render/scope/ScopeLateReticleState.java:118: error: cannot find symbol | symbol:   method deferToIrisFinalOverlay()
+com/tacz/guns/client/render/scope/ScopeLateReticleState.java:122: error: cannot find symbol | symbol:   method deferToIrisTranslucent()
+com/tacz/guns/client/render/scope/ScopeLateReticleState.java:135: error: cannot find symbol | symbol:   method writeFiltered(VertexConsumer,ReticleMar[...]nMark)
+com/tacz/guns/mixin/client/CreativeModeInventoryScreenMixin.java:31: error: constructor AbstractContainerScreen in class AbstractContainerScreen<T> cannot be applied to given types; | required: ItemPickerMenu,Inventory,Component | found:    ItemPickerMenu,Inventory,Component,int,int | reason: actual and formal argument lists differ in length
 	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)
 	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)
 	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)
@@ -54,6 +52,6 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 57s
+BUILD FAILED in 1m 16s
 1 actionable task: 1 executed
 == job status: failure ==
