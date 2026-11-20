@@ -15,7 +15,8 @@
       "com.tacz.guns.test.GunActionSmoke",
       "com.tacz.guns.test.BulletRulesSmoke",
       "com.tacz.guns.test.ScriptGuardSmoke",
-      "com.tacz.guns.test.DefaultReloadSmoke"
+      "com.tacz.guns.test.DefaultReloadSmoke",
+      "com.tacz.guns.block.entity.TargetIdentitySmoke"
     ],
     "fabric-client-gametest": [
       "com.tacz.guns.test.PackClientSmoke"

@@ -1,6 +1,7 @@
 package com.tacz.guns.block.entity;
 
-import com.google.gson.JsonObject;
+import com.mojang.authlib.GameProfile;
+import com.tacz.guns.GunMod;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import com.tacz.guns.block.TargetBlock;
@@ -14,7 +15,11 @@ import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.StringUtil;
+import net.minecraft.util.Util;
+import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.Level;
@@ -30,6 +35,7 @@ import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static com.tacz.guns.block.TargetBlock.OUTPUT_POWER;
 import static com.tacz.guns.block.TargetBlock.STAND;
@@ -40,35 +46,11 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
      * 标靶复位时间，暂定为 5 秒
      */
     private static final int RESET_TIME = 5 * 20;
-    /**
-     * 标靶主人档案的存档键。
-     *
-     * <p>刻意与<b>原版头颅</b>（{@code SkullBlockEntity}）一模一样：同一个键
-     * {@code "profile"}、同一个 {@code ResolvableProfile.CODEC}。这样存档格式、跨版本兼容、
-     * 以及「能不能被原版工具读懂」全部跟原版对齐，我们不再维护自己的档案格式。</p>
-     *
-     * <h2>历史坑（2026-10-27 修复，第二轮）</h2>
-     * <p>第一轮修复（PR #115）把主人拆成 {@code owner_uuid} / {@code owner_name} 两个字符串存，
-     * 并保留了 {@code Owner} 键的读取兼容。那套东西本质上是在手写「档案序列化 + 服务端补全 +
-     * 客户端查皮肤」的半套协议，于是踩了两个必现的运行期崩溃与一类静默失效：</p>
-     * <ul>
-     *   <li>{@code TargetBlock#setPlacedBy} 里 {@code new GameProfile(null, 名字)} ——
-     *       authlib 9 的 {@code GameProfile} 是 record，id/name/properties 都
-     *       {@code Objects.requireNonNull}，传 null 必抛 NPE。抛在 {@code BlockItem#place}
-     *       中途，于是<b>物品不被消耗</b>、方块却已经放下去了。</li>
-     *   <li>{@code TargetMinecart#getGameProfile} 同款写法，但它在<b>客户端每帧</b>被渲染线程调用
-     *       ⇒ 改名过的标靶矿车直接把渲染线程崩掉。</li>
-     *   <li>服务端「补全 UUID」那一套（{@code nameToIdCache} + 后台线程 + 一次性标志）在离线服 /
-     *       拼错名字时只能降级成默认皮肤，还要我们自己维护日志与重试。</li>
-     * </ul>
-     * <p>现在改成原版的做法：方块实体只存一个 {@code ResolvableProfile}（可以只有名字、也可以
-     * 只有 UUID、或两者都有），<b>服务端不解析</b>；客户端通过
-     * {@code PlayerSkinRenderCache}（原版头颅用的同一个缓存）异步解析，解析期间与解析失败都
-     * 自动用默认皮肤，不需要我们做任何兜底。见 {@code TargetRenderer}。</p>
-     */
+    /** Keep the 26.2 / vanilla skull profile format. Server identity lookup must not
+     * freeze a texture snapshot: clients still resolve dynamic UUIDs in their skin cache. */
     private static final String PROFILE_TAG = "profile";
     private static final String ALTERNATE_PROFILE_TAG = "OwnerProfile";
-    /** 本分支 26.2 早期版本写下的扁平键（PR #115 之前）；只读，不再写。 */
+    /** Historical flat keys; owner_name can also carry a name hint for a UUID-only profile. */
     private static final String LEGACY_OWNER_UUID_TAG = "owner_uuid";
     private static final String LEGACY_OWNER_NAME_TAG = "owner_name";
     /** 上游 1.20.1 写的 GameProfile 复合标签 {@code {Name:"x", Id:"uuid", Properties:{...}}}；只读，不再写。 */
@@ -77,6 +59,9 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
     public float rot = 0;
     public float oRot = 0;
     private @Nullable ResolvableProfile owner;
+    private String ownerNameHint = "";
+    private long lookupGeneration;
+    private boolean lookupAttempted;
     private @Nullable Component name;
 
     public TargetBlockEntity(BlockPos pos, BlockState blockState) {
@@ -92,32 +77,75 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
         }
     }
 
-    /**
-     * 标靶主人档案（可能只有名字，也可能只有 UUID）。
-     *
-     * <p>返回的是<b>未解析</b>的原版 {@link ResolvableProfile}：服务端不查会话服务，
-     * 客户端渲染时由 {@code PlayerSkinRenderCache} 异步解析。没有主人时返回 {@code null}。</p>
-     */
     @Nullable
-    public ResolvableProfile getOwnerProfile() {
-        return this.owner;
+    public ResolvableProfile getOwnerProfile() { return owner; }
+
+    /** Human-readable partial profile; partialProfile() always supplies a non-null UUID. */
+    public @Nullable GameProfile getOwner() {
+        if (owner == null) return null;
+        var partial = owner.partialProfile();
+        return partial.name().isEmpty() && !ownerNameHint.isEmpty()
+                ? new GameProfile(partial.id(), ownerNameHint, partial.properties()) : partial;
     }
 
-    /**
-     * 设置标靶主人。
-     *
-     * <p>调用方必须传 {@link ResolvableProfile}（原版允许「只有名字」），
-     * 不要再构造 {@code GameProfile}：authlib 9 的 {@code GameProfile} 不允许 null id/name，
-     * 这正是 {@code setPlacedBy} NPE 的根因。</p>
-     */
     public void setOwner(@Nullable ResolvableProfile owner) {
         this.owner = owner;
-        this.refresh();
+        ownerNameHint = owner == null ? "" : owner.partialProfile().name();
+        invalidateLookup();
+        refresh();
+        resolveOwnerIdentity();
+    }
+
+    @Override public void setLevel(Level level) {
+        if (this.level != level) invalidateLookup();
+        super.setLevel(level);
+        resolveOwnerIdentity();
+    }
+
+    @Override public void setRemoved() {
+        invalidateLookup();
+        super.setRemoved();
+    }
+
+    private void invalidateLookup() { lookupGeneration++; lookupAttempted = false; }
+
+    // A rename must not silently give a saved target a different skin. Resolve the account
+    // off-thread and keep its UUID, not the texture returned by the server. Explicit skins
+    // and patches remain under their author's ownership. No network call from placement/render.
+    private void resolveOwnerIdentity() {
+        if (lookupAttempted || isRemoved() || !(level instanceof ServerLevel world)
+                || !(owner instanceof ResolvableProfile.Dynamic requested)
+                || !PlayerSkin.Patch.EMPTY.equals(requested.skinPatch())) return;
+        String name = requested.name().orElse(null);
+        if (name != null && !StringUtil.isValidPlayerName(name)) return;
+        lookupAttempted = true;
+        long generation = lookupGeneration;
+        lookup(world, name, requested.partialProfile().id()).whenCompleteAsync((result, error) -> {
+            if (lookupGeneration != generation || level != world || isRemoved() || owner != requested) return;
+            if (error != null) {
+                GunMod.LOGGER.warn("Could not resolve target owner {}; keeping original profile", requested.partialProfile(), error);
+                return;
+            }
+            result.ifPresent(found -> {
+                if (name == null && found.name().equals(ownerNameHint) && found.id().equals(requested.partialProfile().id())) return;
+                owner = ResolvableProfile.createUnresolved(found.id());
+                ownerNameHint = found.name();
+                refresh();
+            });
+        }, world.getServer());
+    }
+
+    CompletableFuture<Optional<GameProfile>> lookup(ServerLevel world, @Nullable String name, UUID id) {
+        var resolver = world.getServer().services().profileResolver();
+        return CompletableFuture.supplyAsync(() -> name != null ? resolver.fetchByName(name) : resolver.fetchById(id), Util.nonCriticalIoPool());
     }
 
     @Override
     public void loadAdditional(ValueInput input) {
         // 主路径：与原版头颅同一个键、同一个 CODEC，兼容「只写名字」「只写 UUID」「两者都有」。
+        super.loadAdditional(input);
+        invalidateLookup();
+        ownerNameHint = input.getString(LEGACY_OWNER_NAME_TAG).orElse("");
         ResolvableProfile loaded = input.read(PROFILE_TAG, ResolvableProfile.CODEC)
                 .or(() -> input.read(ALTERNATE_PROFILE_TAG, ResolvableProfile.CODEC)).orElse(null); // tacz:legacy-key: migrate to profile
         if (loaded == null) {
@@ -127,6 +155,7 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
         }
         this.owner = loaded;
         this.name = readCustomName(input);
+        resolveOwnerIdentity();
     }
 
     /**
@@ -142,8 +171,8 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
      * <p>解析不出来（名字拼错之类）不算错误：档案仍然是合法的「未解析档案」，
      * 客户端解析不到就退回默认皮肤，与原版头颅一致。</p>
      */
-    private static @Nullable ResolvableProfile readLegacyOwner(ValueInput input) {
-        String name = getStringOrEmpty(input, LEGACY_OWNER_NAME_TAG);
+    private @Nullable ResolvableProfile readLegacyOwner(ValueInput input) {
+        String name = ownerNameHint;
         String uuidText = getStringOrEmpty(input, LEGACY_OWNER_UUID_TAG);
         UUID id = parseUuid(uuidText);
         Optional<ValueInput> legacyOwner = input.child(LEGACY_OWNER_TAG);
@@ -158,33 +187,11 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
                         .orElseGet(() -> parseUuid(getStringOrEmpty(child, "Id")));
             }
         }
-        return createLegacyProfile(name, id);
-    }
-
-    /**
-     * 把「名字 + 可选 UUID」拼成 {@link ResolvableProfile}。
-     *
-     * <p>两者都有时走 {@code ResolvableProfile.CODEC}（它接受 {@code {name, id, properties}} 形态），
-     * 这样 UUID 与名字都能保留、离线也能解析；CODEC 不认（字段缺失等）时退化成只用名字、
-     * 再退化成只用 UUID —— 全都失败返回 {@code null}，绝不抛异常。</p>
-     */
-    private static @Nullable ResolvableProfile createLegacyProfile(String name, @Nullable UUID id) {
-        if (!name.isEmpty() && id != null) {
-            JsonObject json = new JsonObject();
-            json.addProperty("name", name);
-            json.addProperty("id", id.toString());
-            Optional<ResolvableProfile> parsed = ResolvableProfile.CODEC.parse(JsonOps.INSTANCE, json).result();
-            if (parsed.isPresent()) {
-                return parsed.get();
-            }
-        }
-        if (!name.isEmpty()) {
-            return ResolvableProfile.createUnresolved(name);
-        }
-        if (id != null) {
-            return ResolvableProfile.createUnresolved(id);
-        }
-        return null;
+        ownerNameHint = name;
+        // A name+UUID object decoded without textures becomes a STATIC profile: no skin
+        // fetch ever occurs. Keep the name for display and let the native cache resolve the ID.
+        if (id != null) return ResolvableProfile.createUnresolved(id);
+        return name.isEmpty() ? null : ResolvableProfile.createUnresolved(name);
     }
 
     /** {@code ValueInput#getString} 遇到类型不匹配的旧存档时可能抛异常，读不到就当空串。 */
@@ -238,8 +245,15 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
 
     @Override
     protected void saveAdditional(ValueOutput output) {
-        if (this.owner != null) {
-            output.store(PROFILE_TAG, ResolvableProfile.CODEC, this.owner);
+        super.saveAdditional(output);
+        if (owner != null) {
+            var name = owner.name();
+            boolean canEncode = name.isEmpty() || StringUtil.isValidPlayerName(name.get());
+            if (canEncode) output.store(PROFILE_TAG, ResolvableProfile.CODEC, owner);
+            // Anvils accept names the profile codec rejects. Preserve those literally,
+            // and preserve a known display name alongside an otherwise UUID-only profile.
+            if (!canEncode || name.isEmpty() && !ownerNameHint.isEmpty())
+                output.putString(LEGACY_OWNER_NAME_TAG, name.orElse(ownerNameHint));
         }
         if (this.name != null) {
             output.storeNullable(CUSTOM_NAME_TAG, ComponentSerialization.CODEC, this.name);

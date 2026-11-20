@@ -60,6 +60,12 @@ R2 的可选集成（并非硬依赖）如下：
 
 ## 2. 新增 API 与功能
 
+**使用本线的 1.2 行为回移构建时：** 安装匹配的 26.2 客户端和服务端；仍使用上面的 R3-hotfix4 版本标识，不能仅靠文件名判断是否含回移。实际测试过的提交、JAR 校验和和可选组合以[本线交接账本](docs/lineage/HANDOFF_LEDGER.md#tacz-12-262)为准，不是新的 Release 公告。旧枪包请先按[26.2 转换指南](docs/GUNPACK_CONVERSION_26_2.md)检查，不要覆盖原包或修改版本要求强行加载。
+
+- 手持枪对准允许交互的方块时用 TaCZ「交互」（26.2 默认 **O**）放入展示物；解锁的展示柜／挂板可对准有物品的格子攻击取下。不会为所有位置禁用原版好友快捷键。
+- 默认枪匠台本身是普通合成，不需要查看器；铁块解锁其配方书条目。造枪及配件用对应的枪匠台，JEI/REI 的选方不代为移动材料。
+- 持枪位置与准星可从暂停菜单打开，快捷键默认不绑定。保存按启动器 UUID 分开存入 `config/tacz/view-profiles/`；准星按「单枪 → 枪包类别 → 账号默认」取值，取消不改档案。持枪位置是账号设置，不按单枪保存。
+
 - [可替换弹药源 API](docs/AMMO_SOURCE_API.md)：下游可在不混入 TaCZ 内部背包代码的情况下，
   为特定实体/枪械提供只读查询和服务端消费弹药源；
 - 稳定的具名 gameplay / Lua dispatch hooks，避免扩展依赖编译器生成的 `lambda$...` 名称；
@@ -82,8 +88,8 @@ R2 的可选集成（并非硬依赖）如下：
 record，id/name 一律 `requireNonNull`。标靶主人因此整条链路改成与原版头颅一致的
 `ResolvableProfile`（允许只有名字）+ 客户端 `PlayerSkinRenderCache` 异步解析皮肤（解析不到就是
 默认皮肤），老存档的 `owner_uuid`/`owner_name`/`Owner` 写法仍可读、保存时统一迁移成原版
-`profile` 键。离线守卫新增两条规则（禁止 `new GameProfile(null, ...)`、禁止直接用 `SkinManager`）。
-全部改动**尚未实机验证**，验收清单见
+`profile` 键；本次行为回移对需要解析的名字在后台核对账号身份，不把服务端纹理固化入存档。离线守卫新增两条规则（禁止 `new GameProfile(null, ...)`、禁止直接用 `SkinManager`）。
+上述历史 hotfix 的原验收清单见
 [方块静默失效三连案](docs/investigations/BLOCK_ENTITY_DATA_LOSS_26_2_2026_10_27.md) §6 与
 [工作台双掉落调查](docs/investigations/MULTIBLOCK_DOUBLE_DROP_26_2_2026_10_26.md) §5.1。
 

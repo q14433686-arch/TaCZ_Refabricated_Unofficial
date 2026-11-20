@@ -5,9 +5,8 @@ import org.lwjgl.opengl.GL11;
 /** Scoped OpenGL-only replay state. Shader-pack jitter makes equality against the
  * already-written entity depth unstable. Slope-scaled offset favours that same surface,
  * without disabling terrain occlusion or modifying the scene's depth attachment.
- * Replay runs AFTER LevelRenderer.render returns. The copy still contains forward-Z
- * Iris world depth, but the normal GlConst conversion is back to reversed Z. Match
- * Iris's original comparator for these private draws only. */
+ * Iris 1.11.2 keeps its world comparison active even after LevelRenderer returns;
+ * do not invert it again. Use the comparison actually bound for this draw. */
 public final class IrisThermalDepthBias implements AutoCloseable {
     private static boolean replay;
     private final boolean enabled;
@@ -18,7 +17,6 @@ public final class IrisThermalDepthBias implements AutoCloseable {
         units = GL11.glGetFloat(GL11.GL_POLYGON_OFFSET_UNITS);
         replay = true;
     }
-    public static boolean replayingForwardDepth() { return replay; }
     public static IrisThermalDepthBias begin() { return IrisCompat.hasActiveIrisPack() ? new IrisThermalDepthBias() : null; }
     /** After pipeline binding, which otherwise resets polygon offset on each draw. */
     public static void apply() {

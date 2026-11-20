@@ -131,13 +131,17 @@ public class DisplayRackSmoke {
         var uuid = java.util.UUID.fromString("34894528-8dd7-4330-93b3-34acb5160aaf");
         var legacy = new net.minecraft.nbt.CompoundTag();
         var owner = new net.minecraft.nbt.CompoundTag();
+        owner.putString("Name", "OriginalName");
         owner.putIntArray("Id", net.minecraft.core.UUIDUtil.uuidToIntArray(uuid));
         legacy.put("Owner", owner);
         var target = new com.tacz.guns.block.entity.TargetBlockEntity(BlockPos.ZERO, ModBlocks.TARGET.defaultBlockState());
         target.loadAdditional(TagValueInput.create(ProblemReporter.DISCARDING, registries, legacy));
         helper.assertTrue(target.getOwnerProfile() != null && uuid.equals(target.getOwnerProfile().partialProfile().id()), "Lost old int-array owner UUID");
+        helper.assertTrue(target.getOwnerProfile() instanceof net.minecraft.world.item.component.ResolvableProfile.Dynamic
+                && "OriginalName".equals(target.getOwner().name()), "Legacy name+UUID froze the skin or lost its display name");
         var nativeTag = target.saveWithoutMetadata(registries);
         var alternate = new net.minecraft.nbt.CompoundTag();
+        alternate.putString("owner_name", "OriginalName");
         alternate.put("OwnerProfile", nativeTag.get("profile").copy());
         target.loadAdditional(TagValueInput.create(ProblemReporter.DISCARDING, registries, alternate));
         helper.assertTrue(nativeTag.equals(target.saveWithoutMetadata(registries)), "Alternate profile did not round-trip to the native key");

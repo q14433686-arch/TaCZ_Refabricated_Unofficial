@@ -2,7 +2,20 @@ name: PAL third-person runtime
 on:
   push:
     branches: ['arena/**', '26.2(main)']
-    paths: &pal-paths ['src/**/playeranimator/**', 'src/**/InnerThirdPersonManager.java', 'src/**/PlayerModelMixin.java', 'src/**/PalRuntimeSmoke.java', 'src/**/PackClientSmoke.java', 'scripts/ci-central.init.gradle', '.github/workflows/animation-smoke.yml', 'build.gradle']
+    paths: &pal-paths
+      - 'src/**/playeranimator/**'
+      - 'src/**/InnerThirdPersonManager.java'
+      - 'src/**/PlayerModelMixin.java'
+      - 'src/**/PalRuntimeSmoke.java'
+      - 'src/**/PackClientSmoke.java'
+      - 'src/**/animation/third/**'
+      - 'src/**/ysm/**'
+      - 'src/**/fabric.mod.json'
+      - 'src/**/AvatarModelObserver.java'
+      - 'gradle.properties'
+      - 'scripts/ci-central.init.gradle'
+      - '.github/workflows/animation-smoke.yml'
+      - 'build.gradle'
   pull_request:
     paths: *pal-paths
   workflow_dispatch:

@@ -200,7 +200,7 @@ public class TargetBlock extends BaseEntityBlock {
      * <p>现在改用原版 {@link ResolvableProfile}（允许「只有名字」，和原版头颅的
      * {@code SkullBlockEntity} 完全一致）：服务端不再构造 {@code GameProfile}，也就不可能 NPE；
      * 皮肤由客户端用 {@code PlayerSkinRenderCache} 异步解析，解析不到就是默认皮肤。
-     * UUID 这一层完全不需要我们操心 —— 这也是原版头颅的行为。</p>
+     * 放置不等待服务端身份查询；只有仍是同一主人时，才用实际 UUID 替换名字。</p>
      */
     @Override
     public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {

@@ -271,6 +271,10 @@ final class ScopeLensSmoke {
             throw new AssertionError(name + ": world projection m11=" + projection[0] + ", expected=" + projection[1], e);
         }
         try {
+            if (Boolean.getBoolean("tacz.test.iris") && (name.endsWith("_hot") || name.endsWith("_wall"))) {
+                ctx.runOnClient(mc -> ScopeDepthProbe.next = name);
+                ctx.waitFor(mc -> ScopeDepthProbe.next == null);
+            }
             var image = ImageIO.read(ctx.takeScreenshot("tacz_lens_" + name).toFile());
             int w = image.getWidth(), h = image.getHeight();
             // Record whether the private mask actually contains coverage, independently of
