@@ -32,4 +32,4 @@ jobs:
           path: |
             build/run/**/logs/latest.log
             build/run/**/crash-reports/*.txt
-            build/run/**/screenshots/*.png
+            build/run/**/screenshots/**/*.png

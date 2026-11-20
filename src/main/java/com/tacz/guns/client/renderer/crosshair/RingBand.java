@@ -6,7 +6,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.state.gui.GuiElementRenderState;
+import net.minecraft.client.gui.render.state.GuiElementRenderState;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3x2f;
 
@@ -29,7 +29,7 @@ record RingBand(Matrix3x2f pose, float ix, float iy, float ox, float oy, int col
         var bounds = new ScreenRectangle(-x, -y, 2*x, 2*y).transformMaxBounds(pose);
         var scissor = gui.scissorStack.peek();
         if (scissor != null) bounds = bounds.intersection(scissor);
-        if (bounds != null) gui.guiRenderState.addGuiElement(new RingBand(pose, ix, iy, ox, oy, color, scissor, bounds));
+        if (bounds != null) gui.guiRenderState.submitGuiElement(new RingBand(pose, ix, iy, ox, oy, color, scissor, bounds));
     }
 
     @Override public void buildVertices(VertexConsumer vertices) {

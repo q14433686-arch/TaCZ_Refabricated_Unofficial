@@ -18,7 +18,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector4f;
@@ -84,8 +84,8 @@ public final class ScopeThermalCapture {
             // space. A steeper slope bias can't recover a face parallel to the camera. Try
             // that surface against the *actual* scene depth, EQUAL, without writing depth;
             // never widen the ordinary test or infer a hit from the pack filename.
-            if (model.state() instanceof EntityRenderState state && (state.entityType == EntityTypes.SLIME
-                    || state.entityType == EntityTypes.CHICKEN) && shaderPack) {
+            if (model.state() instanceof EntityRenderState state && (state.entityType == EntityType.SLIME
+                    || state.entityType == EntityType.CHICKEN) && shaderPack) {
                 var match = ScopeThermalMaterial.coverage(model, ScopeThermalMaterial.Depth.SHIFTED);
                 if (match != model) bodies.order(-1).solid.submit(match);
             }

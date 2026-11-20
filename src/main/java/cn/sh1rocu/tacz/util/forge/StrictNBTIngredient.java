@@ -7,13 +7,11 @@ import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredientSerializer;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.crafting.display.SlotDisplay;
@@ -49,16 +47,16 @@ public class StrictNBTIngredient implements CustomIngredient {
     }
 
     @Override
-    public Stream<Holder<Item>> items() {
-        return stack.isEmpty() ? Stream.empty() : Stream.of(stack.typeHolder());
+    public Stream<Holder<Item>> getMatchingItems() {
+        return stack.isEmpty() ? Stream.empty() : Stream.of(stack.getItemHolder());
     }
 
     @Override
-    public SlotDisplay display() {
+    public SlotDisplay toDisplay() {
         if (stack.isEmpty()) {
             return SlotDisplay.Empty.INSTANCE;
         }
-        return new SlotDisplay.ItemStackSlotDisplay(ItemStackTemplate.fromNonEmptyStack(stack.copy()));
+        return new SlotDisplay.ItemStackSlotDisplay(stack.copy());
     }
 
     @Override
@@ -78,9 +76,9 @@ public class StrictNBTIngredient implements CustomIngredient {
 
         private static final MapCodec<StrictNBTIngredient> LEGACY_ITEMS_CODEC = RecordCodecBuilder.mapCodec(codec -> codec.group(
                 BuiltInRegistries.ITEM.holderByNameCodec().listOf().optionalFieldOf("items", List.of()).forGetter(ing ->
-                        ing.stack.isEmpty() ? List.of() : List.of(ing.stack.typeHolder())),
+                        ing.stack.isEmpty() ? List.of() : List.of(ing.stack.getItemHolder())),
                 BuiltInRegistries.ITEM.holderByNameCodec().optionalFieldOf("id").forGetter(ing ->
-                        ing.stack.isEmpty() ? Optional.empty() : Optional.of(ing.stack.typeHolder())),
+                        ing.stack.isEmpty() ? Optional.empty() : Optional.of(ing.stack.getItemHolder())),
                 CustomData.COMPOUND_TAG_CODEC.optionalFieldOf("nbt").forGetter(ing -> {
                     CustomData data = ing.stack.get(DataComponents.CUSTOM_DATA);
                     return data != null ? Optional.of(data.copyTag()) : Optional.empty();
@@ -106,7 +104,7 @@ public class StrictNBTIngredient implements CustomIngredient {
         }
 
         @Override
-        public StreamCodec<RegistryFriendlyByteBuf, StrictNBTIngredient> getStreamCodec() {
+        public StreamCodec<RegistryFriendlyByteBuf, StrictNBTIngredient> getPacketCodec() {
             return ItemStack.OPTIONAL_STREAM_CODEC.map(StrictNBTIngredient::new, ing -> ing.stack);
         }
     }

@@ -58,6 +58,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          LOG=build-reports/compile-java.log
+          test -f "$LOG" || exit 0
           # Compact diagnostics before placing them in the Contents API request. A long
           # single argument exceeds Linux's limit even when the total command is small.
           if [ "$(wc -c < "$LOG")" -gt 65000 ]; then

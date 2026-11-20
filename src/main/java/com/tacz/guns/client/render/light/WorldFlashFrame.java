@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.LevelRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.util.LightCoordsUtil;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +63,7 @@ public final class WorldFlashFrame {
     /** Only raise the block column; ordinary equipment inherits this from the body. Existing
      * higher light, sky and deliberately fullbright layers remain authoritative. */
     int light(int ambient, double x, double y, double z, @Nullable BlockPos self, @Nullable Direction face) {
-        int best = LightCoordsUtil.block(ambient), original = best;
+        int best = LightTexture.block(ambient), original = best;
         for (var s : sources) {
             if (best == 15 || objectRays == 0) break;
             float gain = s.field.gain(x,y,z) * s.strength;
@@ -72,7 +72,7 @@ public final class WorldFlashFrame {
             objectRays--;
             if (visible(s, new Vec3(x,y,z), self, face)) best = value;
         }
-        return best == original ? ambient : LightCoordsUtil.withBlock(ambient, best);
+        return best == original ? ambient : LightTexture.withBlock(ambient, best);
     }
 
     public int rackSlotLight(int ambient, BlockPos pos, Direction facing) {

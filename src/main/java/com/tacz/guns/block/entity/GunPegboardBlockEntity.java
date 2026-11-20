@@ -4,7 +4,7 @@ import com.tacz.guns.block.GunPegboardBlock;
 import com.tacz.guns.block.GunPegboardSlotHelper;
 import com.tacz.guns.block.PegboardShape;
 import com.tacz.guns.init.ModBlocks;
-import net.fabricmc.fabric.api.blockgetter.v2.RenderDataBlockEntity;
+import net.fabricmc.fabric.api.blockview.v2.RenderDataBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;

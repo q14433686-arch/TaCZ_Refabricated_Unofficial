@@ -172,7 +172,7 @@ public final class WorldEmitterManager {
                 PoseStack pose=new PoseStack();pose.translate(-camera.x,-camera.y,-camera.z);
                 var wp=new Vector3f(p.x,p.y,p.z);if(!p.worldSpace)transform.transformPosition(wp);
                 var blockPos=net.minecraft.core.BlockPos.containing(wp.x,wp.y,wp.z);
-                int light=hand?inheritedLight:lit?net.minecraft.util.LightCoordsUtil.pack(level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,blockPos),
+                int light=hand?inheritedLight:lit?net.minecraft.client.renderer.LightTexture.pack(level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK,blockPos),
                         level.getBrightness(net.minecraft.world.level.LightLayer.SKY,blockPos)):15728880;
                 collector.submitCustomGeometry(pose,type,(entry,consumer)->{
                     PoseStack frozen=new PoseStack();frozen.last().pose().set(entry.pose());frozen.last().normal().set(entry.normal());

@@ -8,8 +8,9 @@ import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
-import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import java.util.List;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.item.ItemDisplayContext;
 
 /** A collector scoped to ONE preview. Native quad and TaCZ model submissions capture their
@@ -30,17 +31,13 @@ public final class RackPreviewCollector extends SubmitNodeStorage {
         output.submitCustomGeometry(pose, material(type), (entry, out) -> draw.render(entry, new PreviewVertices(out)));
     }
     @Override public void submitItem(PoseStack pose, ItemDisplayContext context, int light, int overlay, int outline,
-                                     int[] tints, List<BakedQuad> quads, ItemStackRenderState.FoilType foil) {
+                                     int[] tints, List<BakedQuad> quads, RenderType type, ItemStackRenderState.FoilType foil) {
         for (var quad : quads) {
-            var info = quad.materialInfo();
-            int i = info.tintIndex();
+            int i = quad.tintIndex();
             int color = alpha(i >= 0 && i < tints.length ? tints[i] : -1);
-            output.submitCustomGeometry(pose, material(info.itemRenderType()), (entry, out) -> {
-                var instance = new QuadInstance();
-                instance.setColor(color);
-                instance.setLightCoords(light);
-                instance.setOverlayCoords(overlay);
-                out.putBakedQuad(entry, quad, instance);
+            output.submitCustomGeometry(pose, material(type), (entry, out) -> {
+                out.putBulkData(entry, quad, ARGB.redFloat(color), ARGB.greenFloat(color), ARGB.blueFloat(color),
+                        ARGB.alphaFloat(color), light, overlay);
             });
         }
     }

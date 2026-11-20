@@ -35,7 +35,7 @@ public class ClientAmmoStorageTooltip implements ClientTooltipComponent {
     }
 
     @Override
-    public void extractText(GuiGraphics graphics, Font font, int x, int y) {
+    public void renderText(GuiGraphics graphics, Font font, int x, int y) {
         int yOffset = y;
         for (AmmoStorageTooltip.Entry entry : tooltip.getEntries()) {
             graphics.drawString(font, entry.getAmmoName(), x + 20, yOffset + 4, 0xFFFFAA00, false);
@@ -48,7 +48,7 @@ public class ClientAmmoStorageTooltip implements ClientTooltipComponent {
     }
 
     @Override
-    public void extractImage(Font font, int x, int y, int width, int height, GuiGraphics guiGraphics) {
+    public void renderImage(Font font, int x, int y, int width, int height, GuiGraphics guiGraphics) {
         int yOffset = y;
         for (AmmoStorageTooltip.Entry entry : tooltip.getEntries()) {
             guiGraphics.renderItem(entry.ammo(), x, yOffset + 5);
