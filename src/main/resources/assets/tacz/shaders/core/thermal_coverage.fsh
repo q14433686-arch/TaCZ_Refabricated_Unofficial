@@ -14,22 +14,26 @@ uniform sampler2D SceneDepthSampler;
 float nearestSurfaceDepth() {
     ivec2 p = ivec2(gl_FragCoord.xy), hi = textureSize(SceneDepthSampler, 0) - 1;
     float scene = texelFetch(SceneDepthSampler, p, 0).r, z = gl_FragCoord.z;
-    float dx = abs(dFdx(z)), dy = abs(dFdy(z));
-    // A few depth-buffer quantization steps, not a distance-dependent silhouette dilation.
+    vec2 slope = vec2(dFdx(z), dFdy(z));
     const float rounding = 4.0 / 16777215.0;
     float delta = abs(z - scene);
     if (delta <= rounding) return scene;
-    // A pixel of XY mismatch on a slope is meaningful only if the *scene* has that
-    // slope too. Bound the match by 1/64 block along eye Z. At discontinuities use
-    // the smaller one-sided difference, not the depth jump to the background.
-    float cap = 0.5 * abs(ProjMat[3][2]) * gl_FragCoord.w * gl_FragCoord.w / 64.0;
-    if (delta > rounding + min(cap, dx + dy)) return z;
+    // Window Z is affine across a rasterized triangle. An XY jitter of half a pixel
+    // in each direction can account for at most this amount of depth disagreement.
+    float halfPixelSpan = 0.5 * dot(abs(slope), vec2(1.0));
+    // Cap grazing planes as well. One pixel is wider in the world at range, and
+    // narrower under a zoom projection. A fixed fraction of a block isn't a pixel.
+    float pixelDiagonalZ = 1.414214 * abs(ProjMat[3][2]) * gl_FragCoord.w /
+                           (abs(ProjMat[1][1]) * float(hi.y + 1));
+    if (delta > rounding + min(halfPixelSpan, pixelDiagonalZ)) return z;
     float left  = texelFetch(SceneDepthSampler, max(p-ivec2(1,0),ivec2(0)), 0).r;
     float right = texelFetch(SceneDepthSampler, min(p+ivec2(1,0),hi), 0).r;
     float below = texelFetch(SceneDepthSampler, max(p-ivec2(0,1),ivec2(0)), 0).r;
     float above = texelFetch(SceneDepthSampler, min(p+ivec2(0,1),hi), 0).r;
-    float agreed = min(dx, min(abs(scene-left), abs(right-scene))) + min(dy, min(abs(scene-below), abs(above-scene)));
-    return delta <= rounding + agreed ? scene : z;
+    // Require agreement of BOTH signed plane gradients with a real neighbour on
+    // each axis. A model edge in front of a uniformly nearer wall cannot qualify.
+    vec2 error = min(abs(vec2(scene-left, scene-below) - slope), abs(vec2(right-scene, above-scene) - slope));
+    return all(lessThanEqual(error, vec2(2.0 * rounding))) ? scene : z;
 }
 #endif
 

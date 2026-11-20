@@ -169,7 +169,7 @@ public final class ShaderOpticSmoke {
                     ctx.waitFor(mc -> Math.abs(ScopePipRenderer.currentMagnification()-v.zoom)<.01);
                     if (pipGallery) ctx.waitFor(mc -> ScopePipRenderer.suppressesWorldFovZoom());
                     if (suite.startsWith("thermal")) heat(ctx,world,base,m,v,failures);
-                    else gallery(ctx,m,v,thermal,large,failures);
+                    else gallery(ctx,world,base,m,v,thermal,large,failures);
                 }
             }
             int expected = switch (suite) { case "scopes" -> 34; case "sights" -> 25; case "pip" -> 20; case "thermal", "report-size" -> 4; case "thermal-reap", "thermal-xl50" -> 2; case "report-marks" -> 5; default -> throw new AssertionError(suite); };
@@ -205,7 +205,7 @@ public final class ShaderOpticSmoke {
         }
         return maximum;
     }
-    private static void gallery(ClientGameTestContext ctx, Mount m, View v, boolean thermal, boolean large, List<String> failures) {
+    private static void gallery(ClientGameTestContext ctx, TestSingleplayerContext world, BlockPos base, Mount m, View v, boolean thermal, boolean large, List<String> failures) {
         var key=m.optic.getPath()+"_"+v.slot;
         var bounds=ctx.computeOnClient(mc -> ScopeMaskRenderer.hasMaskThisFrame() && ScopeMaskRenderer.hasMaskBounds() ? ScopeMaskRenderer.maskBoundsNdc().clone() : null);
         var img=frame(ctx,key);
@@ -218,6 +218,14 @@ public final class ShaderOpticSmoke {
             ctx.runOnClient(mc -> withoutCoating=true); ctx.waitTicks(3); bare=frame(ctx,key+"_no_division_or_coating");
         }
         ctx.runOnClient(mc -> { withoutReticle=withoutCoating=false; withoutIron=null; });
+        BufferedImage alternate=null;
+        if (iron) {
+            // Mechanical posts/handles occupy real space, often over half the measuring square.
+            // Change the actual scene instead of judging an iron sight as though it were glass.
+            backdrop(ctx,world,base,"lime");
+            try { alternate=frame(ctx,key+"_lime_background"); }
+            finally { backdrop(ctx,world,base,"light_blue"); }
+        }
         int w=img.getWidth(),h=img.getHeight(),cx=w/2,cy=h/2,rad=h/14;
         String failure="";
         if (bounds!=null) {
@@ -226,7 +234,7 @@ public final class ShaderOpticSmoke {
         }
         if (rad<3||cx-rad<0||cy-rad<0||cx+rad>w||cy+rad>h||(!iron && bounds==null)) failure="aperture";
         else {
-            int changed=0,coating=0,background=0,material=0,scaleInk=0,colouredInk=0;
+            int changed=0,coating=0,background=0,material=0,scaleInk=0,colouredInk=0,ironScene=0,ironPost=0;
             for (int y=cy-rad;y<cy+rad;y++) for (int x=cx-rad;x<cx+rad;x++) {
                 int a=img.getRGB(x,y),z=no.getRGB(x,y);
                 if (Math.max(Math.abs(r(a)-r(z)),Math.max(Math.abs(g(a)-g(z)),Math.abs(b(a)-b(z))))>38) changed++;
@@ -235,6 +243,13 @@ public final class ShaderOpticSmoke {
                 if ((r(a)>g(a)+12 && redChroma>50) || (g(a)>b(a)+12 && greenChroma>50)) colouredInk++;
                 int d2=(x-cx)*(x-cx)+(y-cy)*(y-cy);
                 if (d2>rad*rad*.04 && d2<rad*rad*.8 && b(z)-b(a)>45 && g(z)-g(a)>25 && !plate(a)) scaleInk++;
+                if (alternate!=null) {
+                    int green=alternate.getRGB(x,y);
+                    if (Math.abs(x-cx)<=rad/2 && y>=cy-3*rad/4 && y<=cy+rad/4 && b(a)>r(a)+18
+                            && g(green)>b(green)+18 && (g(green)-b(green))-(g(a)-b(a))>50) ironScene++;
+                    if (Math.max(r(a),Math.max(g(a),b(a)))<100 && Math.max(r(green),Math.max(g(green),b(green)))<100
+                            && b(z)>r(z)+18 && b(z)-b(a)>50) ironPost++;
+                }
                 int uncoated=bare.getRGB(x,y);
                 if ((x-cx)*(x-cx)+(y-cy)*(y-cy)<rad*rad && Math.max(Math.abs(r(uncoated)-r(z)),
                         Math.max(Math.abs(g(uncoated)-g(z)),Math.abs(b(uncoated)-b(z))))>38) coating++;
@@ -243,15 +258,26 @@ public final class ShaderOpticSmoke {
             }
             int red=solidRed(img,cx,cy,rad), without=solidRed(no,cx,cy,rad);
             if (red>Math.max(5,rad*.15)) failure="red-plate";
-            if (background<rad*rad*2) failure+=" obstructed";
+            if (iron) {
+                if (ironScene<Math.max(25,rad*rad/6)) failure+=" no-scene-through-sightline";
+                if (ironPost<15) failure+=" missing-physical-sight";
+            } else if (background<rad*rad*2) failure+=" obstructed";
             if (coating>Math.max(8,.02*Math.PI*rad*rad)) failure+=" coating-in-aperture";
             if (ETCHED_SCALES.contains(m.optic.getPath()) && scaleInk<8) failure+=" missing-etched-scale";
             if (large && colouredInk==0) failure+=" missing-coloured-ink";
             if (iron ? changed<15 : changed<2) failure+=" missing-mark";
-            GunMod.LOGGER.info("OPTIC_FRAME: {} {} {}x view={} centre={},{} r={} red={}/{} markDelta={} coatingDelta={} background={}/{} body={} scaleInk={} colouredInk={} {}",
-                    key,m.host,v.zoom,v.locator,cx,cy,rad,red,without,changed,coating,background,4*rad*rad,material,scaleInk,colouredInk,failure.isEmpty()?"PASS":failure);
+            GunMod.LOGGER.info("OPTIC_FRAME: {} {} {}x view={} centre={},{} r={} red={}/{} markDelta={} coatingDelta={} background={}/{} body={} scaleInk={} colouredInk={} ironScene={} ironPost={} {}",
+                    key,m.host,v.zoom,v.locator,cx,cy,rad,red,without,changed,coating,background,4*rad*rad,material,scaleInk,colouredInk,ironScene,ironPost,failure.isEmpty()?"PASS":failure);
         }
         if (!failure.isEmpty()) failures.add(key+":"+failure);
+    }
+
+    private static void backdrop(ClientGameTestContext ctx, TestSingleplayerContext world, BlockPos base, String colour) {
+        var block=net.minecraft.core.registries.BuiltInRegistries.BLOCK.getOptional(Identifier.parse("minecraft:"+colour+"_concrete")).orElseThrow();
+        var mid=base.north(45).above(1);
+        world.getServer().runOnServer(s->{var level=s.getPlayerList().getPlayers().getFirst().level();
+            for(int y=-6;y<=6;y++) for(int x=-6;x<=6;x++) level.setBlock(mid.offset(x,y,0),block.defaultBlockState(),Block.UPDATE_ALL);});
+        ctx.waitFor(mc->mc.level.getBlockState(mid).is(block)); world.getClientLevel().waitForChunksRender(); ctx.waitTicks(6);
     }
 
     private static void heat(ClientGameTestContext ctx, TestSingleplayerContext world, BlockPos base, Mount m, View v, List<String> failures) {
