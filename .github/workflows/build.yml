@@ -97,6 +97,10 @@ jobs:
         run: |
           python3 scripts/verify_120_resources.py
           python3 scripts/verify_recipe_viewer_reload.py
+          python3 scripts/verify_bullet_hole_orientation.py
+          python3 scripts/verify_ysm_compat.py
+          python3 scripts/verify_lr_assets.py --strict
+          python3 scripts/verify_lr_lua_context_api.py --strict
 
       - name: Full build
         run: |

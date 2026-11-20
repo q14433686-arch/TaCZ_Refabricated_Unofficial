@@ -1,14 +1,10 @@
 package com.tacz.guns.util;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.tacz.guns.GunMod;
 import net.fabricmc.loader.api.FabricLoader;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.comparator.LastModifiedFileComparator;
-import org.apache.commons.io.filefilter.TrueFileFilter;
 
 import javax.annotation.Nullable;
 import java.io.*;
@@ -18,7 +14,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.Instant;
 import java.util.*;
 import java.util.jar.JarEntry;
@@ -34,8 +31,7 @@ public final class GetJarResources {
      * 此时间为 TaCZ 第一笔提交时间
      */
     private static final Instant BACKUP_TIME = Instant.parse("2024-02-26T12:28:08.000Z");
-    private static final Path BACKUP_PATH = Paths.get("config", GunMod.MOD_ID, "backup");
-    private static final SimpleDateFormat BACKUP_DATE_FORMAT = new SimpleDateFormat("yyyyMMdd-HHmmss");
+    private static final DateTimeFormatter BACKUP_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneId.systemDefault());
     private static final int MAX_BACKUP_COUNT = 10;
     private static final String EXPORT_STATE_FILE_NAME = ".export-state.json";
     private static final int EXPORT_STATE_VERSION = 1;
@@ -205,11 +201,11 @@ public final class GetJarResources {
     private static void copyFolder(URL sourceUrl, Path targetPath) throws IOException {
         if (Files.isDirectory(targetPath)) {
             // 备份原文件夹
-            backupFiles(targetPath);
+            backupFiles(targetPath, FabricLoader.getInstance().getGameDir().resolve("tacz_backup").resolve(targetPath.getFileName()));
             // 删掉原文件夹，达到强行覆盖的效果
             deleteFiles(targetPath);
-        } else if (Files.exists(targetPath)) {
-            Files.delete(targetPath);
+        } else if (Files.exists(targetPath, LinkOption.NOFOLLOW_LINKS)) {
+            throw new IOException("Expected a pack directory; keeping existing path: " + targetPath);
         }
 
         if ("jar".equals(sourceUrl.getProtocol())) {
@@ -284,84 +280,43 @@ public final class GetJarResources {
         }
     }
 
-    private static void backupFiles(Path targetPath) throws IOException {
-        // 创建子备份文件夹
-        String dirName = targetPath.getFileName().toString();
-        Path resourcePacksPath = FabricLoader.getInstance().getGameDir().resolve("tacz_backup");
-        Path backupPath = resourcePacksPath.resolve(dirName);
-        if (!Files.isDirectory(backupPath)) {
-            Files.createDirectories(backupPath);
-        }
-
-        // 检查备份文件数量，超过十个，删除时间最久的
-        // 同时得到所有备份的 md5
-        Set<String> cacheMd5 = checkOldBackups(backupPath);
-
-        // 先生成一个临时文件
-        File tempFile = File.createTempFile(dirName, ".tmp");
-        FileTime fileTime = FileTime.from(BACKUP_TIME);
-
-        // 开始写入文件
-        try (ZipOutputStream zs = new ZipOutputStream(new FileOutputStream(tempFile));
-             Stream<Path> fileWalks = Files.walk(targetPath)) {
-            fileWalks.filter(Files::isRegularFile).forEach(path -> {
-                String entryPath = targetPath.relativize(path).toString();
-                ZipEntry zipEntry = new ZipEntry(entryPath);
-                // 防止哈希值不一致，需要指定固定时间
-                zipEntry.setLastModifiedTime(fileTime);
-                try {
-                    zs.putNextEntry(zipEntry);
-                    Files.copy(path, zs);
-                    zs.closeEntry();
-                } catch (IOException e) {
-                    GunMod.LOGGER.info("Error in zip file: {}", e.getMessage());
-                }
-            });
-        }
-
-        // 尝试计算哈希值
-        try (FileInputStream inputStream = new FileInputStream(tempFile)) {
-            String md5Hex = Md5Utils.md5Hex(inputStream);
-            // 检查该备份是否存在
-            if (cacheMd5.contains(md5Hex)) {
-                // 存在的话，那就删掉备份
-                tempFile.deleteOnExit();
-            } else {
-                // 否则把备份文件复制一份
-                String dataName = BACKUP_DATE_FORMAT.format(new Date()).toLowerCase(Locale.ENGLISH);
-                Path backupZipFilePath = backupPath.resolve(String.format("backup-%s-%s.zip", dataName, md5Hex));
-                FileUtils.copyFile(tempFile, backupZipFilePath.toFile());
-            }
-        }
-    }
-
-    private static Set<String> checkOldBackups(Path backupPath) {
-        // 临时缓存文件 md5
-        Set<String> allMd5Hex = Sets.newHashSet();
-        if (!Files.isDirectory(backupPath)) {
-            return allMd5Hex;
-        }
+    /** Never let a partial ZIP authorize deletion of the live export. Stage the complete
+     * archive on the backup filesystem before rotating files created by this exporter. */
+    static void backupFiles(Path targetPath, Path backupPath) throws IOException {
+        Files.createDirectories(backupPath);
+        Path temp = Files.createTempFile(backupPath, ".tacz-backup-", ".tmp");
         try {
-            List<File> delFiles = Lists.newArrayList(FileUtils.listFiles(backupPath.toFile(), TrueFileFilter.TRUE, null));
-            delFiles.sort(LastModifiedFileComparator.LASTMODIFIED_REVERSE);
-            int count = 1;
-            for (File file : delFiles) {
-                if (count >= MAX_BACKUP_COUNT) {
-                    // 超过十个的进行删除
-                    GunMod.LOGGER.info("Deleting old backup gun pack {}", file.getName());
-                    FileUtils.deleteQuietly(file);
-                } else {
-                    // 十个以内的，计算 md5，看看有没有重复
-                    try (FileInputStream inputStream = new FileInputStream(file)) {
-                        allMd5Hex.add(Md5Utils.md5Hex(inputStream));
+            try (var zip = new ZipOutputStream(Files.newOutputStream(temp)); var paths = Files.walk(targetPath)) {
+                for (var it = paths.sorted().iterator(); it.hasNext();) {
+                    Path path = it.next();
+                    if (Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) continue;
+                    if (!Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) {
+                        throw new IOException("Cannot back up a link or special file; keeping original export: " + path);
                     }
+                    ZipEntry entry = new ZipEntry(targetPath.relativize(path).toString().replace(File.separatorChar, '/'));
+                    entry.setLastModifiedTime(FileTime.from(BACKUP_TIME));
+                    zip.putNextEntry(entry);
+                    Files.copy(path, zip);
+                    zip.closeEntry();
                 }
-                count++;
             }
-        } catch (Exception exception) {
-            GunMod.LOGGER.error("Error while checking old backup gun pack : {}", exception.getMessage());
+            String digest;
+            try (var in = Files.newInputStream(temp)) { digest = Md5Utils.md5Hex(in); }
+            List<Path> archived;
+            try (var paths = Files.list(backupPath)) {
+                archived = paths.filter(path -> path.getFileName().toString().matches("backup-[0-9]{8}-[0-9]{6}-[0-9a-f]{32}\\.zip")
+                                && Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS))
+                        .sorted(Comparator.comparing(path -> path.getFileName().toString(), Comparator.reverseOrder())).toList();
+            }
+            // A matching filename alone isn't proof the existing backup is intact.
+            for (var copy : archived) {
+                if (copy.getFileName().toString().endsWith("-" + digest + ".zip") && Files.mismatch(temp, copy) == -1) return;
+            }
+            Files.move(temp, backupPath.resolve("backup-" + BACKUP_DATE_FORMAT.format(Instant.now()) + "-" + digest + ".zip"));
+            for (int i = MAX_BACKUP_COUNT - 1; i < archived.size(); i++) Files.delete(archived.get(i));
+        } finally {
+            Files.deleteIfExists(temp);
         }
-        return allMd5Hex;
     }
 
     private static void deleteFiles(Path targetPath) throws IOException {

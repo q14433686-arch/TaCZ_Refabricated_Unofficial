@@ -14,6 +14,7 @@ import socket
 import subprocess
 import tempfile
 import time
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / 'verification/packaged-runtime'
@@ -67,6 +68,15 @@ def main():
         indexes.mkdir(parents=True)
         (fixture/'gunpack.meta.json').write_text(json.dumps({'namespace': 'net_probe', 'dependencies': {'minecraft': '[26.2]'}}))
         (indexes/'first.json').write_text(json.dumps({'name': 'remote', 'type': 'rifle', 'data': 'tacz:ak47_data', 'display': 'tacz:ak47_display'}))
+        # A pre-upgrade, user-edited default export. The changed pack must be backed
+        # up byte-for-byte before replacement; a neighbouring user pack is not ours.
+        old_export = dedicated/'tacz/tacz_default_gun'
+        previous = {'gunpack.meta.json': b'{"namespace":"edited default"}',
+                    'my-notes.txt': b'keep these edits\n', 'data/tacz/index/guns/ak47.json': b'{"custom":true}'}
+        for name, content in previous.items():
+            path = old_export/name
+            path.parent.mkdir(exist_ok=True, parents=True)
+            path.write_bytes(content)
         with socket.socket() as sock:
             sock.bind(('127.0.0.1', 0))
             port = sock.getsockname()[1]
@@ -82,6 +92,16 @@ def main():
                 log = dedicated/'logs/latest.log'
                 await_state(lambda: log.is_file() and 'For help, type "help"' in log.read_text(errors='replace'),
                             [server], 600, 'dedicated startup')
+                [backup] = (dedicated/'tacz_backup/tacz_default_gun').glob('backup-*.zip')
+                with zipfile.ZipFile(backup) as z:
+                    if {name: z.read(name) for name in z.namelist()} != previous:
+                        raise RuntimeError('incomplete original export in the upgrade backup')
+                with zipfile.ZipFile(jar) as z:
+                    name = 'data/tacz/index/guns/ak47.json'
+                    if (old_export/name).read_bytes() != z.read('assets/tacz/custom/tacz_default_gun/' + name):
+                        raise RuntimeError('default export did not upgrade to the distributed version')
+                if (old_export/'my-notes.txt').exists(): raise RuntimeError('retired file remained in the upgraded export')
+                print('::notice::PORT_EXPORT: replaced old default pack, exact prior files recovered from upgrade backup', flush=True)
                 with launch(gradle('client', '-PprobeClient', f'-PprobeReady={ready}', f'-PprobePort={port}', 'runClientGameTest'), evidence/'client.log') as client:
                     await_state(ready.is_file, [server, client], 600, 'client did not receive server-only index')
                     (indexes/'first.json').rename(indexes/'second.json')

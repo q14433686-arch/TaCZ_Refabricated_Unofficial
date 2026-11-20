@@ -2,6 +2,7 @@
 """Check the distributable (not the sources archive or Loom classpath)."""
 import hashlib
 import json
+import os
 from pathlib import Path
 import sys
 from zipfile import ZipFile
@@ -34,7 +35,9 @@ def audit(path):
         required = {'mae-1.1.1.jar', 'commons-math3-3.6.1.jar', 'luaj-core-3.0.8-figura.jar', 'luaj-jse-3.0.8-figura.jar', 'bcel-6.6.1.jar'}
         assert nested == {'META-INF/jars/' + n for n in required} == {j['file'] for j in meta['jars']}, nested
         assert not any(n.endswith('.java') or n.startswith(('com/tacz/guns/test/', 'assets/port_test/', 'data/port_test/', 'com/maydaymemory/')) for n in names)
-        print(f'{path.name}: {len(expected)} resource hashes, target metadata, no test sources, {len(nested)} declared libraries')
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        prefix = '::notice::' if os.getenv('GITHUB_ACTIONS') else ''
+        print(f'{prefix}PORT_JAR: {path.name} SHA-256 {digest}; {len(expected)} resource hashes, target metadata, no test sources, {len(nested)} declared libraries')
 
 
 if __name__ == '__main__':

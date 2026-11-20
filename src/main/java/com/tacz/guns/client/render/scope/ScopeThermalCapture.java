@@ -77,8 +77,7 @@ public final class ScopeThermalCapture {
         // depth-tested bodies; never turn a see-through material into a heat source.
         if (node instanceof ModelFeatureRenderer.Submit model) {
             DepthStencilState depth = model.renderType().pipeline().getDepthStencilState();
-            if (depth == null || depth.equals(new DepthStencilState(com.mojang.blaze3d.platform.CompareOp.ALWAYS_PASS, false))
-                    || depth.equals(new DepthStencilState(com.mojang.blaze3d.platform.CompareOp.ALWAYS_PASS, true))) return;
+            if (depth == null || depth.depthTest() == com.mojang.blaze3d.platform.CompareOp.ALWAYS_PASS) return;
             node = ScopeThermalMaterial.coverage(model);
         }
         bodies.order(0).solid.submit(node);

@@ -78,52 +78,11 @@ import java.util.Optional;
 public final class ScopeMaskRenderer {
 
     /**
-     * 掩码管线。
-     *
-     * <h3>为什么用 {@code POSITION} 而不是 {@code ENTITY} 格式</h3>
-     * 掩码只关心「这个像素有没有被目镜盖到」，<b>不需要</b>贴图、光照、法线。
-     * 用最简格式有三个好处：
-     * <ul>
-     *   <li>顶点数据最小（每顶点 12 字节）；</li>
-     *   <li>{@code core/position} 这套 shader <b>不声明任何 sampler</b> ——
-     *       彻底避开 r52 那次 {@code Missing sampler Sampler0} 的坑；</li>
-     *   <li>不需要自己写 shader，用 vanilla 现成的，也就没有
-     *       r46 那种「shader 声明的 uniform 与管线不匹配」的风险。</li>
-     * </ul>
-     *
-     * <h3>关于颜色</h3>
-     * {@code position.fsh} 输出 {@code apply_fog(ColorModulator, ...)}。
-     * {@code ColorModulator} 由 DynamicTransforms 提供，我们写入纯白，
-     * 于是目镜覆盖处 = 白，其余 = 清空色（黑）。正好是一张二值掩码。
-     *
-     * <p>雾在近距离（手持物就在眼前）几乎不衰减，不影响判读；
-     * 何况本步骤只看<b>形状</b>，不看颜色精度。
-     *
-     * <h3>深度与剔除</h3>
-     * 深度状态传 {@code Optional.empty()}：掩码 target 是 {@code useDepth=false}
-     * 建的，没有深度附件，管线必须声明自己不需要深度。
-     *
-     * <p>{@code withCull(false)}：目镜是<b>单层薄片</b>（实测 30/33 个瞄具的
-     * 目镜 z 厚度 &lt; 0.15），背面剔除可能把它整个剔掉，取决于建模朝向。
-     * 掩码只要「投影形状」，正反面都算数。
+     * Sampler-free coverage. POSITION_COLOR encodes covered glass (white) or physical rim
+     * (black), with alpha distinguishing a CPU-projected hull from view-space mesh geometry.
+     * The ADS progress rides in ColorModulator.g; only color is attached to this pass.
      */
     private static final RenderPipeline MASK_PIPELINE = RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
-            // 用 MATRICES_FOG_SNIPPET 而不是自己拼 GLOBALS + MATRICES_PROJECTION。
-            //
-            // 上一版实测报错：
-            //     Couldn't compile pipeline tacz:pipeline/scope_mask:
-            //         Unable to find shader defined uniform (Fog)
-            // 原因是 core/position.fsh 里 apply_fog(...) 引用了 Fog uniform 块，
-            // 而 BindGroupLayouts.MATRICES_PROJECTION 只声明了
-            // DynamicTransforms + Projection 两个 uniform（字节码确认），
-            // Fog / Globals 是【各自独立】的 layout。少一个就编译不过。
-            //
-            // vanilla 早就把这个组合封装好了（RenderPipelines <clinit> 偏移 30-57）：
-            //     MATRICES_FOG_SNIPPET = builder(GLOBALS_SNIPPET)
-            //                              .withBindGroupLayout(MATRICES_PROJECTION)
-            //                              .withBindGroupLayout(FOG)
-            // 即 Globals + DynamicTransforms + Projection + Fog，
-            // 正是 core/position 这套 shader 需要的全套。直接复用，不再手拼。
             .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_mask"))
             .withVertexShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_mask_coverage"))
             .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_mask_coverage"))
@@ -403,7 +362,10 @@ public final class ScopeMaskRenderer {
             if (target == null) {
                 return;
             }
-            drawMask(target);
+            // This pass writes a private coverage map, not a shaded hand/gbuffer.
+            try (var ignored = com.tacz.guns.compat.iris.IrisSensorProgram.begin()) {
+                drawMask(target);
+            }
         } catch (Exception e) {
             failed = true;
             GunMod.LOGGER.error("[TACZ Scope] Failed to render ocular mask; mask disabled.", e);
@@ -647,16 +609,14 @@ public final class ScopeMaskRenderer {
      *   <li>条目顶点先按 {@code pos/16 → mul(pose)} 得到绘制空间坐标（与描摹路径一致）；</li>
      *   <li>用<b>本 pass 将实际使用的同一投影矩阵</b>投影到 NDC（xy 做透视除法）；</li>
      *   <li>对 NDC 平面点集求 Andrew 单调链凸包；</li>
-     *   <li>凸包顶点用投影的逆变回绘制空间，按<b>退化四边形扇</b>
-     *       (v0, hi, hi+1, hi+1) 写出 —— 复用 QUADS 展开索引即可成三角扇，
-     *       不动管线与索引结构。着色阶段 DynamicTransforms=单位阵，
-     *       顶点再过一次同一投影 ⇒ 精确落回凸包 NDC。</li>
+     *   <li>凸包本身已在屏幕空间，直接写 NDC 三角扇。不凭空选定一个 Z 再逆投影：
+     *       原版和 Iris 的手部深度范围不同。</li>
      * </ol>
      *
      * @return 有效点不足（凸包退化，如全重合）时返回 false，调用方回退逐立方体描摹
      */
     private static boolean writeHullFill(BufferBuilder builder, Matrix4f pose, java.util.List<BedrockCube> cubes, org.joml.Matrix4fc proj) {
-        java.util.List<float[]> pts = new java.util.ArrayList<>();
+        java.util.List<HullVertex> pts = new java.util.ArrayList<>();
         Vector4f tmp = new Vector4f();
         for (BedrockCube cube : cubes) {
             for (var polygon : cube.getPolygons()) {
@@ -690,7 +650,7 @@ public final class ScopeMaskRenderer {
                             || Math.abs(ndcX) > NDC_SANITY_LIMIT || Math.abs(ndcY) > NDC_SANITY_LIMIT) {
                         continue;
                     }
-                    pts.add(new float[]{ndcX, ndcY});
+                    pts.add(new HullVertex(ndcX, ndcY));
                 }
             }
         }
@@ -698,24 +658,24 @@ public final class ScopeMaskRenderer {
             return false;
         }
         // Andrew 单调链凸包（输入先按 x、再按 y 排序去重）
-        pts.sort((a, b) -> a[0] != b[0] ? Float.compare(a[0], b[0]) : Float.compare(a[1], b[1]));
-        java.util.List<float[]> unique = new java.util.ArrayList<>();
-        for (float[] p : pts) {
+        pts.sort((a, b) -> a.x != b.x ? Float.compare(a.x, b.x) : Float.compare(a.y, b.y));
+        java.util.List<HullVertex> unique = new java.util.ArrayList<>();
+        for (HullVertex p : pts) {
             if (unique.isEmpty()) {
                 unique.add(p);
                 continue;
             }
-            float[] q = unique.get(unique.size() - 1);
-            if (Math.abs(q[0] - p[0]) > 1.0e-6f || Math.abs(q[1] - p[1]) > 1.0e-6f) {
+            HullVertex q = unique.get(unique.size() - 1);
+            if (Math.abs(q.x - p.x) > 1.0e-6f || Math.abs(q.y - p.y) > 1.0e-6f) {
                 unique.add(p);
             }
         }
         if (unique.size() < 3) {
             return false;
         }
-        java.util.List<float[]> hull = new java.util.ArrayList<>();
+        java.util.List<HullVertex> hull = new java.util.ArrayList<>();
         // 下壳
-        for (float[] p : unique) {
+        for (HullVertex p : unique) {
             while (hull.size() >= 2 && cross(hull.get(hull.size() - 2), hull.get(hull.size() - 1), p) <= 0) {
                 hull.remove(hull.size() - 1);
             }
@@ -724,7 +684,7 @@ public final class ScopeMaskRenderer {
         // 上壳
         int lower = hull.size() + 1;
         for (int i = unique.size() - 2; i >= 0; i--) {
-            float[] p = unique.get(i);
+            HullVertex p = unique.get(i);
             while (hull.size() >= lower && cross(hull.get(hull.size() - 2), hull.get(hull.size() - 1), p) <= 0) {
                 hull.remove(hull.size() - 1);
             }
@@ -736,11 +696,14 @@ public final class ScopeMaskRenderer {
         if (hull.size() < 3) {
             return false;
         }
-        // 凸包顶点（NDC）逆投影回绘制空间，按退化四边形扇写出
-        Matrix4f invProj = proj.invert(new Matrix4f());
-        float[] p0 = hull.get(0);
+        // The hull is already in screen space; only the traced glass and rim need projection.
+        var first = hull.getFirst();
         for (int i = 1; i + 1 < hull.size(); i++) {
-            emitNdcAsQuad(builder, invProj, p0, hull.get(i), hull.get(i + 1));
+            var last = hull.get(i + 1);
+            first.emit(builder);
+            hull.get(i).emit(builder);
+            last.emit(builder);
+            last.emit(builder); // degenerate quad fan, using the stock quad index buffer
         }
         return true;
     }
@@ -776,30 +739,15 @@ public final class ScopeMaskRenderer {
         }
     }
 
-    /** 单调链叉积：(b−a)×(c−a) 的 z 分量。 */
-    private static float cross(float[] a, float[] b, float[] c) {
-        return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
-    }
-
-    /** 把三个 NDC 点写成一个退化四边形（第 4 顶点重复），顺带回绘制空间。 */
-    private static void emitNdcAsQuad(BufferBuilder builder, Matrix4f invProj,
-                                      float[] a, float[] b, float[] c) {
-        emitNdcVertex(builder, invProj, a);
-        emitNdcVertex(builder, invProj, b);
-        emitNdcVertex(builder, invProj, c);
-        emitNdcVertex(builder, invProj, c);
-    }
-
-    private static void emitNdcVertex(BufferBuilder builder, Matrix4f invProj, float[] ndc) {
-        // Interior of BOTH clip volumes (OpenGL -1..1 and clip-control 0..1). Z=0 is
-        // the reversed far plane on the latter: float roundoff can clip the entire hull.
-        // There is no depth attachment, so only the projected x/y matter here.
-        Vector4f v = new Vector4f(ndc[0], ndc[1], 0.5f, 1.0f);
-        v.mul(invProj);
-        if (Math.abs(v.w) > 1.0e-6f) {
-            v.div(v.w);
+    private record HullVertex(float x, float y) {
+        void emit(BufferBuilder builder) {
+            // Alpha is an input space tag for scope_mask_coverage.vsh, not mask opacity.
+            builder.addVertex(x, y, 0.5f).setColor(0x00ffffff);
         }
-        builder.addVertex(v.x(), v.y(), v.z()).setColor(0xffffffff);
+    }
+
+    private static float cross(HullVertex a, HullVertex b, HullVertex c) {
+        return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
     }
 
     /**
