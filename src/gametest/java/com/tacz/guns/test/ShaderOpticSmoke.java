@@ -152,6 +152,8 @@ public final class ShaderOpticSmoke {
                 boolean thermal=id.equals("scope_reap_ir") || id.equals("scope_xl50");
                 boolean selected = switch (suite) {
                     case "thermal" -> thermal;
+                    case "thermal-reap" -> id.equals("scope_reap_ir");
+                    case "thermal-xl50" -> id.equals("scope_xl50");
                     case "scopes" -> id.startsWith("scope_");
                     case "sights" -> !id.startsWith("scope_");
                     case "pip" -> true;
@@ -166,11 +168,11 @@ public final class ShaderOpticSmoke {
                     count++; equip(ctx,world,m,v);
                     ctx.waitFor(mc -> Math.abs(ScopePipRenderer.currentMagnification()-v.zoom)<.01);
                     if (pipGallery) ctx.waitFor(mc -> ScopePipRenderer.suppressesWorldFovZoom());
-                    if (suite.equals("thermal")) heat(ctx,world,base,m,v,failures);
+                    if (suite.startsWith("thermal")) heat(ctx,world,base,m,v,failures);
                     else gallery(ctx,m,v,thermal,large,failures);
                 }
             }
-            int expected = switch (suite) { case "scopes" -> 34; case "sights" -> 25; case "pip" -> 20; case "thermal", "report-size" -> 4; case "report-marks" -> 5; default -> throw new AssertionError(suite); };
+            int expected = switch (suite) { case "scopes" -> 34; case "sights" -> 25; case "pip" -> 20; case "thermal", "report-size" -> 4; case "thermal-reap", "thermal-xl50" -> 2; case "report-marks" -> 5; default -> throw new AssertionError(suite); };
             if (all.size()!=46 || slots!=59 || count!=expected) throw new AssertionError("Incomplete catalog "+all.size()+"/"+slots+"/"+count);
             if (!failures.isEmpty()) throw new AssertionError("ADS framebuffer failures: " + failures);
             GunMod.LOGGER.info("OPTIC_COMPLETE: {} {}/{} slots ({} indexed attachments)",suite,count,slots,all.size());

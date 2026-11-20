@@ -36,7 +36,7 @@ public final class ScopeThermalCapture {
     private static final Set<EntityRenderState> HOT = Collections.newSetFromMap(new IdentityHashMap<>());
     private static SubmitNodeStorage bodies;
     private static TextureTarget mask;
-    private static boolean enabled, recording, ready, failed;
+    private static boolean enabled, shaderPack, recording, ready, failed;
 
     private ScopeThermalCapture() {}
 
@@ -47,6 +47,7 @@ public final class ScopeThermalCapture {
     static void beginFrame(boolean active) {
         if (!HOT.isEmpty()) HOT.clear();
         enabled = active && !failed;
+        shaderPack = enabled && com.tacz.guns.compat.iris.IrisCompat.hasActiveIrisPack();
         bodies = null;
         recording = ready = false;
     }
@@ -84,11 +85,11 @@ public final class ScopeThermalCapture {
             // that surface against the *actual* scene depth, EQUAL, without writing depth;
             // never widen the ordinary test or infer a hit from the pack filename.
             if (model.state() instanceof EntityRenderState state && (state.entityType == EntityTypes.SLIME
-                    || state.entityType == EntityTypes.CHICKEN) && com.tacz.guns.compat.iris.IrisCompat.hasActiveIrisPack()) {
-                var match = ScopeThermalMaterial.coverage(model, true);
+                    || state.entityType == EntityTypes.CHICKEN) && shaderPack) {
+                var match = ScopeThermalMaterial.coverage(model, ScopeThermalMaterial.Depth.SHIFTED);
                 if (match != model) bodies.order(-1).solid.submit(match);
             }
-            node = ScopeThermalMaterial.coverage(model, false);
+            node = ScopeThermalMaterial.coverage(model, shaderPack ? ScopeThermalMaterial.Depth.SCENE : ScopeThermalMaterial.Depth.NATIVE);
         }
         bodies.order(0).solid.submit(node);
     }
@@ -100,8 +101,7 @@ public final class ScopeThermalCapture {
         if (storage == null || !enabled || scene.getDepthTexture() == null) return;
         // Replay vanilla cutout coverage into a private target, never a pack's gbuffer
         // program (which may have different outputs, alpha semantics and attachments).
-        try (var program = com.tacz.guns.compat.iris.IrisSensorProgram.begin();
-             var bias = com.tacz.guns.compat.iris.IrisThermalDepthBias.begin()) {
+        try (var program = com.tacz.guns.compat.iris.IrisSensorProgram.begin()) {
             var depth = scene.getDepthTexture();
             if (mask == null || mask.width != scene.width || mask.height != scene.height
                     || mask.getDepthTexture().getFormat() != depth.getFormat()) {
@@ -131,7 +131,8 @@ public final class ScopeThermalCapture {
                 RenderSystem.outputDepthTextureOverride = mask.getDepthTextureView();
                 try {
                     encoder.clearColorTexture(mask.getColorTexture(), new Vector4f(0f));
-                    try (var frame = dispatcher.prepareFrame(storage)) { frame.executeSolid(); }
+                    try (var borrowed = shaderPack ? ThermalSceneDepth.borrow(scene) : null;
+                         var frame = dispatcher.prepareFrame(storage)) { frame.executeSolid(); }
                 } finally {
                     RenderSystem.outputColorTextureOverride = previousColor;
                     RenderSystem.outputDepthTextureOverride = previousDepth;

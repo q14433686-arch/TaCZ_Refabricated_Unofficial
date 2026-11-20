@@ -39,7 +39,6 @@ public abstract class IrisGlCommandEncoderMixin {
                                              CallbackInfoReturnable<Boolean> cir) {
         if (cir.getReturnValue() != null && cir.getReturnValue()) {
             IrisScopeMaskState.applyToGlRenderPass(glRenderPass);
-            com.tacz.guns.compat.iris.IrisThermalDepthBias.apply();
         }
     }
 }

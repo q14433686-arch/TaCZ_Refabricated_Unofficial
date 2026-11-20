@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [scopes, sights, pip, thermal, report-size, report-marks]
+        suite: [scopes, sights, pip, thermal-reap, thermal-xl50, report-size, report-marks]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:

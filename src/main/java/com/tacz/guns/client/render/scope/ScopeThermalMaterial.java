@@ -1,6 +1,7 @@
 package com.tacz.guns.client.render.scope;
 
 import com.mojang.blaze3d.pipeline.ColorTargetState;
+import com.mojang.blaze3d.pipeline.BindGroupLayout;
 import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.platform.CompareOp;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
@@ -18,32 +19,39 @@ import java.util.Map;
 /** The heat mask stores surface coverage, not the optical material's translucency.
  * Replay the same model/pose/UVs with texture cutout coverage and ordinary depth testing. */
 final class ScopeThermalMaterial {
-    private static RenderPipeline pipeline(boolean shifted) {
-        var builder = RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
-                .withLocation(Identifier.parse(shifted ? "tacz:pipeline/thermal_shift_match" : "tacz:pipeline/thermal_coverage"))
-                .withVertexShader(Identifier.parse("tacz:core/thermal_coverage"))
-                .withFragmentShader(Identifier.parse("tacz:core/thermal_coverage"))
-                .withColorTargetState(ColorTargetState.DEFAULT).withCull(false);
-        if (shifted) builder.withShaderDefine("MATCH_SHIFTED_FACE")
-                .withDepthStencilState(new DepthStencilState(CompareOp.EQUAL, false));
-        return builder.build();
+    enum Depth {
+        NATIVE("thermal_coverage", false, false), SCENE("thermal_scene_coverage", true, false), SHIFTED("thermal_shift_match", true, true);
+        private final RenderPipeline pipeline;
+        private final Map<Identifier, RenderType> materials = new HashMap<>();
+        Depth(String name, boolean matchScene, boolean shifted) {
+            var b = RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
+                    .withLocation(Identifier.parse("tacz:pipeline/" + name))
+                    .withVertexShader(Identifier.parse("tacz:core/thermal_coverage"))
+                    .withFragmentShader(Identifier.parse("tacz:core/thermal_coverage"))
+                    .withColorTargetState(ColorTargetState.DEFAULT).withCull(false);
+            if (matchScene) b.withShaderDefine("MATCH_SCENE_DEPTH").withBindGroupLayout(
+                    BindGroupLayout.builder().withSampler(ThermalSceneDepth.SAMPLER).build());
+            if (shifted) b.withShaderDefine("MATCH_SHIFTED_FACE")
+                    .withDepthStencilState(new DepthStencilState(CompareOp.EQUAL, false));
+            pipeline = b.build();
+        }
+        RenderType forTexture(Identifier texture) {
+            return materials.computeIfAbsent(texture, id -> {
+                var setup = RenderSetup.builder(pipeline).withTexture("Sampler0",id);
+                if (this != NATIVE) setup.withTexture(ThermalSceneDepth.SAMPLER,ThermalSceneDepth.ID);
+                return RenderType.create("tacz_thermal_coverage",setup.createRenderSetup());
+            });
+        }
     }
-    private static final RenderPipeline COVERAGE = pipeline(false), SHIFT_MATCH = pipeline(true);
-    private static final Map<Identifier, RenderType> TYPES = new HashMap<>(), SHIFTED_TYPES = new HashMap<>();
 
     private ScopeThermalMaterial() {}
 
-    static ModelFeatureRenderer.Submit<?> coverage(ModelFeatureRenderer.Submit<?> model, boolean shifted) {
-        // Replay every eligible body with the sensor material, including the opaque
-        // slime core. Reusing its optical/Iris material makes the face nearest the
-        // copied scene depth disappear while translucent/back faces remain hot.
+    static ModelFeatureRenderer.Submit<?> coverage(ModelFeatureRenderer.Submit<?> model, Depth depth) {
         var setup = ((ThermalRenderTypeAccessor)(Object)model.renderType()).tacz$thermalSetup();
         var binding = ((ThermalRenderSetupAccessor)(Object)setup).tacz$thermalTextures().get("Sampler0");
-        // Nonstandard model shaders without a base texture keep their existing replay.
+        // Preserve nonstandard model materials without a base texture.
         if (!(binding instanceof ThermalTextureBindingAccessor texture)) return model;
-        var type = (shifted ? SHIFTED_TYPES : TYPES).computeIfAbsent(texture.tacz$thermalTexture(), id -> RenderType.create("tacz_thermal_coverage",
-                RenderSetup.builder(shifted ? SHIFT_MATCH : COVERAGE).withTexture("Sampler0", id).createRenderSetup()));
-        return copy(model, type);
+        return copy(model, depth.forTexture(texture.tacz$thermalTexture()));
     }
 
     private static <S> ModelFeatureRenderer.Submit<S> copy(ModelFeatureRenderer.Submit<S> model, RenderType type) {
@@ -51,5 +59,5 @@ final class ScopeThermalMaterial {
                 model.lightCoords(), model.overlayCoords(), model.tintedColor(), model.sprite(), model.sheetedDecalPose());
     }
 
-    static void clear() { TYPES.clear(); SHIFTED_TYPES.clear(); }
+    static void clear() { for (Depth depth : Depth.values()) depth.materials.clear(); }
 }
