@@ -33,19 +33,10 @@ public class InteractKey {
         return isPress && isInGame() && doInteractLogic(true);
     }
 
-    /** On 26.2 Friends and Interact both default to O. Yield the global shortcut only
-     * where the bound gun action can actually use the current target. Do not dispatch it here. */
-    public static boolean hasWorldTarget(InputConstants.Key key) {
-        if (INTERACT_KEY.isUnbound() || !GunInputHandler.matches(INTERACT_KEY, key) || !isInGame()) return false;
-        var mc = Minecraft.getInstance();
-        var player = mc.player;
-        if (player == null || player.isSpectator() || !IGun.mainHandHoldGun(player)) return false;
-        if (mc.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK) {
-            var block = player.level().getBlockState(hit.getBlockPos());
-            return block.getBlock() instanceof AmmoStorageBlock || InteractKeyConfigRead.canInteractBlock(block);
-        }
-        return mc.hitResult instanceof EntityHitResult hit && InteractKeyConfigRead.canInteractEntity(hit.getEntity());
-    }
+    // 【26.2 → 1.21.11】这里原本有 hasWorldTarget(InputConstants.Key)：给 MinecraftMixin 的
+    // "Friends 键让位给枪械交互"裁决提供判据（26.2 两者的默认键都是 O）。1.21.11 的社交界面键是
+    // Options#keySocialInteractions（默认 P），与 KEY_O 不冲突，那条裁决已整段删除，
+    // 判据也就没有消费者了 —— 留着会变成"看起来有人用、实际没人调"的死代码。
 
     public static boolean sharesUseBinding(KeyMapping use) {
         return !use.isUnbound() && KeyBindingHelper.getBoundKeyOf(INTERACT_KEY).equals(KeyBindingHelper.getBoundKeyOf(use));

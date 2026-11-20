@@ -35,16 +35,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Minecraft.class)
 public abstract class MinecraftMixin {
-    // Friends is handled before the ordinary keyboard/mouse callbacks. Let those callbacks
-    // handle an actual gun interaction exactly once; leave screenshots, fullscreen and GUI alone.
-    @ModifyExpressionValue(method = "handleGlobalKeyPress", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/KeyMapping;matches(Lcom/mojang/blaze3d/platform/InputConstants$Key;)Z"),
-            slice = @org.spongepowered.asm.mixin.injection.Slice(from = @At(value = "FIELD",
-                    target = "Lnet/minecraft/client/Options;keyFriends:Lnet/minecraft/client/KeyMapping;")))
-    private boolean tacz$preferTargetedInteract(boolean friends, com.mojang.blaze3d.platform.InputConstants.Key key, boolean repeat) {
-        return friends && !com.tacz.guns.client.input.InteractKey.hasWorldTarget(key);
-    }
-
+    // 【26.2 → 1.21.11】这里原本是"Friends 键与枪械交互键抢同一个按键"的裁决：
+    // 26.2 的 Friends（聊天栏社交界面）与 Interact 都默认绑 O，因此在
+    // Minecraft#handleGlobalKeyPress 里对 keyFriends 的 KeyMapping#matches 调用做
+    // @ModifyExpressionValue，当准星对着可交互方块时让给枪械交互。
+    //
+    // 1.21.11 里这两条前提都不成立：
+    //   1) Minecraft 没有 handleGlobalKeyPress（等价物是 Minecraft#handleKeybinds），
+    //      按键路由走 KeyMapping 的静态 click/set，而不是逐个 matches 比较；
+    //   2) 本线的社交界面键是 Options#keySocialInteractions，默认值是 GLFW 80（P），
+    //      而枪械交互键 InteractKey.INTERACT_KEY 是 KEY_O —— 两者根本不冲突。
+    // 因此这条裁决在本线没有要裁决的对象，整段删除；若将来默认键再次相撞，
+    // 正确的落点是 KeyMapping#click 的 HEAD（按键→clickCount 的唯一入口）。
     @Shadow
     public abstract PackRepository getResourcePackRepository();
 
