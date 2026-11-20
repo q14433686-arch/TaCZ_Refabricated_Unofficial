@@ -1,0 +1,32 @@
+{
+  "type": "tacz:gun_smith_table_crafting",
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 350
+    },
+    {
+      "item": "#c:ingots/gold",
+      "count": 60
+    },
+    {
+      "item": "#c:gems/diamond",
+      "count": 16
+    },
+    {
+      "item": "#c:ingots/netherite",
+      "count": 3
+    },
+    {
+      "item": "#c:rods/blaze",
+      "count": 5
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:hm50b",
+    "attachments": {
+      "scope": "tacz:scope_contender"
+    }
+  }
+}

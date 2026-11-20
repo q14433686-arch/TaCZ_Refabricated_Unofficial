@@ -93,10 +93,18 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      - name: Verify pinned 1.2 source assets and recipe-viewer ownership
+        run: |
+          python3 scripts/verify_120_resources.py
+          python3 scripts/verify_recipe_viewer_reload.py
+
       - name: Full build
         run: |
           set -o pipefail
           ./gradlew --init-script scripts/ci-central.init.gradle build --console=plain --no-daemon 2>&1 | tee "$RUNNER_TEMP/build.log"
+
+      - name: Audit the production JAR (not the dev classpath)
+        run: python3 scripts/audit_26_2_jar.py build/libs/*.jar
 
       - name: Real integrated client (26.2 OpenGL / Mesa)
         timeout-minutes: 12

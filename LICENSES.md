@@ -39,6 +39,17 @@ Some assets may be licensed under terms such as CC BY-NC-ND 4.0 or other license
 
 If you are redistributing, modifying, or reusing assets from this repository, please check the original license and attribution requirements for those assets.
 
+The bundled default pack credits **TACZ Dev Team** and specifies **CC BY-NC-ND 4.0**
+(see its `assets/tacz/gunpack_info.json`). The incremental 1.2.0 resources are tracked
+in [`RESOURCE_IMPORT_120.tsv`](RESOURCE_IMPORT_120.tsv), pinned to
+[Sh1roCu/TACZ-Refabricated `356bdf9`](https://github.com/Sh1roCu/TACZ-Refabricated/tree/356bdf9d48f2225bac6ceb56adc5576a418517a8).
+The full effective built-in pack is tracked in [`DEFAULT_PACK_120.tsv`](DEFAULT_PACK_120.tsv):
+source blob for every file, shipped SHA-256, source/overlay path and adaptation. Models,
+textures, animations and audio are not redrawn, transcoded or relicensed. The adaptation
+column identifies 26.2 metadata, recipes, advancements, loot and script changes. See
+[`scripts/port_default_pack_120.py`](scripts/port_default_pack_120.py) to reproduce it.
+These resources are not relicensed as GPL; this port is not a new distribution permission.
+
 ## Third-party Content Packs
 
 Gun packs, resource packs, data packs, and addon content may have their own licenses.

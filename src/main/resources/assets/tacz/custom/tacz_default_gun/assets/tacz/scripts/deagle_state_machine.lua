@@ -1,6 +1,6 @@
 -- 脚本的位置是 "{命名空间}:{路径}"，那么 require 的格式为 "{命名空间}_{路径}"
 -- 注意！require 取得的内容不应该被修改，应仅调用
-local default = require("tacz_default_state_machine")
+local default = require("tacz_default_state_machine_v2")
 local STATIC_TRACK_LINE = default.STATIC_TRACK_LINE
 local MAIN_TRACK = default.MAIN_TRACK
 local main_track_states = default.main_track_states
@@ -90,7 +90,7 @@ function idle_state.transition(this, context, input)
         -- 此处获取的轨道是位于主轨道行上的主轨道
         local track = context:getTrack(STATIC_TRACK_LINE, MAIN_TRACK)
         -- 停下切换模式动画
-        context:stopAnimation(context:getTrack(STATIC_TRACK_LINE, SWITCH_MODE_TRACK))
+        -- No switch-mode track on this rig.
         -- 播放 put_away 动画,并且将其过渡时长设为从上下文里传入的 put_away_time * 0.75
         context:runAnimation("put_away", track, false, PLAY_ONCE_HOLD, put_away_time * 0.75)
         -- 设定动画进度为最后一帧
