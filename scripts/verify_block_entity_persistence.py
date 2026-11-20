@@ -154,7 +154,7 @@ def check_block_entity(path: Path) -> None:
         written = keys_in(save, WRITE_CALL, consts)
         # 对称性检查看「整个类」的读取：取值往往被抽到 readXxx() 辅助方法里，
         # 只看 loadAdditional 会把合法的键误判成「只写不读」。
-        read = keys_in(strip_comments(text), READ_CALL, consts)
+        read = keys_in(code, READ_CALL, consts)
 
         for key in sorted(keys_in(load, GATE, consts) - written):
             errors.append(
@@ -165,17 +165,17 @@ def check_block_entity(path: Path) -> None:
             errors.append(
                 f"{name}: saveAdditional 写了 `{key}` 却从不读回（死数据，或读取处漏了）"
             )
-        legacy = keys_in("\n".join(line.partition("// tacz:legacy-key")[0] for line in text.splitlines()
-                                   if "// tacz:legacy-key" in line), READ_CALL, consts)
-        for key in sorted(read - written - legacy):
+        # Ignore just the annotated migration read, not that key everywhere in the class.
+        ordinary = "\n".join(line for line in text.splitlines() if "// tacz:legacy-key" not in line)
+        for key in sorted(keys_in(strip_comments(ordinary), READ_CALL, consts) - written):
             errors.append(
                 f"{name}: loadAdditional 读 `{key}` 却从不写入（永远读不到默认值之外的内容）"
             )
 
     # C. 持有物品的方块实体必须在移除时处理内容物
-    if re.search(r"\bItemStack\s+\w+\s*=", text) and "// tacz:no-drop-on-remove" not in text:
-        if not re.search(r"\bvoid\s+preRemoveSideEffects\s*\(", text) and not re.search(
-            r"\bvoid\s+setRemoved\s*\(", text
+    if re.search(r"\bItemStack\s+\w+\s*=", code) and "// tacz:no-drop-on-remove" not in text:
+        if not re.search(r"\bvoid\s+preRemoveSideEffects\s*\(", code) and not re.search(
+            r"\bvoid\s+setRemoved\s*\(", code
         ):
             errors.append(
                 f"{name}: 持有 ItemStack 字段但没有 preRemoveSideEffects/setRemoved —— "
@@ -184,7 +184,7 @@ def check_block_entity(path: Path) -> None:
             )
 
     # D. onRemove 在 26.2 已删除
-    if re.search(r"\b(?:public|protected)\s+void\s+onRemove\s*\(", text):
+    if re.search(r"\b(?:public|protected)\s+void\s+onRemove\s*\(", code):
         errors.append(
             f"{name}: 出现了 `onRemove` 方法 —— 26.2 的 Block#onRemove 已删除，"
             "写了也不会被调用，应改用 preRemoveSideEffects"

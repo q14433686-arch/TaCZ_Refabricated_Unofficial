@@ -74,9 +74,11 @@ jobs:
           from pathlib import Path
           log = Path('build/run/clientGameTest/logs/latest.log')
           if log.is_file():
-              for line in log.read_text(errors='replace').splitlines():
-                  if any(k in line for k in ('PORT_HEAT_DEPTH:', 'PORT_THERMAL_SLIME:', 'PORT_THERMAL_DYNAMIC:', 'PORT_LENS: XL50 restored', 'PORT_HAND_MATERIALS:')):
-                      print('::notice::' + line[line.index('PORT_'):].replace('%', '%25'))
+              lines = log.read_text(errors='replace').splitlines()
+              # One notice per control: per-line annotations hit the Checks limit before the light hand frame.
+              for marker in ('PORT_HEAT_DEPTH:', 'PORT_THERMAL_SLIME:', 'PORT_THERMAL_DYNAMIC:', 'PORT_LENS: XL50 restored', 'PORT_MATERIALS:', 'PORT_HAND_MATERIALS:'):
+                  data = [s[s.index(marker):] for s in lines if marker in s]
+                  if data: print('::notice::' + ' | '.join(data).replace('%', '%25'))
           PY
       - name: Summarize failures
         if: failure()

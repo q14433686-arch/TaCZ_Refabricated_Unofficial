@@ -16,6 +16,10 @@ import com.tacz.guns.util.DefaultGunAttachments;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.resource.network.CommonNetworkCache;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
+import net.fabricmc.loader.api.FabricLoader;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.minecraft.world.level.GameType;
 import net.minecraft.resources.Identifier;
@@ -25,6 +29,7 @@ import net.minecraft.world.InteractionHand;
 public class PackClientSmoke implements FabricClientGameTest {
     @Override public void runTest(ClientGameTestContext context) {
         String viewer = System.getProperty("tacz.test.viewer");
+        assertInstalledCombination(viewer);
         if (viewer != null) {
             ViewerSmoke.run(context, viewer);
             return;
@@ -149,6 +154,20 @@ public class PackClientSmoke implements FabricClientGameTest {
         }
         GunMod.LOGGER.info("PORT_SMOKE_CLIENT: first integrated world closed; checking logout and reopening save");
         WorldReturnSmoke.reopen(context, saved);
+    }
+
+    /** Check the actual mod containers, not just which test the Gradle flag selected.
+     * The packaged TCP probe separately checks a distribution without Cloth/Mod Menu. */
+    private static void assertInstalledCombination(String viewer) {
+        var actual = Stream.of("jei", "roughlyenoughitems", "iris", "sodium", "player_animation_library", "controllable")
+                .filter(FabricLoader.getInstance()::isModLoaded).collect(Collectors.toSet());
+        Set<String> expected;
+        if (viewer != null) expected = Set.of(viewer.equals("rei") ? "roughlyenoughitems" : viewer);
+        else if (Boolean.getBoolean("tacz.test.iris")) expected = Set.of("iris", "sodium");
+        else if (Boolean.getBoolean("tacz.test.pal")) expected = Set.of("player_animation_library");
+        else if (Boolean.getBoolean("tacz.test.controller")) expected = Set.of("controllable");
+        else expected = Set.of();
+        if (!actual.equals(expected)) throw new AssertionError("Expected isolated integration " + expected + ", found " + actual);
     }
 
     private static BlockPos checkRacks(ClientGameTestContext context, TestSingleplayerContext world, Identifier gunId) {

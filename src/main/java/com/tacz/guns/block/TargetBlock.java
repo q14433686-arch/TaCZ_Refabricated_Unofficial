@@ -194,11 +194,11 @@ public class TargetBlock extends BaseEntityBlock {
      * <p>这里原先是 {@code new GameProfile(null, stack.getHoverName().getString())}。authlib 9 的
      * {@code GameProfile} 是 record，构造器对 id/name/properties 全部
      * {@code Objects.requireNonNull}，所以<b>只要物品带自定义名就必抛 NPE</b>。而它抛在
-     * {@code BlockItem#place} 的中途：方块已经放好、{@code setPlacedBy} 里的物品消耗语句却
+     * {@code BlockItem#place} 的中途：方块已经放好、随后原版 {@code BlockItem#place} 的物品消耗语句却
      * 还没执行 ⇒ <b>标靶放下了、物品不被消耗</b>，而且异常被 {@code useItemOn} 吞掉，
      * 玩家看不到任何提示。</p>
      * <p>现在改用原版 {@link ResolvableProfile}（允许「只有名字」，和原版头颅的
-     * {@code SkullBlockEntity} 完全一致）：服务端不再构造 {@code GameProfile}，也就不可能 NPE；
+     * {@code SkullBlockEntity} 完全一致）：放置不会构造 UUID 为空的 {@code GameProfile}；
      * 皮肤由客户端用 {@code PlayerSkinRenderCache} 异步解析，解析不到就是默认皮肤。
      * 放置不等待服务端身份查询；只有仍是同一主人时，才用实际 UUID 替换名字。</p>
      */
@@ -208,19 +208,10 @@ public class TargetBlock extends BaseEntityBlock {
         if (!world.isClientSide()) {
             BlockPos above = pos.above();
             world.setBlock(above, state.setValue(HALF, DoubleBlockHalf.UPPER), Block.UPDATE_ALL);
-            if (stack.getCustomName() != null) {
-                BlockEntity blockentity = world.getBlockEntity(pos);
-                if (blockentity instanceof TargetBlockEntity e) {
-                    Component customName = stack.getHoverName();
-                    String name = customName.getString();
-                    // 空名字（组件被清空之类）不建档案：ResolvableProfile 允许名字为空，
-                    // 但空名字解析不出任何玩家，徒增一次无意义查询。
-                    if (!name.isEmpty()) {
-                        e.setOwner(ResolvableProfile.createUnresolved(name));
-                    }
-                    e.setCustomName(customName);
-                    e.refresh();
-                }
+            Component customName = stack.getCustomName();
+            if (customName != null && world.getBlockEntity(pos) instanceof TargetBlockEntity target) {
+                target.setCustomName(customName);
+                target.setOwnerName(customName.getString()); // publishes both values in one update
             }
         }
     }

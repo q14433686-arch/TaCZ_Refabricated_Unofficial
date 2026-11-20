@@ -84,6 +84,11 @@ class GuardTests(unittest.TestCase):
         self.replace(BLOCKS / "entity/TargetBlockEntity.java", "output.store(PROFILE_TAG,", "output.store(ALTERNATE_PROFILE_TAG,")
         self.guard("verify_block_entity_persistence.py", False)
 
+    def test_legacy_annotation_does_not_exempt_new_reads_of_same_key(self) -> None:
+        self.replace(BLOCKS / "entity/TargetBlockEntity.java", "this.owner = loaded;",
+                     "input.read(ALTERNATE_PROFILE_TAG, ResolvableProfile.CODEC); this.owner = loaded;")
+        self.guard("verify_block_entity_persistence.py", False)
+
     def test_default_only_skin_fails(self) -> None:
         self.replace(RENDERER, "skinRenderCache.getOrDefault(profile)", "skinRenderCache.getDefault(profile)")
         self.guard("verify_block_entity_persistence.py", False)

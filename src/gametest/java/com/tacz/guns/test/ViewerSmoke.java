@@ -10,7 +10,6 @@ import com.tacz.guns.init.ModItems;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.display.SlotDisplayContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.resources.Identifier;
@@ -90,9 +89,6 @@ interface ViewerSmoke {
     }
 
     static void run(ClientGameTestContext ctx, String viewer) {
-        var loader = FabricLoader.getInstance();
-        if (loader.isModLoaded("jei") != viewer.equals("jei") || loader.isModLoaded("roughlyenoughitems") != viewer.equals("rei"))
-            throw new AssertionError("Expected only the " + viewer + " runtime");
         ViewerSmoke api = switch (viewer) {
             case "jei" -> new JeiViewerSmoke();
             case "rei" -> new ReiViewerSmoke();

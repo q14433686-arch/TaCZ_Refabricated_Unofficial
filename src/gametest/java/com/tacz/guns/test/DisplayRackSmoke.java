@@ -182,6 +182,37 @@ public class DisplayRackSmoke {
     }
 
     @GameTest
+    public void statueUpdateAndRemovalKeepOneRegistryBackedStack(GameTestHelper h) {
+        var level = h.getLevel();
+        var pos = h.absolutePos(BlockPos.ZERO);
+        var block = ModBlocks.STATUE;
+        var state = block.defaultBlockState();
+        level.setBlockAndUpdate(pos, state);
+        block.setPlacedBy(level, pos, state, null, new ItemStack(block));
+        var gun = com.tacz.guns.api.item.builder.GunItemBuilder.create().setId(Identifier.parse("tacz:ak47")).setAmmoCount(3).build();
+        gun.set(DataComponents.MAX_STACK_SIZE, 2);
+        gun.setCount(2);
+        gun.set(DataComponents.CUSTOM_NAME, Component.literal("statue update fixture"));
+        gun.enchant(level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
+                .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.UNBREAKING), 1);
+        var player = h.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, gun);
+        var hit = new BlockHitResult(Vec3.atCenterOf(pos.above()), Direction.NORTH, pos.above(), false);
+        level.getBlockState(pos.above()).useItemOn(gun, level, player, InteractionHand.MAIN_HAND, hit);
+        var be = (com.tacz.guns.block.entity.StatueBlockEntity)level.getBlockEntity(pos);
+        h.assertTrue(gun.getCount() == 1 && ItemStack.matches(gun, be.getGunItem()), "Placement did not transfer exactly one item");
+        var copy = new com.tacz.guns.block.entity.StatueBlockEntity(pos, state);
+        copy.loadAdditional(TagValueInput.create(ProblemReporter.DISCARDING, level.registryAccess(), be.getUpdateTag(level.registryAccess())));
+        h.assertTrue(ItemStack.matches(gun, copy.getGunItem()), "Statue update lost registry-backed components");
+        level.destroyBlock(pos.above(), true);
+        h.assertTrue(level.getBlockEntity(pos) == null && be.getGunItem().isEmpty(), "Companion removal did not release contents");
+        int dropped = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(2)).stream().map(ItemEntity::getItem)
+                .filter(s -> ItemStack.isSameItemSameComponents(s, gun)).mapToInt(ItemStack::getCount).sum();
+        h.assertTrue(dropped == 1, "Removed statue dropped " + dropped + " copies of the stored item");
+        h.succeed();
+    }
+
+    @GameTest
     public void dyeLootAndCornerMirror(GameTestHelper helper) {
         var level = helper.getLevel();
         for (var item : List.of(ModItems.GUN_PEGBOARD, ModItems.GLOW_GUN_PEGBOARD)) {

@@ -88,9 +88,26 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
                 ? new GameProfile(partial.id(), ownerNameHint, partial.properties()) : partial;
     }
 
+    /** A placement/anvil name is not a texture snapshot or an authoritative UUID. */
+    public void setOwnerName(@Nullable String name) {
+        setOwner(name == null || name.isEmpty() ? null : ResolvableProfile.createUnresolved(name));
+    }
+
+    /** Native 26.2 API, including skin patches and the unambiguous setOwner(null). */
     public void setOwner(@Nullable ResolvableProfile owner) {
+        replaceOwner(owner, owner == null ? "" : owner.partialProfile().name());
+    }
+
+    /** For callers with authlib profiles: only an explicit texture is a finished skin. */
+    public void setGameProfile(@Nullable GameProfile profile) {
+        if (profile == null) { setOwner(null); return; }
+        replaceOwner(profile.properties().containsKey("textures") ? ResolvableProfile.createResolved(profile)
+                : ResolvableProfile.createUnresolved(profile.id()), profile.name());
+    }
+
+    private void replaceOwner(@Nullable ResolvableProfile owner, String nameHint) {
         this.owner = owner;
-        ownerNameHint = owner == null ? "" : owner.partialProfile().name();
+        this.ownerNameHint = nameHint;
         invalidateLookup();
         refresh();
         resolveOwnerIdentity();
@@ -123,6 +140,7 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
         lookup(world, name, requested.partialProfile().id()).whenCompleteAsync((result, error) -> {
             if (lookupGeneration != generation || level != world || isRemoved() || owner != requested) return;
             if (error != null) {
+                lookupAttempted = false; // a later world attachment may retry, never spin on a tick
                 GunMod.LOGGER.warn("Could not resolve target owner {}; keeping original profile", requested.partialProfile(), error);
                 return;
             }
