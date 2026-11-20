@@ -85,8 +85,11 @@ repositories {
         filter { includeModule('mrcrayfish.test', 'controllable-sdl') }
     }
     maven {
-        // 阿里云镜像，方便国内开发
+        // 阿里云镜像，方便国内开发（限定 commons，避免海外 CI 解析其它组时被网关超时阻断）
         url = uri("https://maven.aliyun.com/repository/public/")
+        content {
+            includeGroup 'org.apache.commons'
+        }
     }
     maven {
         name = "MaydayMemory's Repo"
