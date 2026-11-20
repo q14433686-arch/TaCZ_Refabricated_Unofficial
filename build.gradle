@@ -1,5 +1,6 @@
 import java.security.MessageDigest
 
+// TaCZ Refabricated Unofficial 1.2.0+fabric.26.1.2.R1
 plugins {
     id 'net.fabricmc.fabric-loom' version '1.17-SNAPSHOT'
     id 'maven-publish'

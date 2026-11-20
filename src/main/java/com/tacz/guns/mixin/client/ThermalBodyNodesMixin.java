@@ -39,7 +39,7 @@ abstract class ThermalBodyNodesMixin {
         ScopeThermalCapture.recordModel(model, state, poseStack, renderType, lightCoords, overlayCoords, tintedColor, sprite);
     }
 
-    @Inject(method = "submitModelPart", at = @At("HEAD"))
+    @Inject(method = "submitModelPart(Lnet/minecraft/client/model/geom/ModelPart;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/rendertype/RenderType;IILnet/minecraft/client/renderer/texture/TextureAtlasSprite;ZZILnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;I)V", at = @At("HEAD"))
     private void tacz$recordModelPart(ModelPart modelPart,
                                       PoseStack poseStack,
                                       RenderType renderType,

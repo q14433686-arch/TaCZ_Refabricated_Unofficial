@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ProjectionMatrixBuffer.class)
 abstract class ScopeProjectionUploadMixin {
-    @Inject(method = "getBuffer", at = @At("RETURN"))
+    @Inject(method = "writeBuffer", at = @At("RETURN"))
     private void tacz$rememberProjection(Matrix4f matrix, CallbackInfoReturnable<GpuBufferSlice> cir) {
         ScopeProjection.uploaded(cir.getReturnValue(), matrix);
     }
