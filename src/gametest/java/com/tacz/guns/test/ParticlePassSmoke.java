@@ -42,7 +42,7 @@ final class ParticlePassSmoke {
     private static void uv(RenderType type, float offset) {
         var setup = ((ThermalRenderTypeAccessor)(Object)type).tacz$thermalSetup();
         var transform = ((MaterialTransformObserver)(Object)setup).taczTest$textureTransform();
-        Matrix4f matrix = transform.createMatrix();
+        Matrix4f matrix = transform.getMatrix();
         if (!matrix.equals(new Matrix4f().translation(offset,offset,0), 1e-5f))
             throw new AssertionError("Wrong UV matrix for " + type + ": " + matrix);
     }

@@ -20,8 +20,8 @@ jobs:
       - uses: actions/setup-java@v4
         with: {distribution: temurin, java-version: '25'}
       - uses: gradle/actions/setup-gradle@v4
-      - name: Fetch the pre-backport 26.2 resource tree for the upgrade test
-        run: git fetch --no-tags --depth=1 origin f9ae55af2b507a2d556c3846127aba1c57e47d1c
+      - name: Fetch the pre-backport resource trees for the upgrade test
+        run: git fetch --no-tags --depth=1 origin f9ae55af2b507a2d556c3846127aba1c57e47d1c 569869f107a60aacfa211c4fc658fcd1c58aee93
       - name: Build and inspect the distributable
         run: |
           ./gradlew --init-script scripts/ci-central.init.gradle jar --console=plain

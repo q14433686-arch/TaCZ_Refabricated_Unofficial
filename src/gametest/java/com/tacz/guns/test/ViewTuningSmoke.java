@@ -63,7 +63,7 @@ final class ViewTuningSmoke {
     private static volatile double watchedSize;
     static {
         ModConfigEvents.reloading(GunMod.MOD_ID).register(config -> {
-            if (config.getType() == ModConfig.Type.CLIENT && Thread.currentThread() != Minecraft.getInstance().getRunningThread())
+            if (config.getType() == ModConfig.Type.CLIENT && !Minecraft.getInstance().isSameThread())
                 watchedSize = Dimension.SIZE.option.get();
         });
     }

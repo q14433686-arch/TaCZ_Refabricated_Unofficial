@@ -76,7 +76,7 @@ public final class SurfaceLightSmoke {
         var saved = world.getServer().computeOnServer(s -> s.getPlayerList().getPlayers().getFirst().getMainHandItem().copy());
         var facing = ctx.computeOnClient(mc -> new float[]{mc.player.getYRot(),mc.player.getXRot()});
         BlockPos origin=ctx.computeOnClient(mc->BlockPos.containing(mc.player.getEyePosition()));
-        var concrete=Blocks.CONCRETE.pick(DyeColor.GRAY);
+        var concrete=Blocks.GRAY_CONCRETE;
         var old=world.getServer().computeOnServer(s -> {
             var p=s.getPlayerList().getPlayers().getFirst(); var level=p.level(); p.setItemInHand(InteractionHand.MAIN_HAND,ItemStack.EMPTY);
             var states=new LinkedHashMap<BlockPos,BlockState>();
