@@ -7,24 +7,21 @@
 ## 0. 版本号（最容易错，先做）
 
 - [ ] `gradle.properties` 的 `mod_version` 已是目标版本
-      （形如 `1.1.8+fabric.26.2.R3-hotfix4`；规矩见该文件注释块——SemVer 核心
-      `1.1.8` 不能动，发布身份只放 build metadata，hotfix 序号不加分隔符）。
-- [ ] `fabric.mod.json` 的 `name` 括号里与 `description` 末尾的版本表述一致。
-- [ ] README 五处一致：顶部版本句 /「已使用 R? 版本号」提示行 / 支持环境表两行 /
-      SemVer 说明段。
+      （26.2 的 1.2.0 基线为 `1.2.0+fabric.26.2.R1`）。升级 SemVer 核心会改变枪包版本检查；目标 MC 和本线修订号写在 `+` 后，不写成预发布号。
+- [ ] `fabric.mod.json` 展示名标注正确的 MC 与修订；构建后 `version` 精确等于 `mod_version`。
+- [ ] README 顶部版本句、版本提示、环境表、源码导航和 SemVer 说明一致；不要链接尚不存在的 Release tag。
 - [ ] 机器校验通过：
       ```bash
-      bash scripts/check_release_consistency.sh --links
+      bash scripts/check_release_consistency.sh --strict --links
       ```
       （`--links` 附带校验 README 导航表分支链接；发布前完整门禁可用
       `--all --links --strict`。）
 
 ## 1. 代码状态
 
-- [ ] 目标 commit 的 CI 编译绿（`build-reports/compile-java.log` 首行 commit 与
-      HEAD 一致，末行 `job status: success`）。
+- [ ] 目标 commit 的 `compile-check` 与 `build` 作业通过（在 Actions 核对 SHA）。
 - [ ] 若有 build.yml（全量构建流程）：Actions artifact 里的 jar 存在且大小正常。
-- [ ] CHANGELOG（`docs/CHANGELOG_26_2_R*.md`）已有本版本段落，且区分
+- [ ] CHANGELOG（`docs/CHANGELOG_26_2_*.md`）已有本版本段落，且区分
       「实机 PASS」与「源码级未实测」——措辞纪律见 `AGENTS.md` §2。
 - [ ] 已知边界（README §7）没有因本版本改动而失真。
 
@@ -39,7 +36,7 @@
 
 ## 3. GitHub Release
 
-- [ ] tag 与文件名含完整版本（`TACZ-Refabricated-26.2-1.1.8+fabric.26.2.R?.jar`）。
+- [ ] tag 与文件名含完整版本（`TACZ-Refabricated-26.2-1.2.0+fabric.26.2.R1.jar`）。
 - [ ] **Release 正文首行必须是环境行**（MC + 加载器 + Java + Fabric API +
       Forge Config API Port 的版本要求）——`AGENTS.md` §4 的硬规定。
 - [ ] 正文的修复/特性声明全部有实测或 commit 依据，无「顺嘴写上」的项。

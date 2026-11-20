@@ -114,7 +114,7 @@ def main():
         fixture = dedicated/'tacz/net-probe'
         indexes = fixture/'data/net_probe/index/guns'
         indexes.mkdir(parents=True)
-        (fixture/'gunpack.meta.json').write_text(json.dumps({'namespace': 'net_probe', 'dependencies': {'minecraft': '[26.2]'}}))
+        (fixture/'gunpack.meta.json').write_text(json.dumps({'namespace': 'net_probe', 'dependencies': {'minecraft': '[26.2]', 'tacz': '>=1.2.0'}}))
         (indexes/'first.json').write_text(json.dumps({'name': 'remote', 'type': 'rifle', 'data': 'tacz:ak47_data', 'display': 'tacz:ak47_display'}))
         old_export, previous, old_fingerprint = seed_previous_default(dedicated/'tacz')
         with socket.socket() as sock:

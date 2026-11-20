@@ -2,7 +2,7 @@ name: ADS on Complementary r5.8.1
 on:
   push:
     branches: ['arena/**', '26.2(main)']
-    paths: ['src/main/java/com/tacz/guns/client/**', 'src/main/java/com/tacz/guns/compat/iris/**', 'src/main/java/com/tacz/guns/mixin/client/**', 'src/main/resources/**/attachments/**', 'src/main/resources/**/shaders/**', 'src/gametest/**', 'build.gradle', 'scripts/prepare_iris_smoke.py', '.github/workflows/shader-optics.yml']
+    paths: ['src/main/java/com/tacz/guns/client/**', 'src/main/java/com/tacz/guns/compat/iris/**', 'src/main/java/com/tacz/guns/mixin/client/**', 'src/main/resources/**/attachments/**', 'src/main/resources/**/shaders/**', 'src/gametest/**', 'gradle.properties', 'build.gradle', 'scripts/prepare_iris_smoke.py', '.github/workflows/shader-optics.yml']
   workflow_dispatch:
 permissions:
   contents: read

@@ -12,10 +12,11 @@
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
 的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.2 Fabric**。原移植基线为
-`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.2.R3-hotfix4`**。
+`0.7.0-forge1.1.8-hotfix`；现已回移[上游 1.2.0 的功能与默认包](https://github.com/Sh1roCu/TACZ-Refabricated/tree/356bdf9d48f2225bac6ceb56adc5576a418517a8)。本分支当前源码版本为 **`1.2.0+fabric.26.2.R1`**。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [CurseForge](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated)
+· [26.2 玩家指南](docs/PLAYER_GUIDE_26_2.md) · [枪包 Wiki](docs/wiki/GUNPACK_26_2.md)
 · [问题反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)
 · [直接上游](https://github.com/Sh1roCu/TACZ-Refabricated/tree/1.21.1)
 · [原始 TaCZ 项目](https://github.com/MCModderAnchor/TACZ)
@@ -24,14 +25,14 @@
 
 | Minecraft | 源码分支 |
 |---|---|
-| **26.2** | [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) |
+| **26.2** | [1.2.0 基线说明](docs/CHANGELOG_26_2_1_2_0.md) · [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) |
 | **26.1.2** | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) |
 | **1.21.11** | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) |
 
 本页面对应 **26.2** 分支。所有版本都需要 Fabric API 与 Forge Config API Port，
 具体版本见下方表格与对应 Release 说明。
 
-> 仓库源码已使用 R3-hotfix4 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
+> 仓库源码已使用 R1 版本号（1.2.0 基线）；Actions 测试构建不等于 Release。正式下载与发布日期以 Releases 页面为准。
 
 ---
 
@@ -42,15 +43,15 @@
 | Minecraft | **26.2** |
 | 加载器 | **Fabric Loader 0.19.3+** |
 | Java | **25+** |
-| Fabric API | 需要安装；R3-hotfix4 构建使用 **0.155.2+26.2** |
+| Fabric API | 需要安装；R1 构建使用 **0.155.2+26.2** |
 | Forge Config API Port | **26.2.1+，硬依赖** |
-| 本 mod | **`1.1.8+fabric.26.2.R3-hotfix4`** |
+| 本 mod | **`1.2.0+fabric.26.2.R1`** |
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
-R2 的可选集成（并非硬依赖）如下：
+以下均为可选集成，不影响基础安装：
 
-| 可选 mod | R2 核验/建议版本 | 用途 |
+| 可选 mod | 26.2 核验/建议版本 | 用途 |
 |---|---|---|
 | JEI | 编译 pin **30.13.0.86** | 内置 Ammo Query 与工作台类别 |
 | REI | 编译 pin **26.2.820** | 内置 Ammo Query 与工作台类别 |
@@ -60,7 +61,7 @@ R2 的可选集成（并非硬依赖）如下：
 
 ## 2. 新增 API 与功能
 
-**使用本线的 1.2 行为回移构建时：** 安装匹配的 26.2 客户端和服务端；仍使用上面的 R3-hotfix4 版本标识，不能仅靠文件名判断是否含回移。实际测试过的提交、JAR 校验和和可选组合以[本线交接账本](docs/lineage/HANDOFF_LEDGER.md#tacz-12-262)为准，不是新的 Release 公告。旧枪包请先按[26.2 转换指南](docs/GUNPACK_CONVERSION_26_2.md)检查，不要覆盖原包或修改版本要求强行加载。
+**从 1.1.8 热修构建升级到 1.2.0：** 客户端和服务端换用同一个 26.2 Fabric 构建，先备份存档和改过的 `tacz/`。版本号参与内置包的导出指纹；即使默认资源内容没变，升级也可能先备份再刷新导出目录。旧包先[检查再导出](docs/GUNPACK_CONVERSION_26_2.md)，不要改依赖声明强行加载。改名没有改动默认包美术。
 
 - 手持枪对准允许交互的方块时用 TaCZ「交互」（26.2 默认 **O**）放入展示物；解锁的展示柜／挂板可对准有物品的格子攻击取下。不会为所有位置禁用原版好友快捷键。
 - 默认枪匠台本身是普通合成，不需要查看器；铁块解锁其配方书条目。造枪及配件用对应的枪匠台，JEI/REI 的选方不代为移动材料。
@@ -76,10 +77,9 @@ R2 的可选集成（并非硬依赖）如下：
 - 远程枪包同步完成后合并请求并刷新已安装的 recipe viewer，避免首轮注册早于网络 cache 时
   显示陈旧类别/查询数据。
 
-完整发布范围、联网核验和未执行的实机矩阵见
-[26.2 R2 release notes](docs/CHANGELOG_26_2_R2.md)。R1 的移植基础和历史说明仍保留在仓库历史中。
+当期范围与验收见 [26.2 · 1.2.0 变更记录](docs/CHANGELOG_26_2_1_2_0.md)；[旧基线的 R2/R3 记录](docs/CHANGELOG_26_2_R2.md)仅作历史参考。
 
-**R3-hotfix4**（当前源码版本）：先修掉一轮方块层的静默失效——多格工作台挖非根半边会爆出两个、
+**旧 1.1.8 线的 R3-hotfix4**：先修掉一轮方块层的静默失效——多格工作台挖非根半边会爆出两个、
 雕像上的枪随方块一起消失、带名字标靶的主人与头像在重启后丢失或退回默认皮肤；并把两条离线守卫
 （`scripts/verify_block_drops.py`、`scripts/verify_block_entity_persistence.py`）以 `--strict`
 接入 `build.yml`。随后（同一版本内二次返工）再修掉两个 26.2 上**必现**的运行期崩溃——放置改过名的
@@ -190,20 +190,19 @@ melee、consumable、detonator，以及 explode / sticky / smoke / stun / effect
 `PictureInPictureRenderer` 仅用于枪械工作台的 GUI 模型预览，与瞄具实现无关（本节的
 画中画是 `ScopePipRenderer`，二者是两套东西）。
 
-Iris 有单独的 HAND shader 接线；其他 shader pack 仍可能改写自定义管线的最终效果。
+Iris 有单独的 HAND shader 接线。26.2 在 Complementary Reimagined **r5.8.1** 下修复了镜内红板与白热目标缺面；[逐档画面与隔墙对照](docs/investigations/ADS_COMPLEMENTARY_R581_26_2.md)是 Mesa 软件 OpenGL 验收，不代表所有 GPU 或其他光影包。
 Sulkan 目前没有等价接线，检测到时会回退到不启用镜内掩码裁剪的普通瞄具几何。
 
 ### 4.2 实验性镜内画中画（Scope PIP）：默认关闭，按需开启
 
-26.2 主线最新合并（[PR #66](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/66)）
-新增了可选的镜内画中画：**镜筒外保持 1×，只有镜片内按瞄具倍率放大**。这是对上游行为的
+26.2 的可选功能（[PR #66](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/pull/66)）提供镜内画中画：**镜筒外保持 1×，只有镜片内按瞄具倍率放大**。这是对上游行为的
 刻意偏离，属于**实验性功能**：
 
 - **默认完全关闭**（`ScopePipEnable=false`）：不动配置，行为与之前版本完全一致；
 - 两种镜内成像方式：**重投影**（默认；复用已渲染好的主画面，代价小，但高倍镜下镜内偏软）
   与**二次渲染**（`ScopePipRerender=true`；用窄 FOV 把世界真画一遍，镜内原生分辨率，
   代价是每帧多一遍完整世界渲染）；
-- 光影包（Iris）下也可用：光影开启时镜内走独立的第二世界渲染通道，需额外开关放行（见下）；
+- Iris 光影下需要额外放行 PIP。默认仍是重投影，只有显式开启二次渲染才另画一次世界；
 - 对 Sodium、Voxy、Physics Mod 的投影同步做了专门处理，但兼容面仍在扩大中。
 
 #### 开启教程
@@ -259,7 +258,7 @@ ScopePipAllowShaderPacks = true   # 默认 false 是保守默认，不是已知�
 
 可选微调（前两项界面上都有）：`ScopePipSharpness`（重投影模式镜内锐化，默认 0.5）、
 `ScopePipWorldZoomShare`（把多少倍率还给世界画面：0 = 纯 PIP、1 = 等同关闭，默认 0）；
-`AimingSwayIntensity`（开镜持枪晃动倍率，默认 1.5，高倍镜下可适当调高）**只能在 TOML 里改**。
+`AimingSwayIntensity`（开镜持枪晃动倍率，默认 1.0）**只能在 TOML 里改**。
 
 注意两点：Sulkan 渲染器下目镜掩码本身会回退，PIP 随之无条件停用；若 PIP 运行中出现渲染
 故障，它会在日志报错后自动停用当次会话，在界面里关掉「瞄具画中画（PIP）」（或把 TOML 里的
@@ -285,7 +284,7 @@ ScopePipAllowShaderPacks = true   # 默认 false 是保守默认，不是已知�
 4. 把三个 mod 的 `.jar` 放入 `.minecraft/mods/`；
 5. 启动游戏。第三方枪包按下一节安装。
 
-不要只看文件名中的 `1.1.8`：还必须核对 Minecraft 版本与加载器。
+不要只看文件名中的 `1.2.0`：还必须核对 Minecraft 版本与加载器。
 
 ---
 
@@ -321,7 +320,7 @@ gunpack.meta.json
 
 对 zip 来说，该文件必须位于压缩包根部，不能再多套一层目录。缺少它时，
 `GunPackLoader` 不会把该文件当作现代枪包加载；zip 情况会在日志中记录
-`No gunpack.meta.json found`。
+`No gunpack.meta.json at archive root`。
 
 ### 旧包转换
 
@@ -337,13 +336,11 @@ gunpack.meta.json
 转换器会生成带 `gunpack.meta.json` 的输出；它不能保证自动修复所有旧资源、配方或脚本差异，
 请保留原包备份并检查游戏日志。
 
-**已有 `gunpack.meta.json`，但内部仍是旧版配方或物品栈？** 在本线的 1.2 回移构建上，先用 `/tacz convert universal "包名.zip" check` 查看报告，需要时再 `export`。输出在 `tacz-converted/`，不会替你安装。详见[26.2 转换指南](docs/GUNPACK_CONVERSION_26_2.md)。
+**已有 `gunpack.meta.json`，但内部仍是旧版配方或物品栈？** 在 26.2 的 1.2.0 构建上，先用 `/tacz convert universal "包名.zip" check` 查看报告，需要时再 `export`。输出在 `tacz-converted/`，不会替你安装。详见[26.2 转换指南](docs/GUNPACK_CONVERSION_26_2.md)。
 
 ### 版本约束
 
-枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
-作为 SemVer 核心，`+fabric.26.2.R3-hotfix4` 是构建元数据，不参与 Fabric 的版本先后比较。
-一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
+`gunpack.meta.json` 中的 `dependencies.tacz` 现在比较 **1.2.0**；`+fabric.26.2.R1` 是 SemVer 构建元数据，不参与比较。`>=1.1.8`、`[1.2.0]` 匹配；精确 `1.1.8` 或 `[1.1.8,1.2.0)` 不匹配。通过版本检查不等于资源、配方和脚本都兼容。详见[枪包 Wiki](docs/wiki/GUNPACK_26_2.md)。
 
 ### 依赖 TacZ:Arcana 的内容
 

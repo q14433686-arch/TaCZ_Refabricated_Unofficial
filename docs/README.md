@@ -9,7 +9,10 @@
 | 文件 | 内容 |
 |---|---|
 | `MESH_LOADER.md` | 内置 TML（mesh 高模加载 + GPU 静态烘焙）的当前状态、配置、边界 |
-| `CHANGELOG_26_2_R2.md` | 26.2 线 R2 起的 release notes（R3 段落在此追加） |
+| [26.2 玩家指南](PLAYER_GUIDE_26_2.md) | 1.2.0 安装、从旧构建升级、开镜设置与反馈 |
+| [26.2 · 1.2.0 变更记录](CHANGELOG_26_2_1_2_0.md) | 本线基线、版本约束、验收范围与成品 |
+| [26.2 枪包转换指南](GUNPACK_CONVERSION_26_2.md) | 检查、导出、备份与 26.2 格式差异 |
+| `CHANGELOG_26_2_R2.md` | 旧 1.1.8 线的 R2/R3 记录 |
 | `PORTING_NOTES.md` | 26.2 移植经验总结（字节码级验证过的结论，供后续移植者） |
 | `COMPAT_AND_ROADMAP.md` | 兼容与移植过程记录（历史长文，读前看文件头的取代声明） |
 | `AMMO_SOURCE_API.md` | 可替换弹药 API 表面 |
@@ -17,6 +20,10 @@
 | `LRTACTICAL_FEEDBACK_LAYER_26_2.md` | LRTactical 反馈层 |
 | `FIRST_PERSON_ANIMATION_COMPAT_26_2.md` | 第一人称动画兼容 |
 | `README_26_1_2.md` | **26.1.2 分支根 README 的替换蓝本**（AGENTS.md §3：改 26.2 README 结构时同步它） |
+
+## `wiki/` —— 本移植的枪包作者文档
+
+[Fabric 26.2 枪包 Wiki](wiki/GUNPACK_26_2.md)：怎样写版本谓词、选覆盖层，怎样区分工作台配方、瞄具显示和模型引用。
 
 ## `investigations/` —— 日期型调查/审计记录（完结即入，不再更新）
 

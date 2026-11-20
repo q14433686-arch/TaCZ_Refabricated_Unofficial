@@ -80,7 +80,7 @@ support.
 |---|---|
 | Original mod | **Timeless and Classics Guns: Zero**, by the **TACZ Dev Team** |
 | Upstream Fabric port | [`Sh1roCu/TACZ-Refabricated`](https://github.com/Sh1roCu/TACZ-Refabricated) |
-| Baseline version | upstream **1.1.8-hotfix** |
+| 26.2 baseline | **1.2.0**, with features and default resources backported from the upstream Fabric project |
 | Bundled mesh renderer | **TacZ Mesh Loader [TML]** by **VellEagle** — ported into this build and extended here (GPL-3.0) |
 | Source of this port | [[ 填你的 GitHub 仓库地址 ]] |
 
@@ -164,7 +164,7 @@ at its root**:
 { "namespace": "your_pack_namespace" }
 ```
 
-Without that file the pack is **silently skipped**.
+Without that file a modern pack cannot be mounted.
 
 ### If a pack doesn't load, check in this order
 
@@ -172,14 +172,13 @@ Without that file the pack is **silently skipped**.
 2. Does `gunpack.meta.json` exist?
 3. Is the zip nesting correct? That file must sit at the zip **root**, not inside
    `zip/packname/`.
-4. Check the log for `Mod version mismatch`.
+4. Check the log for `mod dependency mismatch` and verify the pack author’s requirements.
 
 ### Note on the reported mod version
 
-This port reports its version with the upstream baseline first
-(`1.1.8`), followed by build metadata after a `+`. Under the SemVer
-specification build metadata is **ignored when comparing versions**, so gun packs
-that declare a requirement such as `"tacz": ">=1.1.8"` load normally.
+This 26.2 port reports `1.2.0+fabric.26.2.R1`. Pack requirements compare against
+`1.2.0`, not the build metadata. `>=1.1.8` matches; exact `1.1.8` and ranges
+ending below `1.2.0` do not. Matching a version does not validate a pack's assets or scripts.
 
 ## Known limitation: packs requiring **TacZ:Arcana**
 
@@ -270,7 +269,7 @@ world corruption, crashes, data loss, and mod conflicts. Non-commercial project.
 
 | 字段 | 填什么 |
 |---|---|
-| **Display Name** | `TACZ-Refabricated-26.2-1.1.8+fabric.26.2.R3-hotfix4` |
+| **Display Name** | `TACZ-Refabricated-26.2-1.2.0+fabric.26.2.R1` |
 | **Release Type** | **Release** |
 | **Game Version** | `26.2` |
 | **Modloader** | `Fabric` |
@@ -289,6 +288,8 @@ world corruption, crashes, data loss, and mod conflicts. Non-commercial project.
 ---
 
 ## ⑤ Changelog
+
+26.2 的 1.2.0 版请以[本线变更记录](../CHANGELOG_26_2_1_2_0.md)为准。以下 Beta / 旧 R 系列文案保留原文，不用于描述 1.2.0。
 
 ```markdown
 Beta 3 Hotfix – public test build of this Fabric port.

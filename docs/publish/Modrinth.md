@@ -86,7 +86,7 @@ third-party gun packs — including older ones — still load.
 |---|---|
 | Original mod | **Timeless and Classics Guns: Zero**, by the **TACZ Dev Team** |
 | Upstream Fabric port | [`Sh1roCu/TACZ-Refabricated`](https://github.com/Sh1roCu/TACZ-Refabricated) |
-| Baseline | upstream **1.1.8-hotfix** |
+| 26.2 baseline | **1.2.0**, with features and default resources backported from the upstream Fabric project |
 | Bundled mesh renderer | **TacZ Mesh Loader [TML]** by **VellEagle** — ported into this build and extended here (GPL-3.0) |
 | Source of this port | [[ 填你的 GitHub 仓库地址 ]] |
 
@@ -173,11 +173,11 @@ Without it the pack is **silently skipped**.
 2. Does `gunpack.meta.json` exist?
 3. Is the zip nesting right? That file must be at the zip **root**, not inside
    `zip/packname/`.
-4. Check the log for `Mod version mismatch`.
+4. Check the log for `mod dependency mismatch` and verify the pack author’s requirements.
 
-**On the reported version:** this port reports the upstream baseline (`1.1.8`)
-followed by build metadata after a `+`. SemVer ignores build metadata when
-comparing versions, so packs requiring e.g. `"tacz": ">=1.1.8"` load normally.
+**On the reported version:** `1.2.0+fabric.26.2.R1` compares as `1.2.0`.
+A pack declaring `>=1.1.8` passes this check; exact `1.1.8` or `[1.1.8,1.2.0)`
+does not. Other requirements, scripts and assets still need to be compatible.
 
 ## Known limitation: packs requiring TacZ:Arcana
 
@@ -249,8 +249,8 @@ world corruption, crashes, data loss and mod conflicts. Non-commercial project.
 
 | 字段 | 填什么 |
 |---|---|
-| **Version name** | `1.1.8+fabric.26.2.R3-hotfix4` |
-| **Version number** | `1.1.8+fabric.26.2.R3-hotfix4` |
+| **Version name** | `1.2.0` |
+| **Version number** | `1.2.0+fabric.26.2.R1` |
 | **Release channel** | **Release** |
 | **Loaders** | `Fabric` |
 | **Game versions** | `26.2` |
@@ -265,6 +265,8 @@ world corruption, crashes, data loss and mod conflicts. Non-commercial project.
 ---
 
 ## ⑤ Changelog
+
+26.2 的 1.2.0 版请以[本线变更记录](../CHANGELOG_26_2_1_2_0.md)为准。以下 Beta / 旧 R 系列文案保留原文，不用于描述 1.2.0。
 
 ```markdown
 Beta 3 Hotfix – public test build of this Fabric port.

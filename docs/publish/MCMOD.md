@@ -84,7 +84,7 @@ MC 百科一般**不为非官方移植单独开新词条**，而是作为原模�
 的非官方 Fabric 移植版本。
 
 原模组由 TACZ Dev Team 开发，采用 GPL-3.0 开源许可；本移植基于
-Sh1roCu 的 TACZ-Refabricated 项目，对应上游 1.1.8-hotfix 版本，
+Sh1roCu 的 TACZ-Refabricated 项目，26.2 线已回移 1.2.0 的功能与默认包，
 同样以 GPL-3.0 开源。
 
 本项目与 TACZ 官方团队无隶属关系，未经其审阅或背书，目前处于测试阶段。
@@ -116,7 +116,7 @@ Sh1roCu 的 TACZ-Refabricated 项目，对应上游 1.1.8-hotfix 版本，
   原模组：永恒枪械工坊:零（Timeless and Classics Guns: Zero）
           开发者：TACZ Dev Team
   移植来源：Sh1roCu / TACZ-Refabricated
-  对应上游版本：1.1.8-hotfix
+  26.2 模组基线：1.2.0（完整版本 1.2.0+fabric.26.2.R1）
   内置第三方代码：TacZ Mesh Loader（作者 VellEagle，GPL-3.0，
                   本仓移植至目标版本并另写了 GPU 烘焙等部分）
                   LRTactical（作者 LesRaisins，GPL-3.0，部分移植）
@@ -152,6 +152,10 @@ Sh1roCu 的 TACZ-Refabricated 项目，对应上游 1.1.8-hotfix 版本，
      使用该格式（model_type: "mesh"）的枪包无需另装附属；
      顶点变换改为 GPU 烘焙，第一人称与他人手持 / 掉落物 /
      展示台同样适用，多人场景不再被逐顶点 CPU 变换拖慢。
+
+  26.2 开镜实测：使用 Iris 1.11.2、Sodium 0.9.1 与 Complementary Reimagined r5.8.1，
+  镜内镀膜红板和暴露热源缺面已在 Mesa 软件渲染客户端复测。经典模式默认开启，
+  画中画仍需手动启用；该验证不覆盖所有光影组合和显卡。
 
   6. 游戏内配置保存修复
      配置界面里改的设置现在会真正写回 config/tacz-client.toml；
@@ -204,19 +208,18 @@ Sh1roCu 的 TACZ-Refabricated 项目，对应上游 1.1.8-hotfix 版本，
 
     { "namespace": "枪包命名空间" }
 
-  缺少该文件时，枪包将被跳过且不产生提示。
+  缺少该文件时无法作为现代枪包加载。
 
   枪包未生效时的排查顺序：
     1. 是否放置于 tacz/ 目录，而非 tacz_backup/；
     2. 根目录是否存在 gunpack.meta.json；
     3. 压缩包层级是否正确 —— gunpack.meta.json 须位于 zip 根目录，
        而非 zip/枪包名/gunpack.meta.json；
-    4. 查看日志中是否出现 Mod version mismatch。
+    4. 查看日志中的 mod dependency mismatch 并核对作者声明的版本范围。
 
-  关于版本号：本移植版的版本号以上游基线版本（1.1.8）开头，
-  加号之后为语义化版本规范中的构建元数据。
-  按该规范，构建元数据不参与版本比较，
-  因此声明 "tacz": ">=1.1.8" 一类依赖的枪包可以正常通过校验。
+  关于版本号：本线模组核心为 1.2.0，+fabric.26.2.R1 是构建元数据，不参与版本比较。
+  要求 >=1.1.8 的包通过该项检查；要求精确 1.1.8 或 [1.1.8,1.2.0) 的包不匹配。
+  版本匹配不表示所有第三方包都可运行。
 
 ──────────────────────────────
 

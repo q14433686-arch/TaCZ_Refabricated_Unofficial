@@ -28,7 +28,10 @@ def audit(path):
         for name, sha in expected.items():
             assert hashlib.sha256(jar.read(name)).hexdigest() == sha, name
         meta = json.loads(jar.read('fabric.mod.json'))
-        assert meta['depends']['minecraft'] == '26.2' and meta['version'].endswith('+fabric.26.2.R3-hotfix4'), meta
+        [version] = [line.split('=', 1)[1].strip() for line in (ROOT / 'gradle.properties').read_text().splitlines()
+                     if line.partition('=')[0].strip() == 'mod_version']
+        assert meta['depends']['minecraft'] == '26.2' and meta['id'] == 'tacz', meta
+        assert meta['version'] == version, f"JAR version {meta['version']!r}; expected {version!r}"
         for notice in ('SimpleBedrockModel.NOTICE.md', 'SimpleBedrockModel-LGPL-3.0.txt'):
             assert jar.read('META-INF/licenses/' + notice) == (ROOT / 'LICENSES' / notice).read_bytes(), notice
         nested = {n for n in names if n.endswith('.jar')}
