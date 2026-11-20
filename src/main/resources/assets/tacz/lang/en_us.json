@@ -1,5 +1,5 @@
 {
-  "tacz.network.pack_sync_incompatible": "This server’s gun pack requires a compatible TaCZ client with chunked pack sync.",
+  "tacz.network.pack_sync_incompatible": "This server's gun pack requires a compatible TaCZ client with chunked pack sync.",
   "attribute.name.tacz.bullet_resistance": "Bullet Resistance",
   "block.tacz.gun_smith_table": "Gun Smith Table",
   "block.tacz.statue": "Stone Statue",

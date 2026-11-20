@@ -3,7 +3,6 @@ package com.tacz.guns.client.event;
 import com.tacz.guns.client.compat.RecipeViewerReloadBridge;
 import com.tacz.guns.client.resource.ClientIndexManager;
 import com.tacz.guns.network.message.ServerMessageSyncGunPackPart;
-import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.network.CommonNetworkCache;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -13,7 +12,17 @@ import net.minecraft.network.Connection;
 
 @Environment(EnvType.CLIENT)
 public final class CommonNetworkCacheEvent {
+    // Client-thread state. A delayed logout must not touch another connection's transfer.
+    private static Connection syncConnection;
+
     private CommonNetworkCacheEvent() {}
+
+    public static void onSync(Connection connection) {
+        if (syncConnection != connection) {
+            ServerMessageSyncGunPackPart.clearPendingSync();
+            syncConnection = connection;
+        }
+    }
 
     /** Fallback for transport closure. Ignore an event from an old connection after rejoining. */
     public static void onDisconnect(ClientPacketListener handler, Minecraft client) {
@@ -25,12 +34,12 @@ public final class CommonNetworkCacheEvent {
 
     /** Both native logout paths invoke this on the client thread before dropping the player. */
     public static void onLocalLogout(Connection connection) {
-        if (connection == null) return;
+        if (connection == null || connection != syncConnection) return;
+        syncConnection = null;
         ServerMessageSyncGunPackPart.clearPendingSync();
         RecipeViewerReloadBridge.clear();
-        // The integrated server owns this provider and can still be saving its world.
+        // Do not touch the shared provider during integrated-server teardown.
         if (connection.isMemoryConnection()) return;
-        CommonAssetsManager.clearInstance();
         CommonNetworkCache.INSTANCE.clear();
         ClientIndexManager.clear();
     }

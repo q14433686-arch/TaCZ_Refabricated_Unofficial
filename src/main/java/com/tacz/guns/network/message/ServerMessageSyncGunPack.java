@@ -2,6 +2,7 @@ package com.tacz.guns.network.message;
 
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.compat.RecipeViewerReloadBridge;
+import com.tacz.guns.client.event.CommonNetworkCacheEvent;
 import com.tacz.guns.client.resource.ClientIndexManager;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.network.CommonNetworkCache;
@@ -83,7 +84,11 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
     public void handle(LocalPlayer player, PacketSender responseSender) {
         Connection connection = player.connection.getConnection();
         Minecraft.getInstance().execute(() -> {
-            if (isCurrent(connection)) installCache(cache, connection);
+            if (isCurrent(connection)) {
+                CommonNetworkCacheEvent.onSync(connection);
+                ServerMessageSyncGunPackPart.clearPendingSync();
+                installCache(cache, connection);
+            }
         });
     }
 

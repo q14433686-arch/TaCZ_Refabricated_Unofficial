@@ -1,6 +1,7 @@
 package com.tacz.guns.network.message;
 
 import com.tacz.guns.GunMod;
+import com.tacz.guns.client.event.CommonNetworkCacheEvent;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.resource.network.DataType;
 import com.tacz.guns.resource.network.GunPackSync;
@@ -24,7 +25,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-/** New channel rather than reinterpreting an R1-hotfix3 payload as compressed bytes. */
+/** New channel: legacy 1.21.11 clients still decode the original uncompressed map. */
 public record ServerMessageSyncGunPackPart(GunPackSync.Part part) implements CustomPacketPayload {
     public static final Type<ServerMessageSyncGunPackPart> TYPE = new Type<>(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "s2c_sync_gunpack_part"));
     public static final StreamCodec<FriendlyByteBuf, ServerMessageSyncGunPackPart> CODEC = StreamCodec.ofMember(
@@ -50,7 +51,8 @@ public record ServerMessageSyncGunPackPart(GunPackSync.Part part) implements Cus
             } else if (legacy != null && ServerPlayNetworking.canSend(player, ServerMessageSyncGunPack.TYPE)) {
                 NetworkHandler.sendToClientPlayer(legacy, player);
             } else {
-                player.connection.disconnect(Component.translatable("tacz.network.pack_sync_incompatible"));
+                player.connection.disconnect(Component.translatableWithFallback("tacz.network.pack_sync_incompatible",
+                        "This server's gun pack requires a compatible TaCZ client with chunked pack sync."));
             }
         }
     }
@@ -84,6 +86,7 @@ public record ServerMessageSyncGunPackPart(GunPackSync.Part part) implements Cus
     public void handle(Connection connection) {
         Minecraft.getInstance().execute(() -> {
             if (!ServerMessageSyncGunPack.isCurrent(connection)) return;
+            CommonNetworkCacheEvent.onSync(connection);
             try {
                 byte[] data = RECEIVER.accept(part);
                 if (data == null) return;
