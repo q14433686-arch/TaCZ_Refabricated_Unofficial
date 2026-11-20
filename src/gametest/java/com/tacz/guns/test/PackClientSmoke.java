@@ -41,6 +41,11 @@ public class PackClientSmoke implements FabricClientGameTest {
             context.waitFor(client -> CommonNetworkCache.INSTANCE.getGunIndex(id) != null
                     && TimelessAPI.getClientGunIndex(id).isPresent());
             GunMod.LOGGER.info("PORT_SMOKE_CLIENT: default client index and sync installed");
+            String optics = System.getProperty("tacz.test.optics");
+            if (optics != null) {
+                ShaderOpticSmoke.run(context, world, optics);
+                return;
+            }
             if (System.getProperty("tacz.test.irisColor") != null) {
                 ReimaginedSmoke.run(context, world); // verifies the actual selected pack and ACT setting
                 SurfaceLightSmoke.run(context, world, false);

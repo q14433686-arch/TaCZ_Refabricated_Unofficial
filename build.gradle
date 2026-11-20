@@ -327,10 +327,11 @@ if (project.hasProperty('taczIrisSmoke')) {
     dependencies { gametestRuntimeOnly files('build/iris-smoke/iris.jar', 'build/iris-smoke/sodium.jar') }
     loom.runs.clientGameTest.property 'tacz.test.iris', 'true'
     if (project.hasProperty('taczIrisColor')) loom.runs.clientGameTest.property 'tacz.test.irisColor', project.property('taczIrisColor')
+    if (project.hasProperty('taczOpticSuite')) loom.runs.clientGameTest.property 'tacz.test.optics', project.property('taczOpticSuite')
     def installPack = tasks.register('installTestShaderPack', Copy) {
         dependsOn tasks.named('deleteGameTestRunDir')
         into layout.buildDirectory.dir('run/clientGameTest')
-        if (project.hasProperty('taczIrisColor')) from 'build/iris-smoke/complementary'
+        if (project.hasProperty('taczIrisColor') || project.hasProperty('taczOpticSuite')) from 'build/iris-smoke/complementary'
         else from 'src/gametest/irisConfig'
     }
     tasks.named('runClientGameTest') { dependsOn installPack }
