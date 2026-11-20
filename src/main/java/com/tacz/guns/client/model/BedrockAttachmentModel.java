@@ -59,7 +59,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     private static final float AIM_CLIP_START = 0.02f;
 
     /**
-     * 瞄具文字开始显示的开镜进度。与 {@code IlluminatedReticleRenderer.FADE_IN_START}
+     * 瞄具文字开始显示的开镜进度。与 {@code ReticleGeometry} 的分划淡入阈值
      * 取同一值，让文字与准星同时出现，观感统一。详见 {@link #setTextShowList}。
      */
     private static final float TEXT_SHOW_AIM_START = 0.35f;
@@ -298,7 +298,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 continue;
             }
             if (RETICLE_ILLUMINATED_PATTERN.matcher(name).matches()
-                    && (housing == null || !hasAncestor(part, housing.getModelRenderer())
+                    && (divisionByIndex.isEmpty() || housing == null || !hasAncestor(part, housing.getModelRenderer())
                     || divisionByIndex.values().stream().anyMatch(root -> hasAncestor(part, root)))) {
                 // E.g. TA31 also has red_illuminated on the *housing*. Replaying it here
                 // would punch it straight back through the aperture as a fake reticle.

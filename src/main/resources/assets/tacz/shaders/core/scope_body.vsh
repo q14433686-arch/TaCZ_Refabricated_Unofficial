@@ -2,11 +2,7 @@
 
 // 瞄具镜身顶点着色器。
 //
-// 与 26.2 的 assets/minecraft/shaders/core/entity.vsh 【逐字节相同】,
-// 仅因 26.2 要求 vsh/fsh 同名配对而单独存在一份。
-// 所有裁剪逻辑都在 scope_body.fsh 里, 本文件不含任何自定义改动。
-//
-// 若将来 vanilla 改了 entity.vsh, 直接原样覆盖本文件即可。
+// 普通镜身沿用 26.2 entity 顶点语义；后置分划额外解包每面像素覆盖坐标。
 
 #if defined(PER_FACE_LIGHTING) || !defined(NO_CARDINAL_LIGHTING)
 #moj_import <minecraft:light.glsl>

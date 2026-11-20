@@ -161,7 +161,7 @@ final class DroppedGunSmoke {
         var cube = new BedrockCubePerFace(1, 1, 1, 4, 4, 4, 0, 16, 16, faces);
         var counter = new Counter();
         cube.compile(new PoseStack().last(), counter, 0, 0, 1, 1, 1, 1);
-        if (cube.getPolygons().length != 6 || java.util.Arrays.stream(cube.getPolygons()).filter(java.util.Objects::nonNull).count() != 2 || counter.n != 8) throw new AssertionError("Per-face cube wrote " + counter.n + " vertices");
+        if (cube.getPolygons().length != 6 || java.util.Arrays.stream(cube.getPolygons()).filter(com.tacz.guns.client.model.bedrock.BedrockPolygon::isPresent).count() != 2 || counter.n != 8) throw new AssertionError("Per-face cube wrote " + counter.n + " vertices");
         if (!SLOT.equals(TimelessAPI.getGunDisplay(DISPLAY, AK).orElseThrow().getMissingLodDropTexture())
                 || TimelessAPI.getGunDisplay(Identifier.parse("port_test:rack_mesh"), AK).orElseThrow().getMissingLodDropTexture() != null
                 || TimelessAPI.getGunDisplay(NO_SLOT, AK).orElseThrow().getMissingLodDropTexture() != null)

@@ -59,7 +59,7 @@ public class BedrockCubePerFace implements BedrockCube {
         FaceItem face = faces.getFace(direction);
         // Absent faces must not contribute a point at the bone pivot to the ocular hull.
         // Keep all six directional slots; a real face with zero UV extent is still geometry.
-        if (face == FaceItem.EMPTY) return null;
+        if (face == FaceItem.EMPTY) return new BedrockPolygon(direction);
         float u1 = face.getUv()[0];
         float v1 = face.getUv()[1];
         float u2 = u1 + face.getUvSize()[0];
@@ -85,7 +85,7 @@ public class BedrockCubePerFace implements BedrockCube {
         Matrix3f matrix3f = pose.normal();
 
         for (BedrockPolygon polygon : this.polygons) {
-            if (polygon == null) continue;
+            if (!polygon.isPresent()) continue;
             Vector3f vector3f = new Vector3f(polygon.normal);
             vector3f.mul(matrix3f);
             float nx = vector3f.x();

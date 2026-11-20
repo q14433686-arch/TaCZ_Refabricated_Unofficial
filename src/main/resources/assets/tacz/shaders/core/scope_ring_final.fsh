@@ -1,7 +1,7 @@
 #version 330
 
 // TACZ 光影后置目镜框片元 —— 26.2 的 assets/minecraft/shaders/core/entity.fsh
-// 去掉 apply_fog() 的版本（除此之外逐行一致，vanilla 若改 entity.fsh 要跟着同步）。
+// 去掉 apply_fog() 的版本；最终分划额外按原面 UV 采样覆盖率。
 //
 // 为什么去雾：这条管线画在 Iris 全部 composite/final pass 与 PIP 合成【之后】，
 // 是纯前景层。此刻 Fog uniform 块里挂的是世界那套雾参数，套上去目镜框会被

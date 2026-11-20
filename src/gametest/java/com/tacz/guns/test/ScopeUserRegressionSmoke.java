@@ -31,10 +31,11 @@ final class ScopeUserRegressionSmoke {
             var old=new java.util.HashMap<net.minecraft.core.BlockPos,net.minecraft.world.level.block.state.BlockState>();
             if (!emissive) {
                 var player=s.getPlayerList().getPlayers().getFirst(); var level=player.level();
+                var gray=net.minecraft.core.registries.BuiltInRegistries.BLOCK.getOptional(Identifier.parse("minecraft:gray_concrete")).orElseThrow().defaultBlockState();
                 var mid=net.minecraft.core.BlockPos.containing(player.getEyePosition().add(0,4.5,16));
                 for(int x=-6;x<=6;x++) for(int y=-6;y<=6;y++) {
                     var at=mid.offset(x,y,0); old.put(at,level.getBlockState(at));
-                    level.setBlock(at,net.minecraft.world.level.block.Blocks.GRAY_CONCRETE.defaultBlockState(),net.minecraft.world.level.block.Block.UPDATE_ALL);
+                    level.setBlock(at,gray,net.minecraft.world.level.block.Block.UPDATE_ALL);
                 }
             }
             return old;

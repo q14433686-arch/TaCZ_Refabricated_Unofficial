@@ -620,7 +620,7 @@ public final class ScopeMaskRenderer {
         Vector4f tmp = new Vector4f();
         for (BedrockCube cube : cubes) {
             for (var polygon : cube.getPolygons()) {
-                if (polygon == null) {
+                if (polygon == null || !polygon.isPresent()) {
                     continue;
                 }
                 for (var vertex : polygon.vertices) {
@@ -716,7 +716,7 @@ public final class ScopeMaskRenderer {
         for (ScopeMaskGeometry.Entry entry : ScopeMaskGeometry.entries()) {
             for (BedrockCube cube : entry.cubes()) {
                 for (var polygon : cube.getPolygons()) {
-                    if (polygon == null) {
+                    if (polygon == null || !polygon.isPresent()) {
                         continue;
                     }
                     for (var vertex : polygon.vertices) {
@@ -763,7 +763,7 @@ public final class ScopeMaskRenderer {
 
     private static void writeCube(BufferBuilder builder, Matrix4f pose, BedrockCube cube, int color) {
         for (var polygon : cube.getPolygons()) {
-            if (polygon == null) {
+            if (polygon == null || !polygon.isPresent()) {
                 continue;
             }
             for (var vertex : polygon.vertices) {

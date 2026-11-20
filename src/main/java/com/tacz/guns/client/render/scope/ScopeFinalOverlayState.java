@@ -60,15 +60,14 @@ import java.util.List;
  * <ul>
  *   <li>ring-final 管线<b>不</b>注册给 Iris 的 HAND 程序：注册了就被塞回光影管线，
  *       既拿不到无雾语义又会被后置 pass 再盖一次；</li>
- *   <li><b>不</b>无条件延后：只在 {@code ScopePipRenderer.wantsIrisComposite()} 为真时
- *       排队（BedrockAttachmentModel 的调用点把关）；其余路径（无光影 / 未开 PIP /
- *       关着 AllowShaderPacks / 第三人称）逐位保持原样。队列在帧首清空
+ *   <li><b>不</b>无条件延后：物理镜框只在 {@code ScopePipRenderer.wantsIrisComposite()} 为真时排队；
+ *       光影下有真实掩码的分划则在 HAND 后显示，即使该瞄具不用 PIP 合成。队列在帧首清空
  *       （{@link #beginFrame()}），否则某帧没走到刷新点时残留快照会画到下一帧。</li>
  * </ul>
  */
 public final class ScopeFinalOverlayState {
 
-    /** 与 1.21.11 母本一致：目镜框排在准星（20_000，若将来补）之后，后画者盖前画者。 */
+    /** 与 1.21.11 母本一致：目镜框排在准星（20_000）之后，后画者盖前画者。 */
     private static final int FINAL_OCULAR_RING_ORDER = 20_001;
 
     private static final List<RingDraw> PENDING_RETICLES = new ArrayList<>();
@@ -187,7 +186,7 @@ public final class ScopeFinalOverlayState {
             minecraft.gameRenderer.featureRenderDispatcher().renderAllFeatures(storage);
             if (!loggedRendered) {
                 loggedRendered = true;
-                GunMod.LOGGER.info("[TACZ Scope] Redrew ocular ring after shader-pack PIP composite.");
+                GunMod.LOGGER.info("[TACZ Scope] Redrew optical foreground after shader-pack scene.");
             }
         } catch (RuntimeException e) {
             // 可选的 Iris 集成不许把光影包边缘情况变成客户端崩溃。

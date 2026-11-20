@@ -22,7 +22,7 @@ final class ReticleCoverage {
                       @Nullable Matrix4fc clip, int width, int height) {
         var writer = new ReticleCoverage();
         for (var draw : commands) for (var cube : draw.cubes()) for (var face : cube.getPolygons()) {
-            if (face != null) writer.quad(draw, face, out, clip, width, height);
+            if (face != null && face.isPresent()) writer.quad(draw, face, out, clip, width, height);
         }
     }
 
