@@ -14,7 +14,8 @@
 的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.2 Fabric**。原移植基线为
 `0.7.0-forge1.1.8-hotfix`；现已回移[上游 1.2.0 的功能与默认包](https://github.com/Sh1roCu/TACZ-Refabricated/tree/356bdf9d48f2225bac6ceb56adc5576a418517a8)。本分支当前源码版本为 **`1.2.0+fabric.26.2.R1`**。
 
-[下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
+[正式发行](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
+· [1.2.0 测试构建与校验值](docs/CHANGELOG_26_2_1_2_0.md#build-120)
 · [CurseForge](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated)
 · [26.2 玩家指南](docs/PLAYER_GUIDE_26_2.md) · [枪包 Wiki](docs/wiki/GUNPACK_26_2.md)
 · [问题反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)
@@ -218,12 +219,11 @@ Sulkan 目前没有等价接线，检测到时会回退到不启用镜内掩码�
    | 界面里的名字 | 对应 TOML 键 | 什么时候要开 |
    |---|---|---|
    | 瞄具画中画（PIP） | `ScopePipEnable` | 主开关，先开它 |
-   | PIP 二次渲染模式 | `ScopePipRerender` | 想「镜内真能瞄准」就开它（高倍镜强烈建议） |
+   | PIP 二次渲染模式 | `ScopePipRerender` | 需要用窄 FOV 另画一次世界才开；与红板／热像修复无关 |
    | 允许在光影下开启 PIP | `ScopePipAllowShaderPacks` | 用光影时额外开它 |
    | 最低倍率 / 分辨率比例 / 重渲染频率 / 共享变焦 / 锐化 / 独立管线 / 阴影缩放 | 同名 `ScopePip*` | 按需微调，不动也能用 |
 
-3. 界面里保存后**立即生效，不需要重启**；唯一的例外是 `ScopePipShadowScale`
-   （镜内阴影贴图比例）—— 它在瞄具管线构建时读取，改完需**重启游戏或切换维度**。
+3. 界面里保存后通常无需重启。`ScopePipShadowScale` 在独立瞄具管线构建时读取；配置变动会尝试重建该管线。若未能重建，切换维度或重载光影后再看。
 4. 界面保存会**真的写回** `.minecraft/config/tacz-client.toml`（R3-hotfix 修好了 FCAP 26.x
    的保存断桥），重启后配置仍在。**注意**：修复前 TOML 里已经写死旧值的字段不会
    自动更新，需要在界面里改一次并保存，才会被新值覆盖。
@@ -242,7 +242,7 @@ ScopePipEnable = true        # 总开关，默认 false
 # ScopeMaskEnable = true     # PIP 依赖目镜掩码定位镜片；该项默认即 true，勿关
 ```
 
-高倍镜（6×/8×）建议同时开二次渲染，镜内不再受「屏幕分辨率 ÷ 倍率」的上限约束：
+若高倍镜重投影偏软且能承担额外渲染开销，可选二次渲染，镜内不再受「屏幕分辨率 ÷ 倍率」的上限约束：
 
 ```toml
 ScopePipRerender = true      # 镜内原生分辨率；每帧多一遍完整世界渲染

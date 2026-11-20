@@ -1,5 +1,7 @@
 # 玩家指南：Fabric 26.2 / 1.2.0
 
+[1.2.0 测试构建与校验值](CHANGELOG_26_2_1_2_0.md#build-120) · [正式发行页](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)。Actions 附件是测试构建，不是 Release。
+
 ## 安装或从 R3-hotfix4 升级
 
 1. 确认实例是 **Minecraft 26.2、Java 25、Fabric Loader 0.19.3 或以上**。安装对应 26.2 的 Fabric API（本线使用 `0.155.2+26.2`）和 Forge Config API Port（`26.2.1` 或以上）。Iris、JEI、REI 和手柄模组都不是基础安装的必需品。

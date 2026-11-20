@@ -21,4 +21,17 @@
 
 **如何看 PASS：** 光影回归在 `a119e32` 使用 Iris 1.11.2、Sodium 0.9.1 和 r5.8.1 默认设置：46 个默认瞄具的 59 个档位、20 个 PIP 档位通过；两种热瞄具的 48 组墙后原始热掩码全部为零。这是 Mesa 软件 OpenGL 上的游戏帧，不是所有显卡、光影配置或第三方包的保证。该报告与更早的行为回移账本各自保留当时的 **1.1.8 热修构建及其校验值**，不能拿来校验 1.2.0 JAR。
 
+<a id="build-120"></a>
+## 1.2.0 成品核验
+
+[下载该次 Actions 构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44676085976/artifacts/14602168455)（解压 ZIP 后取 JAR；归档有保留期限）。提交 `0df51ea` 的[构建审计](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44676085976/job/136088143039)与[独立专服和客户端 TCP 测试](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44676086074/job/136088143097)都取得了同一份 **JAR 本体**的 SHA-256：
+
+```text
+32654cb8696f775c23915578bb60f7b91be41122dfc372626b8375bd8313d942
+```
+
+测试专服上的独立枪包要求 `tacz >=1.2.0`；客户端成功收到该包的索引，重载、退出和重连均通过。[同一提交的 r5.8.1 复测](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44676085948)中，59 个经典档位、20 个 PIP 档位及在 2560×1417 复查的 9 个视图均通过；48 组热像遮挡对照的原始热掩码与叠字前漏热点均为 **0**。[原生客户端](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44676086001)和[Iris 原有回归](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44676086011)也通过。
+
+本提交共 **10 个工作流、22 个作业通过**，包括分开安装的 [JEI / REI](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44676085982)、[PAL](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44676086109) 和 [Controllable](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44676086030)。
+
 [玩家指南](PLAYER_GUIDE_26_2.md) · [枪包 Wiki](wiki/GUNPACK_26_2.md) · [转换说明](GUNPACK_CONVERSION_26_2.md) · [旧基线记录](CHANGELOG_26_2_R2.md) · [来源与许可](../LICENSES.md)

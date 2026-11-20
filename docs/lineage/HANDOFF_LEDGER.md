@@ -33,6 +33,8 @@
 <a id="tacz-12-262"></a>
 ### TaCZ 1.2 行为回移：26.2 接收记录
 
+> 本节固定记录接收时的热修构建。改用 **1.2.0** 版本名后的成品与独立校验见[26.2 基线记录](../CHANGELOG_26_2_1_2_0.md)；下方历史 SHA 与结果不变。
+
 接收基线 `26.2(main)@f9ae55a`，行为参照 `26.3@c5d536b7`。**工作分支已完成本接收单的目标版验收；不是合并或发布公告。** 保留 Minecraft 26.2、Java 25、Loader 0.19.3、Fabric API 0.155.2+26.2、Forge Config API Port 26.2.1 和本线 Blaze3D 管线。
 
 **已测提交**：[`e4d77b8430e1acb780c21fe8bbd581410981a038`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/e4d77b8430e1acb780c21fe8bbd581410981a038) · [下载 26.2 JAR（Actions 归档）](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44659749367/artifacts/14594553698) · [专服日志和普通客户端原帧](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44659749367/artifacts/14595131741)。归档内文件名 `TACZ-Refabricated-26.2-1.1.8+fabric.26.2.R3-hotfix4.jar`，其 SHA-256 为 **`baaa64ee67a16a33664811cbbad93699f8cab32868524e524390990ced47719d`**。[成品审计](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44659749367/job/136034772524)与[装入两个独立 JVM 的测试](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44659749260/job/136034772470)各自计算出同一散列；不要校验外层 ZIP 或按文件名混用旧 hotfix4。以下各项均在这一提交上执行。
