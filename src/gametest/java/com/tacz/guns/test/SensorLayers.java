@@ -30,12 +30,20 @@ public record SensorLayers(BufferedImage sensor, int heatPixels) {
                 heat.complete(n);
             } catch (Throwable e) { heat.completeExceptionally(e); }
         });
-        Screenshot.takeScreenshot(main, pixels -> {
+        readColor(main).thenCombine(heat, SensorLayers::new).whenComplete((layers,error)->{
+            if (error!=null) future.completeExceptionally(error); else future.complete(layers);
+        });
+    }
+
+    static CompletableFuture<BufferedImage> readColor(RenderTarget target) {
+        var result = new CompletableFuture<BufferedImage>();
+        Screenshot.takeScreenshot(target, pixels -> {
             try (pixels) {
                 var image = new BufferedImage(pixels.getWidth(),pixels.getHeight(),BufferedImage.TYPE_INT_RGB);
                 for (int y=0;y<image.getHeight();y++) for(int x=0;x<image.getWidth();x++) image.setRGB(x,y,pixels.getPixel(x,y));
-                heat.whenComplete((n,e)->{ if (e!=null) future.completeExceptionally(e); else future.complete(new SensorLayers(image,n)); });
-            } catch (Throwable e) { future.completeExceptionally(e); }
+                result.complete(image);
+            } catch (Throwable e) { result.completeExceptionally(e); }
         });
+        return result;
     }
 }

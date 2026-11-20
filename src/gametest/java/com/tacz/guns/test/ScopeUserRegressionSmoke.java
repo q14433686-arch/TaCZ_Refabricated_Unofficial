@@ -88,9 +88,7 @@ final class ScopeUserRegressionSmoke {
 
     private static void checkOwnedParticle(ClientGameTestContext ctx,int zoom,boolean emissive) {
         var runtime=com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance();
-        final java.awt.image.BufferedImage baseline;
-        try { baseline=javax.imageio.ImageIO.read(ctx.takeScreenshot("tacz_amg10_particle_baseline_"+zoom).toFile()); }
-        catch(java.io.IOException e) { throw new java.io.UncheckedIOException(e); }
+        var baseline=OpticalLayers.sample(ctx,"tacz_amg10_particle_baseline_"+zoom,emissive);
         ctx.runOnClient(mc->{
             var env=new com.tacz.guns.client.particle.bedrock.particle.runtime.ParticleMolangEnvironment();
             var def=new com.tacz.guns.client.particle.bedrock.particle.data.ParticleEffectDeserializer().parse(
@@ -112,27 +110,36 @@ final class ScopeUserRegressionSmoke {
         });
         try {
             ctx.waitTicks(4);
-            var image=javax.imageio.ImageIO.read(ctx.takeScreenshot("tacz_amg10_particle_"+zoom).toFile());
-            int signal=0,baselineGreen=0,r=image.getHeight()/16;
+            var frame=OpticalLayers.sample(ctx,"tacz_amg10_particle_"+zoom,emissive);
+            var image=frame.display();
+            int signal=0,displaySignal=0,displayOnly=0,baselineGreen=0,r=image.getHeight()/16;
             for(int y=image.getHeight()/2-r;y<image.getHeight()/2+r;y++)for(int x=image.getWidth()/2-r;x<image.getWidth()/2+r;x++) {
-                int c=image.getRGB(x,y),b=baseline.getRGB(x,y);
-                int dr=(c>>>16&255)-(b>>>16&255),dg=(c>>>8&255)-(b>>>8&255),db=(c&255)-(b&255);
-                // Additive magenta over blue sky is pale pink, not saturated magenta.
-                // Measure the injected red/blue energy against the same ADS frame;
-                // sky brightness alone must never satisfy the positive control.
-                // Require the resulting hue too. A one-row shift of the horizon changes
-                // green grass to blue sky with a large red delta, but neither color is pink.
-                int green = c >>> 8 & 255;
+                int c=image.getRGB(x,y),b=baseline.display().getRGB(x,y);
                 if (emissive) {
-                    if ((c >>> 16 & 255) > green+15 && (c & 255) > green+15 && dr>30 && db>=0 && dr+db-2*dg>40) signal++;
+                    // Same material, same sky, same detector. Test the real composite BEFORE ink too:
+                    // the authored red AMG10 mark over blue can make pink in the final frame.
+                    int scene=frame.scene().getRGB(x,y),empty=baseline.scene().getRGB(x,y);
+                    if (magenta(scene,empty)) signal++;
+                    if (magenta(c,b)) {
+                        displaySignal++;
+                        if (!magenta(scene,empty) && (c!=scene || b!=empty)) displayOnly++;
+                    }
                 } else {
+                    int dr=(c>>>16&255)-(b>>>16&255),dg=(c>>>8&255)-(b>>>8&255),db=(c&255)-(b&255);
                     if ((b>>>8&255)>Math.max(b>>>16&255,b&255)+20) baselineGreen++;
-                    if (green>Math.max(c>>>16&255,c&255)+20 && dg>30 && dg-Math.max(dr,db)>20) signal++;
+                    if ((c>>>8&255)>Math.max(c>>>16&255,c&255)+20 && dg>30 && dg-Math.max(dr,db)>20) signal++;
                 }
             }
-            if(baselineGreen!=0 || (zoom<2?signal>0:signal<8)) throw new AssertionError("Owned particle aperture policy zoom="+zoom+" signal="+signal+" ambientGreen="+baselineGreen);
-            GunMod.LOGGER.info("PORT_SCOPE_PARTICLE: AMG10 zoom={} central {}={} material={}",zoom,emissive?"magenta":"green",signal,emissive?"energy_swirl":"particles_add");
-        } catch(java.io.IOException e) { throw new java.io.UncheckedIOException(e); }
+            boolean bad=zoom<2 ? signal!=0 || displaySignal!=displayOnly : signal<8 || (emissive && displaySignal<8);
+            if(baselineGreen!=0 || bad) throw new AssertionError("Owned particle aperture policy zoom="+zoom+" signal="+signal
+                    +" display="+displaySignal+" foregroundOnly="+displayOnly+" ambientGreen="+baselineGreen);
+            GunMod.LOGGER.info("PORT_SCOPE_PARTICLE: AMG10 zoom={} central {}={} material={} display={} foregroundOnly={}",zoom,
+                    emissive?"magenta":"green",signal,emissive?"energy_swirl":"particles_add",emissive?displaySignal:signal,displayOnly);
+        }
         finally { ctx.runOnClient(mc->runtime.clear()); }
+    }
+    private static boolean magenta(int c,int b) {
+        int dr=(c>>>16&255)-(b>>>16&255),dg=(c>>>8&255)-(b>>>8&255),db=(c&255)-(b&255),green=c>>>8&255;
+        return (c>>>16&255)>green+15 && (c&255)>green+15 && dr>30 && db>=0 && dr+db-2*dg>40;
     }
 }
