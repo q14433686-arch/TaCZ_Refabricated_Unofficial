@@ -76,7 +76,7 @@ public class StatueBlockEntity extends BlockEntity {
     }
 
     public void dropItem() {
-        this.dropItem(this.getBlockState());
+        this.dropItem(this.getBlockState(), true);
     }
 
     /**
@@ -88,14 +88,17 @@ public class StatueBlockEntity extends BlockEntity {
      * facing from air"）。因此由调用方传入可用的状态，并对没有该属性的状态回退到
      * {@link Direction#NORTH}（扔在雕像正前方一格上方）。</p>
      */
-    private void dropItem(BlockState state) {
+    private void dropItem(BlockState state, boolean notify) {
         if (!gunItem.isEmpty() && level != null) {
             Direction direction = state.hasProperty(FACING) ? state.getValue(FACING) : Direction.NORTH;
-            Block.popResource(level, worldPosition.relative(direction).above(), gunItem);
-            this.gunItem = ItemStack.EMPTY;
-            BlockState current = level.getBlockState(worldPosition);
-            level.sendBlockUpdated(worldPosition, current, current, Block.UPDATE_ALL);
-            this.setChanged();
+            ItemStack dropped = this.gunItem;
+            this.gunItem = ItemStack.EMPTY; // removal callbacks must see it as already returned
+            Block.popResource(level, worldPosition.relative(direction).above(), dropped);
+            if (notify) {
+                BlockState current = level.getBlockState(worldPosition);
+                level.sendBlockUpdated(worldPosition, current, current, Block.UPDATE_ALL);
+                this.setChanged();
+            }
         }
     }
 
@@ -109,7 +112,7 @@ public class StatueBlockEntity extends BlockEntity {
     public void preRemoveSideEffects(BlockPos pos, BlockState state) {
         super.preRemoveSideEffects(pos, state);
         if (level != null && !level.isClientSide()) {
-            this.dropItem(state);
+            this.dropItem(state, false);
         }
     }
 

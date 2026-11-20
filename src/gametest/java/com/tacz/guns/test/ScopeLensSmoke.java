@@ -270,7 +270,33 @@ final class ScopeLensSmoke {
         } catch (AssertionError e) {
             throw new AssertionError(name + ": world projection m11=" + projection[0] + ", expected=" + projection[1], e);
         }
-        try { return ImageIO.read(ctx.takeScreenshot("tacz_lens_" + name).toFile()); }
+        try {
+            var image = ImageIO.read(ctx.takeScreenshot("tacz_lens_" + name).toFile());
+            int w = image.getWidth(), h = image.getHeight();
+            // Record whether the private mask actually contains coverage, independently of
+            // the composed scene. A CPU bounds rectangle alone cannot establish this.
+            if (name.equals("classic_bare") || name.equals("classic_optical") || name.equals("pip_optical")) {
+                var coverage = new java.util.concurrent.CompletableFuture<String>();
+                ctx.runOnClient(mc -> {
+                    var mask = com.tacz.guns.client.render.scope.ScopeMaskTarget.current();
+                    if (mask == null) { coverage.complete("no mask target"); return; }
+                    net.minecraft.client.Screenshot.takeScreenshot(mask, pixels -> {
+                        try (pixels) {
+                            int mx = pixels.getWidth()/2, my = pixels.getHeight()/2;
+                            int covered = 0;
+                            for (int y=my-h/8; y<my+h/8; y+=2) for (int x=mx-h/8; x<mx+h/8; x+=2)
+                                if ((pixels.getPixel(x,y) >> 16 & 255) > 128) covered++;
+                            coverage.complete(Integer.toHexString(pixels.getPixel(mx,my)) + " samples=" + covered);
+                        } catch (RuntimeException e) { coverage.completeExceptionally(e); }
+                    });
+                });
+                ctx.waitFor(mc -> coverage.isDone());
+                GunMod.LOGGER.info("PORT_LENS_FRAME: {}: mask={}, interior RGB={}/{}/{} stripe={} heat={}",name,coverage.join(),
+                        Integer.toHexString(image.getRGB(w/2-h/16,h/2-h/18)),Integer.toHexString(image.getRGB(w/2,h/2-h/18)),
+                        Integer.toHexString(image.getRGB(w/2+h/16,h/2-h/18)),stripeWidth(image),hotArea(image));
+            }
+            return image;
+        }
         catch (IOException e) { throw new UncheckedIOException(e); }
     }
 

@@ -8,6 +8,7 @@ import com.tacz.guns.api.client.other.KeepingItemRenderer;
 import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
 import com.tacz.guns.compat.firstperson.FirstPersonAnimationCompat;
 import com.tacz.guns.compat.iris.IrisCompat;
+import com.tacz.guns.compat.ysm.YsmCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -136,6 +137,8 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
         if (hand == InteractionHand.OFF_HAND) {
             return;
         }
+
+        if (YsmCompat.isExternalGunRenderActive()) return;
 
         // 【光影枪身闪烁 · 实验开关】Iris 26.x HandRenderer 一帧跑两遍手部 pass：
         // renderSolid（→ gbuffers_hand）与 renderTranslucent（→ gbuffers_hand_water）。

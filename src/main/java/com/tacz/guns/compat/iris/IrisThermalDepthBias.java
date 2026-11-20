@@ -5,7 +5,7 @@ import org.lwjgl.opengl.GL11;
 /** Scoped OpenGL-only replay state. Shader-pack jitter makes equality against the
  * already-written entity depth unstable. Slope-scaled offset favours that same surface,
  * without disabling terrain occlusion or modifying the scene's depth attachment.
- * 26.2 uses reversed depth, so a positive offset moves toward the camera. */
+ * Iris 26.2 undoes reversed Z in shader world passes, including the depth comparison. */
 public final class IrisThermalDepthBias implements AutoCloseable {
     private static boolean replay;
     private final boolean enabled;
@@ -21,7 +21,9 @@ public final class IrisThermalDepthBias implements AutoCloseable {
     public static void apply() {
         if (replay) {
             GL11.glEnable(GL11.GL_POLYGON_OFFSET_FILL);
-            GL11.glPolygonOffset(2f, 2f);
+            int func = GL11.glGetInteger(GL11.GL_DEPTH_FUNC);
+            float towardCamera = func == GL11.GL_LESS || func == GL11.GL_LEQUAL ? -2f : 2f;
+            GL11.glPolygonOffset(towardCamera, towardCamera);
         }
     }
     @Override public void close() {

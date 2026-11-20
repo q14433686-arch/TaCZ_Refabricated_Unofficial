@@ -128,6 +128,8 @@ public class TaCZFabricClient implements ClientModInitializer {
         InputEvent.InteractionKeyMappingTriggered.EVENT.register(ClientPreventGunClick::onClickInput);
 
         ClientPlayConnectionEvents.DISCONNECT.register(CommonNetworkCacheEvent::onDisconnect);
+        // Minecraft.disconnect drops queued tasks before closing the play listener on voluntary leave.
+        ClientPlayerNetworkEvent.LOGGING_OUT.register(event -> CommonNetworkCacheEvent.onLocalLogout(event.getConnection()));
         PackCompatibilityNotice.register();
         com.tacz.guns.client.particle.NativeMuzzleEffects.register();
         com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance().register();
@@ -138,6 +140,7 @@ public class TaCZFabricClient implements ClientModInitializer {
         ClientPlayerNetworkEvent.LOGGING_OUT.register(com.tacz.guns.client.event.ClientGunTimeLifecycle::onPlayerLoggedOut);
         ClientTickEvents.END_CLIENT_TICK.register(com.tacz.guns.client.gui.overlay.DisplayCaseLockHint::tick);
         ClientTickEvents.END_CLIENT_TICK.register(CrawlKey::cancelLostHold);
+        ClientTickEvents.END_CLIENT_TICK.register(client -> com.tacz.guns.compat.ysm.YsmCompat.clearExternalGunRender());
 
         // 26.2: 第一人称入口不再走 SimpleBedrockModel 的 RenderHandEvent。
         // 现在统一由客户端 ItemModel（tacz:dynamic_item）-> AnimateGeoItemRenderer#render 的

@@ -126,6 +126,25 @@ public class DisplayRackSmoke {
     }
 
     @GameTest
+    public void targetMigratesLegacyIntArrayIdAndAlternateProfile(GameTestHelper helper) {
+        var registries = helper.getLevel().registryAccess();
+        var uuid = java.util.UUID.fromString("34894528-8dd7-4330-93b3-34acb5160aaf");
+        var legacy = new net.minecraft.nbt.CompoundTag();
+        var owner = new net.minecraft.nbt.CompoundTag();
+        owner.putIntArray("Id", net.minecraft.core.UUIDUtil.uuidToIntArray(uuid));
+        legacy.put("Owner", owner);
+        var target = new com.tacz.guns.block.entity.TargetBlockEntity(BlockPos.ZERO, ModBlocks.TARGET.defaultBlockState());
+        target.loadAdditional(TagValueInput.create(ProblemReporter.DISCARDING, registries, legacy));
+        helper.assertTrue(target.getOwnerProfile() != null && uuid.equals(target.getOwnerProfile().partialProfile().id()), "Lost old int-array owner UUID");
+        var nativeTag = target.saveWithoutMetadata(registries);
+        var alternate = new net.minecraft.nbt.CompoundTag();
+        alternate.put("OwnerProfile", nativeTag.get("profile").copy());
+        target.loadAdditional(TagValueInput.create(ProblemReporter.DISCARDING, registries, alternate));
+        helper.assertTrue(nativeTag.equals(target.saveWithoutMetadata(registries)), "Alternate profile did not round-trip to the native key");
+        helper.succeed();
+    }
+
+    @GameTest
     public void rotatedTargetAndStatuePreserveBothHalvesAndData(GameTestHelper helper) {
         var level = helper.getLevel();
         var origin = helper.absolutePos(BlockPos.ZERO); var dest = origin.offset(1,0,1);

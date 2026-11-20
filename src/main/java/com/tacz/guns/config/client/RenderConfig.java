@@ -125,6 +125,7 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue DISABLE_MOVEMENT_ATTRIBUTE_FOV;
     public static ForgeConfigSpec.BooleanValue ENABLE_TACZ_ID_IN_TOOLTIP;
     public static ForgeConfigSpec.BooleanValue BLOCK_ENTITY_TRANSLUCENT;
+    public static ForgeConfigSpec.BooleanValue YSM_COMPAT;
     /**
      * 瞄准镜「镜内画中画（PIP）」总开关。默认<b>关闭</b>。
      *
@@ -759,6 +760,8 @@ public class RenderConfig {
 
         builder.comment("Enable translucent while render block entity or not. Enable this option will result in ADDITIONAL PERFORMANCE OVERHEAD.");
         BLOCK_ENTITY_TRANSLUCENT = builder.define("EnableBlockEntityTranslucent", false);
+        YSM_COMPAT = builder.comment("Yield the first-person gun render only if the installed Yes Steve Model requests it this tick.")
+                .define("YsmCompat", true);
 
         builder.pop();
     }

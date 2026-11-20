@@ -67,6 +67,7 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
      * 自动用默认皮肤，不需要我们做任何兜底。见 {@code TargetRenderer}。</p>
      */
     private static final String PROFILE_TAG = "profile";
+    private static final String ALTERNATE_PROFILE_TAG = "OwnerProfile";
     /** 本分支 26.2 早期版本写下的扁平键（PR #115 之前）；只读，不再写。 */
     private static final String LEGACY_OWNER_UUID_TAG = "owner_uuid";
     private static final String LEGACY_OWNER_NAME_TAG = "owner_name";
@@ -117,7 +118,8 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
     @Override
     public void loadAdditional(ValueInput input) {
         // 主路径：与原版头颅同一个键、同一个 CODEC，兼容「只写名字」「只写 UUID」「两者都有」。
-        ResolvableProfile loaded = input.read(PROFILE_TAG, ResolvableProfile.CODEC).orElse(null);
+        ResolvableProfile loaded = input.read(PROFILE_TAG, ResolvableProfile.CODEC)
+                .or(() -> input.read(ALTERNATE_PROFILE_TAG, ResolvableProfile.CODEC)).orElse(null); // tacz:legacy-key: migrate to profile
         if (loaded == null) {
             // 老存档兼容：本分支早期的 owner_uuid/owner_name，以及上游 1.20.1 的 Owner 复合标签。
             // 读到之后下一次保存就会以原版 profile 键覆盖，属于一次性迁移。
@@ -143,17 +145,20 @@ public class TargetBlockEntity extends BlockEntity implements Nameable {
     private static @Nullable ResolvableProfile readLegacyOwner(ValueInput input) {
         String name = getStringOrEmpty(input, LEGACY_OWNER_NAME_TAG);
         String uuidText = getStringOrEmpty(input, LEGACY_OWNER_UUID_TAG);
+        UUID id = parseUuid(uuidText);
         Optional<ValueInput> legacyOwner = input.child(LEGACY_OWNER_TAG);
         if (legacyOwner.isPresent()) {
             ValueInput child = legacyOwner.get();
             if (name.isEmpty()) {
                 name = getStringOrEmpty(child, "Name");
             }
-            if (uuidText.isEmpty()) {
-                uuidText = getStringOrEmpty(child, "Id");
+            if (id == null) {
+                id = child.getIntArray("Id").filter(array -> array.length == 4)
+                        .map(net.minecraft.core.UUIDUtil::uuidFromIntArray)
+                        .orElseGet(() -> parseUuid(getStringOrEmpty(child, "Id")));
             }
         }
-        return createLegacyProfile(name, parseUuid(uuidText));
+        return createLegacyProfile(name, id);
     }
 
     /**

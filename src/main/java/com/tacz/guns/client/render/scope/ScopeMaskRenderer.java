@@ -791,7 +791,10 @@ public final class ScopeMaskRenderer {
     }
 
     private static void emitNdcVertex(BufferBuilder builder, Matrix4f invProj, float[] ndc) {
-        Vector4f v = new Vector4f(ndc[0], ndc[1], 0.0f, 1.0f);
+        // Interior of BOTH clip volumes (OpenGL -1..1 and clip-control 0..1). Z=0 is
+        // the reversed far plane on the latter: float roundoff can clip the entire hull.
+        // There is no depth attachment, so only the projected x/y matter here.
+        Vector4f v = new Vector4f(ndc[0], ndc[1], 0.5f, 1.0f);
         v.mul(invProj);
         if (Math.abs(v.w) > 1.0e-6f) {
             v.div(v.w);

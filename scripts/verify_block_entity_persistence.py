@@ -41,7 +41,7 @@ D. 不得出现 `onRemove` 覆写（26.2 已删除该 API，写了也不会被�
 豁免
 ----
 `// tacz:no-drop-on-remove`：第 3 项豁免；`// tacz:legacy-key`：同一行上的
-`getString(...)`/`child(...)` 属于老存档兼容读取，不算「只读不写」。
+读取属于已知的旧存档格式，不算「只读不写」；不能豁免判据或「写而不读」。
 
 用法
 ----
@@ -165,7 +165,9 @@ def check_block_entity(path: Path) -> None:
             errors.append(
                 f"{name}: saveAdditional 写了 `{key}` 却从不读回（死数据，或读取处漏了）"
             )
-        for key in sorted(read - written):
+        legacy = keys_in("\n".join(line.partition("// tacz:legacy-key")[0] for line in text.splitlines()
+                                   if "// tacz:legacy-key" in line), READ_CALL, consts)
+        for key in sorted(read - written - legacy):
             errors.append(
                 f"{name}: loadAdditional 读 `{key}` 却从不写入（永远读不到默认值之外的内容）"
             )
