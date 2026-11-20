@@ -153,9 +153,9 @@ public final class SurfaceLights {
     /** LR already sends one FLASH burst at the stun entity, before removal. Never use a blind
      * status on the camera, a trail particle, or all 12 individual sprites as light sources. */
     public static void stun(ClientboundLevelParticlesPacket packet) {
-        if (!RenderConfig.EXPLOSION_SURFACE_LIGHT.get() || packet.particle().getType()!=ParticleTypes.FLASH
-                || packet.count()!=StunGrenadeEntity.FLASH_PARTICLES || !ready()) return;
-        var pos=new Vec3(packet.x(),packet.y(),packet.z());
+        if (!RenderConfig.EXPLOSION_SURFACE_LIGHT.get() || packet.getParticle().getType()!=ParticleTypes.FLASH
+                || packet.getCount()!=StunGrenadeEntity.FLASH_PARTICLES || !ready()) return;
+        var pos=new Vec3(packet.getX(),packet.getY(),packet.getZ());
         if (!nearBlast(pos) || level.getEntitiesOfClass(StunGrenadeEntity.class,new AABB(pos,pos).inflate(1.5)).isEmpty()) return;
         stunEvents++;
         offer(new Pulse(pos,null,Vec3.ZERO,6,WHITE,.76f,45,175,-1,false));

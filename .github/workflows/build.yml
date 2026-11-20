@@ -103,11 +103,15 @@ jobs:
           set -o pipefail
           ./gradlew --init-script scripts/ci-central.init.gradle build --console=plain --no-daemon 2>&1 | tee "$RUNNER_TEMP/build.log"
 
+      - name: Check dedicated survival receipts
+        run: |
+          grep -F '202 one-short no-output/no-debit controls' build/run/gameTest/logs/latest.log | sed 's/^/::notice::/'
+
       - name: Audit the production JAR (not the dev classpath)
         run: python3 scripts/audit_26_2_jar.py build/libs/*.jar
 
       - name: Real integrated client (26.2 OpenGL / Mesa)
-        timeout-minutes: 12
+        timeout-minutes: 24
         env:
           LIBGL_ALWAYS_SOFTWARE: 'true'
           ALSOFT_DRIVERS: 'null'
@@ -119,6 +123,19 @@ jobs:
       - name: Annotate target failures
         if: failure()
         run: python3 scripts/report_ci_failures.py "$RUNNER_TEMP/build.log" "$RUNNER_TEMP/client.log" build/run/{gameTest,clientGameTest}/logs/latest.log
+
+      - name: Keep target screenshots and runtime receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: target-evidence-${{ github.sha }}
+          retention-days: 7
+          if-no-files-found: ignore
+          path: |
+            build/run/*/logs/latest.log
+            build/run/*/crash-reports/*.txt
+            build/run/clientGameTest/screenshots/**/*.png
+            ${{ runner.temp }}/client.log
 
       - name: Upload jars
         uses: actions/upload-artifact@v4

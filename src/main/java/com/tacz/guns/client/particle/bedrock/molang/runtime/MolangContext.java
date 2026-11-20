@@ -3,7 +3,6 @@ package com.tacz.guns.client.particle.bedrock.molang.runtime;
 
 import com.tacz.guns.client.particle.bedrock.molang.runtime.binding.QueryBinding;
 import com.tacz.guns.client.particle.bedrock.molang.runtime.value.MutableObjectBinding;
-import com.maydaymemory.mae.basic.IEvaluationContext;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @param <T> 关联对象的类型
  */
-public class MolangContext<T> implements IEvaluationContext {
+public class MolangContext<T> {
     private @Nullable T entity;
     private final MutableObjectBinding variableStorage;
     private double animTime;
@@ -39,14 +38,12 @@ public class MolangContext<T> implements IEvaluationContext {
         this.entity = entity;
     }
 
-    // === IEvaluationContext ===
+    // Particle expressions own this clock on 26.2; MAE 1.1.1 has no external context API.
 
-    @Override
     public float getTimeS() {
         return (float) animTime;
     }
 
-    @Override
     public void prepareEvaluation(float timeS) {
         this.animTime = timeS;
     }

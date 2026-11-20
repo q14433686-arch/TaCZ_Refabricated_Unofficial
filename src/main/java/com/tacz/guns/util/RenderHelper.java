@@ -126,7 +126,7 @@ public final class RenderHelper {
                 // AFTER the regular depth-writing body/arm; do not relight the skin globally.
                 collector.order(1).submitModelPart(hand == HumanoidArm.RIGHT ? model.rightArm : model.leftArm,
                         matrixStack, FlashMaterials.reflection(skinTexture), combinedLight,
-                        net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, null, 0xff000000 | gray * 0x010101);
+                        net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, null, 0xff000000 | gray * 0x010101, null);
             }
         } finally {
             FirstPersonAnimationCompat.endDirectArmRender();
