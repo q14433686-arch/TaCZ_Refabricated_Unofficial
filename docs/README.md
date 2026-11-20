@@ -24,6 +24,8 @@
 结论可能已被后续代码推翻，**引用前先看文件头的状态标注**。
 （2026-08-31 从根目录迁入 12 份；此前平铺在 `docs/` 根下。）
 
+[26.2 · Complementary Reimagined r5.8.1 开镜红板与热像缺面](investigations/ADS_COMPLEMENTARY_R581_26_2.md)：默认瞄具逐档画面、热像暴露／遮挡对照和可复查的构建。
+
 **开 26.3 线之前先读**：`PORT_26_3_FEASIBILITY_2026_09_02.md`（账本 #16）——
 26.3 移植可行性实测评估：Fabric API 侧风险、Mojang 渲染层换代（blaze3d→renderpearl / OIT /
 `ItemInHandRenderer` 改名）、本仓暴露面计数、生态就绪度表、减损清单与移植脚本包计划。
