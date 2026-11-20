@@ -1,8 +1,9 @@
 package com.tacz.guns.client.render;
 
 import com.mojang.blaze3d.pipeline.*;
-import com.mojang.blaze3d.platform.BlendFactor;
 import com.mojang.blaze3d.platform.CompareOp;
+import com.mojang.blaze3d.platform.DestFactor;
+import com.mojang.blaze3d.platform.SourceFactor;
 import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
 import com.tacz.guns.client.render.scope.ScopeMaskTextureHandle;
 import com.tacz.guns.compat.iris.IrisCompat;
@@ -70,7 +71,7 @@ public final class FlashMaterials {
                 .withColorTargetState(new ColorTargetState(pass.layer == Layer.STRIP ? BlendFunction.TRANSLUCENT : BlendFunction.ADDITIVE));
         if (pass.layer != Layer.SURFACE) b.withShaderDefine("NO_OVERLAY");
         if (pass.layer == Layer.SURFACE) b.withDepthStencilState(new DepthStencilState(DepthStencilState.DEFAULT.depthTest(), false))
-                .withColorTargetState(new ColorTargetState(new BlendFunction(BlendFactor.SRC_ALPHA, BlendFactor.ONE, BlendFactor.ZERO, BlendFactor.ONE)));
+                .withColorTargetState(new ColorTargetState(new BlendFunction(SourceFactor.SRC_ALPHA, DestFactor.ONE, SourceFactor.ZERO, DestFactor.ONE)));
         if (pass.layer == Layer.SWIRL) b.withShaderDefine("APPLY_TEXTURE_MATRIX");
         if (pass.layer == Layer.REFLECTION) b.withDepthStencilState(new DepthStencilState(CompareOp.EQUAL, false));
         if (pass.clipped) b.withShaderDefine("SCOPE_MASK").withSampler(ScopeBodyRenderTypes.maskSamplerName());

@@ -1,11 +1,12 @@
 package com.tacz.guns.client.event;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.tacz.guns.block.GunDisplayCaseBlock;
 import com.tacz.guns.block.GunDisplayCaseSlotHelper;
 import com.tacz.guns.block.GunPegboardSlotHelper;
 import com.tacz.guns.block.entity.DisplayRackBlockEntity;
 import net.fabricmc.fabric.api.client.rendering.v1.RenderStateDataKey;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
@@ -43,7 +44,7 @@ public final class DisplayRackHighlight {
     }
 
     public static void register() {
-        LevelExtractionEvents.AFTER_BLOCK_OUTLINE_EXTRACTION.register((context, target) -> {
+        LevelRenderEvents.AFTER_BLOCK_OUTLINE_EXTRACTION.register((context, target) -> {
             var outline = context.levelState().blockOutlineRenderState;
             if (outline == null || !(target instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK) return;
             var pos = hit.getBlockPos();
@@ -74,10 +75,31 @@ public final class DisplayRackHighlight {
                 // The picked rack is already visibility/range checked by vanilla's block pick.
                 // Do not let a stored item's depth hide the edges of its own selected cell.
                 var out = context.submitNodeCollector().order(1);
-                for (var cell : cells) out.submitShapeOutline(pose, Shapes.create(cell.box), Material.LINES, cell.color, 1f, false);
+                for (var cell : cells) {
+                    var shape = Shapes.create(cell.box);
+                    int color = cell.color;
+                    out.submitCustomGeometry(pose, Material.LINES, (entryPose, consumer) ->
+                            shape.forAllEdges((x1, y1, z1, x2, y2, z2) -> emitLine(entryPose, consumer, x1, y1, z1, x2, y2, z2, color, 1.0f)));
+                }
                 pose.popPose();
             }
             return true;
         });
+    }
+
+    private static void emitLine(PoseStack.Pose pose, VertexConsumer consumer,
+                                 double x1, double y1, double z1, double x2, double y2, double z2,
+                                 int color, float lineWidth) {
+        float dx = (float) (x2 - x1);
+        float dy = (float) (y2 - y1);
+        float dz = (float) (z2 - z1);
+        float len = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (len > 1.0e-6f) {
+            dx /= len;
+            dy /= len;
+            dz /= len;
+        }
+        consumer.addVertex(pose, (float) x1, (float) y1, (float) z1).setColor(color).setNormal(pose, dx, dy, dz).setLineWidth(lineWidth);
+        consumer.addVertex(pose, (float) x2, (float) y2, (float) z2).setColor(color).setNormal(pose, dx, dy, dz).setLineWidth(lineWidth);
     }
 }

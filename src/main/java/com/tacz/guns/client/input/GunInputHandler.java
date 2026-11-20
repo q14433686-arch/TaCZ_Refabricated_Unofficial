@@ -48,7 +48,7 @@ public final class GunInputHandler {
     }
 
     private static boolean matches(KeyMapping mapping, InputConstants.Key key) {
-        return !mapping.isUnbound() && mapping.matches(key);
+        return !mapping.isUnbound() && KeyMappingHelper.getBoundKeyOf(mapping).equals(key);
     }
 
     private static boolean closeRefit(InputConstants.Key key) {

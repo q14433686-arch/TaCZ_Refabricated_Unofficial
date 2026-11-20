@@ -40,7 +40,8 @@ import static com.tacz.guns.block.StatueBlock.FACING;
  * 否则就是双份 —— 这里的枪同理，只由本方法掉。</p>
  */
 public class StatueBlockEntity extends BlockEntity {
-    public static final BlockEntityType<StatueBlockEntity> TYPE = new BlockEntityType<>(StatueBlockEntity::new, Set.of(ModBlocks.STATUE));
+    public static final BlockEntityType<StatueBlockEntity> TYPE = net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder.create(
+            StatueBlockEntity::new, ModBlocks.STATUE).build();
     private static final String ITEM_TAG = "Item";
     private ItemStack gunItem = ItemStack.EMPTY;
 

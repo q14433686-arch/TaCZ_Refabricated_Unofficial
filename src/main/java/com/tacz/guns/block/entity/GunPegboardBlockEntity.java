@@ -19,7 +19,8 @@ import java.util.Set;
 
 public class GunPegboardBlockEntity extends DisplayRackBlockEntity implements RenderDataBlockEntity {
     public static final int SLOT_COUNT = 2 * SLOTS_PER_FACE;
-    public static final BlockEntityType<GunPegboardBlockEntity> TYPE = new BlockEntityType<>(GunPegboardBlockEntity::new, Set.of(ModBlocks.GUN_PEGBOARD, ModBlocks.GLOW_GUN_PEGBOARD));
+    public static final BlockEntityType<GunPegboardBlockEntity> TYPE = net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder.create(
+            GunPegboardBlockEntity::new, ModBlocks.GUN_PEGBOARD, ModBlocks.GLOW_GUN_PEGBOARD).build();
     private int color = -1;
     private boolean inheritedColor;
 

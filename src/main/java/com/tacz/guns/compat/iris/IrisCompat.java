@@ -9,6 +9,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
@@ -224,6 +225,65 @@ public final class IrisCompat {
 
     public static void assignRackOutlinePipeline(RenderPipeline pipeline) {
         tryAssignPipeline(pipeline, "LINES");
+    }
+
+    public static boolean assignPipelineToIris(RenderPipeline pipeline, String program, String debugName) {
+        if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) {
+            return false;
+        }
+        try {
+            return assignProgram(pipeline, program);
+        } catch (Throwable t) {
+            String msg = t.getMessage();
+            Throwable cause = t.getCause();
+            if ((msg != null && msg.contains("already assigned"))
+                    || (cause != null && cause.getMessage() != null && cause.getMessage().contains("already assigned"))) {
+                return true;
+            }
+            GunMod.LOGGER.warn("[TACZ Iris] Cannot assign {} ({}) to Iris {}", pipeline.getLocation(), debugName, program, t);
+            return false;
+        }
+    }
+
+    public static boolean assignMeshPipelineToHand(RenderPipeline pipeline) {
+        return assignPipelineToIris(pipeline, "HAND", "mesh_entity_hand");
+    }
+
+    public static boolean assignMeshPipelineToEntity(RenderPipeline pipeline) {
+        return assignPipelineToIris(pipeline, "ENTITIES", "mesh_entity_world");
+    }
+
+    public static boolean supportsHandFlushHook() {
+        return FabricLoader.getInstance().getModContainer(CompatRegistry.IRIS)
+                .map(container -> container.getMetadata().getVersion().getFriendlyString().startsWith("1.11"))
+                .orElse(false);
+    }
+
+    public static boolean isRenderingSolidHandPass() {
+        return isHandRendererActive() && isHandRenderingSolid();
+    }
+
+    public static boolean shouldRenderInCurrentHandPhase(ItemStack stack) {
+        if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS) || !isUsingRenderPack()) {
+            return true;
+        }
+        resolveIrisHandles();
+        if (handRendererInstance == null || mHandRendererIsActive == null) {
+            return true;
+        }
+        try {
+            boolean active = (Boolean) mHandRendererIsActive.invoke(handRendererInstance);
+            if (!active) {
+                return true;
+            }
+            boolean renderingSolid = isHandRenderingSolid();
+            boolean itemTranslucent = (Boolean) handRendererInstance.getClass()
+                    .getMethod("isHandTranslucent", ItemStack.class)
+                    .invoke(handRendererInstance, stack);
+            return renderingSolid != itemTranslucent;
+        } catch (Throwable ignored) {
+            return true;
+        }
     }
 
     private static void tryAssignPipeline(RenderPipeline pipeline, String program) {
