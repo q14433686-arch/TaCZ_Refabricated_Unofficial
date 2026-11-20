@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "tacz_port_test",
+  "version": "1.0.0",
+  "name": "TaCZ 1.21.11 receiver tests (development only)",
+  "entrypoints": {
+    "fabric-gametest": [
+      "com.tacz.guns.test.Catalog12111Smoke",
+      "com.tacz.guns.test.AmmoStorageSmoke",
+      "com.tacz.guns.test.WorkbenchSettlementSmoke"
+    ],
+    "fabric-client-gametest": ["com.tacz.guns.test.Port12111Smoke"]
+  },
+  "depends": { "tacz": "*" }
+}

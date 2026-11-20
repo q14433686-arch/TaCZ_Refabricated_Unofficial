@@ -13,6 +13,14 @@ base {
 }
 
 fabricApi {
+    if (project.hasProperty('taczGameTests')) {
+        configureTests {
+            createSourceSet = true
+            modId = 'tacz_port_test'
+            enableGameTests = true
+            enableClientGameTests = true
+        }
+    }
     configureDataGeneration {
         client = true
     }

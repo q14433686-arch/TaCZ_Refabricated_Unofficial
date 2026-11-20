@@ -1,0 +1,35 @@
+name: 1.21.11 game smoke
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ['1.21.11']
+    paths: [src/**, build.gradle, gradle.properties, '.github/workflows/game-smoke-12111.yml']
+permissions:
+  contents: read
+jobs:
+  game:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
+    strategy:
+      fail-fast: false
+      matrix:
+        task: [runGameTest, runClientGameTest]
+    env:
+      LIBGL_ALWAYS_SOFTWARE: 'true'
+      ALSOFT_DRIVERS: 'null'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Run native receiver GameTest
+        run: xvfb-run -a ./gradlew -PtaczGameTests "${{ matrix.task }}" --console=plain --no-daemon
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: game-12111-${{ matrix.task }}-${{ github.sha }}
+          retention-days: 7
+          path: |
+            build/run/**/logs/latest.log
+            build/run/**/crash-reports/*.txt
+            build/run/**/screenshots/*.png
