@@ -67,15 +67,18 @@ class BulletHoleOrientationChecks(unittest.TestCase):
                 self.assertGreater(sum((a - b) ** 2 for a, b in
                                        zip(rotate(direction, (0, 0, 1)), normal)), 1)
 
-    def test_each_uv_corner_and_normal_offset_matches_legacy(self):
+    def test_each_uv_corner_matches_legacy_with_only_normal_displacement(self):
         for face, (normal, direction) in FACES.items():
             for size in (.025, .05, .2):
                 for uv, xy, legacy in zip(UV, XY, LEGACY_XZ):
                     with self.subTest(face=face, size=size, uv=uv):
                         rotated = rotate(mul(direction, BASIS), xy)
-                        actual = tuple(v * size + n * .01 * size for v, n in zip(rotated, normal))
-                        expected = tuple(v * size for v in rotate(direction, legacy))
-                        self.assertVector(actual, expected)
+                        legacy_corner = rotate(direction, legacy)
+                        for separation in (.005, .0075, .01):
+                            actual = tuple(v * size + n * separation for v, n in zip(rotated, normal))
+                            expected = tuple(v * size + n * (separation - .01 * size)
+                                             for v, n in zip(legacy_corner, normal))
+                            self.assertVector(actual, expected)
 
     def test_camera_translation_and_partial_tick_are_preserved(self):
         # Hit position must remain world-relative, not become a fixed screen/RGB offset.
@@ -86,16 +89,22 @@ class BulletHoleOrientationChecks(unittest.TestCase):
                                for a, b, c in zip(previous, current, camera))
                 for normal, direction in FACES.values():
                     for xy, legacy in zip(XY, LEGACY_XZ):
-                        actual = tuple(c + v * .05 + n * .0005 for c, v, n in
+                        separation = .0075
+                        actual = tuple(c + v * .05 + n * separation for c, v, n in
                                        zip(center, rotate(mul(direction, BASIS), xy), normal))
-                        expected = tuple(c + v * .05 for c, v in zip(center, rotate(direction, legacy)))
+                        expected = tuple(c + v * .05 + n * (separation - .0005) for c, v, n in
+                                         zip(center, rotate(direction, legacy), normal))
                         self.assertVector(actual, expected)
 
     def test_java_source_uses_tested_basis_and_coordinate_overload(self):
         source = re.sub(r"/\*.*?\*/|//[^\n]*", "", SOURCE.read_text(), flags=re.S)
         source = re.sub(r"\s+", " ", source)
         self.assertIn("this.direction.getRotation() .mul(new Quaternionf().rotationX(-Mth.HALF_PI).rotateZ(Mth.PI))", source)
-        self.assertIn("float offset = 0.01F * this.getQuadSize(partialTicks);", source)
+        # 1.2.0 samples a bounded per-particle gap once to avoid coplanar decals;
+        # extracting a new random value each frame would make overlapping hits shimmer.
+        self.assertIn("private final float surfaceOffset;", source)
+        self.assertIn("this.surfaceOffset = this.random.nextFloat() * .005f + .005f;", source)
+        self.assertIn("float offset = this.surfaceOffset;", source)
         self.assertIn("Vec3 camPos = camera.position();", source)
         for coordinate, step in (("x", "X"), ("y", "Y"), ("z", "Z")):
             self.assertIn(

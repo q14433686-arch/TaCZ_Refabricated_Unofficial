@@ -94,6 +94,7 @@ public class AmmoStorageSmoke {
         helper.assertTrue(replacement.getCapacityStacks() == 864 && replacement.extractAmmo(sample, 100, false).getCount() == 73,
                 "Stock/variant not restored after drop, upgrade and placement");
         helper.assertTrue(replacement.getContents().isEmpty() && replacement.getComparatorSignal() == 0, "Duplicated stock after extraction");
+        com.tacz.guns.GunMod.LOGGER.info("PORT_STORAGE: block loot and both recipe upgrades preserve tagged stock");
         helper.succeed();
     }
 }

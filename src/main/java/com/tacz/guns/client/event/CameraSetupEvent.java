@@ -17,7 +17,7 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor;
 import com.tacz.guns.api.modifier.ParameterizedCachePair;
-import com.tacz.guns.client.render.scope.ScopePipRenderer;
+import com.tacz.guns.client.render.scope.ScopePipRenderState;
 import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.pojo.display.gun.AdsFov;
@@ -116,16 +116,18 @@ public class CameraSetupEvent {
             //
             // 每帧重新问一次、不缓存：PIP 若在运行期出错自我停用，
             // 下一帧整屏变焦就自动接管，不会留下「既没 PIP 也没放大」的死角。
-            if (ScopePipRenderer.suppressesWorldFovZoom()) {
+            if (ScopePipRenderState.suppressesWorldFovZoom((float) event.getPartialTick())) {
                 // 【倍率拆分】默认 ScopePipWorldZoomShare=0.0 时 worldZoom 恒为 1，
                 // magnificationToFov(1, fov) == fov，于是这里与「完全不动世界 FOV」逐位等价 ——
                 // 老行为一点没变。
                 //
                 // 玩家把它调大，就是在用「镜外放大一点」换「镜内清晰一点」：
                 // 世界放大 W 之后镜内只需再放大 Z/W，于是镜内拿到的真实像素多 W 倍。
-                // 合成那一侧会把 W 除掉（见 ScopePipRenderer 的两个 runComposite 调用），
+                // 合成那一侧会把 W 除掉（见 ScopePipRenderState 的两个 runComposite 调用），
                 // 两边相乘恒等于总倍率，所以镜内外看到的放大程度始终一致。
-                float worldZoom = ScopePipRenderer.currentWorldZoom();
+                AdsFov.Channel curve = TimelessAPI.getGunDisplay(stack).map(GunDisplayInstance::getAdsFov).map(AdsFov::getWorld).orElse(null);
+                float progress = fovProgress(livingEntity, (float) event.getPartialTick(), curve);
+                float worldZoom = ScopePipRenderState.worldZoomAtProgress(progress);
                 float fov = WORLD_FOV_DYNAMICS.update(worldZoom > 1.0f
                         ? (float) MathUtil.magnificationToFov(worldZoom, event.getFOV())
                         : (float) event.getFOV());

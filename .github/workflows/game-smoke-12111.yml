@@ -1,9 +1,7 @@
 name: 1.21.11 game smoke
 on:
   workflow_dispatch:
-  pull_request:
-    branches: ['1.21.11']
-    paths: [src/**, build.gradle, gradle.properties, '.github/workflows/game-smoke-12111.yml']
+  workflow_call:
 permissions:
   contents: read
 jobs:
@@ -32,6 +30,7 @@ jobs:
           else
             grep -F 'PORT_CATALOG:' build/run/gameTest/logs/latest.log
             grep -F 'PORT_SETTLEMENT:' build/run/gameTest/logs/latest.log
+            grep -F 'PORT_STORAGE:' build/run/gameTest/logs/latest.log
           fi
       - uses: actions/upload-artifact@v4
         if: always()

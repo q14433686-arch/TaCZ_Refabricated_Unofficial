@@ -650,7 +650,7 @@ public class FirstPersonRenderGunEvent {
             LocalPlayer player = Minecraft.getInstance().player;
             float fy = player == null ? Float.NaN : Mth.wrapDegrees(player.getYRot());
             float fx = player == null ? Float.NaN : player.getXRot();
-            Matrix4f mv = com.mojang.blaze3d.systems.new org.joml.Matrix4f(RenderSystem.getModelViewMatrix());
+            Matrix4f mv = new org.joml.Matrix4f(com.mojang.blaze3d.systems.RenderSystem.getModelViewMatrix());
             com.tacz.guns.GunMod.LOGGER.info(
                     "[TACZ Case08] ms={} facing=({},{}) w={} d=({},{},{}) v0=({},{},{}) v3=({},{},{}) "
                             + "B=[{},{},{} {},{},{} {},{},{}] P=[{},{},{} {},{},{} {},{},{}] Pt=({},{},{}) "

@@ -1,5 +1,6 @@
 package com.tacz.guns.test;
 
+import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.builder.GunItemBuilder;
 import com.tacz.guns.resource.network.CommonNetworkCache;
@@ -29,6 +30,6 @@ public final class Port12111Smoke implements FabricClientGameTest {
             context.waitTicks(30);
             context.takeScreenshot("tacz_12111_catalog_and_viewmodel");
         }
-        System.out.println("PORT_12111_CLIENT: live world, extended pack snapshot and held model passed");
+        GunMod.LOGGER.info("PORT_12111_CLIENT: live world, extended pack snapshot and held model passed");
     }
 }

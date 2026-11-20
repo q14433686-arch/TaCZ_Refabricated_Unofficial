@@ -26,6 +26,12 @@ fabricApi {
     }
 }
 
+// The integration suites load the complete default pack and native model catalog.
+if (project.hasProperty('taczGameTests')) {
+    loom.runs.named('clientGameTest') { vmArg '-Xmx2G' }
+    loom.runs.named('gameTest') { vmArg '-Xmx1G' }
+}
+
 loom {
     accessWidenerPath = file("src/main/resources/tacz.accesswidener")
     // 1.21.11 is obfuscated, so mappings exist again and the legacy mixin AP is both

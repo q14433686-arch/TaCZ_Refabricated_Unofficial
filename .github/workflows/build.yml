@@ -170,3 +170,7 @@ jobs:
             !build/libs/*-sources.jar
           retention-days: 14
           if-no-files-found: error
+
+  game-smoke:
+    needs: build
+    uses: ./.github/workflows/game-smoke-12111.yml

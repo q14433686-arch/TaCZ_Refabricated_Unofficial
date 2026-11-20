@@ -4,7 +4,7 @@ import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.tacz.guns.api.TimelessAPI;
-import com.tacz.guns.client.render.scope.ScopePipRenderer;
+import com.tacz.guns.client.render.scope.ScopePipRenderState;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.Minecraft;
@@ -35,14 +35,14 @@ enum DroppedGunSprite implements SpecialModelRenderer<Identifier> {
         if (distance > 0) {
             // Match the existing world-mesh detail gates: an 8x scope makes the same drop
             // look much closer. PIP reuses the extracted item; deciding at draw time is too late.
-            double radius = (double) distance * ScopePipRenderer.currentDetailZoom();
+            double radius = (double) distance * ScopePipRenderState.currentDetailZoom();
             if (Minecraft.getInstance().gameRenderer.getMainCamera().position().distanceToSqr(drop.position()) < radius * radius) return null;
         }
         return TimelessAPI.getGunDisplay(stack).map(GunDisplayInstance::getMissingLodDropTexture).orElse(null);
     }
 
     @Override
-    public void submit(Identifier texture, PoseStack item, SubmitNodeCollector collector,
+    public void submit(Identifier texture, ItemDisplayContext displayContext, PoseStack item, SubmitNodeCollector collector,
                        int light, int overlay, boolean foil, int outline) {
         // ItemTransform has already translated by (-.5,-.5,-.5). Keep the vanilla bob,
         // model center, scale and per-copy offset, but face the camera instead of spinning
