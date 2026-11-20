@@ -12,7 +12,7 @@ public class AmmoClothConfig {
         ConfigCategory ammo = root.getOrCreateCategory(Component.translatable("config.tacz.common.ammo"));
 
         ammo.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.common.ammo.explosive_ammo_destroys_blocks"), AmmoConfig.EXPLOSIVE_AMMO_DESTROYS_BLOCK.get())
-                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.common.ammo.explosive_ammo_destroys_blocks.desc"))
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.common.ammo.explosive_ammo_destroys_blocks.desc"))
                 .setSaveConsumer(AmmoConfig.EXPLOSIVE_AMMO_DESTROYS_BLOCK::set).build());
 
         ammo.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.common.ammo.explosive_ammo_fire"), AmmoConfig.EXPLOSIVE_AMMO_FIRE.get())
@@ -34,6 +34,26 @@ public class AmmoClothConfig {
         ammo.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.common.ammo.destroy_glass"), AmmoConfig.DESTROY_GLASS.get())
                 .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.common.ammo.destroy_glass.desc"))
                 .setSaveConsumer(AmmoConfig.DESTROY_GLASS::set).build());
+
+        ammo.addEntry(entryBuilder.startStrList(Component.translatable("config.tacz.common.ammo.destroy_blocks"), AmmoConfig.DESTROY_BLOCKS.get())
+                .setDefaultValue(Lists.newArrayList(AmmoConfig.DEFAULT_DESTROY_BLOCKS)).setTooltip(Component.translatable("config.tacz.common.ammo.destroy_blocks.desc"))
+                .setSaveConsumer(AmmoConfig.DESTROY_BLOCKS::set).build());
+
+        ammo.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.common.ammo.destroy_block_hardness_threshold"), AmmoConfig.DESTROY_BLOCK_HARDNESS_THRESHOLD.get())
+                .setMin(0).setMax(Double.MAX_VALUE).setDefaultValue(1.0).setTooltip(Component.translatable("config.tacz.common.ammo.destroy_block_hardness_threshold.desc"))
+                .setSaveConsumer(AmmoConfig.DESTROY_BLOCK_HARDNESS_THRESHOLD::set).build());
+
+        ammo.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.common.ammo.ignore_team_friendly_fire"), AmmoConfig.IGNORE_TEAM_FRIENDLY_FIRE.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.common.ammo.ignore_team_friendly_fire.desc"))
+                .setSaveConsumer(AmmoConfig.IGNORE_TEAM_FRIENDLY_FIRE::set).build());
+
+        ammo.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.common.ammo.enable_bullet_damage_ignore_list"), AmmoConfig.ENABLE_BULLET_DAMAGE_IGNORE_LIST.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.common.ammo.enable_bullet_damage_ignore_list.desc"))
+                .setSaveConsumer(AmmoConfig.ENABLE_BULLET_DAMAGE_IGNORE_LIST::set).build());
+
+        ammo.addEntry(entryBuilder.startStrList(Component.translatable("config.tacz.common.ammo.bullet_damage_ignore_list"), AmmoConfig.BULLET_DAMAGE_IGNORE_LIST.get())
+                .setDefaultValue(Lists.newArrayList(AmmoConfig.DEFAULT_BULLET_DAMAGE_IGNORE_LIST)).setTooltip(Component.translatable("config.tacz.common.ammo.bullet_damage_ignore_list.desc"))
+                .setSaveConsumer(AmmoConfig.BULLET_DAMAGE_IGNORE_LIST::set).build());
 
         ammo.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.common.ammo.ignite_block"), AmmoConfig.IGNITE_BLOCK.get())
                 .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.common.ammo.ignite_block.desc"))

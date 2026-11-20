@@ -9,7 +9,9 @@
       "com.tacz.guns.util.ExportUpgradeSmoke",
       "com.tacz.guns.test.AmmoStorageSmoke",
       "com.tacz.guns.test.DisplayRackSmoke",
-      "com.tacz.guns.test.PegboardCommandSmoke"
+      "com.tacz.guns.test.PegboardCommandSmoke",
+      "com.tacz.guns.test.PackServerSmoke",
+      "com.tacz.guns.test.WorkbenchSettlementSmoke"
     ],
     "fabric-client-gametest": [
       "com.tacz.guns.test.PackClientSmoke"

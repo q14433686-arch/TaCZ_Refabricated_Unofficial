@@ -24,6 +24,10 @@ public class PackInfoManager extends SimplePreparableReloadListener<Map<String, 
     private static final String PACK_INFO_NAME = "gunpack_info.json";
     private final Map<String, PackInfo> dataMap = Maps.newHashMap();
 
+    private long reloadVersion;
+
+    public long getReloadVersion() { return reloadVersion; }
+
     @Override
     protected Map<String, PackInfo> prepare(ResourceManager manager, ProfilerFiller pProfiler) {
         Map<String, PackInfo> output = Maps.newHashMap();
@@ -52,6 +56,7 @@ public class PackInfoManager extends SimplePreparableReloadListener<Map<String, 
     protected void apply(Map<String, PackInfo> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
         dataMap.clear();
         dataMap.putAll(pObject);
+        reloadVersion++;
     }
 
     public PackInfo getData(String namespace) {

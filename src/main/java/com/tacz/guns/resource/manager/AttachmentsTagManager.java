@@ -2,7 +2,6 @@ package com.tacz.guns.resource.manager;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
@@ -25,7 +24,7 @@ import java.util.*;
 
 public class AttachmentsTagManager extends SimplePreparableReloadListener<Map<Identifier, List<JsonElement>>> implements INetworkCacheReloadListener {
     private final Map<Identifier, Set<String>> tags = Maps.newHashMap();
-    private final Map<Identifier, Set<String>> allow_attachments = Maps.newHashMap();
+    private final Map<Identifier, Set<String>> allowAttachments = Maps.newHashMap();
 
     private final Gson gson;
     private final Marker marker;
@@ -48,13 +47,13 @@ public class AttachmentsTagManager extends SimplePreparableReloadListener<Map<Id
     @Override
     protected void apply(Map<Identifier, List<JsonElement>> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
         tags.clear();
-        allow_attachments.clear();
+        allowAttachments.clear();
         ImmutableMap.Builder<Identifier, String> builder = ImmutableMap.builder();
 
         for (Map.Entry<Identifier, List<JsonElement>> entry : pObject.entrySet()) {
             Identifier id = entry.getKey();
 
-            List<String> temp = new ArrayList<>();
+            LinkedHashSet<String> merged = new LinkedHashSet<>();
             for (JsonElement element : entry.getValue()) {
                 try {
                     List<String> data = parseJson(element);
@@ -62,7 +61,7 @@ public class AttachmentsTagManager extends SimplePreparableReloadListener<Map<Id
                         if (data.stream().anyMatch(Objects::isNull)) {
                             throw new JsonParseException("Null value found in JSON data");
                         } else {
-                            temp.addAll(data);
+                            merged.addAll(data);
                         }
                     }
                 } catch (JsonParseException e) {
@@ -70,14 +69,15 @@ public class AttachmentsTagManager extends SimplePreparableReloadListener<Map<Id
                 }
             }
 
+            Set<String> ordered = Collections.unmodifiableSet(new LinkedHashSet<>(merged));
             if (id.getPath().startsWith("allow_attachments/") && id.getPath().length() > 18) {
                 Identifier gunId = id.withPath(id.getPath().substring(18));
-                allow_attachments.computeIfAbsent(gunId, (v) -> Sets.newHashSet()).addAll(temp);
+                allowAttachments.put(gunId, ordered);
             } else {
-                tags.computeIfAbsent(id, (v) -> Sets.newHashSet()).addAll(temp);
+                tags.put(id, ordered);
             }
 
-            builder.put(entry.getKey(), gson.toJson(temp));
+            builder.put(entry.getKey(), gson.toJson(ordered));
         }
 
         this.networkCache = builder.build();
@@ -103,7 +103,7 @@ public class AttachmentsTagManager extends SimplePreparableReloadListener<Map<Id
     }
 
     public Set<String> getAllowAttachmentTags(Identifier registryName) {
-        return allow_attachments.get(registryName);
+        return allowAttachments.get(registryName);
     }
 
     public static final Identifier ID = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "attachments_tag_manager");

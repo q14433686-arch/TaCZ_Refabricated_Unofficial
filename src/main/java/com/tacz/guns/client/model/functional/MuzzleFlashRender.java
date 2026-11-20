@@ -40,13 +40,15 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
 
     private final BedrockGunModel bedrockGunModel;
 
+    public static void resetTimestamps() { shootTimeStamp = -1L; }
+
     public MuzzleFlashRender(BedrockGunModel bedrockGunModel) {
         this.bedrockGunModel = bedrockGunModel;
     }
 
     public static void onShoot() {
         // 记录开火时间戳
-        shootTimeStamp = System.currentTimeMillis();
+        shootTimeStamp = com.tacz.guns.util.time.GunTime.nowMillis();
         // 记录枪口火焰启动标记
         muzzleFlashStartMark = true;
         // 随机给予枪口火焰的旋转
@@ -92,7 +94,7 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
         // 曾在此调 IrisCompat.assignCommonEntityPipelinesToHandIfNeeded()（vanilla 管线归 HAND）。
         // 在 Iris 26.2 上那是 no-op（管线已预注册、assignPipeline 抛 already assigned），
         // 只留下日志噪音；已移除，见 IrisCompat#assignCommonEntityPipelinesToHandIfNeeded。
-        long time = System.currentTimeMillis() - shootTimeStamp;
+        long time = com.tacz.guns.util.time.GunTime.nowMillis() - shootTimeStamp;
         if (time < 0 || time > TIME_RANGE) {
             return;
         }
@@ -144,8 +146,8 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
         // 成立，需要现场确认是哪个分量把开关打掉了。挂在 ScopeMaskDebug 下（同属掩码诊断），
         // 火光窗口内 1 秒节流，常态零噪音。
         if (com.tacz.guns.config.client.RenderConfig.SCOPE_MASK_DEBUG.get()
-                && System.currentTimeMillis() - flashDebugLastLogMs > 1000L) {
-            flashDebugLastLogMs = System.currentTimeMillis();
+                && com.tacz.guns.util.time.GunTime.nowMillis() - flashDebugLastLogMs > 1000L) {
+            flashDebugLastLogMs = com.tacz.guns.util.time.GunTime.nowMillis();
             com.tacz.guns.GunMod.LOGGER.info("[TACZ FlashDebug] ready={} ctx={} enable={} irisUnsafe={} geomEmpty={} targetOk={}",
                     flashMaskReady,
                     context.displayContext(),
@@ -197,7 +199,7 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
         if (!isSelf) {
             return;
         }
-        long time = System.currentTimeMillis() - shootTimeStamp;
+        long time = com.tacz.guns.util.time.GunTime.nowMillis() - shootTimeStamp;
         if (time > TIME_RANGE) {
             return;
         }

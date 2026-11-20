@@ -116,6 +116,7 @@ public class TaCZFabric implements ModInitializer {
         CapabilityRegistry.init();
 
         net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.register(AmmoStorageInteractionEvent::onRightClickBlock);
+        com.tacz.guns.api.event.common.GunFirePostEvent.EVENT.register(GunSoundAngerEvent::onGunFire);
         AttackBlockCallback.EVENT.register(DisplayRackInteractions::attack);
         net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.register(DisplayRackInteractions::use);
         AddReloadListenerEvent.CALLBACK.register(CommonAssetsManager::onReload);

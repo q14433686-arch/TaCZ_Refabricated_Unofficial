@@ -13,19 +13,29 @@ import java.util.function.Consumer;
 public class InventoryAttachmentSlot extends Button implements IStackTooltip {
     private final int slotIndex;
     private final Inventory inventory;
+    private final ItemStack preview;
 
     public InventoryAttachmentSlot(int pX, int pY, int slotIndex, Inventory inventory, Button.OnPress onPress) {
         super(pX, pY, 18, 18, Component.empty(), onPress, DEFAULT_NARRATION);
+        this.preview = ItemStack.EMPTY;
         this.slotIndex = slotIndex;
         this.inventory = inventory;
     }
 
+    public InventoryAttachmentSlot(int x, int y, ItemStack preview, Inventory inventory, Button.OnPress onPress) {
+        super(x, y, 18, 18, Component.empty(), onPress, DEFAULT_NARRATION);
+        this.preview = preview;
+        this.inventory = inventory;
+        this.slotIndex = -1;
+    }
+
+    public ItemStack getItemStack() {
+        return slotIndex < 0 ? preview : inventory.getItem(slotIndex);
+    }
+
     @Override
     public void renderTooltip(Consumer<ItemStack> consumer) {
-        if (this.isHoveredOrFocused() && 0 <= this.slotIndex && this.slotIndex < this.inventory.getContainerSize()) {
-            ItemStack item = this.inventory.getItem(slotIndex);
-            consumer.accept(item);
-        }
+        if (this.isHoveredOrFocused()) consumer.accept(getItemStack());
     }
 
     @Override
@@ -36,7 +46,7 @@ public class InventoryAttachmentSlot extends Button implements IStackTooltip {
         } else {
             graphics.blit(RenderPipelines.GUI_TEXTURED, GunRefitScreen.SLOT_TEXTURE, x + 1, y + 1, 1, 1, width - 2, height - 2, 18, 18);
         }
-        graphics.item(inventory.getItem(slotIndex), x + 1, y + 1);
+        graphics.item(getItemStack(), x + 1, y + 1);
     }
 
     public int getSlotIndex() {

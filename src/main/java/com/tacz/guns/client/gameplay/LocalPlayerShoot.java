@@ -1,13 +1,14 @@
 package com.tacz.guns.client.gameplay;
 
+import com.tacz.guns.util.time.GunTime;
 import cn.sh1rocu.tacz.api.LogicalSide;
-import cn.sh1rocu.tacz.mixin.accessor.BlockableEventLoopAccessor;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.animation.statemachine.AnimationStateMachine;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ShootResult;
 import com.tacz.guns.api.event.common.GunFireEvent;
+import com.tacz.guns.api.event.common.GunFirePostEvent;
 import com.tacz.guns.api.event.common.GunShootEvent;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.gun.FireMode;
@@ -33,8 +34,6 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
@@ -201,7 +200,7 @@ public class LocalPlayerShoot {
                                            GunDisplayInstance display, GunData gunData, boolean playDrySound) {
         // 按钮冷却时间未到，防止点击按钮后误触开火
         // 默认设置为 50 ms
-        if (System.currentTimeMillis() - LocalPlayerDataHolder.clientClickButtonTimestamp < 50) {
+        if (GunTime.nowMillis() - LocalPlayerDataHolder.clientClickButtonTimestamp < 50) {
             return ShootResult.COOL_DOWN;
         }
 
@@ -265,63 +264,50 @@ public class LocalPlayerShoot {
         // 获取余弹数
         boolean consumeAmmo = IGunOperator.fromLivingEntity(player).consumesAmmoOrNot();
         boolean hasAmmoInBarrel = iGun.hasBulletInBarrel(mainHandItem) && boltType != Bolt.OPEN_BOLT;
-        int ammoCount = consumeAmmo ? iGun.getCurrentAmmoCount(mainHandItem) + (hasAmmoInBarrel ? 1 : 0) : Integer.MAX_VALUE;
-        // 连发射击间隔
-        long period = fireMode == FireMode.BURST ? gunData.getBurstShootInterval() : 1;
-        // 最大连发数
-        final int maxCount = Math.min(ammoCount, fireMode == FireMode.BURST ? gunData.getBurstData().getCount() : 1);
-        // 连发计数器
-        AtomicInteger count = new AtomicInteger(0);
-
-        LocalPlayerDataHolder.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate(
-                () -> runClientShootCycle(display, iGun, mainHandItem, gunData, count, maxCount, chargeProgress),
-                delay, period, TimeUnit.MILLISECONDS);
+        int burstSize = fireMode == FireMode.BURST ? Math.max(1, gunData.getBurstData().getCount()) : 1;
+        int magazine = iGun.useInventoryAmmo(mainHandItem) ? ClientAmmoCount.get(player, mainHandItem, iGun) : iGun.getCurrentAmmoCount(mainHandItem);
+        int maxCount = consumeAmmo ? (int) Math.min(burstSize, (long) Math.max(0, magazine) + (hasAmmoInBarrel ? 1 : 0)) : burstSize;
+        long period = fireMode == FireMode.BURST ? Math.max(1, gunData.getBurstShootInterval()) : 1;
+        var count = new AtomicInteger();
+        var client = Minecraft.getInstance();
+        var gunId = iGun.getGunId(mainHandItem);
+        int slot = player.getInventory().getSelectedSlot();
+        long epoch = GunTime.epoch();
+        long[] due = {GunTime.nowMillis() + Math.max(0, delay)};
+        data.shots.start(LocalPlayerDataHolder.SCHEDULED_EXECUTOR_SERVICE, client, delay, period, () -> {
+            var held = player.getMainHandItem();
+            if (epoch != GunTime.epoch() || client.player != player || player.isDeadOrDying() || data.isTimedStateLocked()
+                    || slot != player.getInventory().getSelectedSlot() || held.getItem() != iGun || !gunId.equals(iGun.getGunId(held))) {
+                data.isShootRecorded = true;
+                return false;
+            }
+            long now = GunTime.nowMillis();
+            if (!GunTime.shouldTick() || now < due[0]) return true;
+            runClientShootCycle(display, iGun, held, gunData, count, maxCount, chargeProgress);
+            due[0] = now + period;
+            return count.get() < maxCount;
+        });
     }
 
-    /**
-     * Stable hook for one execution of the client burst scheduler.
-     */
+    /** One timer wake on the client thread. The stable hook can still control the cycle counter. */
     protected void runClientShootCycle(GunDisplayInstance display, IGun iGun, ItemStack mainHandItem, GunData gunData,
                                        AtomicInteger count, int maxCount, float chargeProgress) {
-        if (count.get() == 0) {
-            // 转换 isRecord 状态，允许下一个tick的开火检测。
-            data.isShootRecorded = true;
-        }
-        //Handle Heat Data
-        if (gunData.hasHeatData()) {
-            if (iGun.isOverheatLocked(mainHandItem)) {
-                ScheduledFuture<?> future = (ScheduledFuture<?>) Thread.currentThread();
-                future.cancel(false); // 取消当前任务
-                return;
-            }
-        }
-        // 如果达到最大连发次数，或者玩家已经死亡，取消任务
-        if (count.get() >= maxCount || player.isDeadOrDying()) {
-            ScheduledFuture<?> future = (ScheduledFuture<?>) Thread.currentThread();
-            future.cancel(false); // 取消当前任务
+        if (count.get() == 0) data.isShootRecorded = true;
+        if (count.get() >= maxCount || player.isDeadOrDying() || gunData.hasHeatData() && iGun.isOverheatLocked(mainHandItem)) {
+            count.set(maxCount);
             return;
         }
-
-        // 以下逻辑只需要执行一次
         if (count.get() == 0) {
-            // 如果状态锁正在准备锁定，且不是开火的状态锁，则不允许开火(主要用于防止切枪后开火动作覆盖切枪动作)
             if (data.clientStateLock && data.lockedCondition != null && !isShootLockCondition(data.lockedCondition)) {
+                count.set(maxCount);
                 return;
             }
-            // 记录新的开火时间戳
             data.clientLastShootTimestamp = data.clientShootTimestamp;
-            data.clientShootTimestamp = System.currentTimeMillis();
-            // 发送开火的数据包，通知服务器
+            data.clientShootTimestamp = GunTime.nowMillis();
             ClientPlayNetworking.send(new ClientMessagePlayerShoot(data.clientShootTimestamp - data.clientBaseTimestamp, chargeProgress));
         }
-
-        // 已核实：本段运行在 ScheduledExecutorService 线程，而动画状态机、声音
-        // 与 Fabric 事件都属于客户端主线程状态；必须经 Minecraft 的事件循环提交，
-        // 否则会并发修改集合。将具名 hook 整体提交，不能把效果移回 scheduler 线程。
-        ((BlockableEventLoopAccessor) Minecraft.getInstance()).tacz$submitAsync(
-                () -> applyClientFireEffects(display, mainHandItem, gunData));
-
-        count.getAndIncrement();
+        applyClientFireEffects(display, mainHandItem, gunData);
+        count.incrementAndGet();
     }
 
     /**
@@ -347,7 +333,7 @@ public class LocalPlayerShoot {
             } else {
                 SoundPlayManager.playShootSound(player, display, gunData);
             }
-            com.tacz.guns.api.event.common.GunFirePostEvent.EVENT.invoker().post(new com.tacz.guns.api.event.common.GunFirePostEvent(player, mainHandItem, LogicalSide.CLIENT));
+            GunFirePostEvent.EVENT.invoker().post(new GunFirePostEvent(player, mainHandItem, LogicalSide.CLIENT));
         }
     }
 
@@ -370,9 +356,9 @@ public class LocalPlayerShoot {
         FireMode fireMode = iGun.getFireMode(mainHandItem);
         long coolDown;
         if (fireMode == FireMode.BURST) {
-            coolDown = (long) (gunData.getBurstData().getMinInterval() * 1000f) - (System.currentTimeMillis() - data.clientShootTimestamp);
+            coolDown = (long) (gunData.getBurstData().getMinInterval() * 1000f) - (GunTime.nowMillis() - data.clientShootTimestamp);
         } else {
-            coolDown = gunData.getShootInterval(this.player, fireMode, mainHandItem) - (System.currentTimeMillis() - data.clientShootTimestamp);
+            coolDown = gunData.getShootInterval(this.player, fireMode, mainHandItem) - (GunTime.nowMillis() - data.clientShootTimestamp);
         }
         return Math.max(coolDown, 0);
     }

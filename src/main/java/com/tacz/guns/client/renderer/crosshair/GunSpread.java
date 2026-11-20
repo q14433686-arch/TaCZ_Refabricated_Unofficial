@@ -25,7 +25,7 @@ final class GunSpread {
         var data = TimelessAPI.getClientGunIndex(gun.getGunId(stack)).map(index -> index.getGunData()).orElse(null);
         if (data == null) return 0;
 
-        var stance = InaccuracyType.getInaccuracyType(player);
+        var stance = InaccuracyType.getInaccuracyType(player, () -> Math.sqrt(player.distanceToSqr(player.xOld, player.yOld, player.zOld)));
         var cache = IGunOperator.fromLivingEntity(player).getCacheProperty();
         Float spread = cache == null ? null : cache.getCacheOrDefault(GunProperties.INACCURACY, Map.of()).get(stance);
         if (spread == null) { // A newly drawn gun may not have its modified values yet.

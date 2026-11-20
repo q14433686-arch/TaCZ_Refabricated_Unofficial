@@ -243,6 +243,18 @@ dependencies {
     // implementation "maven.modrinth:accrelatedrendering-refabricated:1.0.8-1.20.1-alpha-fabric.1"
 }
 
+// External game-test pack, never a production classpath resource.
+['gameTest', 'clientGameTest'].each { run ->
+    if (run == 'clientGameTest' && !project.hasProperty('taczClientSmoke')) return
+    def zip = tasks.register("zip${run.capitalize()}Pack", Zip) {
+        from 'src/gametest/fixtures/overlay'
+        archiveFileName = 'tacz-port-smoke.zip'
+        destinationDirectory = layout.buildDirectory.dir("run/${run}/tacz")
+        mustRunAfter tasks.named('deleteGameTestRunDir')
+    }
+    tasks.named("run${run.capitalize()}") { dependsOn zip }
+}
+
 test { useJUnitPlatform() }
 
 processResources {

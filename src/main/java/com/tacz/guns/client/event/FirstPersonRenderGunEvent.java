@@ -1,5 +1,6 @@
 package com.tacz.guns.client.event;
 
+import com.tacz.guns.util.time.GunTime;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.tacz.guns.api.DefaultAssets;
@@ -8,6 +9,7 @@ import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.client.other.KeepingItemRenderer;
 import com.tacz.guns.api.event.common.GunFireEvent;
+import com.tacz.guns.api.event.common.GunFirePostEvent;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor;
@@ -17,7 +19,12 @@ import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.MuzzleFlashRender;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
+import com.tacz.guns.client.tuning.ViewmodelPosition;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
+import com.tacz.guns.client.resource.index.ClientAttachmentVariantIndex;
+import com.tacz.guns.client.resource.index.ClientSlotAdapterIndex;
+import com.tacz.guns.util.SlotAdapterHelper;
+import com.tacz.guns.client.resource.pojo.display.gun.AdsPath;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.util.math.Easing;
 import com.tacz.guns.util.math.MathUtil;
@@ -85,25 +92,31 @@ public class FirstPersonRenderGunEvent {
         }
     }
 
+    // Kept callable for 26.3 integrations. Our own listener only runs after all pre callbacks voted.
     public static void onGunFire(GunFireEvent event) {
-        if (event.getLogicalSide().isClient()) {
-            LivingEntity shooter = event.getShooter();
-            LocalPlayer player = Minecraft.getInstance().player;
-            if (!shooter.equals(player)) {
-                return;
-            }
-            ItemStack mainHandItem = player.getMainHandItem();
-            IGun iGun = IGun.getIGunOrNull(mainHandItem);
-            if (iGun == null) {
-                return;
-            }
-            TimelessAPI.getClientGunIndex(iGun.getGunId(mainHandItem)).ifPresent(gunIndex -> {
-                // 记录开火时间戳，用于后坐力程序动画
-                shootTimeStamp = System.currentTimeMillis();
-                // 记录枪口火焰数据
-                MuzzleFlashRender.onShoot();
-            });
+        if (!event.isCanceled() && event.getLogicalSide().isClient()) onGunFire(event.getShooter());
+    }
+
+    public static void onGunFirePost(GunFirePostEvent event) {
+        if (event.getLogicalSide().isClient()) onGunFire(event.getShooter());
+    }
+
+    private static void onGunFire(LivingEntity shooter) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (!shooter.equals(player)) {
+            return;
         }
+        ItemStack mainHandItem = player.getMainHandItem();
+        IGun iGun = IGun.getIGunOrNull(mainHandItem);
+        if (iGun == null) {
+            return;
+        }
+        TimelessAPI.getClientGunIndex(iGun.getGunId(mainHandItem)).ifPresent(gunIndex -> {
+            // 记录开火时间戳，用于后坐力程序动画
+            shootTimeStamp = GunTime.nowMillis();
+            // 记录枪口火焰数据
+            MuzzleFlashRender.onShoot();
+        });
     }
 
     private static boolean bulletFromPlayer(Entity entity) {
@@ -152,8 +165,12 @@ public class FirstPersonRenderGunEvent {
         if (scopeId.equals(DefaultAssets.EMPTY_ATTACHMENT_ID)) {
             scopeId = iGun.getBuiltInAttachmentId(stack, AttachmentType.SCOPE);
         }
+        var scopeIndex = DefaultAssets.isEmptyAttachmentId(scopeId) ? Optional.<ClientAttachmentIndex>empty() : TimelessAPI.getClientAttachmentIndex(scopeId);
         CompoundTag scopeTag = iGun.getAttachmentTag(stack, AttachmentType.SCOPE);
         int zoomNumber = AttachmentItemDataAccessor.getZoomNumberFromTag(scopeTag);
+        var scopeVariant = TimelessAPI.getClientAttachmentVariantIndex(scopeId, scopeTag);
+        Vector3f mountOffset = null;
+        int mountInsert = -1;
         int viewIndex = 1;
         if (DefaultAssets.isEmptyAttachmentId(scopeId)) {
             // 未安装瞄具，使用机瞄定位组
@@ -163,17 +180,18 @@ public class FirstPersonRenderGunEvent {
             List<BedrockPart> scopeNodePath = model.getScopePosPath();
             if (scopeNodePath != null) {
                 aimingNodePath = new ArrayList<>(scopeNodePath);
-                Optional<ClientAttachmentIndex> indexOptional = TimelessAPI.getClientAttachmentIndex(scopeId);
-                if (indexOptional.isPresent()) {
-                    BedrockAttachmentModel attachmentModel = indexOptional.get().getAttachmentModel();
-                    int[] views = indexOptional.get().getViews();
-                    viewIndex = views[zoomNumber % views.length] - 1;
+                mountInsert = scopeNodePath.size() - 1;
+                mountOffset = getScopeMountOffset(stack, scopeId, scopeVariant);
+                if (scopeIndex.isPresent()) {
+                    BedrockAttachmentModel attachmentModel = scopeVariant.map(ClientAttachmentVariantIndex::getAttachmentModel).orElseGet(scopeIndex.get()::getAttachmentModel);
+                    int[] views = scopeVariant.map(ClientAttachmentVariantIndex::getViews).orElseGet(scopeIndex.get()::getViews);
+                    viewIndex = views[Math.floorMod(zoomNumber, views.length)] - 1;
                     if (attachmentModel != null) {
                         // 【第 35 轮】把"当前用的是哪一组镜"告诉模型，供组合镜过滤准星。
                         // views[] 里 1 = 红点分系统、2 = 筒镜分系统
                         // （scope_hamr_display.json: zoom[3.25, 1.25] / views[2, 1]）。
                         // 这里是全流程唯一同时知道 zoomNumber 与 views[] 的地方。
-                        attachmentModel.setActiveViewGroup(views[zoomNumber % views.length]);
+                        attachmentModel.setActiveViewGroup(views[Math.floorMod(zoomNumber, views.length)]);
                         List<BedrockPart> scopeViewPath = attachmentModel.getScopeViewPath(currentViewIndex == -1 ? viewIndex : currentViewIndex);
                         if (scopeViewPath != null) {
                             aimingNodePath.addAll(scopeViewPath);
@@ -182,7 +200,7 @@ public class FirstPersonRenderGunEvent {
                 }
             }
         }
-        Matrix4f aimingViewMatrix = getPositioningNodeInverse(aimingNodePath);
+        Matrix4f aimingViewMatrix = getPositioningNodeInverse(aimingNodePath, mountOffset, mountInsert);
         // 执行两个 scope view 之间的插值
         if (currentViewIndex == -1) {
             currentViewIndex = viewIndex;
@@ -199,9 +217,25 @@ public class FirstPersonRenderGunEvent {
             oldViewIndex = view_interpret;
             currentViewIndex = viewIndex;
         }
+        AdsPath adsPath = TimelessAPI.getGunDisplay(stack).map(display -> display.getAdsPath()).orElse(null);
         // 应用瞄准变换
-        MathUtil.applyMatrixLerp(transformMatrix, getPositioningNodeInverse(idleNodePath), transformMatrix, (1 - refitScreenOpeningProgress));
-        MathUtil.applyMatrixLerp(transformMatrix, aimingViewMatrix, transformMatrix, (1 - refitScreenOpeningProgress) * aimingProgress);
+        float idleScopeHeightAdjust = scopeIndex.map(ClientAttachmentIndex::getIdleScopeHeightAdjust).orElse(0f) / 16.0f;
+        Matrix4f idleViewMatrix = getPositioningNodeInverse(idleNodePath);
+        MathUtil.applyMatrixLerp(transformMatrix, idleViewMatrix, transformMatrix, (1 - refitScreenOpeningProgress));
+        float positioningWeight = 1 - refitScreenOpeningProgress;
+        float pathProgress = aimingProgress;
+        float rotationProgress = adsPath == null ? aimingProgress : adsPath.rotation(pathProgress);
+        MathUtil.applyMatrixLerp(transformMatrix, aimingViewMatrix, transformMatrix, positioningWeight * rotationProgress);
+        if (adsPath != null) {
+            // 保留原有旋转插值，位移各轴按自己的时间窗口到达同一瞄准终点。
+            // 共享已有的平滑开镜进度，避免短 ADS 时间导致模型瞬间横移。
+            transformMatrix.m30(transformMatrix.m30() + (aimingViewMatrix.m30() - idleViewMatrix.m30())
+                    * (adsPath.x(pathProgress) - rotationProgress) * positioningWeight);
+            transformMatrix.m31(transformMatrix.m31() + (aimingViewMatrix.m31() - idleViewMatrix.m31())
+                    * (adsPath.y(pathProgress) - rotationProgress) * positioningWeight);
+            transformMatrix.m32(transformMatrix.m32() + (aimingViewMatrix.m32() - idleViewMatrix.m32())
+                    * (adsPath.z(pathProgress) - rotationProgress) * positioningWeight);
+        }
         // 应用改装界面开启时的定位
         float refitTransformProgress = (float) Easing.easeOutCubic(RefitTransform.getTransformProgress());
         AttachmentType oldType = RefitTransform.getOldTransformType();
@@ -210,7 +244,9 @@ public class FirstPersonRenderGunEvent {
         List<BedrockPart> toNode = model.getRefitAttachmentViewPath(currentType);
         MathUtil.applyMatrixLerp(transformMatrix, getPositioningNodeInverse(fromNode), transformMatrix, refitScreenOpeningProgress);
         MathUtil.applyMatrixLerp(transformMatrix, getPositioningNodeInverse(toNode), transformMatrix, refitScreenOpeningProgress * refitTransformProgress);
-        com.tacz.guns.client.tuning.ViewmodelPosition.apply(transformMatrix, aimingProgress, refitScreenOpeningProgress);
+        float heightProgress = adsPath == null ? aimingProgress : adsPath.y(aimingProgress);
+        transformMatrix.m31(transformMatrix.m31() + idleScopeHeightAdjust * (1 - heightProgress));
+        ViewmodelPosition.apply(transformMatrix, aimingProgress, refitScreenOpeningProgress);
         // 应用变换到 PoseStack
         poseStack.translate(0, 1.5f, 0);
         poseStack.mulPose(transformMatrix);
@@ -222,10 +258,18 @@ public class FirstPersonRenderGunEvent {
      */
     @Nonnull
     private static Matrix4f getPositioningNodeInverse(List<BedrockPart> nodePath) {
+        return getPositioningNodeInverse(nodePath, null, -1);
+    }
+
+    @Nonnull
+    private static Matrix4f getPositioningNodeInverse(List<BedrockPart> nodePath, Vector3f mountOffset, int mountOffsetInsertIndex) {
         Matrix4f matrix4f = new Matrix4f();
         matrix4f.identity();
         if (nodePath != null) {
             for (int i = nodePath.size() - 1; i >= 0; i--) {
+                if (mountOffset != null && i == mountOffsetInsertIndex) {
+                    matrix4f.translate(-mountOffset.x() / 16.0F, mountOffset.y() / 16.0F, -mountOffset.z() / 16.0F);
+                }
                 BedrockPart part = nodePath.get(i);
                 // 计算反向的旋转
                 matrix4f.rotate(Axis.XN.rotation(part.xRot));
@@ -242,10 +286,34 @@ public class FirstPersonRenderGunEvent {
         return matrix4f;
     }
 
+    private static Vector3f getScopeMountOffset(ItemStack gunItem, Identifier scopeId,
+                                                Optional<ClientAttachmentVariantIndex> scopeVariant) {
+        Vector3f combinedOffset = new Vector3f();
+        boolean hasOffset = false;
+
+        Identifier adapterId = SlotAdapterHelper.getEffectiveSlotAdapter(gunItem, AttachmentType.SCOPE, scopeId);
+        if (adapterId != null) {
+            Vector3f adapterOffset = TimelessAPI.getClientSlotAdapterIndex(adapterId)
+                    .map(ClientSlotAdapterIndex::getMountOffset)
+                    .orElse(null);
+            if (adapterOffset != null) {
+                combinedOffset.add(adapterOffset);
+                hasOffset = true;
+            }
+        }
+
+        Vector3f variantOffset = scopeVariant.map(ClientAttachmentVariantIndex::getMountOffset).orElse(null);
+        if (variantOffset != null) {
+            combinedOffset.add(variantOffset);
+            hasOffset = true;
+        }
+        return hasOffset ? combinedOffset : null;
+    }
+
     private static void applyShootSwayAndRotation(BedrockGunModel model, float aimingProgress) {
         BedrockPart rootNode = model.getRootNode();
         if (rootNode != null) {
-            float progress = 1 - (System.currentTimeMillis() - shootTimeStamp) / (SHOOT_ANIMATION_TIME * 1000);
+            float progress = 1 - (GunTime.nowMillis() - shootTimeStamp) / (SHOOT_ANIMATION_TIME * 1000);
             if (progress < 0) {
                 progress = 0;
             }
@@ -259,7 +327,7 @@ public class FirstPersonRenderGunEvent {
 
     private static void applyJumpingSway(BedrockGunModel model, float partialTicks) {
         if (jumpingTimeStamp == -1) {
-            jumpingTimeStamp = System.currentTimeMillis();
+            jumpingTimeStamp = GunTime.nowMillis();
         }
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null) {
@@ -276,7 +344,7 @@ public class FirstPersonRenderGunEvent {
                     }
                     lastOnGround = true;
                 } else {
-                    jumpingSwayProgress -= (System.currentTimeMillis() - jumpingTimeStamp) / (LANDING_SWAY_TIME * 1000);
+                    jumpingSwayProgress -= (GunTime.nowMillis() - jumpingTimeStamp) / (LANDING_SWAY_TIME * 1000);
                     if (jumpingSwayProgress < 0) {
                         jumpingSwayProgress = 0;
                     }
@@ -290,14 +358,14 @@ public class FirstPersonRenderGunEvent {
                     }
                     lastOnGround = false;
                 } else {
-                    jumpingSwayProgress -= (System.currentTimeMillis() - jumpingTimeStamp) / (JUMPING_SWAY_TIME * 1000);
+                    jumpingSwayProgress -= (GunTime.nowMillis() - jumpingTimeStamp) / (JUMPING_SWAY_TIME * 1000);
                     if (jumpingSwayProgress < 0) {
                         jumpingSwayProgress = 0;
                     }
                 }
             }
         }
-        jumpingTimeStamp = System.currentTimeMillis();
+        jumpingTimeStamp = GunTime.nowMillis();
         float ySway = JUMPING_DYNAMICS.update(JUMPING_Y_SWAY * jumpingSwayProgress);
         BedrockPart rootNode = model.getRootNode();
         if (rootNode != null) {
@@ -574,7 +642,7 @@ public class FirstPersonRenderGunEvent {
             if (delta.lengthSquared() < 1.0e-6 && v3.lengthSquared() < 1.0e-6) {
                 return; // 静帧不打，避免刷屏
             }
-            long now = System.currentTimeMillis();
+            long now = GunTime.nowMillis();
             if (now - case08LastLogMs < 150L) {
                 return;
             }
@@ -606,5 +674,15 @@ public class FirstPersonRenderGunEvent {
                     com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack());
         } catch (Throwable ignored) {
         }
+    }
+
+    public static void resetTimestamps() {
+        shootTimeStamp = -1;
+        jumpingTimeStamp = -1;
+        jumpingSwayProgress = 0;
+        lastOnGround = false;
+        currentViewIndex = -1;
+        if (SWITCH_VIEW_DYNAMICS != null) SWITCH_VIEW_DYNAMICS.stop();
+        SWITCH_VIEW_DYNAMICS = null;
     }
 }

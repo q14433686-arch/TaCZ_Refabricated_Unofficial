@@ -26,23 +26,8 @@ import static com.tacz.guns.util.InputExtraCheck.isInGame;
 public class InteractKey {
     public static final KeyMapping INTERACT_KEY = new KeyMapping("key.tacz.interact.desc",
             InputConstants.Type.KEYSYM,
-            org.lwjgl.glfw.GLFW.GLFW_KEY_O,
+            InputConstants.KEY_O,
             TaCZKeyCategory.TACZ);
-
-    public static void onInteractKeyPress(cn.sh1rocu.tacz.api.event.InputEvent.Key event) {
-        press(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()), event.getAction());
-    }
-
-    public static void onInteractMousePress(cn.sh1rocu.tacz.api.event.InputEvent.MouseButton.Post event) {
-        press(InputConstants.Type.MOUSE.getOrCreate(event.getButton()), event.getAction());
-    }
-
-    private static void press(InputConstants.Key key, int action) {
-        if (action != org.lwjgl.glfw.GLFW.GLFW_PRESS || !isInGame()) return;
-        var mc = Minecraft.getInstance();
-        if (!mc.options.keyUse.isUnbound() && mc.options.keyUse.matches(key)) DisplayCaseLockHint.onEmptyHandUse(mc);
-        if (!INTERACT_KEY.isUnbound() && INTERACT_KEY.matches(key)) doInteractLogic(false);
-    }
 
     public static boolean onInteractControllerPress(boolean isPress) {
         return isPress && isInGame() && doInteractLogic(true);

@@ -1,5 +1,6 @@
 package com.tacz.guns.api.client.animation.statemachine;
 
+import com.tacz.guns.util.time.GunTime;
 import com.tacz.guns.api.client.animation.AnimationController;
 
 import javax.annotation.Nonnull;
@@ -35,6 +36,7 @@ public class AnimationStateMachine<T extends AnimationStateContext> {
     private final @Nonnull AnimationController animationController;
 
     protected long exitingTime = -1;
+    protected long exitingEpoch = GunTime.epoch();
 
     /**
      * @param animationController 动画状态机控制的动画控制器
@@ -158,7 +160,8 @@ public class AnimationStateMachine<T extends AnimationStateContext> {
      * 用于在切换至同一个物品时，建议延迟重新初始化状态机，以便让动画播放完毕。
      */
     public void setExitingTime(long keepTime) {
-        this.exitingTime = System.currentTimeMillis() + keepTime;
+        this.exitingEpoch = GunTime.epoch();
+        this.exitingTime = GunTime.nowMillis() + keepTime;
     }
 
     /**
@@ -168,7 +171,7 @@ public class AnimationStateMachine<T extends AnimationStateContext> {
      * @return 建议退出时间
      */
     public long getExitingTime() {
-        return exitingTime;
+        return exitingEpoch == GunTime.epoch() ? exitingTime : -1;
     }
 
     /**

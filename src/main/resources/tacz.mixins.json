@@ -10,6 +10,7 @@
     "common.ServerPlayNetHandlerMixin"
   ],
   "client": [
+    "client.CreativeModeInventoryScreenMixin",
     "client.ThermalRenderSetupAccessor",
     "client.ThermalRenderTypeAccessor",
     "client.ThermalTextureBindingAccessor",

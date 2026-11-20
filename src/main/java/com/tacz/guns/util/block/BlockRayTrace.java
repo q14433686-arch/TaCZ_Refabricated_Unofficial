@@ -29,9 +29,7 @@ public final class BlockRayTrace {
         return performRayTrace(context, (rayTraceContext, blockPos) -> {
             BlockState blockState = level.getBlockState(blockPos);
             // 这里添加判断方块是否可以穿透，如果可以穿透则返回 null
-            List<String> ids = AmmoConfig.PASS_THROUGH_BLOCKS.get();
-            Identifier blockId = BuiltInRegistries.BLOCK.getKey(blockState.getBlock());
-            if (blockId != null && ids.contains(blockId.toString())) {
+            if (com.tacz.guns.config.util.AmmoBlockConfigRead.canPassThrough(blockState)) {
                 return null;
             }
             // tag

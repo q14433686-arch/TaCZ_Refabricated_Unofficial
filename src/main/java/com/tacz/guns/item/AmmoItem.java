@@ -27,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
+import com.tacz.guns.util.ContentPackOrder;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -124,7 +125,7 @@ public class AmmoItem extends Item implements AmmoItemDataAccessor, IItem {
     }
 
     private static Comparator<Map.Entry<Identifier, CommonAmmoIndex>> idNameSort() {
-        return Comparator.comparingInt(m -> m.getValue().getSort());
+        return ContentPackOrder.byPackThenSort(CommonAmmoIndex::getSort);
     }
 
     public static NonNullList<ItemStack> fillItemCategory() {

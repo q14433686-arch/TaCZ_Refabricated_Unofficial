@@ -157,7 +157,7 @@ public class Animations {
             }
             // 将声音数据转移到 ObjectAnimation 中
             SoundEffectKeyframes soundEffectKeyframes = bedrockAnimation.getSoundEffects();
-            if (soundEffectKeyframes != null) {
+            if (soundEffectKeyframes != null && !soundEffectKeyframes.getKeyframes().isEmpty()) {
                 ObjectAnimationSoundChannel soundChannel = new ObjectAnimationSoundChannel();
                 soundChannel.content = new AnimationSoundChannelContent();
                 int keyframeNum = soundEffectKeyframes.getKeyframes().size();
@@ -170,6 +170,10 @@ public class Animations {
                     i++;
                 }
                 animation.setSoundChannel(soundChannel);
+            }
+            if (bedrockAnimation.getParticleEffects() != null) {
+                animation.setParticleChannel(bedrockAnimation.getParticleEffects().channel());
+                animation.includeDuration(bedrockAnimation.getAnimationLength());
             }
             result.add(animation);
         }

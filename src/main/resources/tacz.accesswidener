@@ -11,3 +11,4 @@ accessible method net/minecraft/client/Minecraft startUseItem ()V
 #  && !isMobilityRestricted && !isPassenger && target instanceof LivingEntity && !isSprinting），
 # 直接复用可保证与原版【完全一致】而非行为近似，故开放访问而不是手写一遍条件。
 accessible method net/minecraft/world/entity/player/Player canCriticalAttack (Lnet/minecraft/world/entity/Entity;)Z
+accessible field net/minecraft/world/item/CreativeModeTabs CACHED_PARAMETERS Lnet/minecraft/world/item/CreativeModeTab$ItemDisplayParameters;

@@ -23,7 +23,7 @@ final class TargetPoseSmoke {
         for (boolean rising : new boolean[]{false, true}) {
             var block = ModBlocks.TARGET.defaultBlockState().setValue(TargetBlock.FACING, Direction.SOUTH).setValue(TargetBlock.STAND, rising);
             var target = new TargetBlockEntity(BlockPos.ZERO, block);
-            target.setOwnerName(mc.player.getName().getString());
+            target.setOwner(net.minecraft.world.item.component.ResolvableProfile.createUnresolved(mc.player.getGameProfile().name()));
             target.rot = rising ? 90 : 0;
             TargetBlockEntity.clientTick(mc.level, BlockPos.ZERO, block, target);
             var dispatcher = mc.getBlockEntityRenderDispatcher();

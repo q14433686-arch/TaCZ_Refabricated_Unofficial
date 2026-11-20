@@ -62,6 +62,7 @@ public class AttachmentCacheProperty {
         return key.type().cast(cacheValues.get(key.name()).getValue());
     }
 
+    /** A display may be sampled while a newly equipped stack's cache is still being populated. */
     public <T> T getCacheOrDefault(GunProperty<T> key, T fallback) {
         var cached = cacheValues.get(key.name());
         return cached != null && key.type().isInstance(cached.getValue()) ? key.type().cast(cached.getValue()) : fallback;
