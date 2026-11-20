@@ -90,7 +90,11 @@ public interface IReticleRenderer {
             this(poseStack, collector, displayContext, baseRenderType, illuminatedRenderType, light, overlay, aimingProgress, maskActive, null);
         }
         public void submit(com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot snapshot, boolean emissive) {
-            if (maskActive && texture != null && ScopePipRenderer.wantsIrisComposite()) {
+            // A collimated display is foreground ink. Subpixel markings also disappear in
+            // a pack's hand/TAA pass on sights with no optical post-process of their own.
+            // Reuse the real hand projection and inverse aperture, not an unmasked HUD cross.
+            if (maskActive && texture != null && !ScopePipRenderer.opaqueCameraMedium()
+                    && com.tacz.guns.compat.iris.IrisCompat.hasActiveIrisPack()) {
                 ScopeFinalOverlayState.queueReticle(snapshot, ScopeBodyRenderTypes.finalReticle(texture, emissive));
                 return; // Do not bake display graphics into the scene subsequently thermally mapped.
             }

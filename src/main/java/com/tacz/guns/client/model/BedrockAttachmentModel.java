@@ -296,7 +296,10 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             if (part == null) {
                 continue;
             }
-            if (RETICLE_ILLUMINATED_PATTERN.matcher(name).matches()) {
+            if (RETICLE_ILLUMINATED_PATTERN.matcher(name).matches()
+                    && (divisionByIndex.isEmpty() || divisionByIndex.values().stream().anyMatch(root -> hasAncestor(part, root)))) {
+                // E.g. TA31 also has red_illuminated on the *housing*. Replaying it here
+                // would punch it straight back through the aperture as a fake reticle.
                 illuminated.add(part);
             } else if (RETICLE_ETCHED_PATTERN.matcher(name).matches()) {
                 etched.add(part);

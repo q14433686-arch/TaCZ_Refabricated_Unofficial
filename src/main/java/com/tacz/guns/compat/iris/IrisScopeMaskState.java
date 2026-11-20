@@ -1,6 +1,8 @@
 package com.tacz.guns.compat.iris;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
+import net.minecraft.resources.Identifier;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.render.scope.ScopeMaskRenderer;
 import com.tacz.guns.client.render.scope.ScopeMaskTarget;
@@ -14,7 +16,6 @@ import org.lwjgl.system.MemoryStack;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.IntBuffer;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -26,12 +27,8 @@ import java.util.Map;
  * set to {@code mode = 0} on every draw call to prevent uniform leakage and random clipping.</p>
  */
 public final class IrisScopeMaskState {
-    private static final String BODY_PIPELINE = "pipeline/scope_body_clipped";
-    private static final String FLASH_TRANSLUCENT_PIPELINE = "pipeline/scope_flash_translucent_clipped";
-    private static final String FLASH_SWIRL_PIPELINE = "pipeline/scope_flash_swirl_clipped";
-    private static final String RETICLE_PIPELINE = "pipeline/scope_reticle_clipped";
-    private static final String RETICLE_EMISSIVE_PIPELINE = "pipeline/scope_reticle_emissive_clipped";
-    private static final String TEXT_PIPELINE = "pipeline/scope_text_clipped";
+    private static final Identifier SCOPE_BODY = Identifier.parse("tacz:core/scope_body");
+    private static final Identifier SCOPE_TEXT = Identifier.parse("tacz:pipeline/scope_text_clipped");
     private static final String MASK_SAMPLER = "ScopeMaskSampler";
     private static final String UNIFORM_MODE = "tacz_ScopeMaskMode";
     private static final String UNIFORM_SAMPLER = "tacz_ScopeMaskSampler";
@@ -478,54 +475,15 @@ public final class IrisScopeMaskState {
     /** 真正去问「这套管线是不是我们的镜身/准星管线」。只在每个管线实例上跑一次。 */
     private static int resolveModeUncached(Object glPipeline) {
         try {
-            Object renderPipeline = invokeNoArgs(glPipeline, "info");
-            if (renderPipeline == null) {
-                return 0;
-            }
-            Object location = invokeNoArgs(renderPipeline, "getLocation");
-            if (location == null) {
-                return 0;
-            }
-            String namespace = String.valueOf(invokeNoArgs(location, "getNamespace"));
-            String path = String.valueOf(invokeNoArgs(location, "getPath"));
-            if (!GunMod.MOD_ID.equals(namespace)) {
-                return 0;
-            }
-            String normalized = path.toLowerCase(Locale.ROOT);
-            if (BODY_PIPELINE.equals(normalized)) {
-                // 【恒为 1】镜身在孔径内 discard，于是最终画面里孔径那块就是 1× 的世界。
-                //
-                // 镜内的「放大」不在这里做 —— 那是
-                // {@code ScopePipRenderer.compositeAfterLevelUnderShaders()} 的活：
-                // 等 Iris 整条管线跑完，直接在最终画面上把孔径内那 1/Z 的小块放大铺满。
-                // 而「孔径内是干净的 1× 世界、没有枪」正是这里 discard 换来的前提。
-                //
-                // ↓ 以下是被推翻的旧方案，留作路标，别再走一遍 ↓
-                // 曾经让这里返回 3，由注入进 pack 着色器的分支去采样 colortexN。
-                // 两次实测都失败：先是纯黑（HAND_CUTOUT 跑在延迟光照之前，
-                // 那一刻没有任何 colortex 装着已着色的场景），把枪挪进半透明 pass 之后
-                // 又变成「灰噪块 + 黑」（场景色逐 pack 不同，Eclipse 在 colortex2）。
-                // 根子上这条路要求猜中别家 pack 的内部约定，怎么修都是下一次盲猜。
-                return 1;
-            }
-            if (FLASH_TRANSLUCENT_PIPELINE.equals(normalized)
-                    || FLASH_SWIRL_PIPELINE.equals(normalized)
-                    || "pipeline/muzzle_strip_clipped".equals(normalized)
-                    || "pipeline/muzzle_swirl_clipped".equals(normalized)
-                    || "pipeline/snowstorm_add_clipped".equals(normalized)
-                    || "pipeline/snowstorm_emissive_clipped".equals(normalized)) {
-                return 1;
-            }
-            if (RETICLE_PIPELINE.equals(normalized) || RETICLE_EMISSIVE_PIPELINE.equals(normalized)) {
-                return 2;
-            }
-            if (TEXT_PIPELINE.equals(normalized)) {
-                // 【镜内文字，2026-08-30 补】与准星同侧：discard 镜外、只留镜内。
-                // 光影下我们自己的 scope_text.fsh 不会运行（assignPipeline 之后
-                // Iris 用 pack 的 HAND 着色器替换整条管线），裁剪只能靠注入分支
-                // 的 mode=2。此前这里没有该管线的映射 → mode 恒 0 → MK5HD 等
-                // 瞄具的镜内文字在光影下不裁切（用户实测截图，2026-08-30）。
-                return 2;
+            // Iris replaces the program but GlRenderPipeline.info() is still the *original*
+            // Blaze3D pipeline. Read the same material contract that the native fsh uses:
+            // an illuminated lens/body is still a body, not a division or an unclipped glow.
+            if (!(invokeNoArgs(glPipeline, "info") instanceof RenderPipeline p)
+                    || !GunMod.MOD_ID.equals(p.getLocation().getNamespace())) return 0;
+            if (SCOPE_TEXT.equals(p.getLocation())) return 2;
+            var flags = p.getShaderDefines().flags();
+            if (SCOPE_BODY.equals(p.getFragmentShader()) && flags.contains("SCOPE_MASK")) {
+                return flags.contains("SCOPE_MASK_INVERT") ? 2 : 1;
             }
         } catch (Throwable t) {
             logOnce("resolve scope render pass", t);

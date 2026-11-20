@@ -21,8 +21,12 @@ public final class IrisThermalDepthBias implements AutoCloseable {
     /** After pipeline binding, which otherwise resets polygon offset on each draw. */
     public static void apply() {
         if (replay) {
-            GL11.glEnable(GL11.GL_POLYGON_OFFSET_FILL);
             int func = GL11.glGetInteger(GL11.GL_DEPTH_FUNC);
+            if (func == GL11.GL_EQUAL) { // shifted-face match needs the exact rasterized depth
+                GL11.glDisable(GL11.GL_POLYGON_OFFSET_FILL);
+                return;
+            }
+            GL11.glEnable(GL11.GL_POLYGON_OFFSET_FILL);
             float towardCamera = func == GL11.GL_LESS || func == GL11.GL_LEQUAL ? -2f : 2f;
             GL11.glPolygonOffset(towardCamera, towardCamera);
         }

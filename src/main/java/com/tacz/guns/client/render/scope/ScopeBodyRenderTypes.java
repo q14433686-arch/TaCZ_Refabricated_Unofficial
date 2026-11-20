@@ -1,5 +1,8 @@
 package com.tacz.guns.client.render.scope;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.AddressMode;
+import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.pipeline.BindGroupLayout;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
@@ -255,7 +258,10 @@ public final class ScopeBodyRenderTypes {
     public static RenderType finalReticle(Identifier texture, boolean emissive) {
         return FINAL_RETICLES.computeIfAbsent(texture + ":" + emissive, key -> RenderType.create("tacz_final_reticle",
                 RenderSetup.builder(emissive ? FINAL_RETICLE_EMISSIVE : FINAL_RETICLE)
-                        .withTexture("Sampler0", texture).withTexture(MASK_SAMPLER, ScopeMaskTextureHandle.ID)
+                        // Preserve sub-texel reticle strokes when minified, without smoothing enlarged art or the mask.
+                        .withTexture("Sampler0", texture, () -> RenderSystem.getSamplerCache().getSampler(
+                                AddressMode.REPEAT, AddressMode.REPEAT, FilterMode.LINEAR, FilterMode.NEAREST, false))
+                        .withTexture(MASK_SAMPLER, ScopeMaskTextureHandle.ID)
                         .useLightmap().useOverlay().createRenderSetup()));
     }
 

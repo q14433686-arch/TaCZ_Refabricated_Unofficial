@@ -34,7 +34,8 @@ import java.util.*;
 
 /** The two reported failures have different oracles. No shaderpack or edited optic assets in the fixture. */
 public final class ShaderOpticSmoke {
-    public static boolean withoutReticle; // test mixin only
+    public static Identifier withoutIron;
+    public static boolean withoutReticle, withoutCoating; // test mixin only
     private static final AttachmentType SLOT = AttachmentType.SCOPE;
     private static final String PACK = "ComplementaryReimagined_r5.8.1.zip";
     private record Mount(Identifier optic, Identifier host, boolean builtin) {}
@@ -178,9 +179,15 @@ public final class ShaderOpticSmoke {
         var key=m.optic.getPath()+"_"+v.slot;
         var bounds=ctx.computeOnClient(mc -> ScopeMaskRenderer.hasMaskThisFrame() && ScopeMaskRenderer.hasMaskBounds() ? ScopeMaskRenderer.maskBoundsNdc().clone() : null);
         var img=frame(ctx,key);
-        ctx.runOnClient(mc -> withoutReticle=true); ctx.waitTicks(3);
-        var no=frame(ctx,key+"_no_division"); ctx.runOnClient(mc -> withoutReticle=false);
-        int w=img.getWidth(),h=img.getHeight(),cx=w/2,cy=h/2,rad=h/14; boolean iron=key.startsWith("oem_sight_");
+        boolean iron=m.optic.getPath().startsWith("oem_sight_");
+        ctx.runOnClient(mc -> { withoutReticle=true; withoutIron=iron?m.optic:null; }); ctx.waitTicks(3);
+        var no=frame(ctx,key+(iron?"_no_iron":"_no_division"));
+        BufferedImage bare=no;
+        if (!iron && m.optic.getPath().startsWith("scope_")) {
+            ctx.runOnClient(mc -> withoutCoating=true); ctx.waitTicks(3); bare=frame(ctx,key+"_no_division_or_coating");
+        }
+        ctx.runOnClient(mc -> { withoutReticle=withoutCoating=false; withoutIron=null; });
+        int w=img.getWidth(),h=img.getHeight(),cx=w/2,cy=h/2,rad=h/14;
         String failure="";
         if (bounds!=null) {
             cx=Math.round(w*(.5f+.25f*(bounds[0]+bounds[2]))); cy=Math.round(h*(.5f-.25f*(bounds[1]+bounds[3])));
@@ -188,19 +195,23 @@ public final class ShaderOpticSmoke {
         }
         if (rad<3||cx-rad<0||cy-rad<0||cx+rad>w||cy+rad>h||(!iron && bounds==null)) failure="aperture";
         else {
-            int changed=0,background=0,material=0;
+            int changed=0,coating=0,background=0,material=0;
             for (int y=cy-rad;y<cy+rad;y++) for (int x=cx-rad;x<cx+rad;x++) {
                 int a=img.getRGB(x,y),z=no.getRGB(x,y);
                 if (Math.max(Math.abs(r(a)-r(z)),Math.max(Math.abs(g(a)-g(z)),Math.abs(b(a)-b(z))))>38) changed++;
+                int uncoated=bare.getRGB(x,y);
+                if ((x-cx)*(x-cx)+(y-cy)*(y-cy)<rad*rad && Math.max(Math.abs(r(uncoated)-r(z)),
+                        Math.max(Math.abs(g(uncoated)-g(z)),Math.abs(b(uncoated)-b(z))))>38) coating++;
                 if (thermal ? cold(a) : b(a)>r(a)+18) background++;
                 if (Math.max(r(a),Math.max(g(a),b(a)))<90) material++;
             }
             int red=solidRed(img,cx,cy,rad), without=solidRed(no,cx,cy,rad);
             if (red>Math.max(5,rad*.15)) failure="red-plate";
             if (background<rad*rad*2) failure+=" obstructed";
-            if (iron ? material<5 : changed<2) failure+=" missing-mark";
-            GunMod.LOGGER.info("OPTIC_FRAME: {} {} {}x view={} centre={},{} r={} red={}/{} divisionDelta={} background={}/{} body={} {}",
-                    key,m.host,v.zoom,v.locator,cx,cy,rad,red,without,changed,background,4*rad*rad,material,failure.isEmpty()?"PASS":failure);
+            if (coating>Math.max(8,.02*Math.PI*rad*rad)) failure+=" coating-in-aperture";
+            if (iron ? changed<15 : changed<2) failure+=" missing-mark";
+            GunMod.LOGGER.info("OPTIC_FRAME: {} {} {}x view={} centre={},{} r={} red={}/{} markDelta={} coatingDelta={} background={}/{} body={} {}",
+                    key,m.host,v.zoom,v.locator,cx,cy,rad,red,without,changed,coating,background,4*rad*rad,material,failure.isEmpty()?"PASS":failure);
         }
         if (!failure.isEmpty()) failures.add(key+":"+failure);
     }
@@ -214,7 +225,7 @@ public final class ShaderOpticSmoke {
         ctx.waitFor(mc->mc.level.getEntity(id)!=null);
         try {
             for(boolean pip:new boolean[]{false,true}) {
-                ctx.runOnClient(mc -> { RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.set(true); RenderConfig.SCOPE_PIP_ENABLE.set(pip); });
+                ctx.runOnClient(mc -> { RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.set(true); RenderConfig.SCOPE_PIP_MIN_MAGNIFICATION.set(1d); RenderConfig.SCOPE_PIP_ENABLE.set(pip); });
                 ctx.waitFor(mc -> ScopePipRenderer.suppressesWorldFovZoom()==pip);
                 for(int range:new int[]{16,36}) {
                     var at=base.north(range).above();

@@ -18,6 +18,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector4f;
@@ -78,7 +79,16 @@ public final class ScopeThermalCapture {
         if (node instanceof ModelFeatureRenderer.Submit model) {
             DepthStencilState depth = model.renderType().pipeline().getDepthStencilState();
             if (depth == null || depth.depthTest() == com.mojang.blaze3d.platform.CompareOp.ALWAYS_PASS) return;
-            node = ScopeThermalMaterial.coverage(model);
+            // Some packs (Complementary FLICKERING_FIX) shift slime/chicken faces in clip
+            // space. A steeper slope bias can't recover a face parallel to the camera. Try
+            // that surface against the *actual* scene depth, EQUAL, without writing depth;
+            // never widen the ordinary test or infer a hit from the pack filename.
+            if (model.state() instanceof EntityRenderState state && (state.entityType == EntityTypes.SLIME
+                    || state.entityType == EntityTypes.CHICKEN) && com.tacz.guns.compat.iris.IrisCompat.hasActiveIrisPack()) {
+                var match = ScopeThermalMaterial.coverage(model, true);
+                if (match != model) bodies.order(-1).solid.submit(match);
+            }
+            node = ScopeThermalMaterial.coverage(model, false);
         }
         bodies.order(0).solid.submit(node);
     }

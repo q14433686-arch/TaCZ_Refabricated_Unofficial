@@ -2,7 +2,7 @@ name: ADS on Complementary r5.8.1
 on:
   push:
     branches: ['arena/**', '26.2(main)']
-    paths: ['src/main/java/com/tacz/guns/{client,compat,mixin}/**', 'src/main/**/scope/**', 'src/main/**/iris/**', 'src/main/**/bedrock/**', 'src/main/**/BedrockAttachmentModel.java', 'src/main/resources/**/attachments/**', 'src/main/resources/**/shaders/**', 'src/gametest/**', 'build.gradle', 'scripts/prepare_iris_smoke.py', '.github/workflows/shader-optics.yml']
+    paths: ['src/main/java/com/tacz/guns/client/**', 'src/main/java/com/tacz/guns/compat/iris/**', 'src/main/java/com/tacz/guns/mixin/client/**', 'src/main/resources/**/attachments/**', 'src/main/resources/**/shaders/**', 'src/gametest/**', 'build.gradle', 'scripts/prepare_iris_smoke.py', '.github/workflows/shader-optics.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -43,10 +43,16 @@ jobs:
           log=build/run/clientGameTest/logs/latest.log
           if [[ -f $log ]]; then
             grep -E 'OPTIC_(PACK|FRAME|HEAT|COMPLETE):' "$log" | tee -a "$GITHUB_STEP_SUMMARY" || true
-            for marker in PACK FRAME HEAT COMPLETE; do
-              data=$(sed -n "s/.*OPTIC_$marker: //p" "$log" | paste -sd '|' -)
-              if [[ -n $data ]]; then echo "::notice title=$marker::$data"; fi
-            done
+            # Checks truncate a single long annotation. Keep all slots and angle controls readable.
+            python3 - "$log" <<'PY'
+          from pathlib import Path
+          import sys
+          rows=Path(sys.argv[1]).read_text(errors='replace').splitlines()
+          for tag in ('PACK','FRAME','HEAT','COMPLETE'):
+              marker='OPTIC_'+tag+': '
+              data=[s.split(marker,1)[1] for s in rows if marker in s]
+              for i in range(0,len(data),10): print('::notice title='+tag+'::'+' | '.join(data[i:i+10]))
+          PY
           fi
       - if: failure()
         run: python3 scripts/report_ci_failures.py "$RUNNER_TEMP/ads.log" build/run/clientGameTest/logs/latest.log
