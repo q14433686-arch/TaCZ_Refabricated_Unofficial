@@ -53,7 +53,10 @@ public class PackClientSmoke implements FabricClientGameTest {
             SurfaceLightSmoke.run(context, world, true);
             DroppedGunSmoke.run(context, world);
             ViewTuningSmoke.run(context, world);
-            if (!Boolean.getBoolean("tacz.test.iris")) RackPreviewSmoke.run(context, world, id);
+            if (!Boolean.getBoolean("tacz.test.iris")) {
+                context.runOnClient(TargetPoseSmoke::run);
+                RackPreviewSmoke.run(context, world, id);
+            }
             PortInputSmoke.run(context, world);
             ScopeUserRegressionSmoke.run(context, world);
             if (Boolean.getBoolean("tacz.test.iris")) {

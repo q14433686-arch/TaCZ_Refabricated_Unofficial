@@ -14,6 +14,7 @@ import com.tacz.guns.client.animation.screen.RefitTransform;
 import com.tacz.guns.client.compat.RecipeViewerReloadBridge;
 import com.tacz.guns.client.event.*;
 import com.tacz.guns.client.gui.ViewTuningScreen;
+import com.tacz.guns.client.gui.overlay.DisplayCaseLockHint;
 import com.tacz.guns.client.init.ClientSetupEvent;
 import com.tacz.guns.client.init.ModContainerScreen;
 import com.tacz.guns.client.init.ModEntitiesRender;
@@ -230,6 +231,7 @@ public class TaCZFabricClient implements ClientModInitializer {
         ItemTooltipCallback.EVENT.register((stack, tooltipContext, flag, lines) -> TooltipEvent.onTooltip(stack, flag, lines));
 
         GunInputHandler.registerEvents();
+        ClientTickEvents.END_CLIENT_TICK.register(DisplayCaseLockHint::tick);
         ClientTickEvents.END_CLIENT_TICK.register(AimKey::cancelAim);
         ClientTickEvents.END_CLIENT_TICK.register(CrawlKey::cancelLostHold);
         ClientTickEvents.START_CLIENT_TICK.register(AimKey::onAimHoldingPreInput);

@@ -1,6 +1,8 @@
 package com.tacz.guns.client.input;
 
 import com.tacz.guns.block.AmmoStorageBlock;
+import com.tacz.guns.block.GunDisplayCaseBlock;
+import com.tacz.guns.client.gui.overlay.DisplayCaseLockHint;
 import com.tacz.guns.network.message.ClientMessageAmmoStorageInteract;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -64,6 +66,9 @@ public class InteractKey {
     private static void interactBlock(BlockHitResult blockHitResult, LocalPlayer player, Minecraft mc, boolean vanillaUse) {
         BlockPos blockPos = blockHitResult.getBlockPos();
         BlockState block = player.level().getBlockState(blockPos);
+        if (block.getBlock() instanceof GunDisplayCaseBlock && block.getValue(GunDisplayCaseBlock.LOCKED)) {
+            DisplayCaseLockHint.show(mc, true);
+        }
         if (block.getBlock() instanceof AmmoStorageBlock) {
             if (ClientPlayNetworking.canSend(ClientMessageAmmoStorageInteract.TYPE))
                 ClientPlayNetworking.send(new ClientMessageAmmoStorageInteract(blockPos));

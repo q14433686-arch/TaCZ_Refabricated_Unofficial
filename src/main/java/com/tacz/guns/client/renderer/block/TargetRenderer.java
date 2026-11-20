@@ -6,6 +6,7 @@ import com.tacz.guns.block.TargetBlock;
 import com.tacz.guns.block.entity.TargetBlockEntity;
 import com.tacz.guns.client.model.bedrock.BedrockModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
+import com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot;
 import com.tacz.guns.client.resource.InternalAssetLoader;
 import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.renderer.PlayerSkinRenderCache;
@@ -19,6 +20,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.block.state.BlockState;
@@ -38,8 +40,7 @@ public class TargetRenderer implements BlockEntityRenderer<TargetBlockEntity, Ta
     /** Custom render state for target block entity */
     public static class TargetRenderState extends BlockEntityRenderState {
         public Direction facing = Direction.NORTH;
-        public float rot;
-        public float oRot;
+        public float tiltDegrees;
         public Identifier skinTexture;
         public boolean hasOwner;
     }
@@ -58,8 +59,7 @@ public class TargetRenderer implements BlockEntityRenderer<TargetBlockEntity, Ta
         BlockEntityRenderState.extractBase(blockEntity, state, crumblingOverlay);
         BlockState blockState = blockEntity.getBlockState();
         state.facing = blockState.getValue(TargetBlock.FACING);
-        state.rot = blockEntity.rot;
-        state.oRot = blockEntity.oRot;
+        state.tiltDegrees = -Mth.lerp(partialTick, blockEntity.oRot, blockEntity.rot);
         ResolvableProfile owner = blockEntity.getOwnerProfile();
         if (owner != null) {
             state.hasOwner = true;
@@ -80,36 +80,37 @@ public class TargetRenderer implements BlockEntityRenderer<TargetBlockEntity, Ta
         getModel().ifPresent(model -> {
             int combinedLightIn = state.lightCoords;
             int combinedOverlayIn = OverlayTexture.NO_OVERLAY;
-            // partialTick is not available in submit; use 1.0f (latest tick state)
-            float deg = -state.rot;
-
-            BedrockPart headModel = model.getNode(HEAD_NAME);
-            BedrockPart upperModel = model.getNode(UPPER_NAME);
-            upperModel.xRot = (float) Math.toRadians(deg);
-            headModel.visible = false;
-
+            BedrockPart head = model.getNode(HEAD_NAME);
+            BedrockPart upper = model.getNode(UPPER_NAME);
+            float oldRotation = upper.xRot;
+            boolean oldHeadVisible = head.visible;
             poseStack.pushPose();
-            poseStack.translate(0.5, 0.225, 0.5);
-            poseStack.rotate(Axis.YN.rotationDegrees(state.facing.get2DDataValue() * 90));
-            poseStack.rotate(Axis.ZN.rotationDegrees(180));
-            poseStack.translate(0, -1.275, 0.0125);
-            RenderType renderType = RenderTypes.entityTranslucent(InternalAssetLoader.TARGET_TEXTURE_LOCATION);
-            model.submit(poseStack, ItemDisplayContext.NONE, collector, renderType, combinedLightIn, combinedOverlayIn);
+            try {
+                upper.xRot = (float) Math.toRadians(state.tiltDegrees);
+                head.visible = false;
+                poseStack.translate(0.5, 0.225, 0.5);
+                poseStack.rotate(Axis.YN.rotationDegrees(state.facing.get2DDataValue() * 90));
+                poseStack.rotate(Axis.ZN.rotationDegrees(180));
+                poseStack.translate(0, -1.275, 0.0125);
+                RenderType body = RenderTypes.entityTranslucent(InternalAssetLoader.TARGET_TEXTURE_LOCATION);
+                model.submit(poseStack, ItemDisplayContext.NONE, collector, body, combinedLightIn, combinedOverlayIn);
 
-            if (state.hasOwner && state.skinTexture != null) {
-                poseStack.translate(0, 1.25, 0);
-                poseStack.rotate(Axis.XP.rotationDegrees(deg));
-                headModel.visible = true;
-                RenderType skullRenderType = RenderTypes.entityCutout(state.skinTexture);
-                // Use submitCustomGeometry to render the head part with a VertexConsumer
-                collector.submitCustomGeometry(poseStack, skullRenderType, (entryPose, consumer) -> {
-                    PoseStack working = new PoseStack();
-                    working.last().pose().set(entryPose.pose());
-                    working.last().normal().set(entryPose.normal());
-                    headModel.render(working, ItemDisplayContext.NONE, consumer, combinedLightIn, combinedOverlayIn);
-                });
+                if (state.hasOwner && state.skinTexture != null) {
+                    poseStack.translate(0, 1.25, 0);
+                    poseStack.rotate(Axis.XP.rotationDegrees(state.tiltDegrees));
+                    head.visible = true;
+                    // Capture now, just like the plate. Another target can hide or rotate
+                    // bones on this shared model before the collector replays its draws.
+                    head.translateAndRotateAndScale(poseStack);
+                    BedrockRenderSnapshot.captureSubtree(head, poseStack, ItemDisplayContext.NONE,
+                            combinedLightIn, combinedOverlayIn, 1, 1, 1, 1)
+                            .submitGeometry(collector, RenderTypes.entityCutout(state.skinTexture), false);
+                }
+            } finally {
+                head.visible = oldHeadVisible;
+                upper.xRot = oldRotation;
+                poseStack.popPose();
             }
-            poseStack.popPose();
         });
     }
 
