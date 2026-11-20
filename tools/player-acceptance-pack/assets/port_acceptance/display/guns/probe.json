@@ -1,0 +1,15 @@
+{
+  "model": "tacz:gun/ak47_geo",
+  "texture": "tacz:gun/uv/ak47",
+  "animation": "port_acceptance:probe",
+  "state_machine": "tacz:ak47_state_machine",
+  "use_default_animation": "rifle",
+  "text_show": {
+    "root": {
+      "text": "INV %ammo_count%",
+      "scale": 0.25,
+      "color": "#00FF00",
+      "light": 15
+    }
+  }
+}

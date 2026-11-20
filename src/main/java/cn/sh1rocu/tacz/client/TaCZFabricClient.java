@@ -137,6 +137,7 @@ public class TaCZFabricClient implements ClientModInitializer {
         ClientTickEvents.START_CLIENT_TICK.register(com.tacz.guns.client.event.ClientGunTimeLifecycle::tick);
         ClientPlayerNetworkEvent.LOGGING_OUT.register(com.tacz.guns.client.event.ClientGunTimeLifecycle::onPlayerLoggedOut);
         ClientTickEvents.END_CLIENT_TICK.register(com.tacz.guns.client.gui.overlay.DisplayCaseLockHint::tick);
+        ClientTickEvents.END_CLIENT_TICK.register(CrawlKey::cancelLostHold);
 
         // 26.2: 第一人称入口不再走 SimpleBedrockModel 的 RenderHandEvent。
         // 现在统一由客户端 ItemModel（tacz:dynamic_item）-> AnimateGeoItemRenderer#render 的

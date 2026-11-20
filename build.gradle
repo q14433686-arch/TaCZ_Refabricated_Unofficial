@@ -48,6 +48,18 @@ loom {
 }
 
 repositories {
+    // Modrinth's bare 1.2.5 coordinate also denotes a 26.1 jar (its hand mixin cannot
+    // load on 26.2). Pin the author's 26.2 release, not a newer PAL API.
+    exclusiveContent {
+        forRepository {
+            ivy {
+                url = uri('https://github.com/ZigyTheBird/PlayerAnimationLibrary/releases/download')
+                patternLayout { artifact("v[revision]/[artifact]-${player_animation_lib}+mc.${minecraft_version}.[ext]") }
+                metadataSources { artifact() }
+            }
+        }
+        filter { includeModule('zigy.release', 'PlayerAnimationLibMerged') }
+    }
     // Official signed Fabric releases; neither the controller nor Framework is bundled into TaCZ.
     ['Controllable', 'Framework'].each { mod ->
         exclusiveContent {
@@ -222,7 +234,7 @@ dependencies {
 
     // Player Animation Lib — 26.2：KosmX(dev.kosmx.playerAnim) 无 26.2 构建；现已将第三人称
     // 四层动画语义迁移到 zigythebird PAL 1.2.5。PAL 运行时可选，只编译其隔离兼容实现所需 API。
-    compileOnly "maven.modrinth:player-animation-library:${player_animation_lib}"
+    compileOnly "zigy.release:PlayerAnimationLibMerged:${player_animation_lib}+${minecraft_version}"
 
     // KubeJS
     // compileOnly "dev.latvian.mods:kubejs-fabric:${kubejs_version}"
@@ -275,7 +287,7 @@ dependencies {
 configurations.gametestCompileOnly.extendsFrom(configurations.compileOnly)
 if (project.hasProperty('taczPalSmoke')) {
     loom.runs.clientGameTest.property 'tacz.test.pal', 'true'
-    dependencies { gametestRuntimeOnly "maven.modrinth:player-animation-library:${player_animation_lib}" }
+    dependencies { gametestRuntimeOnly "zigy.release:PlayerAnimationLibMerged:${player_animation_lib}+${minecraft_version}" }
 }
 if (project.hasProperty('taczControllerSmoke')) {
     loom.runs.clientGameTest.property 'tacz.test.controller', 'true'
@@ -297,11 +309,28 @@ if (project.hasProperty('taczViewerSmoke')) {
     }
 }
 
+if (project.hasProperty('taczClientSuite')) {
+    loom.runs.clientGameTest.property 'tacz.test.suite', project.property('taczClientSuite')
+}
+if (project.hasProperty('taczIrisSmoke')) {
+    dependencies { gametestRuntimeOnly files('build/iris-smoke/iris.jar', 'build/iris-smoke/sodium.jar') }
+    loom.runs.clientGameTest.property 'tacz.test.iris', 'true'
+    if (project.hasProperty('taczIrisColor')) loom.runs.clientGameTest.property 'tacz.test.irisColor', project.property('taczIrisColor')
+    def installPack = tasks.register('installTestShaderPack', Copy) {
+        dependsOn tasks.named('deleteGameTestRunDir')
+        into layout.buildDirectory.dir('run/clientGameTest')
+        if (project.hasProperty('taczIrisColor')) from 'build/iris-smoke/complementary'
+        else from 'src/gametest/irisConfig'
+    }
+    tasks.named('runClientGameTest') { dependsOn installPack }
+}
+
 // External game-test pack, never a production classpath resource.
 ['gameTest', 'clientGameTest'].each { run ->
     if (run == 'clientGameTest' && !project.hasProperty('taczClientSmoke')) return
     def zip = tasks.register("zip${run.capitalize()}Pack", Zip) {
         from 'src/gametest/fixtures/overlay'
+        from('tools/player-acceptance-pack') { exclude 'gunpack.meta.json', 'README.md' }
         archiveFileName = 'tacz-port-smoke.zip'
         destinationDirectory = layout.buildDirectory.dir("run/${run}/tacz")
         if (run == 'clientGameTest') dependsOn tasks.named('deleteGameTestRunDir')
