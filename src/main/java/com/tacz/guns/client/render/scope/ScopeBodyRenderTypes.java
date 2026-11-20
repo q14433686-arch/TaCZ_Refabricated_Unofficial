@@ -244,26 +244,25 @@ public final class ScopeBodyRenderTypes {
                 .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_reticle_final_" + emissive))
                 .withVertexShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_body"))
                 .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_ring_final"))
-                .withShaderDefine("ALPHA_CUTOUT", 0.1F).withShaderDefine("SCOPE_MASK")
+                .withShaderDefine("RETICLE_COVERAGE").withShaderDefine("SCOPE_MASK")
                 .withBindGroupLayout(BindGroupLayouts.SAMPLER1).withBindGroupLayout(MASK_SAMPLER_LAYOUT)
                 .withCull(false).withDepthStencilState(new DepthStencilState(
                         com.mojang.blaze3d.platform.CompareOp.ALWAYS_PASS, false))
-                .withColorTargetState(ColorTargetState.DEFAULT);
-        if (emissive) b.withShaderDefine("EMISSIVE").withShaderDefine("NO_CARDINAL_LIGHTING")
-                .withShaderDefine("RETICLE_COVERAGE").withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT));
+                .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT));
+        if (emissive) b.withShaderDefine("EMISSIVE").withShaderDefine("NO_CARDINAL_LIGHTING");
         else b.withShaderDefine("PER_FACE_LIGHTING");
         return b.build();
     }
     private static final RenderPipeline FINAL_RETICLE = finalReticlePipeline(false), FINAL_RETICLE_EMISSIVE = finalReticlePipeline(true);
     private static final Map<String, RenderType> FINAL_RETICLES = new HashMap<>();
-    static boolean usesReticleCoverage(RenderType type) { return type.pipeline() == FINAL_RETICLE_EMISSIVE; }
+    static boolean usesReticleCoverage(RenderType type) { return type.pipeline() == FINAL_RETICLE_EMISSIVE || type.pipeline() == FINAL_RETICLE; }
 
     public static RenderType finalReticle(Identifier texture, boolean emissive) {
         return FINAL_RETICLES.computeIfAbsent(texture + ":" + emissive, key -> RenderType.create("tacz_final_reticle",
                 RenderSetup.builder(emissive ? FINAL_RETICLE_EMISSIVE : FINAL_RETICLE)
-                        // The luminous shader integrates covered texels itself; no bilinear bleed from adjacent UV islands.
+                        // The final shader integrates covered texels itself; no bilinear bleed from adjacent UV islands.
                         .withTexture("Sampler0", texture, () -> RenderSystem.getSamplerCache().getSampler(
-                                AddressMode.REPEAT, AddressMode.REPEAT, emissive ? FilterMode.NEAREST : FilterMode.LINEAR, FilterMode.NEAREST, false))
+                                AddressMode.REPEAT, AddressMode.REPEAT, FilterMode.NEAREST, FilterMode.NEAREST, false))
                         .withTexture(MASK_SAMPLER, ScopeMaskTextureHandle.ID)
                         .useLightmap().useOverlay().createRenderSetup()));
     }

@@ -9,11 +9,12 @@ import org.joml.Vector4f;
 
 import java.util.List;
 
-/** Conservative raster bounds for the final luminous decal. A subpixel quad may cover a
+/** Conservative raster bounds for the final reticle decal. A subpixel quad may cover a
  * pixel without containing its centre. Expand only the *sampling domain* of small faces;
  * the fragment shader integrates samples inside the original unit quad and its original UVs.
  * No substitute dot, readback, enlarged artwork, or extra framebuffer. */
 final class ReticleCoverage {
+    private final Vector3f normal = new Vector3f();
     private final Vector3f origin = new Vector3f(), u = new Vector3f(), v = new Vector3f();
     private final Vector4f a = new Vector4f(), b = new Vector4f(), c = new Vector4f();
 
@@ -46,6 +47,7 @@ final class ReticleCoverage {
             }
         }
         u.sub(origin); v.sub(origin);
+        draw.normal().transform(normal.set(face.normal));
         var uv0 = corners[0]; var uv1 = corners[1]; var uv3 = corners[3];
         for (int i = 0; i < 4; i++) {
             float s = i == 1 || i == 2 ? 1 + padU : -padU;
@@ -53,9 +55,11 @@ final class ReticleCoverage {
             out.addVertex(origin.x + s*u.x + t*v.x, origin.y + s*u.y + t*v.y, origin.z + s*u.z + t*v.z)
                     .setColor(draw.red(), draw.green(), draw.blue(), draw.alpha())
                     .setUv(uv0.u + s*(uv1.u-uv0.u) + t*(uv3.u-uv0.u), uv0.v + s*(uv1.v-uv0.v) + t*(uv3.v-uv0.v))
-                    .setOverlay(draw.overlay())
-                    // UV2 is unused by emissive materials. Positive fixed-point fits the stock ENTITY short pair.
-                    .setUv2(Math.round((s+2)*4096), Math.round((t+2)*4096)).setNormal(0, 0, 1);
+                    // Vanilla's 16x16 overlay uses only the low nibble of each UV1 lane.
+                    // Store face coordinates in the upper bits, keep real light and overlay for etched ink.
+                    .setUv1(Math.round((s+1)*512)*16 + (draw.overlay() & 15),
+                            Math.round((t+1)*512)*16 + (draw.overlay() >>> 16 & 15))
+                    .setLight(draw.light()).setNormal(normal.x, normal.y, normal.z);
         }
     }
 }

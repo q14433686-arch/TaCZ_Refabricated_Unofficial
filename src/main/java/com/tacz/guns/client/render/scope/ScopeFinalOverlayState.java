@@ -174,7 +174,7 @@ public final class ScopeFinalOverlayState {
             for (RingDraw draw : reticles) {
                 boolean coverage = ScopeBodyRenderTypes.usesReticleCoverage(draw.renderType());
                 displayCollector.submitCustomGeometry(new PoseStack(), draw.renderType(), (pose, consumer) -> {
-                    if (coverage) draw.snapshot().writeLuminousReticle(consumer, clip, main.width, main.height);
+                    if (coverage) draw.snapshot().writeFilteredReticle(consumer, clip, main.width, main.height);
                     else draw.snapshot().write(consumer);
                 });
             }

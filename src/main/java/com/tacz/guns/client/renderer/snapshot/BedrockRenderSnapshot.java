@@ -164,7 +164,7 @@ public final class BedrockRenderSnapshot {
     /** Explicit single-material replay (e.g. the final reticle pass). */
     public void write(VertexConsumer consumer) { write(consumer, 0, drawCommands.size()); }
 
-    public void writeLuminousReticle(VertexConsumer consumer, @Nullable Matrix4fc clip, int width, int height) {
+    public void writeFilteredReticle(VertexConsumer consumer, @Nullable Matrix4fc clip, int width, int height) {
         ReticleCoverage.write(drawCommands, consumer, clip, width, height);
     }
 

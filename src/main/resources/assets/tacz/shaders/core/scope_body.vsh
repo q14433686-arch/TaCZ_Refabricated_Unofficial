@@ -75,11 +75,15 @@ void main() {
 #endif
 
 #ifndef NO_OVERLAY
+#ifdef RETICLE_COVERAGE
+    overlayColor = texelFetch(Sampler1, UV1 & ivec2(15), 0);
+#else
     overlayColor = texelFetch(Sampler1, UV1, 0);
+#endif
 #endif
 
 #ifdef RETICLE_COVERAGE
-    reticleFace = vec2(UV2) / 4096.0 - 2.0;
+    reticleFace = vec2(UV1 >> 4) / 512.0 - 1.0;
 #endif
     texCoord0 = UV0;
 

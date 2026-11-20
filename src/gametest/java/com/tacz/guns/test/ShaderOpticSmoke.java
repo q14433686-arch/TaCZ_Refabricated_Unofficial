@@ -35,9 +35,11 @@ import java.util.*;
 /** The two reported failures have different oracles. No shaderpack or edited optic assets in the fixture. */
 public final class ShaderOpticSmoke {
     public static Identifier withoutIron;
+    public static UUID poseTarget;
+    public static float renderedYaw = Float.NaN;
     public static boolean withoutReticle, withoutCoating; // test mixin only
     private static final AttachmentType SLOT = AttachmentType.SCOPE;
-    private static final Set<String> REPORT_OPTICS = Set.of("scope_qmk152", "scope_standard_8x", "scope_vudu",
+    private static final Set<String> SMALL_MARKS = Set.of("scope_vudu",
             "sight_deltapoint_rifle", "sight_deltapoint_pistol", "sight_rmr_dot");
     private static final Set<String> ETCHED_SCALES = Set.of("scope_qmk152", "scope_elcan_4x", "scope_lpvo_1_6", "scope_standard_8x");
     private static final String PACK = "ComplementaryReimagined_r5.8.1.zip";
@@ -137,7 +139,7 @@ public final class ShaderOpticSmoke {
         var all=mounts(world);
         var failures=new ArrayList<String>(); int slots=0, count=0;
         try {
-            boolean pipGallery = suite.equals("pip"), large = suite.equals("report-size");
+            boolean pipGallery = suite.equals("pip"), large = suite.startsWith("report-");
             if (pipGallery) ctx.runOnClient(mc -> {
                 RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.set(true);
                 RenderConfig.SCOPE_PIP_ENABLE.set(true);
@@ -153,11 +155,13 @@ public final class ShaderOpticSmoke {
                     case "scopes" -> id.startsWith("scope_");
                     case "sights" -> !id.startsWith("scope_");
                     case "pip" -> true;
-                    case "report-size" -> REPORT_OPTICS.contains(id);
+                    case "report-size" -> id.equals("scope_qmk152") || id.equals("scope_standard_8x") || id.equals("scope_lpvo_1_6");
+                    case "report-marks" -> SMALL_MARKS.contains(id);
                     default -> throw new IllegalArgumentException("Unknown ADS suite " + suite);
                 };
                 if (!selected) continue;
                 for (var v:views) {
+                    if (large && id.equals("scope_lpvo_1_6") && v.zoom>2f) continue; // also verify its smallest etched scale
                     if (pipGallery && v.zoom < 4f) continue; // default PIP cutover
                     count++; equip(ctx,world,m,v);
                     ctx.waitFor(mc -> Math.abs(ScopePipRenderer.currentMagnification()-v.zoom)<.01);
@@ -166,7 +170,7 @@ public final class ShaderOpticSmoke {
                     else gallery(ctx,m,v,thermal,large,failures);
                 }
             }
-            int expected = switch (suite) { case "scopes" -> 34; case "sights" -> 25; case "pip" -> 20; case "thermal" -> 4; default -> 8; };
+            int expected = switch (suite) { case "scopes" -> 34; case "sights" -> 25; case "pip" -> 20; case "thermal", "report-size" -> 4; case "report-marks" -> 5; default -> throw new AssertionError(suite); };
             if (all.size()!=46 || slots!=59 || count!=expected) throw new AssertionError("Incomplete catalog "+all.size()+"/"+slots+"/"+count);
             if (!failures.isEmpty()) throw new AssertionError("ADS framebuffer failures: " + failures);
             GunMod.LOGGER.info("OPTIC_COMPLETE: {} {}/{} slots ({} indexed attachments)",suite,count,slots,all.size());
@@ -264,45 +268,81 @@ public final class ShaderOpticSmoke {
                     world.getServer().runOnServer(s->s.getPlayerList().getPlayers().getFirst().level().getEntity(id).snapTo(Vec3.atBottomCenterOf(at)));
                     ctx.getInput().lookAt(at); ctx.waitTicks(12);
                     var key=m.optic.getPath()+"_"+v.slot+(pip?"_pip_":"_classic_")+range;
-                    // Place a real solid wall immediately in front of the slime, then remove it.
-                    var wall=at.south(2); setWall(ctx,world,wall,true);
-                    var behind=frame(ctx,key+"_wall");
-                    move(ctx,world,id,at.east(12));
+                    var wall=at.south(2);
+                    // Both empty references have the *same* wall/background, camera, optic and pack
+                    // as their populated counterpart. Never infer the target footprint from heat.
+                    move(ctx,world,id,at.east(12)); setWall(ctx,world,wall,true);
                     var emptyWall=frame(ctx,key+"_wall_without_target");
-                    move(ctx,world,id,at); setWall(ctx,world,wall,false);
+                    var wallScene=SensorLayers.sample(ctx).sensor(); setWall(ctx,world,wall,false);
+                    thermal(ctx,false); var emptyOptical=frame(ctx,key+"_optical_without_target");
+                    move(ctx,world,id,at);
                     for(int angle:new int[]{0,45,90}) {
-                        world.getServer().runOnServer(s->{var e=(LivingEntity)s.getPlayerList().getPlayers().getFirst().level().getEntity(id);
-                            e.setYRot(angle);e.setYHeadRot(angle);e.yBodyRot=angle;});
-                        ctx.waitTicks(6); var image=frame(ctx,key+"_"+angle);
+                        pose(ctx,world,id,angle);
+                        var optical=frame(ctx,key+"_optical_"+angle);
+                        thermal(ctx,true);
+                        var image=frame(ctx,key+"_"+angle);
+                        float drawn=ctx.computeOnClient(mc->renderedYaw);
+                        if (Math.abs(net.minecraft.util.Mth.wrapDegrees(drawn-angle))>1 || !Float.isFinite(drawn))
+                            throw new AssertionError("Render state changed angle: "+drawn+" vs "+angle);
+                        setWall(ctx,world,wall,true); var behind=frame(ctx,key+"_wall_"+angle);
+                        var covered=SensorLayers.sample(ctx);
                         int h=image.getHeight(),w=image.getWidth();
-                        // Inset of the projected face at this range/magnification. Exclude fixed bright display ink
-                        // using the wall frame; never derive the sampling footprint from which pixels became hot.
                         int radius=Math.max(4,Math.min(h/40,(int)(h*.17*v.zoom/range)));
                         int n=0,lit=0,wallHot=0;
                         for(int y=h/2-radius;y<h/2+radius;y++) for(int x=w/2-radius;x<w/2+radius;x++) {
                             int b=behind.getRGB(x,y); if(hot(b))wallHot++; if(!cold(b))continue;
                             n++; if (hot(image.getRGB(x,y)))lit++;
                         }
-                        // Compare wall with/without the same entity across the whole central sensor region.
-                        // Keep the native white display strokes; don't mistake their small motion for heat.
-                        int leaks=0, wr=Math.min(h/9,range==16?h/8:h/12);
+                        var bounds=ctx.computeOnClient(mc->ScopeMaskRenderer.maskBoundsNdc().clone());
+                        // Compare the optically visible green body against the same empty blue scene.
+                        // Exclude the physical rim/vignette and fixed display ink, NOT cold holes in the body.
+                        int wr=Math.min(h/3,Math.round(.16f*Math.min(w*(bounds[2]-bounds[0]),h*(bounds[3]-bounds[1]))));
+                        int visible=0,filled=0,leaks=0;
                         for(int y=h/2-wr; y<h/2+wr; y++) for(int x=w/2-wr; x<w/2+wr; x++) {
-                            if (!hot(behind.getRGB(x,y))) continue;
+                            if (!cold(emptyWall.getRGB(x,y))) continue;
+                            if (opticalSlime(optical,emptyOptical,x,y) && opticalSlime(optical,emptyOptical,x-1,y)
+                                    && opticalSlime(optical,emptyOptical,x+1,y) && opticalSlime(optical,emptyOptical,x,y-1)
+                                    && opticalSlime(optical,emptyOptical,x,y+1)) {
+                                visible++; if (hot(image.getRGB(x,y))) filled++;
+                            }
+                            if (!hot(covered.sensor().getRGB(x,y))) continue;
                             boolean allCold=true;
                             for(int dy=-2;dy<=2 && allCold;dy++) for(int dx=-2;dx<=2;dx++)
-                                if (!cold(emptyWall.getRGB(x+dx,y+dy))) { allCold=false; break; }
+                                if (!cold(wallScene.getRGB(x+dx,y+dy))) { allCold=false; break; }
                             if(allCold)leaks++;
                         }
-                        boolean ok=n>=2*radius*radius && lit>=.83*n && wallHot<=.16*4*radius*radius && leaks==0;
-                        GunMod.LOGGER.info("OPTIC_HEAT: {} @{} face={}/{} wallBright={} wallLeak={} radius={} {}",key,angle,lit,n,wallHot,leaks,radius,ok?"PASS":"FAIL");
-                        if(!ok)failures.add(key+"@"+angle+":"+lit+"/"+n+" wall="+wallHot);
+                        boolean ok=n>=2*radius*radius && lit>=.83*n && visible>=2*radius*radius && filled>=.83*visible
+                                && wallHot<=.16*4*radius*radius && leaks==0 && covered.heatPixels()==0;
+                        GunMod.LOGGER.info("OPTIC_HEAT: {} @{} drawn={} face={}/{} opticalBody={}/{} wallBright={} wallLeak={} wallMask={} radius={} {}",
+                                key,angle,drawn,lit,n,filled,visible,wallHot,leaks,covered.heatPixels(),radius,ok?"PASS":"FAIL");
+                        if(!ok)failures.add(key+"@"+angle+":"+lit+"/"+n+" body="+filled+"/"+visible+" wallLeak="+leaks+" mask="+covered.heatPixels());
+                        setWall(ctx,world,wall,false); thermal(ctx,false);
                     }
+                    thermal(ctx,true);
                 }
             }
         } finally {
-            ctx.runOnClient(mc->RenderConfig.SCOPE_PIP_ENABLE.set(false));
+            ctx.runOnClient(mc->{ poseTarget=null; RenderConfig.SCOPE_THERMAL_ENABLE.set(true); RenderConfig.SCOPE_PIP_ENABLE.set(false); });
             world.getServer().runOnServer(s->s.getPlayerList().getPlayers().getFirst().level().getEntity(id).discard());
         }
+    }
+    private static boolean opticalSlime(BufferedImage target, BufferedImage empty, int x, int y) {
+        int a=target.getRGB(x,y), z=empty.getRGB(x,y);
+        return (g(a)-b(a))-(g(z)-b(z))>35;
+    }
+    private static void thermal(ClientGameTestContext ctx,boolean on) {
+        ctx.runOnClient(mc->RenderConfig.SCOPE_THERMAL_ENABLE.set(on)); ctx.waitTicks(4);
+    }
+    private static void pose(ClientGameTestContext ctx, TestSingleplayerContext world, UUID id, int angle) {
+        world.getServer().runOnServer(s->orient((LivingEntity)s.getPlayerList().getPlayers().getFirst().level().getEntity(id),angle));
+        // No-AI mobs need not turn their body to their network head yaw while standing still.
+        // Set both endpoints of the fixture pose and wait for the *rendered model*, not just the packet.
+        ctx.runOnClient(mc->{ poseTarget=id; renderedYaw=Float.NaN; orient((LivingEntity)mc.level.getEntity(id),angle); });
+        ctx.waitFor(mc->Float.isFinite(renderedYaw) && Math.abs(net.minecraft.util.Mth.wrapDegrees(renderedYaw-angle))<1);
+        ctx.waitTicks(4);
+    }
+    private static void orient(LivingEntity e,int yaw) {
+        e.setYRot(yaw); e.setYHeadRot(yaw); e.yHeadRotO=e.yHeadRot=e.yBodyRotO=e.yBodyRot=yaw;
     }
     private static void move(ClientGameTestContext ctx,TestSingleplayerContext world,UUID id,BlockPos to) {
         world.getServer().runOnServer(s->s.getPlayerList().getPlayers().getFirst().level().getEntity(id).snapTo(Vec3.atBottomCenterOf(to)));

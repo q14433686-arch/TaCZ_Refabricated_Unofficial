@@ -7,6 +7,10 @@ import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.render.scope.ScopeThermalCapture;
 import com.tacz.guns.test.ScopeDepthProbe;
+import com.tacz.guns.test.ShaderOpticSmoke;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import org.lwjgl.opengl.GL45C;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,6 +21,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /** Observe the frame that owns the world depth, not the GUI framebuffer after swap. */
 @Mixin(ScopeThermalCapture.class)
 abstract class HeatDepthObserver {
+    @Inject(method = "extracted", at = @At("HEAD"))
+    private static void observePose(Entity entity, EntityRenderState state, CallbackInfo ci) {
+        if (ShaderOpticSmoke.poseTarget != null && ShaderOpticSmoke.poseTarget.equals(entity.getUUID()) && state instanceof LivingEntityRenderState living)
+            ShaderOpticSmoke.renderedYaw = living.bodyRot;
+    }
+
     @Inject(method = "finish", at = @At("HEAD"))
     private static void taczTest$sceneDepth(RenderTarget scene, CameraRenderState camera, CallbackInfo ci) {
         String sample = ScopeDepthProbe.next;
