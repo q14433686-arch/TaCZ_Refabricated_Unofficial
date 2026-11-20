@@ -5,8 +5,17 @@ import net.minecraftforge.common.ForgeConfigSpec;
 
 public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue ENABLE_LASER_FADE_OUT;
+    public static ForgeConfigSpec.BooleanValue RENDER_MUZZLE_SMOKE;
+    public static ForgeConfigSpec.BooleanValue MUZZLE_SURFACE_LIGHT, LEGACY_MUZZLE_LIGHT, EXPLOSION_SURFACE_LIGHT;
+    public static ForgeConfigSpec.BooleanValue DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER;
+    public static ForgeConfigSpec.DoubleValue GUN_HURT_BOB_MULTIPLIER;
     public static ForgeConfigSpec.BooleanValue ILLUMINATED_REAL_SKY;
     public static ForgeConfigSpec.IntValue GUN_LOD_RENDER_DISTANCE;
+    public static final int DEFAULT_DROPPED_GUN_SPRITE_DISTANCE = 8;
+    public static ForgeConfigSpec.IntValue DROPPED_GUN_SPRITE_DISTANCE;
+    public static ForgeConfigSpec.BooleanValue HIT_PARTICLE_ENABLE;
+    public static ForgeConfigSpec.BooleanValue HIT_EXTRA_PARTICLE_ENABLE;
+    public static ForgeConfigSpec.IntValue HIT_PARTICLE_MAX_DISTANCE;
     public static ForgeConfigSpec.IntValue BULLET_HOLE_PARTICLE_LIFE;
     public static ForgeConfigSpec.DoubleValue BULLET_HOLE_PARTICLE_FADE_THRESHOLD;
     public static ForgeConfigSpec.EnumValue<CrosshairType> CROSSHAIR_TYPE;
@@ -14,7 +23,11 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue HEAD_SHOT_DEBUG_HITBOX;
     /** 瞄准镜镜内裁剪（目镜掩码）总开关。默认<b>开启</b>。 */
     public static ForgeConfigSpec.BooleanValue SCOPE_MASK_ENABLE;
-    /** Iris 瞄具掩码注入策略。HAND_ONLY 只碰手部/枪械程序；ALL 旧行为（全注）；OFF 全关（光影下不裁剪，仅对照实验）。默认 HAND_ONLY。 */
+    public static ForgeConfigSpec.BooleanValue EXPERIMENTAL_SCOPE_LENS;
+    public static ForgeConfigSpec.BooleanValue SCOPE_THERMAL_ENABLE;
+    public static ForgeConfigSpec.BooleanValue ENABLE_OCULAR_INFLATE;
+    public static ForgeConfigSpec.DoubleValue OCULAR_INFLATE;
+    /** Iris 瞄具掩码注入策略。HAND_ONLY 只碰手部程序和裁剪自发光所用的实体程序；ALL 旧行为（全注）；OFF 全关（光影下不裁剪，仅对照实验）。默认 HAND_ONLY。 */
     public enum IrisScopeMaskInjection {
         HAND_ONLY,
         ALL,
@@ -106,11 +119,13 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.BooleanValue IRIS_HAND_PHASE_SPLIT_FIX;
     public static ForgeConfigSpec.BooleanValue DISABLE_INTERACT_HUD_TEXT;
+    public static ForgeConfigSpec.BooleanValue RENDER_CREATIVE_PACK_SIDEBAR;
     public static ForgeConfigSpec.BooleanValue AUTO_SELECT_GUN_SMITH_TABLE_FILTER;
     public static ForgeConfigSpec.IntValue DAMAGE_COUNTER_RESET_TIME;
     public static ForgeConfigSpec.BooleanValue DISABLE_MOVEMENT_ATTRIBUTE_FOV;
     public static ForgeConfigSpec.BooleanValue ENABLE_TACZ_ID_IN_TOOLTIP;
     public static ForgeConfigSpec.BooleanValue BLOCK_ENTITY_TRANSLUCENT;
+    public static ForgeConfigSpec.BooleanValue YSM_COMPAT;
     /**
      * 瞄准镜「镜内画中画（PIP）」总开关。默认<b>关闭</b>。
      *
@@ -262,6 +277,12 @@ public class RenderConfig {
 
     public static void init(ForgeConfigSpec.Builder builder) {
         builder.push("render");
+        DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER = builder.comment("Hide third-person offhand and unselected hotbar guns; keep main hand visible").define("DisableThirdPersonOffhandAndHotbarGunRender", false);
+        GUN_HURT_BOB_MULTIPLIER = builder.comment("First-person ordinary hurt tilt while holding a gun; front/back hits are additionally halved").defineInRange("GunHurtBobMultiplier", 0.1, 0, 1);
+        MUZZLE_SURFACE_LIGHT = builder.comment("Briefly light nearby terrain, world entities and displayed objects on a successful shot (client visual only).").define("MuzzleSurfaceLight", false);
+        LEGACY_MUZZLE_LIGHT = builder.comment("Estimate shot exposure for old textured flashes and explosive launchers that omit the flash. Never enables disabled renew effects.").define("LegacyMuzzleLight", false);
+        EXPLOSION_SURFACE_LIGHT = builder.comment("Project a short-range pulse for standard explosion notifications (including TNT) and tracked LR stun bursts.").define("ExplosionSurfaceLight", false);
+        RENDER_MUZZLE_SMOKE = builder.comment("Render detached renew muzzle smoke independently of flash").define("RenderMuzzleSmoke", true);
 
         builder.comment("Whether or not apply fadeout effect on the laser beam. Close this may improve laser performance under some shaders.");
         ENABLE_LASER_FADE_OUT = builder.define("EnableLaserFadeOut", true);
@@ -281,13 +302,21 @@ public class RenderConfig {
         builder.comment("How far to display the lod model, 0 means always display");
         GUN_LOD_RENDER_DISTANCE = builder.defineInRange("GunLodRenderDistance", 0, 0, Integer.MAX_VALUE);
 
+        DROPPED_GUN_SPRITE_DISTANCE = builder.comment("Without a usable pack LOD, draw dropped guns as their slot icon from this distance (blocks).",
+                "-1: disable, 0: even nearby. Does not affect held guns, previews or racks.")
+                .defineInRange("DroppedGunSpriteDistance", DEFAULT_DROPPED_GUN_SPRITE_DISTANCE, -1, Integer.MAX_VALUE);
+
+        HIT_PARTICLE_ENABLE = builder.comment("Show block impact particles").define("HitParticleEnable", true);
+        HIT_EXTRA_PARTICLE_ENABLE = builder.comment("Show gun pack hit_surface_particles in addition to block fragments").define("HitExtraParticleEnable", true);
+        HIT_PARTICLE_MAX_DISTANCE = builder.comment("Maximum impact-particle distance (0: unlimited)").defineInRange("HitParticleMaxDistance", 64, 0, Integer.MAX_VALUE);
+
         builder.comment("The existence time of bullet hole particles, in tick");
         BULLET_HOLE_PARTICLE_LIFE = builder.defineInRange("BulletHoleParticleLife", 400, 0, Integer.MAX_VALUE);
 
         builder.comment("The threshold for fading out when rendering bullet hole particles");
         BULLET_HOLE_PARTICLE_FADE_THRESHOLD = builder.defineInRange("BulletHoleParticleFadeThreshold", 0.98, 0, 1);
 
-        builder.comment("The crosshair when holding a gun");
+        builder.comment("Legacy crosshair preset seed for accounts without a personal view profile.");
         CROSSHAIR_TYPE = builder.defineEnum("CrosshairType", CrosshairType.DOT_1);
 
         builder.comment("The starting position of the hit marker");
@@ -298,12 +327,20 @@ public class RenderConfig {
         // 特性与调试分离：
         // 早前两者共用 ScopeMaskDebug 一个开关，导致「关掉左上角预览」会连镜内裁剪
         // 一起关掉。现在拆开——功能默认开，预览默认关。
+        ENABLE_OCULAR_INFLATE = builder.comment("Expand only attachment ocular cubes when baking. Reload resources to apply.")
+                .define("EnableOcularInflate", true);
+        OCULAR_INFLATE = builder.comment("Additional inflate in Bedrock model units (not screen-space mask padding).")
+                .defineInRange("OcularInflate", 0.0005, 0.0, (double) Float.MAX_VALUE);
         SCOPE_MASK_ENABLE = builder
                 .comment("Whether to clip the scope body/reticle inside the ocular (see-through scope).")
                 .define("ScopeMaskEnable", true);
+        EXPERIMENTAL_SCOPE_LENS = builder.comment("Apply the active display's lens to its masked aperture (native renderer).")
+                .define("EnableExperimentalScopeLens", true);
+        SCOPE_THERMAL_ENABLE = builder.comment("Capture visible heat sources for thermal lenses; otherwise use their optics.")
+                .define("EnableScopeThermal", true);
         IRIS_SCOPE_MASK_INJECTION = builder
                 .comment("Which Iris shader programs receive the TACZ scope-mask clip branch.",
-                        "HAND_ONLY (default): only gbuffers_hand programs; world programs stay byte-identical to stock Iris.",
+                        "HAND_ONLY (default): hand programs and the emissive entity variant used by clipped flashes; terrain and shadow programs are untouched.",
                         "ALL: legacy behaviour (every program). OFF: never inject (scope is not clipped under shader packs).",
                         "Takes effect after the shader pipeline is rebuilt (toggle or reload the pack).")
                 .defineEnum("IrisScopeMaskInjection", IrisScopeMaskInjection.HAND_ONLY);
@@ -508,6 +545,9 @@ public class RenderConfig {
 
         builder.comment("Whether or not to automatically select the gun smith table's held item filter when opening it with a gun, attachment or ammo in main hand");
         AUTO_SELECT_GUN_SMITH_TABLE_FILTER = builder.define("AutoSelectGunSmithTableFilter", true);
+
+        RENDER_CREATIVE_PACK_SIDEBAR = builder.comment("Display a pack sidebar in TaCZ creative tabs. Disabling restores the full current tab.")
+                .define("RenderCreativePackSidebar", true);
 
         SCOPE_PIP_ENABLE = builder
                 .comment("Magnify only INSIDE the scope lens instead of zooming the whole screen",
@@ -720,6 +760,8 @@ public class RenderConfig {
 
         builder.comment("Enable translucent while render block entity or not. Enable this option will result in ADDITIONAL PERFORMANCE OVERHEAD.");
         BLOCK_ENTITY_TRANSLUCENT = builder.define("EnableBlockEntityTranslucent", false);
+        YSM_COMPAT = builder.comment("Yield the first-person gun render only if the installed Yes Steve Model requests it this tick.")
+                .define("YsmCompat", true);
 
         builder.pop();
     }

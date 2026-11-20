@@ -102,6 +102,17 @@ public abstract class GameRendererMixin {
         }
     }
 
+    // Keep the death roll and direction rotations vanilla. Only scale the hurt-tilt rotation.
+    @org.spongepowered.asm.mixin.injection.ModifyArg(method = "bobHurt", at = @At(value = "INVOKE", target = "Lcom/mojang/math/Axis;rotationDegrees(F)Lorg/joml/Quaternionf;", ordinal = 2), index = 0)
+    private float tacz$heldGunHurtTilt(float angle) {
+        if (minecraft.options.getCameraType().isFirstPerson()
+                && minecraft.getCameraEntity() instanceof LocalPlayer player && !player.isDeadOrDying()
+                && player.getMainHandItem().getItem() instanceof com.tacz.guns.api.item.gun.AbstractGunItem) {
+            return GunHurtBobTweak.heldGunTilt(angle, player.getHurtDir(), com.tacz.guns.config.client.RenderConfig.GUN_HURT_BOB_MULTIPLIER.get());
+        }
+        return angle;
+    }
+
     @Inject(method = "bobView", at = @At("HEAD"), cancellable = true)
     private void tacz$bobView(CameraRenderState cameraState, PoseStack poseStack, CallbackInfo ci) {
         if (this.tacz$isItemInHandBobPass()) {
@@ -246,8 +257,8 @@ public abstract class GameRendererMixin {
     @Inject(method = "extract", at = @At("HEAD"))
     private void tacz$beginScopeFrame(DeltaTracker deltaTracker, boolean renderLevel, CallbackInfo ci) {
         IrisCompat.beginFrame();
-        ScopePipRenderer.beginFrame();
         ScopeMaskRenderer.beginFrame();
+        ScopePipRenderer.beginFrame();
         // poly_mesh GPU 绘制表：与掩码同点归零，一帧内单调累积、手部 pass 消费。
         PolyMeshGpuRenderer.beginFrame();
         // 光影后置目镜框队列：帧首清空，残留快照绝不许画到下一帧

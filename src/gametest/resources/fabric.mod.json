@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "tacz_port_test",
+  "version": "1.0.0",
+  "name": "TaCZ 26.2 backport tests (development only)",
+  "entrypoints": {
+    "fabric-gametest": [
+      "com.tacz.guns.test.PackConversionSmoke",
+      "com.tacz.guns.util.ExportUpgradeSmoke",
+      "com.tacz.guns.test.AmmoStorageSmoke",
+      "com.tacz.guns.test.DisplayRackSmoke",
+      "com.tacz.guns.test.PegboardCommandSmoke",
+      "com.tacz.guns.test.PackServerSmoke",
+      "com.tacz.guns.test.WorkbenchSettlementSmoke",
+      "com.tacz.guns.test.GunActionSmoke",
+      "com.tacz.guns.test.BulletRulesSmoke",
+      "com.tacz.guns.test.ScriptGuardSmoke",
+      "com.tacz.guns.test.DefaultReloadSmoke",
+      "com.tacz.guns.block.entity.TargetIdentitySmoke"
+    ],
+    "fabric-client-gametest": [
+      "com.tacz.guns.test.PackClientSmoke"
+    ],
+    "jei_mod_plugin": [
+      "com.tacz.guns.test.JeiViewerSmoke"
+    ]
+  },
+  "depends": {
+    "tacz": "*"
+  },
+  "mixins": [
+    {
+      "config": "tacz-port-test.mixins.json",
+      "environment": "client"
+    }
+  ]
+}

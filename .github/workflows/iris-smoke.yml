@@ -1,0 +1,96 @@
+name: Iris thermal regression
+on:
+  push:
+    branches: ['arena/**', '26.2(main)']
+    paths: ['src/**', 'build.gradle', 'scripts/*iris*', 'scripts/run_client_smoke.sh', 'scripts/ci-central.init.gradle', '.github/workflows/iris-smoke.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: iris-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  iris:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { artifact: iris, color: '' }
+          - { artifact: reimagined-off, color: '0' }
+          - { artifact: reimagined-act, color: '128' }
+    env:
+      TACZ_IRIS_COLOR: ${{ matrix.color }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: python3 scripts/prepare_iris_smoke.py
+      - name: Record depth convention from the installed Iris binary
+        if: matrix.color == ''
+        run: |
+          javap -p -c -classpath build/iris-smoke/iris.jar net.irisshaders.iris.mixin.UndoReverseZThree net.irisshaders.iris.mixin.UndoReverseZFour > build/iris-smoke/depth-convention.txt
+          cat build/iris-smoke/manifest.json
+      - name: Real Iris and Sodium with the selected active shader pack (OpenGL software)
+        env:
+          SDL_VIDEO_DRIVER: x11
+          LIBGL_ALWAYS_SOFTWARE: 'true'
+          MESA_GL_VERSION_OVERRIDE: '4.6'
+          MESA_GLSL_VERSION_OVERRIDE: '460'
+          ALSOFT_DRIVERS: 'null'
+          TACZ_SMOKE_IRIS: 'true'
+          SDL_VIDEO_FORCE_EGL: '1'
+        run: |
+          set -o pipefail
+          flags=(-PtaczClientSmoke -PtaczIrisSmoke)
+          if [[ -n "$TACZ_IRIS_COLOR" ]]; then flags+=("-PtaczIrisColor=$TACZ_IRIS_COLOR"); fi
+          xvfb-run -a -s '-screen 0 1280x1024x24 +extension GLX +render -noreset' ./gradlew --init-script scripts/ci-central.init.gradle "${flags[@]}" runClientGameTest --console=plain 2>&1 | tee "$RUNNER_TEMP/tacz-client.log"
+          if [[ -n "$TACZ_IRIS_COLOR" ]]; then
+            grep -F 'PORT_REIMAGINED: complete' build/run/clientGameTest/logs/latest.log
+            grep -F 'PORT_RECEIVER: complete' build/run/clientGameTest/logs/latest.log
+          else
+            grep -F 'PORT_IRIS: thermal and new-item regression passed' build/run/clientGameTest/logs/latest.log
+          fi
+      - name: Report real-pack pixel and shadow measurements
+        if: always() && matrix.color != ''
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          log=Path('build/run/clientGameTest/logs/latest.log')
+          if log.exists():
+            lines=log.read_text(errors='replace').splitlines()
+            for name,keys in [('Setup',('Complementary','depth readback')),('Shadow',('shadow ',)),('Bounds',('caster bounds','translated caster','removed caster')),('Light',('ambient=','stock locator','same stock','timed exposure')),('Aperture',('PORT_SCOPE_PARTICLE:',))]:
+              data=[s.split(') ',1)[-1] for s in lines if ('PORT_REIMAGINED:' in s or 'PORT_SCOPE_PARTICLE:' in s) and any(k in s for k in keys)]
+              if data: print('::notice title='+name+'::'+' | '.join(data).replace('%','%25'))
+          PY
+      - name: Report active-pack depth and particle controls
+        if: always() && matrix.color == ''
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          log = Path('build/run/clientGameTest/logs/latest.log')
+          if log.is_file():
+              lines = log.read_text(errors='replace').splitlines()
+              # One notice per control: per-line annotations hit the Checks limit before the light hand frame.
+              for marker in ('PORT_HEAT_DEPTH:', 'PORT_THERMAL_SLIME:', 'PORT_THERMAL_DYNAMIC:', 'PORT_LENS: XL50 restored', 'PORT_MATERIALS:', 'PORT_HAND_MATERIALS:'):
+                  data = [s[s.index(marker):] for s in lines if marker in s]
+                  if data: print('::notice::' + ' | '.join(data).replace('%', '%25'))
+          PY
+      - name: Summarize failures
+        if: failure()
+        run: python3 scripts/report_ci_failures.py "$RUNNER_TEMP/tacz-client.log" build/run/clientGameTest/logs/latest.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ matrix.artifact }}-${{ github.sha }}
+          path: |
+            build/iris-smoke/manifest.json
+            build/iris-smoke/depth-convention.txt
+            build/run/clientGameTest/logs/latest.log
+            build/run/clientGameTest/screenshots/**/*.png
+            build/run/clientGameTest/diagnostics/*.txt
+            build/run/clientGameTest/crash-reports/*.txt

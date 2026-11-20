@@ -1,5 +1,6 @@
 package com.tacz.guns.client.renderer.item;
 
+import com.tacz.guns.util.time.GunTime;
 import cn.sh1rocu.simplebedrockmodel.api.event.ViewportEvent;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.animation.IFPAnimationInstance;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.renderer.IFPGeoItemRenderer;
@@ -103,7 +104,7 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
         if (stateMachine == null) {
             return false;
         }
-        return !stateMachine.isInitialized() && stateMachine.getExitingTime() < System.currentTimeMillis();
+        return !stateMachine.isInitialized() && stateMachine.getExitingTime() < GunTime.nowMillis();
     }
 
     /**
@@ -252,7 +253,7 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
             float facingX = player == null ? Float.NaN : player.getXRot();
             com.tacz.guns.GunMod.LOGGER.info(
                     "[TACZ RecoilDebug] levelCam ms={} q=({},{},{},{}) mult={} ang={} eulerD=({},{},{}) in=({},{},{}) facing=({},{}) shader={} irisHand={}",
-                    System.currentTimeMillis(),
+                    GunTime.nowMillis(),
                     f(q.x()), f(q.y()), f(q.z()), f(q.w()), f(mult), f(angleDeg),
                     f(dYaw), f(dPitch), f(dRoll),
                     f(inYaw), f(inPitch), f(inRoll),
@@ -283,7 +284,7 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
             float facingX = player == null ? Float.NaN : player.getXRot();
             com.tacz.guns.GunMod.LOGGER.info(
                     "[TACZ RecoilDebug] itemCam ms={} q=({},{},{},{}) mult={} ang={} base3x3=[{},{},{}; {},{},{}; {},{},{}] baseT=({},{},{}) facing=({},{}) shader={} irisHand={}",
-                    System.currentTimeMillis(),
+                    GunTime.nowMillis(),
                     f(q.x()), f(q.y()), f(q.z()), f(q.w()), f(mult), f(angleDeg),
                     f(b.m00()), f(b.m01()), f(b.m02()),
                     f(b.m10()), f(b.m11()), f(b.m12()),

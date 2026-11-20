@@ -35,6 +35,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Minecraft.class)
 public abstract class MinecraftMixin {
+    // Friends is handled before the ordinary keyboard/mouse callbacks. Let those callbacks
+    // handle an actual gun interaction exactly once; leave screenshots, fullscreen and GUI alone.
+    @ModifyExpressionValue(method = "handleGlobalKeyPress", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/KeyMapping;matches(Lcom/mojang/blaze3d/platform/InputConstants$Key;)Z"),
+            slice = @org.spongepowered.asm.mixin.injection.Slice(from = @At(value = "FIELD",
+                    target = "Lnet/minecraft/client/Options;keyFriends:Lnet/minecraft/client/KeyMapping;")))
+    private boolean tacz$preferTargetedInteract(boolean friends, com.mojang.blaze3d.platform.InputConstants.Key key, boolean repeat) {
+        return friends && !com.tacz.guns.client.input.InteractKey.hasWorldTarget(key);
+    }
+
     @Shadow
     public abstract PackRepository getResourcePackRepository();
 

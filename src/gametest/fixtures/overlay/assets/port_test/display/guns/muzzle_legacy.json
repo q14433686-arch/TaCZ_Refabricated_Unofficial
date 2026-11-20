@@ -1,0 +1,14 @@
+{
+  "model": "tacz:gun/ak47_geo",
+  "texture": "tacz:gun/uv/ak47",
+  "animation": "tacz:ak47",
+  "state_machine": "tacz:ak47_state_machine",
+  "use_default_animation": "rifle",
+  "muzzle_flash": {
+    "type": "default",
+    "texture": "tacz:flash/common_muzzle_flash",
+    "scale": 0.75
+  },
+  "slot": "tacz:gun/slot/ak47",
+  "hud": "tacz:gun/hud/ak47"
+}

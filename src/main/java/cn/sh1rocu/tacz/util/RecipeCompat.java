@@ -252,6 +252,9 @@ public final class RecipeCompat {
         }
         if (el.isJsonObject()) {
             JsonObject obj = el.getAsJsonObject();
+            // Never flatten a native custom ingredient (its item/tag is configuration, not a
+            // vanilla shorthand). The converter's overlay passes through this live loader too.
+            if (obj.has("fabric:type")) return obj;
             if (obj.has("tag")) {
                 String tag = obj.get("tag").getAsString();
                 // 保留原命名空间（forge: 或 c: 或 minecraft:），仅补 # 前缀

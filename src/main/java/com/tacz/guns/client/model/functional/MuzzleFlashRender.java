@@ -1,11 +1,13 @@
 package com.tacz.guns.client.model.functional;
 
+import com.tacz.guns.util.time.GunTime;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.tacz.guns.api.TimelessAPI;
-import com.tacz.guns.api.item.IAttachment;
-import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.client.particle.MuzzleAttachment;
+import com.tacz.guns.client.particle.NativeMuzzleEffects;
+import com.tacz.guns.client.render.FlashMaterials;
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.IFunctionalSubmitter;
 import com.tacz.guns.client.model.SlotModel;
@@ -13,11 +15,9 @@ import com.tacz.guns.client.model.bedrock.BedrockModel;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.pojo.display.gun.MuzzleFlash;
 import com.tacz.guns.compat.iris.IrisCompat;
-import com.tacz.guns.resource.modifier.custom.SilenceModifier;
-import it.unimi.dsi.fastutil.Pair;
+import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix3f;
@@ -46,7 +46,7 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
 
     public static void onShoot() {
         // 记录开火时间戳
-        shootTimeStamp = System.currentTimeMillis();
+        shootTimeStamp = GunTime.nowMillis();
         // 记录枪口火焰启动标记
         muzzleFlashStartMark = true;
         // 随机给予枪口火焰的旋转
@@ -79,43 +79,29 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void extract(ExtractionContext context) {
-        // 【RecoilDebug 隔离】第 27.4 轮：运行时关闭枪口火光，用于定位斜向"后坐力固定侧偏"的视觉载体
-        if (com.tacz.guns.config.client.RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH != null
-                && com.tacz.guns.config.client.RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) {
-            return;
-        }
-        if (IrisCompat.isRenderShadow() || !isSelf) {
-            return;
-        }
+        if (IrisCompat.isRenderShadow()) return;
+        ItemStack currentGunItem = bedrockGunModel.getCurrentGunItem();
+        if (RenderConfig.MUZZLE_SURFACE_LIGHT.get()) com.tacz.guns.client.render.light.SurfaceLights.muzzleLocator(
+                currentGunItem, context.displayContext(), context.poseStack().last().pose());
+        // Renew owns two independent layers. Disabling the flash must not suppress the smoke.
+        if (NativeMuzzleEffects.extract(currentGunItem, context)) return;
+        if (!isSelf || RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) return;
         // 曾在此调 IrisCompat.assignCommonEntityPipelinesToHandIfNeeded()（vanilla 管线归 HAND）。
         // 在 Iris 26.2 上那是 no-op（管线已预注册、assignPipeline 抛 already assigned），
         // 只留下日志噪音；已移除，见 IrisCompat#assignCommonEntityPipelinesToHandIfNeeded。
-        long time = System.currentTimeMillis() - shootTimeStamp;
+        long time = GunTime.nowMillis() - shootTimeStamp;
         if (time < 0 || time > TIME_RANGE) {
             return;
         }
 
-        ItemStack currentGunItem = bedrockGunModel.getCurrentGunItem();
         GunDisplayInstance display = TimelessAPI.getGunDisplay(currentGunItem).orElse(null);
         if (display == null || display.getMuzzleFlash() == null) {
             return;
         }
 
-        ItemStack muzzleAttachment = bedrockGunModel.getCurrentAttachmentItem().get(AttachmentType.MUZZLE);
-        IAttachment iAttachment = IAttachment.getIAttachmentOrNull(muzzleAttachment);
-        if (iAttachment != null) {
-            var index = TimelessAPI.getCommonAttachmentIndex(iAttachment.getAttachmentId(muzzleAttachment)).orElse(null);
-            if (index != null) {
-                var modifier = index.getData().getModifier();
-                if (modifier.containsKey(SilenceModifier.ID)
-                        && modifier.get(SilenceModifier.ID).getValue() instanceof Pair<?, ?> pair
-                        && ((Pair<Integer, Boolean>) pair).right()) {
-                    return;
-                }
-            }
-        }
+        // Legacy uses the silence flag, not renew's fractional flash_hider.
+        if (MuzzleAttachment.of(currentGunItem).silenced()) return;
 
         MuzzleFlash muzzleFlash = display.getMuzzleFlash();
         float scale = 0.5f * muzzleFlash.getScale();
@@ -154,9 +140,8 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
                     com.tacz.guns.client.render.scope.ScopeMaskGeometry.isEmpty(),
                     com.tacz.guns.client.render.scope.ScopeMaskTextureHandle.syncToMaskTarget());
         }
-        RenderType flashQuadType = flashMaskReady
-                ? com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.flashTranslucent(muzzleFlash.getTexture())
-                : RenderTypes.entityTranslucent(muzzleFlash.getTexture());
+        RenderType flashQuadType = FlashMaterials.legacyStrip(muzzleFlash.getTexture(), flashMaskReady);
+        RenderType glowType = FlashMaterials.swirl(muzzleFlash.getTexture(), flashMaskReady, flashMaskReady ? 0 : 1);
 
         context.add(collector -> {
             PoseStack backgroundPose = new PoseStack();
@@ -179,9 +164,6 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
             // 大面片从未失手。26.2 把 swirl 折叠回通用 entity shader（core/entity +
             // APPLY_TEXTURE_MATRIX），我们的 scope_body 就是它的逐字节拷贝，于是直接
             // 立一条 mask 版 swirl 管线（ADDITIVE 观感不变 + 镜内 discard）。
-            RenderType glowType = flashMaskReady
-                    ? com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.flashSwirlClipped(muzzleFlash.getTexture())
-                    : RenderTypes.energySwirl(muzzleFlash.getTexture(), 1, 1);
             collector.submitCustomGeometry(glowPose, glowType,
                     (pose, buffer) -> MUZZLE_FLASH_MODEL.renderToBuffer(
                             glowPose, buffer, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F));
@@ -189,7 +171,6 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void render(PoseStack poseStack, VertexConsumer vertexBuffer, ItemDisplayContext transformType, int light, int overlay) {
         if (IrisCompat.isRenderShadow()) {
             return;
@@ -197,30 +178,19 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
         if (!isSelf) {
             return;
         }
-        long time = System.currentTimeMillis() - shootTimeStamp;
+        long time = GunTime.nowMillis() - shootTimeStamp;
         if (time > TIME_RANGE) {
             return;
         }
         ItemStack currentGunItem = bedrockGunModel.getCurrentGunItem();
 
-        TimelessAPI.getGunDisplay(currentGunItem).ifPresent(display -> {
-            ItemStack muzzleAttachment = bedrockGunModel.getCurrentAttachmentItem().get(AttachmentType.MUZZLE);
-            IAttachment iAttachment = IAttachment.getIAttachmentOrNull(muzzleAttachment);
-            if (iAttachment != null) {
-                Identifier attachmentId = iAttachment.getAttachmentId(muzzleAttachment);
-                TimelessAPI.getCommonAttachmentIndex(attachmentId).ifPresent(index -> {
-                    var modifier = index.getData().getModifier();
-                    if (modifier.containsKey(SilenceModifier.ID) && modifier.get(SilenceModifier.ID).getValue() instanceof Pair<?, ?> pair) {
-                        // 如果安装了消音器，则不渲染枪口火光
-                        if (((Pair<Integer, Boolean>) pair).right()) {
-                            return;
-                        }
-                    }
-                    renderMuzzleFlash(display, poseStack, bedrockGunModel, time);
-                });
-            } else {
-                renderMuzzleFlash(display, poseStack, bedrockGunModel, time);
-            }
-        });
+        if (MuzzleAttachment.of(currentGunItem).silenced()) return;
+        TimelessAPI.getGunDisplay(currentGunItem).ifPresent(display -> renderMuzzleFlash(display, poseStack, bedrockGunModel, time));
+    }
+
+    public static void resetTimestamps() {
+        shootTimeStamp = -1;
+        muzzleFlashStartMark = false;
+        isSelf = false;
     }
 }

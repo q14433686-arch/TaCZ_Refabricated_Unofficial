@@ -6,11 +6,14 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import java.util.List;
 
 public class SyncConfig {
+    public static ForgeConfigSpec.IntValue BULLET_HIT_BLOCK_EFFECT_SEND_DISTANCE;
     // 交互键的判断是在客户端执行的，但是需要服务端来控制
     public static ForgeConfigSpec.ConfigValue<List<String>> INTERACT_KEY_WHITELIST_BLOCKS;
     public static ForgeConfigSpec.ConfigValue<List<String>> INTERACT_KEY_WHITELIST_ENTITIES;
     public static ForgeConfigSpec.ConfigValue<List<String>> INTERACT_KEY_BLACKLIST_BLOCKS;
     public static ForgeConfigSpec.ConfigValue<List<String>> INTERACT_KEY_BLACKLIST_ENTITIES;
+    public static ForgeConfigSpec.ConfigValue<List<String>> GUN_PEGBOARD_WHITELIST_ITEMS;
+    public static ForgeConfigSpec.ConfigValue<List<String>> GUN_PEGBOARD_BLACKLIST_ITEMS;
     public static ForgeConfigSpec.BooleanValue ENABLE_TABLE_FILTER;
     public static ForgeConfigSpec.BooleanValue SERVER_SHOOT_NETWORK_V;
     public static ForgeConfigSpec.BooleanValue SERVER_SHOOT_COOLDOWN_V;
@@ -29,9 +32,17 @@ public class SyncConfig {
     public static ForgeConfigSpec.ConfigValue<List<List<String>>> CLIENT_GUN_PACK_DOWNLOAD_URLS;
     // 禁用趴下战术动作
     public static ForgeConfigSpec.BooleanValue ENABLE_CRAWL;
+    public static ForgeConfigSpec.BooleanValue ENABLE_CRAWL_WITHOUT_GUN;
+    public static ForgeConfigSpec.DoubleValue CRAWL_MAX_UP_ANGLE;
+    public static ForgeConfigSpec.DoubleValue CRAWL_MAX_DOWN_ANGLE;
+    public static ForgeConfigSpec.BooleanValue USE_HIP_FIRE_INACCURACY_WHILE_AIRBORNE;
 
     public static void init(ForgeConfigSpec.Builder builder) {
         interactKey(builder);
+        builder.push("gun_pegboard");
+        GUN_PEGBOARD_WHITELIST_ITEMS = builder.comment("Additional item ids permitted on display walls").define("GunPegboardWhitelistItems", Lists.newArrayList());
+        GUN_PEGBOARD_BLACKLIST_ITEMS = builder.comment("Denied display item ids (overrides whitelist and built-ins)").define("GunPegboardBlacklistItems", Lists.newArrayList());
+        builder.pop();
         baseMultiplier(builder);
         misc(builder);
     }
@@ -74,6 +85,7 @@ public class SyncConfig {
 
     private static void misc(ForgeConfigSpec.Builder builder) {
         builder.push("misc");
+        BULLET_HIT_BLOCK_EFFECT_SEND_DISTANCE = builder.comment("Impact effect send radius; 0 means unlimited in the same level, shooter is always included").defineInRange("BulletHitBlockEffectSendDistance", 128, 0, Integer.MAX_VALUE);
 
         builder.comment("The entity's head hitbox during the headshot");
         builder.comment("Format: touhou_little_maid:maid [-0.5, 1.0, -0.5, 0.5, 1.5, 0.5]");
@@ -87,6 +99,18 @@ public class SyncConfig {
 
         builder.comment("Whether or not players are allowed to use the crawl feature");
         ENABLE_CRAWL = builder.define("EnableCrawl", true);
+
+        builder.comment("Allow players to crawl without holding a TACZ gun. EnableCrawl must also be enabled");
+        ENABLE_CRAWL_WITHOUT_GUN = builder.define("EnableCrawlWithoutGun", true);
+
+        builder.comment("Maximum upward look angle in degrees while crawling with a gun. Set both crawl angle limits to 90 for the full vanilla pitch range");
+        CRAWL_MAX_UP_ANGLE = builder.defineInRange("CrawlMaxUpAngle", 45.0D, 0.0D, 90.0D);
+
+        builder.comment("Maximum downward look angle in degrees while crawling with a gun");
+        CRAWL_MAX_DOWN_ANGLE = builder.defineInRange("CrawlMaxDownAngle", 30.0D, 0.0D, 90.0D);
+
+        builder.comment("Use only move or stand hip-fire inaccuracy while not on the ground, including jumping and falling. Ignore aiming, prone, and sneaking inaccuracy");
+        USE_HIP_FIRE_INACCURACY_WHILE_AIRBORNE = builder.define("UseHipFireInaccuracyWhileAirborne", false);
 
         builder.comment("Enable the recipe limit of default gunsmith table or not");
         ENABLE_TABLE_FILTER = builder.define("EnableDefaultGunSmithTableFilter", true);

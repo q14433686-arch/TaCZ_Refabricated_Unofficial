@@ -60,17 +60,23 @@ import java.util.List;
  * <ul>
  *   <li>ring-final 管线<b>不</b>注册给 Iris 的 HAND 程序：注册了就被塞回光影管线，
  *       既拿不到无雾语义又会被后置 pass 再盖一次；</li>
- *   <li><b>不</b>无条件延后：只在 {@code ScopePipRenderer.wantsIrisComposite()} 为真时
- *       排队（BedrockAttachmentModel 的调用点把关）；其余路径（无光影 / 未开 PIP /
- *       关着 AllowShaderPacks / 第三人称）逐位保持原样。队列在帧首清空
+ *   <li><b>不</b>无条件延后：物理镜框只在 {@code ScopePipRenderer.wantsIrisComposite()} 为真时排队；
+ *       光影下有真实掩码的分划则在 HAND 后显示，即使该瞄具不用 PIP 合成。队列在帧首清空
  *       （{@link #beginFrame()}），否则某帧没走到刷新点时残留快照会画到下一帧。</li>
  * </ul>
  */
 public final class ScopeFinalOverlayState {
 
-    /** 与 1.21.11 母本一致：目镜框排在准星（20_000，若将来补）之后，后画者盖前画者。 */
+    /** 与 1.21.11 母本一致：目镜框排在准星（20_000）之后，后画者盖前画者。 */
     private static final int FINAL_OCULAR_RING_ORDER = 20_001;
 
+    private static final List<RingDraw> PENDING_RETICLES = new ArrayList<>();
+    private static final List<java.util.function.Consumer<net.minecraft.client.renderer.OrderedSubmitNodeCollector>> PENDING_TEXT = new ArrayList<>();
+    public static void queueReticle(BedrockRenderSnapshot snapshot, RenderType type) {
+        if (!snapshot.isEmpty()) PENDING_RETICLES.add(new RingDraw(snapshot, type));
+    }
+    public static void queueText(java.util.function.Consumer<net.minecraft.client.renderer.OrderedSubmitNodeCollector> task) { PENDING_TEXT.add(task); }
+    private static boolean empty() { return PENDING_RINGS.isEmpty() && PENDING_RETICLES.isEmpty() && PENDING_TEXT.isEmpty(); }
     private static final List<RingDraw> PENDING_RINGS = new ArrayList<>();
     @Nullable
     private static HandTransform handTransform;
@@ -82,7 +88,7 @@ public final class ScopeFinalOverlayState {
 
     /** 帧首清空（挂 GameRenderer#extract HEAD）：残留快照绝不许跨帧。 */
     public static void beginFrame() {
-        PENDING_RINGS.clear();
+        PENDING_RINGS.clear(); PENDING_RETICLES.clear(); PENDING_TEXT.clear();
         handTransform = null;
     }
 
@@ -102,7 +108,7 @@ public final class ScopeFinalOverlayState {
      * （solid 与 translucent），两次都是手持矩阵，第一次的就够。
      */
     public static void capturePhaseBoundaryTransform() {
-        if (handTransform != null || PENDING_RINGS.isEmpty()) {
+        if (handTransform != null || empty()) {
             return;
         }
         if (!ScopeMaskRenderer.isInHandPass()) {
@@ -123,14 +129,18 @@ public final class ScopeFinalOverlayState {
      * 「目镜框永远在合成之上」的无光影语序。</p>
      */
     public static void renderAfterLevelComposite() {
-        if (PENDING_RINGS.isEmpty()) {
+        if (empty()) {
             return;
         }
+        List<RingDraw> reticles = List.copyOf(PENDING_RETICLES);
+        var text = List.copyOf(PENDING_TEXT);
         List<RingDraw> rings = List.copyOf(PENDING_RINGS);
         HandTransform transform = handTransform;
-        PENDING_RINGS.clear();
+        PENDING_RINGS.clear(); PENDING_RETICLES.clear(); PENDING_TEXT.clear();
         handTransform = null;
-        if (transform == null) {
+        if (transform == null || ScopePipRenderer.opaqueCameraMedium()) {
+            // A no-fog foreground replay must not punch through opaque camera lava.
+            // The ordinary hand pass still owns the physical model below that medium.
             // 排了队但没经过手部阶段边界（异常路径）：没有可信矩阵，宁可不画。
             return;
         }
@@ -157,6 +167,17 @@ public final class ScopeFinalOverlayState {
             // dispatcher 用官方共享实例 —— 此刻 LevelRenderer#render 已返回，
             // 它的 PreparedFrame 已 close，renderAllFeatures 可安全重入。
             SubmitNodeStorage storage = new SubmitNodeStorage();
+            var displayCollector = storage.order(FINAL_OCULAR_RING_ORDER - 1);
+            var projection = ScopeProjection.current();
+            var clip = projection == null ? null : new Matrix4f(projection).mul(transform.modelView());
+            for (RingDraw draw : reticles) {
+                boolean coverage = ScopeBodyRenderTypes.usesReticleCoverage(draw.renderType());
+                displayCollector.submitCustomGeometry(new PoseStack(), draw.renderType(), (pose, consumer) -> {
+                    if (coverage) draw.snapshot().writeFilteredReticle(consumer, clip, main.width, main.height);
+                    else draw.snapshot().write(consumer);
+                });
+            }
+            for (var task : text) task.accept(displayCollector);
             OrderedSubmitNodeCollector ringCollector = storage.order(FINAL_OCULAR_RING_ORDER);
             for (RingDraw draw : rings) {
                 ringCollector.submitCustomGeometry(new PoseStack(), draw.renderType(),
@@ -165,7 +186,7 @@ public final class ScopeFinalOverlayState {
             minecraft.gameRenderer.featureRenderDispatcher().renderAllFeatures(storage);
             if (!loggedRendered) {
                 loggedRendered = true;
-                GunMod.LOGGER.info("[TACZ Scope] Redrew ocular ring after shader-pack PIP composite.");
+                GunMod.LOGGER.info("[TACZ Scope] Redrew optical foreground after shader-pack scene.");
             }
         } catch (RuntimeException e) {
             // 可选的 Iris 集成不许把光影包边缘情况变成客户端崩溃。

@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_dye",
+  "dye": "#minecraft:dyes",
+  "group": "tacz:dyed_pegboards",
+  "result": {
+    "id": "tacz:gun_pegboard"
+  },
+  "target": "tacz:gun_pegboard"
+}

@@ -1,0 +1,79 @@
+package com.tacz.guns.compat.jei.category;
+
+import com.tacz.guns.GunMod;
+import com.tacz.guns.compat.recipeviewer.GunAttachmentQueryEntry;
+import com.tacz.guns.init.ModCreativeTabs;
+import mezz.jei.api.constants.VanillaTypes;
+import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
+import mezz.jei.api.gui.drawable.IDrawable;
+import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
+import mezz.jei.api.helpers.IGuiHelper;
+import mezz.jei.api.recipe.IFocusGroup;
+import mezz.jei.api.recipe.RecipeIngredientRole;
+import mezz.jei.api.recipe.types.IRecipeType;
+import net.minecraft.resources.Identifier;
+import mezz.jei.api.recipe.category.IRecipeCategory;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
+
+import java.util.Locale;
+
+public class GunAttachmentQueryCategory implements IRecipeCategory<GunAttachmentQueryEntry> {
+    public static final IRecipeType<GunAttachmentQueryEntry> GUN_ATTACHMENT_QUERY = IRecipeType.create(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "gun_attachment_query"), GunAttachmentQueryEntry.class);
+    private static final Component TITLE = Component.translatable("jei.tacz.gun_attachment_query.title");
+    private static final int WIDTH = 162;
+    private static final int COLUMNS = 9;
+    private final IDrawable slotDraw;
+    private final IDrawable iconDraw;
+
+    public GunAttachmentQueryCategory(IGuiHelper guiHelper) {
+        this.slotDraw = guiHelper.getSlotDrawable();
+        this.iconDraw = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK, ModCreativeTabs.GUN_RIFLE_TAB.getIconItem());
+    }
+
+    @Override
+    public void draw(GunAttachmentQueryEntry entry, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor guiGraphics, double mouseX, double mouseY) {
+        Font font = Minecraft.getInstance().font;
+        Component typeName = Component.translatable("tacz.type." + entry.getAttachmentType().name().toLowerCase(Locale.ROOT) + ".name");
+        Component groupTitle = Component.translatable("jei.tacz.gun_attachment_query.group", typeName, entry.getTotalAttachmentCount());
+        guiGraphics.text(font, groupTitle, (WIDTH - font.width(groupTitle)) / 2, 22, 0xFF555555, false);
+        if (entry.getPageCount() > 1) {
+            Component page = Component.translatable("jei.tacz.gun_attachment_query.page", entry.getPageNumber(), entry.getPageCount());
+            guiGraphics.text(font, page, (WIDTH - font.width(page)) / 2, 145, 0xFF555555, false);
+        }
+    }
+
+    @Override
+    public void setRecipe(IRecipeLayoutBuilder builder, GunAttachmentQueryEntry entry, IFocusGroup focuses) {
+        // 枪械作为输出，可从其 JEI 配方页查看全部兼容配件。
+        builder.addSlot(RecipeIngredientRole.OUTPUT, 73, 1).add(entry.getGunStack()).setBackground(slotDraw, -1, -1);
+        for (int i = 0; i < entry.getAttachmentStacks().size(); i++) {
+            int x = 1 + i % COLUMNS * 18;
+            int y = 35 + i / COLUMNS * 18;
+            builder.addSlot(RecipeIngredientRole.INPUT, x, y).add(entry.getAttachmentStacks().get(i)).setBackground(slotDraw, -1, -1);
+        }
+    }
+
+    @Override
+    public IRecipeType<GunAttachmentQueryEntry> getRecipeType() {
+        return GUN_ATTACHMENT_QUERY;
+    }
+
+    @Override
+    public Component getTitle() {
+        return TITLE;
+    }
+
+    @Override
+    public int getWidth() { return WIDTH; }
+
+    @Override
+    public int getHeight() { return 156; }
+
+    @Override
+    public IDrawable getIcon() {
+        return iconDraw;
+    }
+}

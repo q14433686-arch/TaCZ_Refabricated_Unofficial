@@ -41,7 +41,7 @@ D. 不得出现 `onRemove` 覆写（26.2 已删除该 API，写了也不会被�
 豁免
 ----
 `// tacz:no-drop-on-remove`：第 3 项豁免；`// tacz:legacy-key`：同一行上的
-`getString(...)`/`child(...)` 属于老存档兼容读取，不算「只读不写」。
+读取属于已知的旧存档格式，不算「只读不写」；不能豁免判据或「写而不读」。
 
 用法
 ----
@@ -57,13 +57,12 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "src/main/java"
 
 WRITE_CALL = re.compile(
     r"\.(?:putString|putInt|putBoolean|putFloat|putLong|putDouble|putUUID|storeNullable|store)\(\s*([^,]+),"
 )
 READ_CALL = re.compile(
-    r"\.(?:getStringOr|getIntOr|getBooleanOr|getFloatOr|getLongOr|getDoubleOr|read)\(\s*([^,]+),"
+    r"\.(?:getStringOr|getIntOr|getBooleanOr|getFloatOr|getLongOr|getDoubleOr|read|getString)\(\s*([^,()]+)[,)]"
 )
 GATE = re.compile(r'(?:getStringOr|getIntOr)\(\s*([^,]+),\s*(?:""|0)\s*\)\s*(?:\.isEmpty\(\)|> 0|== 0)')
 CONST = re.compile(r'static\s+final\s+String\s+([A-Za-z0-9_]+)\s*=\s*"([^"]*)"')
@@ -147,14 +146,15 @@ def check_block_entity(path: Path) -> None:
     checked.append(name)
     consts = dict(CONST.findall(text))
 
-    save = method_body(text, "void saveAdditional(")
-    load = method_body(text, "void loadAdditional(")
+    code = strip_comments(text)
+    save = method_body(code, "void saveAdditional(")
+    load = method_body(code, "void loadAdditional(")
 
     if save is not None and load is not None:
         written = keys_in(save, WRITE_CALL, consts)
         # 对称性检查看「整个类」的读取：取值往往被抽到 readXxx() 辅助方法里，
         # 只看 loadAdditional 会把合法的键误判成「只写不读」。
-        read = keys_in(text, READ_CALL, consts)
+        read = keys_in(code, READ_CALL, consts)
 
         for key in sorted(keys_in(load, GATE, consts) - written):
             errors.append(
@@ -165,15 +165,17 @@ def check_block_entity(path: Path) -> None:
             errors.append(
                 f"{name}: saveAdditional 写了 `{key}` 却从不读回（死数据，或读取处漏了）"
             )
-        for key in sorted(read - written):
+        # Ignore just the annotated migration read, not that key everywhere in the class.
+        ordinary = "\n".join(line for line in text.splitlines() if "// tacz:legacy-key" not in line)
+        for key in sorted(keys_in(strip_comments(ordinary), READ_CALL, consts) - written):
             errors.append(
                 f"{name}: loadAdditional 读 `{key}` 却从不写入（永远读不到默认值之外的内容）"
             )
 
     # C. 持有物品的方块实体必须在移除时处理内容物
-    if re.search(r"\bItemStack\s+\w+\s*=", text) and "// tacz:no-drop-on-remove" not in text:
-        if not re.search(r"\bvoid\s+preRemoveSideEffects\s*\(", text) and not re.search(
-            r"\bvoid\s+setRemoved\s*\(", text
+    if re.search(r"\bItemStack\s+\w+\s*=", code) and "// tacz:no-drop-on-remove" not in text:
+        if not re.search(r"\bvoid\s+preRemoveSideEffects\s*\(", code) and not re.search(
+            r"\bvoid\s+setRemoved\s*\(", code
         ):
             errors.append(
                 f"{name}: 持有 ItemStack 字段但没有 preRemoveSideEffects/setRemoved —— "
@@ -182,23 +184,41 @@ def check_block_entity(path: Path) -> None:
             )
 
     # D. onRemove 在 26.2 已删除
-    if re.search(r"\b(?:public|protected)\s+void\s+onRemove\s*\(", text):
+    if re.search(r"\b(?:public|protected)\s+void\s+onRemove\s*\(", code):
         errors.append(
             f"{name}: 出现了 `onRemove` 方法 —— 26.2 的 Block#onRemove 已删除，"
             "写了也不会被调用，应改用 preRemoveSideEffects"
         )
 
 
+def check_profile_paths(src: Path) -> None:
+    # The target has its native skin cache/RenderType fallback, not the RenderPearl APIs.
+    for relative in ("client/renderer/block/TargetRenderer", "client/renderer/entity/TargetMinecartRenderer"):
+        code = strip_comments((src / f"com/tacz/guns/{relative}.java").read_text())
+        if ".getOrDefault(profile).renderType()" not in code or "return PlayerSkinRenderCache.DEFAULT_PLAYER_SKIN_RENDER_TYPE" not in code:
+            errors.append(f"{relative}: expected native asynchronous skin resolution with a default fallback")
+    code = strip_comments((src / "com/tacz/guns/block/entity/TargetBlockEntity.java").read_text())
+    if ("lookupGeneration != generation" not in code or "isRemoved() || owner != requested" not in code
+            or "ResolvableProfile.createUnresolved(found.id())" not in code):
+        errors.append("TargetBlockEntity: stale reply or frozen texture in server identity lookup")
+    cart = strip_comments((src / "com/tacz/guns/entity/TargetMinecart.java").read_text())
+    if "!customName.equals(this.ownerProfileSource)" not in cart or "ResolvableProfile.createUnresolved(name)" not in cart:
+        errors.append("TargetMinecart: owner cache must follow the current custom name")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="审计方块实体的持久化与移除收尾")
     parser.add_argument("--strict", action="store_true", help="有问题时退出 1")
+    parser.add_argument("--root", type=Path, default=ROOT, help=argparse.SUPPRESS)
     args = parser.parse_args()
+    src = args.root / "src/main/java"
 
-    if not SRC.is_dir():
-        print(f"[ERR] 找不到 {SRC}", file=sys.stderr)
+    if not src.is_dir():
+        print(f"[ERR] 找不到 {src}", file=sys.stderr)
         return 1 if args.strict else 0
 
-    for path in sorted(SRC.rglob("*.java")):
+    check_profile_paths(src)
+    for path in sorted(src.rglob("*.java")):
         code = strip_comments(path.read_text(encoding="utf-8"))
         check_hand_rolled_profile(path, code)
         check_block_entity(path)

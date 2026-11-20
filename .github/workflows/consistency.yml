@@ -15,12 +15,14 @@ on:
       - 'README.md'
       - 'src/main/resources/fabric.mod.json'
       - 'scripts/check_release_consistency.sh'
+      - '.github/workflows/consistency.yml'
   pull_request:
     paths:
       - 'gradle.properties'
       - 'README.md'
       - 'src/main/resources/fabric.mod.json'
       - 'scripts/check_release_consistency.sh'
+      - '.github/workflows/consistency.yml'
   workflow_dispatch:
 jobs:
   check:
@@ -29,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: 检查当前分支
-        run: bash scripts/check_release_consistency.sh
+        run: bash scripts/check_release_consistency.sh --strict
       - name: 失败提示
         if: failure()
         run: |

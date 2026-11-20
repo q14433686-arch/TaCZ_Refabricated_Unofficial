@@ -31,6 +31,12 @@ public class ModCreativeTabs {
                 output.acceptAll(GunSmithTableItem.fillItemCategory());
                 output.accept(ModItems.TARGET);
                 output.accept(ModItems.STATUE);
+                output.accept(ModItems.GUN_DISPLAY_CASE);
+                output.accept(ModItems.GUN_PEGBOARD);
+                output.accept(ModItems.GLOW_GUN_PEGBOARD);
+                output.accept(ModItems.AMMO_STORAGE);
+                output.accept(ModItems.AMMO_STORAGE_GOLD);
+                output.accept(ModItems.AMMO_STORAGE_DIAMOND);
                 output.accept(ModItems.TARGET_MINECART);
                 AmmoBoxItem.fillItemCategory(output);
             }).build());
@@ -79,6 +85,11 @@ public class ModCreativeTabs {
             .title(Component.translatable("tacz.type.sniper.name"))
             .icon(() -> GunItemBuilder.create().setId(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "ai_awp")).build())
             .displayItems((parameters, output) -> output.acceptAll(AbstractGunItem.fillItemCategory(GunTabType.SNIPER))).build());
+
+    public static CreativeModeTab GUN_DMR_TAB = regiser("dmr", CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
+            .title(Component.translatable("tacz.type.dmr.name"))
+            .icon(() -> GunItemBuilder.create().setId(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "mk14")).build())
+            .displayItems((parameters, output) -> output.acceptAll(AbstractGunItem.fillItemCategory(GunTabType.DMR))).build());
 
     public static CreativeModeTab GUN_RIFLE_TAB = regiser("rifle", CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
             .title(Component.translatable("tacz.type.rifle.name"))

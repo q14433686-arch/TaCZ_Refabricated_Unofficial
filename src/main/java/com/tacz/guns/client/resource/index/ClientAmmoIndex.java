@@ -313,6 +313,10 @@ public class ClientAmmoIndex {
         return shellTextureLocation;
     }
 
+    @Nullable public java.util.List<HitSurfaceParticle> getHitSurfaceParticles() { return display.getHitSurfaceParticles(); }
+    @Nullable public Integer getHitBlockParticleCount() { return display.getHitBlockParticleCount(); }
+    public boolean isBulletHoleEnabled() { return display.isBulletHoleEnabled(); }
+
     @Nullable
     public AmmoParticle getParticle() {
         return particle;

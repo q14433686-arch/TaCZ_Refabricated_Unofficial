@@ -1,0 +1,8 @@
+{
+  "name": "Test optic",
+  "display": "port_test:optic",
+  "data": "port_test:optic",
+  "target_tags": [
+    "port_test:optics"
+  ]
+}

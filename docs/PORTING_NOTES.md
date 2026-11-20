@@ -578,7 +578,7 @@ Codec.STRING.xmap(
 
 ### 移植版特有的坑：`Mod version mismatch`
 
-`GunPackLoader#modVersionMatch` 会拿枪包 `gunpack.meta.json` 里的
+现行 `GunPackVersions.dependenciesMatch` 会拿枪包 `gunpack.meta.json` 里的
 `dependencies` 与**实际 mod 版本**比对：
 
 ```java
@@ -589,7 +589,7 @@ VersionPredicate.parse(version).test(mod.getMetadata().getVersion())
 `"tacz": ">=1.0.4"`，**必然不满足**，于是被静默拒绝
 （日志 `Mod version mismatch`）。
 
-**已解决**：版本号改为 `1.1.8+fabric.26.2.alpha.N`（见下）。
+**当时的修复**：版本号改为 `1.1.8+fabric.26.2.alpha.N`（见下文历史示例）。当前 26.2 已将核心提升到 **1.2.0**；精确要求旧版的枪包不匹配。参见[枪包 Wiki 的版本表](wiki/GUNPACK_26_2.md)。
 
 ### 版本号怎么起：`+` 与 `-` 的天壤之别
 
@@ -625,7 +625,7 @@ Fabric 使用 Semantic Versioning 的超集；`+` 后的 build metadata 在版�
 
 > 发布时不要为了“Alpha N”把版本写成 `1.1.8-alpha.N` 或
 > `1.1.8-fabric.26.2.alpha.N`。那会变成 prerelease，低于 `1.1.8`，导致要求
-> `>=1.1.8` 的枪包失配。当前采用 `1.1.8+fabric.26.2.alpha.N`，Alpha 信息在
+> `>=1.1.8` 的枪包失配。当时采用 `1.1.8+fabric.26.2.alpha.N`，Alpha 信息在
 > build metadata 与 `fabric.mod.json` 展示文本中表达。
 
 另一个容易踩的 Fabric 端细节：官方文档提到 Loader 0.19.3 对超过 3 段版本的 `.x`

@@ -1,5 +1,6 @@
 package com.tacz.guns.client.compat;
 
+import cn.sh1rocu.tacz.compat.rei.ReiPackRefresh;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.resource.CommonAssetsManager;
 import net.fabricmc.api.EnvType;
@@ -7,9 +8,6 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
-
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 
 /**
  * Rebuilds optional recipe-viewer registrations after TACZ's authoritative gun-pack cache arrives.
@@ -20,20 +18,15 @@ import java.lang.reflect.Modifier;
  * Requests are deliberately coalesced and deferred to {@link #tick(Minecraft)}: packet handling,
  * viewer internals, and client resources must all remain on the Minecraft client thread.</p>
  *
- * <p>The lightweight entry points are optional implementation APIs. This class only probes
- * installed viewers and uses reflection for REI. JEI uses its non-destructive lifecycle reload
- * listener, captured by an optional mixin; REI uses
- * {@code me.shedaniel.rei.RoughlyEnoughItemsCoreClient#reloadPlugins} with two nullable arguments. Never synthesize JEI's {@code AFTER_RECIPES_UPDATED} event:
- * newer JEI versions interpret it without a preceding recipe-sync notification as a server switch
- * and clear the authoritative recipe map, leaving only the vanilla client fallback. If either
- * installed viewer has moved its entry point, one normal client resource reload is used as a safe
- * fallback for the connection; it is never retriggered by the fallback itself.</p>
+ * <p>JEI uses its lifecycle listener. REI's server displays are one-shot additions to the current
+ * holder, not registrations replayed by plugins. Only replace our own gun-pack entries there.</p>
  */
 @Environment(EnvType.CLIENT)
 public final class RecipeViewerReloadBridge {
     // This listener belongs to JEI's client lifecycle, not a connection. Keep it across clear().
     private static ResourceManagerReloadListener jeiReloadListener;
     private static boolean reloadRequested;
+    private static boolean reiPending;
     private static boolean reloadInProgress;
     private static boolean resourceFallbackUsed;
 
@@ -47,13 +40,13 @@ public final class RecipeViewerReloadBridge {
 
     /** Queues one coalesced reload after cache installation and index rebuilding have completed. */
     public static void requestReload() {
-        if (hasJei() || hasRei()) {
-            reloadRequested = true;
-        }
+        reloadRequested = hasJei();
+        reiPending = hasRei();
     }
 
     /** Drops pending work when the client leaves before the synchronized cache can be used. */
     public static void clear() {
+        reiPending = false;
         reloadRequested = false;
         reloadInProgress = false;
         resourceFallbackUsed = false;
@@ -61,10 +54,20 @@ public final class RecipeViewerReloadBridge {
 
     /** Runs from {@code END_CLIENT_TICK} after the client has a level and player. */
     public static void tick(Minecraft client) {
-        if (!reloadRequested || reloadInProgress || client.level == null || client.player == null) {
+        if (reloadInProgress || client.level == null || client.player == null) {
             return;
         }
 
+        if (reiPending) {
+            try {
+                reiPending = !ReiPackRefresh.refreshWhenReady();
+            } catch (RuntimeException | LinkageError ex) {
+                reiPending = false;
+                // Never use a destructive full reload as a fallback on an unfamiliar REI runtime.
+                GunMod.LOGGER.warn("[TACZ Recipe Viewer] Could not refresh REI gun-pack entries; leaving server displays alone.", ex);
+            }
+        }
+        if (!reloadRequested) return;
         reloadRequested = false;
         reloadInProgress = true;
         int tableCount = CommonAssetsManager.get().getAllBlocks().size();
@@ -72,20 +75,11 @@ public final class RecipeViewerReloadBridge {
         GunMod.LOGGER.info("[TACZ Recipe Viewer] Refreshing after gun-pack sync ({} table(s), {} recipe(s)).",
                 tableCount, recipeCount);
 
-        // Do not short-circuit: when both viewers are installed each receives its own refresh attempt.
-        boolean requiresResourceFallback = false;
-        if (hasJei() && !refreshJei(client)) {
-            requiresResourceFallback = true;
-        }
-        if (hasRei() && !refreshRei()) {
-            requiresResourceFallback = true;
-        }
+        boolean requiresResourceFallback = !refreshJei(client);
         if (!requiresResourceFallback || resourceFallbackUsed) {
             reloadInProgress = false;
             if (requiresResourceFallback) {
                 GunMod.LOGGER.warn("[TACZ Recipe Viewer] Lightweight refresh is unavailable; the one fallback for this connection was already used.");
-            } else {
-                GunMod.LOGGER.info("[TACZ Recipe Viewer] JEI/REI refresh completed.");
             }
             return;
         }
@@ -112,9 +106,34 @@ public final class RecipeViewerReloadBridge {
 
     /**
      * JEI's own lifecycle reload listener rebuilds plugins without treating this as a new recipe
-     * packet or clearing the server recipe cache. Present in both the pinned 30.13.0.86 and newer
-     * 26.2 JEI builds. The optional mixin captures it without linking against JEI implementation
-     * classes; no synthetic recipe-sync events or private state writes are needed.
+     * packet or clearing the server recipe cache. On the pinned 30.13.0.86 build ({@code ClientLifecycleHandler#getReloadListener()} returns a
+     * {@code ResourceManagerReloadListener} that stops/starts JEI when it is running on the client
+     * thread). The optional mixin captures it without linking against JEI implementation classes;
+     * no synthetic recipe-sync events, no {@code Internal.restartJei()} reflection and no private
+     * state writes are needed.
+     *
+     * <h2>Why not {@code AFTER_RECIPES_UPDATED} (or a fallback to it)</h2>
+     * <p>The event was the 26.2 entry point, but JEI Fabric's listener for it is
+     * ({@code ClientLifecycleHandler#registerEvents}, 26.2 and 26.3 source):</p>
+     * <pre>
+     *   if (!receivedRecipeSync) Internal.clearClientRecipes();
+     *   receivedRecipeSync = false;
+     *   stopJei(); startJei();
+     * </pre>
+     * <p>The flag is only set by a real Fabric recipe-sync packet and is consumed by the first
+     * start. Firing the event by hand afterwards therefore <b>throws away the server-synced recipe
+     * map</b>; JEI then falls back to {@code VanillaClientRecipeLoader}, which loads recipes from
+     * the vanilla pack only ("Loaded N vanilla recipes from the client recipe registry" + "This
+     * fabric server does not provide recipes to JEI"). Every {@code minecraft:crafting_*} recipe
+     * shipped by a mod datapack — TACZ's own workbench/ammo-box/target recipes and any gun pack's —
+     * silently disappears from JEI, while {@code tacz:gun_smith_table_crafting} entries survive only
+     * because our plugin builds them from the gun-pack cache instead of the recipe map.</p>
+     *
+     * <p>Do not keep the event as a "last resort" either: a JEI build that moved this listener would
+     * silently destroy the synced recipes, which is worse than the one connection-scoped resource
+     * reload fallback in {@link #tick(Minecraft)}. {@code Internal.restartJei()} is deliberately not
+     * used any more: it throws when the handler is not initialised yet and it is not present in all
+     * older JEI builds, so the single lifecycle listener covers both cases.</p>
      */
     private static boolean refreshJei(Minecraft client) {
         if (jeiReloadListener == null) {
@@ -125,32 +144,6 @@ public final class RecipeViewerReloadBridge {
             return true;
         } catch (LinkageError | RuntimeException exception) {
             GunMod.LOGGER.debug("[TACZ Recipe Viewer] JEI lightweight refresh unavailable.", exception);
-            return false;
-        }
-    }
-
-    /** REI 26.2.820 reloads all plugin stages through reloadPlugins(MutableLong, ReloadStage). */
-    private static boolean refreshRei() {
-        try {
-            Class<?> coreClient = Class.forName("me.shedaniel.rei.RoughlyEnoughItemsCoreClient");
-            Method reload = null;
-            for (Method candidate : coreClient.getMethods()) {
-                if (candidate.getName().equals("reloadPlugins")
-                        && Modifier.isStatic(candidate.getModifiers())
-                        && candidate.getParameterCount() == 2) {
-                    reload = candidate;
-                    break;
-                }
-            }
-            if (reload == null) {
-                throw new NoSuchMethodException("RoughlyEnoughItemsCoreClient.reloadPlugins(MutableLong, ReloadStage)");
-            }
-            // Null requests the full plugin-stage reload; REI's own 26.2 UI uses this same
-            // two-argument entry point for a manual reload.
-            reload.invoke(null, null, null);
-            return true;
-        } catch (ReflectiveOperationException | LinkageError | RuntimeException exception) {
-            GunMod.LOGGER.debug("[TACZ Recipe Viewer] REI lightweight refresh unavailable.", exception);
             return false;
         }
     }

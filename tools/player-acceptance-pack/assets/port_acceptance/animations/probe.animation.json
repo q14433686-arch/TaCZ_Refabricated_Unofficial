@@ -1,0 +1,121 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "inspect": {
+      "loop": false,
+      "animation_length": 1,
+      "particle_effects": {
+        "0": {
+          "effect": "minecraft:end_rod",
+          "locator": "muzzle_flash"
+        },
+        "0.2": [
+          {
+            "effect": "tacz:muzzle_flash",
+            "locator": "muzzle_flash"
+          },
+          {
+            "effect": "tacz:muzzle_flash_smoke",
+            "locator": "muzzle_flash"
+          }
+        ],
+        "0.4": {
+          "effect": "minecraft:happy_villager",
+          "locator": "root"
+        },
+        "0.3": {
+          "effect": "port_acceptance:runtime_probe",
+          "locator": "muzzle_flash",
+          "pre_effect_script": "variable.count = 3;"
+        }
+      }
+    },
+    "inspect_empty": {
+      "loop": false,
+      "animation_length": 1,
+      "particle_effects": {
+        "0": {
+          "effect": "minecraft:end_rod",
+          "locator": "muzzle_flash"
+        },
+        "0.2": [
+          {
+            "effect": "tacz:muzzle_flash",
+            "locator": "muzzle_flash"
+          },
+          {
+            "effect": "tacz:muzzle_flash_smoke",
+            "locator": "muzzle_flash"
+          }
+        ],
+        "0.4": {
+          "effect": "minecraft:happy_villager",
+          "locator": "root"
+        },
+        "0.3": {
+          "effect": "port_acceptance:runtime_probe",
+          "locator": "muzzle_flash",
+          "pre_effect_script": "variable.count = 3;"
+        }
+      }
+    },
+    "inspect_xmag": {
+      "loop": false,
+      "animation_length": 1,
+      "particle_effects": {
+        "0": {
+          "effect": "minecraft:end_rod",
+          "locator": "muzzle_flash"
+        },
+        "0.2": [
+          {
+            "effect": "tacz:muzzle_flash",
+            "locator": "muzzle_flash"
+          },
+          {
+            "effect": "tacz:muzzle_flash_smoke",
+            "locator": "muzzle_flash"
+          }
+        ],
+        "0.4": {
+          "effect": "minecraft:happy_villager",
+          "locator": "root"
+        },
+        "0.3": {
+          "effect": "port_acceptance:runtime_probe",
+          "locator": "muzzle_flash",
+          "pre_effect_script": "variable.count = 3;"
+        }
+      }
+    },
+    "inspect_empty_xmag": {
+      "loop": false,
+      "animation_length": 1,
+      "particle_effects": {
+        "0": {
+          "effect": "minecraft:end_rod",
+          "locator": "muzzle_flash"
+        },
+        "0.2": [
+          {
+            "effect": "tacz:muzzle_flash",
+            "locator": "muzzle_flash"
+          },
+          {
+            "effect": "tacz:muzzle_flash_smoke",
+            "locator": "muzzle_flash"
+          }
+        ],
+        "0.4": {
+          "effect": "minecraft:happy_villager",
+          "locator": "root"
+        },
+        "0.3": {
+          "effect": "port_acceptance:runtime_probe",
+          "locator": "muzzle_flash",
+          "pre_effect_script": "variable.count = 3;"
+        }
+      }
+    }
+  }
+}

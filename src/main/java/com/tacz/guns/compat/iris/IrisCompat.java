@@ -147,6 +147,11 @@ public final class IrisCompat {
         return result;
     }
 
+    /** Unlike the generic pack fallback, never opt Sulkan into an Iris-specific material. */
+    public static boolean hasActiveIrisPack() {
+        return FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS) && isUsingRenderPack();
+    }
+
     private static boolean computeUsingRenderPack() {
         // Iris 检查 - 使用反射避免硬依赖
         if (FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) {
@@ -183,21 +188,7 @@ public final class IrisCompat {
             return false;
         }
         try {
-            Class<?> irisApiClass = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
-            Object instance = irisApiClass.getMethod("getInstance").invoke(null);
-            int minor = (Integer) irisApiClass.getMethod("getMinorApiRevision").invoke(instance);
-            if (minor < 3) {
-                if (!loggedScopePipelineAssign) {
-                    loggedScopePipelineAssign = true;
-                    GunMod.LOGGER.warn("[TACZ Scope] Iris API revision {} has no assignPipeline support; scope mask will fall back under shaders.", minor);
-                }
-                return false;
-            }
-            Class<?> irisProgramClass = Class.forName("net.irisshaders.iris.api.v0.IrisProgram");
-            @SuppressWarnings({"unchecked", "rawtypes"})
-            Object handProgram = Enum.valueOf((Class<? extends Enum>) irisProgramClass.asSubclass(Enum.class), "HAND");
-            irisApiClass.getMethod("assignPipeline", RenderPipeline.class, irisProgramClass)
-                    .invoke(instance, pipeline, handProgram);
+            if (!assignProgram(pipeline, "HAND")) return false;
             scopePipelineAssignSuccesses++;
             scopePipelinesAssigned = scopePipelineAssignSuccesses >= 2;
             if (!loggedScopePipelineAssign) {
@@ -218,6 +209,41 @@ public final class IrisCompat {
             }
             return false;
         }
+    }
+
+    /** Custom entity-vertex materials (particles and illuminated bones). Do not count these
+     * registrations towards optical mask readiness or reassign any vanilla pipeline. */
+    public static void assignEntityPipeline(RenderPipeline pipeline, boolean hand, boolean emissive) {
+        tryAssignPipeline(pipeline, hand ? "HAND" : emissive ? "EMISSIVE_ENTITIES" : "ENTITIES");
+    }
+
+    /** Self-emitting colours use the pack's emissive program in either view. HAND is normally lit. */
+    public static void assignEmissivePipeline(RenderPipeline pipeline) {
+        tryAssignPipeline(pipeline, "EMISSIVE_ENTITIES");
+    }
+
+    public static void assignRackOutlinePipeline(RenderPipeline pipeline) {
+        tryAssignPipeline(pipeline, "LINES");
+    }
+
+    private static void tryAssignPipeline(RenderPipeline pipeline, String program) {
+        if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) return;
+        try {
+            if (!assignProgram(pipeline, program)) GunMod.LOGGER.warn("Iris cannot assign {} to {}", pipeline.getLocation(), program);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            GunMod.LOGGER.warn("Cannot assign {} to Iris {}", pipeline.getLocation(), program, e);
+        }
+    }
+
+    private static boolean assignProgram(RenderPipeline pipeline, String program) throws ReflectiveOperationException {
+        Class<?> api = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
+        Object instance = api.getMethod("getInstance").invoke(null);
+        if ((Integer) api.getMethod("getMinorApiRevision").invoke(instance) < 3) return false;
+        Class<?> programs = Class.forName("net.irisshaders.iris.api.v0.IrisProgram");
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        Object selected = Enum.valueOf((Class<? extends Enum>) programs.asSubclass(Enum.class), program);
+        api.getMethod("assignPipeline", RenderPipeline.class, programs).invoke(instance, pipeline, selected);
+        return true;
     }
 
     // 【已移除 · 2026-09-08】assignCommonEntityPipelinesToHandIfNeeded()：

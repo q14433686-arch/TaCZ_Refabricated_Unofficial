@@ -1,5 +1,7 @@
 package com.tacz.guns.util;
 
+import com.tacz.guns.client.render.ViewmodelFlash;
+import com.tacz.guns.client.render.FlashMaterials;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
 import com.tacz.guns.compat.ar.ARCompat;
@@ -102,21 +104,30 @@ public final class RenderHelper {
         // 用 collector 代理在提交穿过时原地替换。判定放在这里（submit task
         // 执行期）而不是 extract 期：掩码清单登记发生在瞄具提交内部，
         // 只有此刻的 maskReadyForViewmodel 才反映本帧真实状态。
-        collector = wrapForScopeClip(collector, skinTexture);
+        var baseCollector = wrapForScopeClip(collector, skinTexture);
         // NEA normally raises this guard from ItemInHandRenderer#renderPlayerArm. TACZ calls
         // AvatarRenderer directly, so bridge the same guard to keep third-person smoothing and
         // action poses from being layered over the authored gun-hand bones.
         FirstPersonAnimationCompat.beginDirectArmRender();
         try {
             if (hand == HumanoidArm.RIGHT) {
-                renderer.renderRightHand(matrixStack, collector, combinedLight, skinTexture,
+                renderer.renderRightHand(matrixStack, baseCollector, combinedLight, skinTexture,
                         player.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE));
             } else {
-                renderer.renderLeftHand(matrixStack, collector, combinedLight, skinTexture,
+                renderer.renderLeftHand(matrixStack, baseCollector, combinedLight, skinTexture,
                         player.isModelPartShown(PlayerModelPart.LEFT_SLEEVE));
             }
             // 【手臂对齐修复】中和 vanilla 1.21.9+ 的 zRot=±0.1，见本方法第 6 轮注释。
             resetFirstPersonArmLean(renderer);
+            float gain = ViewmodelFlash.gain();
+            if (gain > 0 && renderer.getModel() instanceof PlayerModel model) {
+                int gray = Math.round(gain * 255);
+                // Same live ModelPart (including sleeve visibility) and pose as vanilla. Submit
+                // AFTER the regular depth-writing body/arm; do not relight the skin globally.
+                collector.order(1).submitModelPart(hand == HumanoidArm.RIGHT ? model.rightArm : model.leftArm,
+                        matrixStack, FlashMaterials.reflection(skinTexture), combinedLight,
+                        net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, null, 0xff000000 | gray * 0x010101, null);
+            }
         } finally {
             FirstPersonAnimationCompat.endDirectArmRender();
         }

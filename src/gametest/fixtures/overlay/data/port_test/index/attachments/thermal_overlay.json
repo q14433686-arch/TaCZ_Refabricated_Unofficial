@@ -1,0 +1,6 @@
+{
+  "name": "Thermal overlay probe",
+  "display": "port_test:thermal_overlay",
+  "data": "tacz:scope_xl50_data",
+  "type": "scope"
+}

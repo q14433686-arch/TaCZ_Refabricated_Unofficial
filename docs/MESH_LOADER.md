@@ -172,8 +172,8 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 ### 5.1 编译（CI 闭环）——已打通
 
 `.github/workflows/compile-check.yml` 已由仓库所有者放入分支，每次 push
-自动跑 `./gradlew compileJava` 并把日志写回 `build-reports/compile-java.log`。
-本文档涉及的全部提交均 CI 编译绿。
+自动跑 `compileJava`；行为回移后的失败诊断见对应 Check，不再向测试分支回推日志。
+编译本身不是贴图或镜内画面的证明。
 
 ### 5.2 实机（下列 1-7 项 + GPU 各路径均已实测 PASS，2026-08-30）
 
@@ -319,11 +319,13 @@ pass and was rejected. …（logged once）
 `ak_enact` 365848 顶点 / `p90un` 491184 顶点）：镜内应为高模而非立方体；
 两条 log-once 都应出现；主画面镜外仍是高模（不消失、不双影）；开关光影都验一遍。
 
-**顺带发现（另案，未修）**：同一份日志里世界语境的贴图解析与第一人称不同源 ——
+**当时的另案（历史日志）**：同一份日志里世界语境的贴图解析与第一人称不同源 ——
 第一人称拿到 `duyupack:textures/gun/uv/ak_enact.png`，世界语境回退到
 `GunDisplayInstance.getModelTexture()` 给的 `duyupack:textures/gun/ak_enact.png`
 （少了 `/uv/`），紧跟一条 `Missing resource duyupack:textures/gun/ak_enact.png`
-⇒ 世界 mesh 枪会用 missing-texture 兜底贴图。与本项无关，待单独处理。
+⇒ 世界 mesh 枪会用 missing-texture 兜底贴图。
+
+**26.2 行为回移更新**：`GunRigBaker` 对近景使用 display 的 `texture`、对低模使用 `lod.texture`，在各自的 TML 模型上设置所选贴图。`ExternalRigSmoke` 检查 `gun/uv/ak47` 与 `gun/lod/ak47` 的模型／贴图区分、实际 FIXED 提交及重载后旧模型退役。这是测试包的证据，不是上述 `duyupack` 原包的复测。
 
 **证据级别**：根因与「镜内会重新提交」= 用户实机日志直接证明；修复效果本身
 **待实测**（沙箱无 java/JDK 与 MC 依赖源，编译走 CI 闭环）。

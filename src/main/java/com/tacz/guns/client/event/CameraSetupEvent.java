@@ -1,5 +1,6 @@
 package com.tacz.guns.client.event;
 
+import com.tacz.guns.util.time.GunTime;
 import cn.sh1rocu.simplebedrockmodel.api.event.ViewportEvent;
 import cn.sh1rocu.tacz.api.event.ComputeFovModifierEvent;
 import com.tacz.guns.GunMod;
@@ -10,6 +11,7 @@ import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.client.other.KeepingItemRenderer;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.event.common.GunFireEvent;
+import com.tacz.guns.api.event.common.GunFirePostEvent;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
@@ -18,6 +20,8 @@ import com.tacz.guns.api.modifier.ParameterizedCachePair;
 import com.tacz.guns.client.render.scope.ScopePipRenderer;
 import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
 import com.tacz.guns.client.resource.GunDisplayInstance;
+import com.tacz.guns.client.resource.pojo.display.gun.AdsFov;
+import com.tacz.guns.util.math.Easing;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
@@ -129,17 +133,10 @@ public class CameraSetupEvent {
                 return;
             }
             float zoom = iGun.getAimingZoom(stack);
-            if (livingEntity instanceof LocalPlayer localPlayer) {
-                IClientPlayerGunOperator gunOperator = IClientPlayerGunOperator.fromLocalPlayer(localPlayer);
-                float aimingProgress = gunOperator.getClientAimingProgress((float) event.getPartialTick());
-                float fov = WORLD_FOV_DYNAMICS.update((float) MathUtil.magnificationToFov(1 + (zoom - 1) * aimingProgress, event.getFOV()));
-                event.setFOV(fov);
-            } else {
-                IGunOperator gunOperator = IGunOperator.fromLivingEntity(livingEntity);
-                float aimingProgress = gunOperator.getSynAimingProgress();
-                float fov = WORLD_FOV_DYNAMICS.update((float) MathUtil.magnificationToFov(1 + (zoom - 1) * aimingProgress, event.getFOV()));
-                event.setFOV(fov);
-            }
+            AdsFov.Channel curve = TimelessAPI.getGunDisplay(stack).map(GunDisplayInstance::getAdsFov).map(AdsFov::getWorld).orElse(null);
+            float progress = fovProgress(livingEntity, (float) event.getPartialTick(), curve);
+            float target = (float) MathUtil.magnificationToFov(1 + (zoom - 1) * progress, event.getFOV());
+            event.setFOV(applyFovCurve(WORLD_FOV_DYNAMICS, target, curve));
         }
     }
 
@@ -161,74 +158,81 @@ public class CameraSetupEvent {
             }
             CompoundTag scopeTag = iGun.getAttachmentTag(stack, AttachmentType.SCOPE);
             int zoomNumber = AttachmentItemDataAccessor.getZoomNumberFromTag(scopeTag);
-            // 尝试使用配件fov修改，若无则尝试使用枪械本身fov修改，否则维持不变
-            float modifiedFov = TimelessAPI.getClientAttachmentIndex(scopeItemId)
-                    .map(index -> {
-                        float[] viewsFov = index.getViewsFov();
-                        return viewsFov[zoomNumber % viewsFov.length];
-                    })
-                    .orElse(
-                            TimelessAPI.getGunDisplay(stack)
-                                    .map(GunDisplayInstance::getZoomModelFov)
-                                    .orElse((float) event.getFOV())
-                    );
-            if (livingEntity instanceof LocalPlayer localPlayer) {
-                IClientPlayerGunOperator gunOperator = IClientPlayerGunOperator.fromLocalPlayer(localPlayer);
-                float aimingProgress = gunOperator.getClientAimingProgress((float) event.getPartialTick());
-                float fov = ITEM_MODEL_FOV_DYNAMICS.update(Mth.lerp(aimingProgress, (float) event.getFOV(), modifiedFov));
-                event.setFOV(fov);
-            } else {
-                IGunOperator gunOperator = IGunOperator.fromLivingEntity(livingEntity);
-                float aimingProgress = gunOperator.getSynAimingProgress();
-                float fov = ITEM_MODEL_FOV_DYNAMICS.update(Mth.lerp(aimingProgress, (float) event.getFOV(), modifiedFov));
-                event.setFOV(fov);
-            }
+            var display = TimelessAPI.getGunDisplay(stack);
+            float base = display.map(GunDisplayInstance::getModelFov).orElse((float) event.getFOV());
+            Identifier resolved = scopeItemId;
+            var fovs = TimelessAPI.getClientAttachmentVariantIndex(resolved, scopeTag).map(index -> index.getViewsFov())
+                    .or(() -> TimelessAPI.getClientAttachmentIndex(resolved).map(index -> index.getViewsFov()));
+            float modified = fovs.map(fov -> fov[Math.floorMod(zoomNumber, fov.length)])
+                    .orElseGet(() -> display.map(GunDisplayInstance::getZoomModelFov).orElse(base));
+            AdsFov.Channel curve = display.map(GunDisplayInstance::getAdsFov).map(AdsFov::getModel).orElse(null);
+            float progress = fovProgress(livingEntity, (float) event.getPartialTick(), curve);
+            event.setFOV(applyFovCurve(ITEM_MODEL_FOV_DYNAMICS, Mth.lerp(progress, base, modified), curve));
         }
     }
 
+    private static float fovProgress(LivingEntity entity, float partialTick, AdsFov.Channel curve) {
+        float progress = entity instanceof LocalPlayer player
+                ? IClientPlayerGunOperator.fromLocalPlayer(player).getClientAimingProgress(partialTick)
+                : IGunOperator.fromLivingEntity(entity).getSynAimingProgress();
+        return curve == null ? (float) Easing.easeInExpo(progress) : curve.evaluate(progress);
+    }
+
+    private static float applyFovCurve(SecondOrderDynamics smoother, float target, AdsFov.Channel curve) {
+        // Even in direct mode advance the smoother so switching guns doesn't restore a stale FOV.
+        float smoothed = smoother.update(target);
+        return curve == null || curve.isSmooth() ? smoothed : target;
+    }
+
+    // Kept callable for 26.3 integrations. Our own listener only runs after all pre callbacks voted.
     public static void initialCameraRecoil(GunFireEvent event) {
-        if (event.getLogicalSide().isClient()) {
-            LivingEntity shooter = event.getShooter();
-            LocalPlayer player = Minecraft.getInstance().player;
-            if (!shooter.equals(player)) {
-                return;
-            }
-            ItemStack mainHandItem = player.getMainHandItem();
-            if (!(mainHandItem.getItem() instanceof IGun iGun)) {
-                return;
-            }
-            AttachmentCacheProperty cacheProperty = IGunOperator.fromLivingEntity(player).getCacheProperty();
-            if (cacheProperty == null) {
-                return;
-            }
-            Identifier gunId = iGun.getGunId(mainHandItem);
-            Optional<ClientGunIndex> gunIndexOptional = TimelessAPI.getClientGunIndex(gunId);
-            if (gunIndexOptional.isEmpty()) {
-                return;
-            }
-            ClientGunIndex gunIndex = gunIndexOptional.get();
-            GunData gunData = gunIndex.getGunData();
-            // 获取所有配件对摄像机后坐力的修改
-            ParameterizedCachePair<Float, Float> attachmentRecoilModifier = cacheProperty.getCache(RecoilModifier.ID);
-            IClientPlayerGunOperator clientPlayerGunOperator = IClientPlayerGunOperator.fromLocalPlayer(player);
-            float partialTicks = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
-            float aimingProgress = clientPlayerGunOperator.getClientAimingProgress(partialTicks);
-            float zoom = iGun.getAimingZoom(mainHandItem);
-            float aimingRecoilModifier = 1 - aimingProgress + aimingProgress / (float) Math.min(Math.sqrt(zoom), 1.5);
-            // 如果是趴下，那么后坐力按 data 设计减少（默认为降低一半）
-            if (!player.isSwimming() && player.getPose() == Pose.SWIMMING) {
-                aimingRecoilModifier = aimingRecoilModifier * gunData.getCrawlRecoilMultiplier();
-            }
-            float pitchMod = (float) attachmentRecoilModifier.left().eval(aimingRecoilModifier);
-            float yawMod = (float) attachmentRecoilModifier.right().eval(aimingRecoilModifier);
-            pitchSplineFunction = gunData.getRecoil().genPitchSplineFunction(pitchMod);
-            yawSplineFunction = gunData.getRecoil().genYawSplineFunction(yawMod);
-            shootTimeStamp = System.currentTimeMillis();
-            xRotO = 0;
-            yRotO = 0;
-            if (RenderConfig.RECOIL_DEBUG.get()) {
-                debugLogRecoilFire(player, aimingRecoilModifier, pitchMod, yawMod, pitchSplineFunction, yawSplineFunction);
-            }
+        if (!event.isCanceled() && event.getLogicalSide().isClient()) initialCameraRecoil(event.getShooter());
+    }
+
+    public static void initialCameraRecoilPost(GunFirePostEvent event) {
+        if (event.getLogicalSide().isClient()) initialCameraRecoil(event.getShooter());
+    }
+
+    private static void initialCameraRecoil(LivingEntity shooter) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (!shooter.equals(player)) {
+            return;
+        }
+        ItemStack mainHandItem = player.getMainHandItem();
+        if (!(mainHandItem.getItem() instanceof IGun iGun)) {
+            return;
+        }
+        AttachmentCacheProperty cacheProperty = IGunOperator.fromLivingEntity(player).getCacheProperty();
+        if (cacheProperty == null) {
+            return;
+        }
+        Identifier gunId = iGun.getGunId(mainHandItem);
+        Optional<ClientGunIndex> gunIndexOptional = TimelessAPI.getClientGunIndex(gunId);
+        if (gunIndexOptional.isEmpty()) {
+            return;
+        }
+        ClientGunIndex gunIndex = gunIndexOptional.get();
+        GunData gunData = gunIndex.getGunData();
+        // 获取所有配件对摄像机后坐力的修改
+        ParameterizedCachePair<Float, Float> attachmentRecoilModifier = cacheProperty.getCache(RecoilModifier.ID);
+        IClientPlayerGunOperator clientPlayerGunOperator = IClientPlayerGunOperator.fromLocalPlayer(player);
+        float partialTicks = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
+        float aimingProgress = clientPlayerGunOperator.getClientAimingProgress(partialTicks);
+        float zoom = iGun.getAimingZoom(mainHandItem);
+        float aimingRecoilModifier = 1 - aimingProgress + aimingProgress / (float) Math.min(Math.sqrt(zoom), 1.5);
+        // 如果是趴下，那么后坐力按 data 设计减少（默认为降低一半）
+        if (!player.isSwimming() && player.getPose() == Pose.SWIMMING) {
+            aimingRecoilModifier = aimingRecoilModifier * gunData.getCrawlRecoilMultiplier();
+        }
+        float pitchMod = (float) attachmentRecoilModifier.left().eval(aimingRecoilModifier);
+        float yawMod = (float) attachmentRecoilModifier.right().eval(aimingRecoilModifier);
+        pitchSplineFunction = gunData.getRecoil().genPitchSplineFunction(pitchMod);
+        yawSplineFunction = gunData.getRecoil().genYawSplineFunction(yawMod);
+        shootTimeStamp = GunTime.nowMillis();
+        xRotO = 0;
+        yRotO = 0;
+        if (RenderConfig.RECOIL_DEBUG.get()) {
+            debugLogRecoilFire(player, aimingRecoilModifier, pitchMod, yawMod, pitchSplineFunction, yawSplineFunction);
         }
     }
 
@@ -237,7 +241,7 @@ public class CameraSetupEvent {
         if (player == null) {
             return;
         }
-        long timeTotal = System.currentTimeMillis() - shootTimeStamp;
+        long timeTotal = GunTime.nowMillis() - shootTimeStamp;
         double dPitch = 0;
         double dYaw = 0;
         if (pitchSplineFunction != null && pitchSplineFunction.isValidPoint(timeTotal)) {
@@ -319,5 +323,13 @@ public class CameraSetupEvent {
             }
             event.setNewFovModifier(player.isSprinting() ? 1.15f * f : f);
         }
+    }
+
+    public static void resetTimestamp() {
+        shootTimeStamp = -1;
+        pitchSplineFunction = null;
+        yawSplineFunction = null;
+        xRotO = 0;
+        yRotO = 0;
     }
 }

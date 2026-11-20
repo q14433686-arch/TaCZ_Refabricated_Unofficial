@@ -1,6 +1,10 @@
 package com.tacz.guns.client.input;
 
-import cn.sh1rocu.tacz.api.event.InputEvent;
+import com.tacz.guns.block.AmmoStorageBlock;
+import com.tacz.guns.block.GunDisplayCaseBlock;
+import com.tacz.guns.client.gui.overlay.DisplayCaseLockHint;
+import com.tacz.guns.network.message.ClientMessageAmmoStorageInteract;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.config.util.InteractKeyConfigRead;
@@ -10,12 +14,11 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.Entity;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
-import org.lwjgl.glfw.GLFW;
 
 import static com.tacz.guns.util.InputExtraCheck.isInGame;
 
@@ -23,81 +26,70 @@ import static com.tacz.guns.util.InputExtraCheck.isInGame;
 public class InteractKey {
     public static final KeyMapping INTERACT_KEY = new KeyMapping("key.tacz.interact.desc",
             InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_O,
+            InputConstants.KEY_O,
             TaCZKeyCategory.TACZ);
 
-    public static void onInteractKeyPress(InputEvent.Key event) {
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INTERACT_KEY.matches(InputConstants.Type.KEYSYM.getOrCreate(event.getKey()))) {
-            doInteractLogic();
-        }
-    }
-
-    public static void onInteractMousePress(InputEvent.MouseButton.Post event) {
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS && INTERACT_KEY.matches(InputConstants.Type.MOUSE.getOrCreate(event.getButton()))) {
-            doInteractLogic();
-        }
-    }
-
     public static boolean onInteractControllerPress(boolean isPress) {
-        if (isInGame() && isPress) {
-            Minecraft mc = Minecraft.getInstance();
-            LocalPlayer player = mc.player;
-            if (player == null || player.isSpectator()) {
-                return false;
-            }
-            if (!IGun.mainHandHoldGun(player)) {
-                return false;
-            }
-            HitResult hitResult = mc.hitResult;
-            if (hitResult == null) {
-                return false;
-            }
-            if (hitResult instanceof BlockHitResult blockHitResult) {
-                interactBlock(blockHitResult, player, mc);
-                return true;
-            }
-            if (hitResult instanceof EntityHitResult entityHitResult) {
-                interactEntity(entityHitResult, mc);
-                return true;
-            }
+        return isPress && isInGame() && doInteractLogic(true);
+    }
+
+    /** On 26.2 Friends and Interact both default to O. Yield the global shortcut only
+     * where the bound gun action can actually use the current target. Do not dispatch it here. */
+    public static boolean hasWorldTarget(InputConstants.Key key) {
+        if (INTERACT_KEY.isUnbound() || !INTERACT_KEY.matches(key) || !isInGame()) return false;
+        var mc = Minecraft.getInstance();
+        var player = mc.player;
+        if (player == null || player.isSpectator() || !IGun.mainHandHoldGun(player)) return false;
+        if (mc.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK) {
+            var block = player.level().getBlockState(hit.getBlockPos());
+            return block.getBlock() instanceof AmmoStorageBlock || InteractKeyConfigRead.canInteractBlock(block);
+        }
+        return mc.hitResult instanceof EntityHitResult hit && InteractKeyConfigRead.canInteractEntity(hit.getEntity());
+    }
+
+    public static boolean sharesUseBinding(KeyMapping use) {
+        return !use.isUnbound() && KeyMappingHelper.getBoundKeyOf(INTERACT_KEY).equals(KeyMappingHelper.getBoundKeyOf(use));
+    }
+
+    // Only for the synchronous, allowlisted startUseItem call below. A pad (or a mouse rebind)
+    // need not have set the keyboard mapping's down flag when Minecraft fires its use event.
+    private static boolean dispatchingUse;
+    public static boolean isDispatchingUse() { return dispatchingUse; }
+    private static void use(Minecraft mc) {
+        boolean previous = dispatchingUse;
+        dispatchingUse = true;
+        try { mc.startUseItem(); } finally { dispatchingUse = previous; }
+    }
+
+    static boolean doInteractLogic(boolean controller) {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (player == null || player.isSpectator() || !IGun.mainHandHoldGun(player)) return false;
+        boolean vanillaUse = !controller && sharesUseBinding(mc.options.keyUse);
+        if (mc.hitResult instanceof BlockHitResult blockHitResult && blockHitResult.getType() == HitResult.Type.BLOCK) {
+            interactBlock(blockHitResult, player, mc, vanillaUse);
+            return true;
+        }
+        if (mc.hitResult instanceof EntityHitResult entityHitResult) {
+            if (!vanillaUse && InteractKeyConfigRead.canInteractEntity(entityHitResult.getEntity())) use(mc);
+            return true;
         }
         return false;
     }
 
-    private static void doInteractLogic() {
-        Minecraft mc = Minecraft.getInstance();
-        LocalPlayer player = mc.player;
-        if (player == null || player.isSpectator()) {
-            return;
-        }
-        if (!IGun.mainHandHoldGun(player)) {
-            return;
-        }
-        HitResult hitResult = mc.hitResult;
-        if (hitResult == null) {
-            return;
-        }
-        if (hitResult instanceof BlockHitResult blockHitResult) {
-            interactBlock(blockHitResult, player, mc);
-            return;
-        }
-        if (hitResult instanceof EntityHitResult entityHitResult) {
-            interactEntity(entityHitResult, mc);
-        }
-    }
-
-    private static void interactBlock(BlockHitResult blockHitResult, LocalPlayer player, Minecraft mc) {
+    private static void interactBlock(BlockHitResult blockHitResult, LocalPlayer player, Minecraft mc, boolean vanillaUse) {
         BlockPos blockPos = blockHitResult.getBlockPos();
         BlockState block = player.level().getBlockState(blockPos);
-        if (InteractKeyConfigRead.canInteractBlock(block)) {
-            mc.startUseItem();
+        if (block.getBlock() instanceof GunDisplayCaseBlock && block.getValue(GunDisplayCaseBlock.LOCKED)) {
+            DisplayCaseLockHint.show(mc, true);
         }
-    }
-
-    private static void interactEntity(EntityHitResult entityHitResult, Minecraft mc) {
-        Entity entity = entityHitResult.getEntity();
-        if (InteractKeyConfigRead.canInteractEntity(entity)) {
-            mc.startUseItem();
+        if (block.getBlock() instanceof AmmoStorageBlock) {
+            if (ClientPlayNetworking.canSend(ClientMessageAmmoStorageInteract.TYPE))
+                ClientPlayNetworking.send(new ClientMessageAmmoStorageInteract(blockPos));
+            return;
+        }
+        if (!vanillaUse && InteractKeyConfigRead.canInteractBlock(block)) {
+            use(mc);
         }
     }
 }

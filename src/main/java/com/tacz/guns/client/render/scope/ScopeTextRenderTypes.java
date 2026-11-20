@@ -1,6 +1,8 @@
 package com.tacz.guns.client.render.scope;
 
 import com.mojang.blaze3d.pipeline.BindGroupLayout;
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.tacz.guns.GunMod;
 import net.fabricmc.api.EnvType;
@@ -93,6 +95,18 @@ public final class ScopeTextRenderTypes {
                     .withBindGroupLayout(MASK_SAMPLER_LAYOUT)
                     .build();
 
+    private static final RenderPipeline FINAL_TEXT_PIPELINE =
+            RenderPipeline.builder(RenderPipelines.WORLD_TEXT_SNIPPET)
+                    .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_text_final"))
+                    .withVertexShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_text"))
+                    .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_text"))
+                    .withShaderDefine("SCOPE_MASK").withShaderDefine("SCOPE_FINAL")
+                    .withDepthStencilState(new com.mojang.blaze3d.pipeline.DepthStencilState(com.mojang.blaze3d.platform.CompareOp.ALWAYS_PASS, false))
+                    .withBindGroupLayout(MASK_SAMPLER_LAYOUT)
+                    // Final glyphs retain vanilla text alpha blending, even after the hand pass.
+                    .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+                    .build();
+
     private static boolean irisAssignmentAttempted = false;
 
     /**
@@ -125,6 +139,13 @@ public final class ScopeTextRenderTypes {
      * @param pageId 该图集页的壳 Identifier（由 {@code ScopeTextSubmitter}
      *               的 view 登记流程生成并每帧刷新指向）
      */
+    private static final Map<Identifier, RenderType> FINAL_PAGE_CACHE = new HashMap<>();
+    public static RenderType finalText(Identifier pageId) {
+        return FINAL_PAGE_CACHE.computeIfAbsent(pageId, id -> RenderType.create("tacz_scope_text_final",
+                RenderSetup.builder(FINAL_TEXT_PIPELINE).withTexture("Sampler0", id)
+                        .withTexture(MASK_SAMPLER, ScopeMaskTextureHandle.ID)
+                        .useLightmap().createRenderSetup()));
+    }
     public static RenderType clippedText(Identifier pageId) {
         ensureIrisCompatibility();
         return PAGE_CACHE.computeIfAbsent(pageId,

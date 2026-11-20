@@ -8,6 +8,7 @@ import com.tacz.guns.api.client.other.KeepingItemRenderer;
 import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
 import com.tacz.guns.compat.firstperson.FirstPersonAnimationCompat;
 import com.tacz.guns.compat.iris.IrisCompat;
+import com.tacz.guns.compat.ysm.YsmCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -39,6 +40,7 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
     private long tacz$KeepTimeMs;
     @Unique
     private long tacz$KeepTimestamp;
+    @Unique private long tacz$keepEpoch = -1;
 
     /**
      * 26.2 迁移: renderHandsWithItems → submitHandsWithItems
@@ -136,6 +138,8 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
             return;
         }
 
+        if (YsmCompat.isExternalGunRenderActive()) return;
+
         // 【光影枪身闪烁 · 实验开关】Iris 26.x HandRenderer 一帧跑两遍手部 pass：
         // renderSolid（→ gbuffers_hand）与 renderTranslucent（→ gbuffers_hand_water）。
         // Iris 对实心物品的半透明遍取消放在 submitArmWithItem 的 HEAD
@@ -217,14 +221,15 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
         // 「接管不会用一个静止视模顶掉正在播放的动画」由调用点保证：
         // LocalPlayerDraw#doPutAway 只在 AnimateGeoItemRenderer#hasInitializedStateMachine
         // 成立（旧枪确实一直在被渲染、INPUT_PUT_AWAY 确实已触发）时才调 keep。
-        long now = System.currentTimeMillis();
+        long now = com.tacz.guns.util.time.GunTime.nowMillis();
         boolean sameKeptItem = tacz$KeepItem != null
                 && ItemStack.isSameItemSameComponents(tacz$KeepItem, itemStack);
-        if (sameKeptItem && now + timeMs <= tacz$KeepTimestamp + tacz$KeepTimeMs) {
+        if (tacz$keepEpoch == com.tacz.guns.util.time.GunTime.epoch() && sameKeptItem && now + timeMs <= tacz$KeepTimestamp + tacz$KeepTimeMs) {
             return;
         }
         this.tacz$KeepTimeMs = timeMs;
         this.tacz$KeepTimestamp = now;
+        this.tacz$keepEpoch = com.tacz.guns.util.time.GunTime.epoch();
         this.tacz$KeepItem = itemStack;
         this.mainHandItem = itemStack;
     }
@@ -235,8 +240,8 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
             return mainHandItem;
         }
         if (tacz$KeepItem != null) {
-            long time = System.currentTimeMillis() - tacz$KeepTimestamp;
-            if (time < tacz$KeepTimeMs) {
+            long time = com.tacz.guns.util.time.GunTime.nowMillis() - tacz$KeepTimestamp;
+            if (tacz$keepEpoch == com.tacz.guns.util.time.GunTime.epoch() && time < tacz$KeepTimeMs) {
                 return tacz$KeepItem;
             } else {
                 tacz$KeepItem = null;

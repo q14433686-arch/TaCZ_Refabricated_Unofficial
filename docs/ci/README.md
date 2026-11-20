@@ -10,26 +10,17 @@ Agent 把 workflow 改动写到本目录，维护者在 GitHub 网页端复制�
 
 两边不一致时，**以 `.github/workflows/` 的正式件为准**。
 
-## 当前状态（2026-09-02 实测刷新）
+## 26.2 工作分支的验收流程
 
-三件**全部已上线**，本目录副本与 `.github/workflows/` 正式件逐字一致（只差空行）：
+三个通用工作流在本目录保留同名镜像；下表描述的是工作分支，不代表已经合入默认分支。Actions 的日志和归档才是实际执行记录。
 
-| 文件 | 状态 | 内容 |
-|---|---|---|
-| `compile-check.yml` | ✅ 已上线（v4） | 主分支 push + PR 也编译（补合并 commit 的盲区）；日志回推只在 `arena/**`；`concurrency` 取消同分支过期 run |
-| `consistency.yml` | ✅ 已上线（v2） | 版本号↔README 守门；`arena/**` 也触发；`paths` 含 `fabric.mod.json` |
-| `build.yml` | ✅ 已上线（**2026-10-27 起五个静态校验**） | 全量 `gradlew build` + jar artifact（14 天）+ 五个静态校验（mixin 配置完整性 / en-zh 语言键齐平 / **方块掉落接线** / **方块实体持久化** / 版本一致性）。artifact 名只用 sha（`github.ref_name` 在 arena 分支带 `/`，是非法字符，首跑 2026-08-31 就是这样红的） |
+| 工作流 | 在 26.2 上检查什么 |
+|---|---|
+| [`compile-check.yml`](compile-check.yml) | Java 25 编译；失败诊断写入对应 Check，不再往测试分支推日志提交。 |
+| [`consistency.yml`](consistency.yml) | `check_release_consistency.sh --strict`：版本号与 README 不一致时失败，不只是打印报告。 |
+| [`build.yml`](build.yml) | `gradlew build`（含专服 GameTest、JUnit）、成品 JAR 清单与散列、Mesa 普通客户端；另验方块掉落／存档、资源、语言键与版本一致性。二进制归档保留 14 天。 |
 
-> **2026-10-27 更新**：本会话的凭据已可推送 workflow 改动，`build.yml` 的两个新静态校验
-> （`scripts/verify_block_drops.py --strict`、`scripts/verify_block_entity_persistence.py --strict`）
-> 已直接写进 `.github/workflows/build.yml` 并同步回本目录的同名副本，逐字一致；
-> 原先放在 `pending/refab-26.2/verify-block-scripts.md` 的代拟件已删除（不需要维护者手工粘贴了）。
-> 起因见 `docs/investigations/MULTIBLOCK_DOUBLE_DROP_26_2_2026_10_26.md` 与
-> `BLOCK_ENTITY_DATA_LOSS_26_2_2026_10_27.md`。
-
-> 旧版本文字（2026-08-31）曾把 `consistency.yml` 记为「待上线 v2」、`build.yml` 记为
-> 「待更新 hotfix」——两件后来都已由维护者上线，本表 2026-09-02 按 `gh api contents`
-> 实拉核对后刷新。
+回移专用流程直接看正式件：[成品专服与 TCP 客户端](../../.github/workflows/distribution-smoke.yml)、[动作／瞄具／粒子／光照](../../.github/workflows/client-suites.yml)、[Iris](../../.github/workflows/iris-smoke.yml)、[JEI / REI](../../.github/workflows/viewer-smoke.yml)、[PAL](../../.github/workflows/animation-smoke.yml)、[Controllable](../../.github/workflows/controller-smoke.yml)。各自有路径过滤；文档提交不必重新生成全部二进制。测试 SHA、匹配的产物和未测范围统一见[交接记录](../lineage/HANDOFF_LEDGER.md#tacz-12-262)。不要把 26.2 依赖或用例直接复制给其它接收线。
 
 ## 本线之外的待上线件 → `pending/`
 

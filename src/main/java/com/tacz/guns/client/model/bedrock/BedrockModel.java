@@ -72,6 +72,8 @@ public class BedrockModel {
         modelRenderer.setInitRotationAngle(x, y, z);
     }
 
+    protected float getExtraCubeInflate(BonesItem bone) { return 0; }
+
     protected void loadNewModel(BedrockModelPOJO pojo) {
         assert pojo.getGeometryModelNew() != null;
         pojo.getGeometryModelNew().deco();
@@ -140,13 +142,14 @@ public class BedrockModel {
             }
 
             // 塞入 Cube List
+            float extraInflate = getExtraCubeInflate(bones);
             for (CubesItem cube : bones.getCubes()) {
                 List<Float> uv = cube.getUv();
                 @Nullable FaceUVsItem faceUv = cube.getFaceUv();
                 List<Float> size = cube.getSize();
                 @Nullable List<Float> cubeRotation = cube.getRotation();
                 boolean mirror = cube.isMirror();
-                float inflate = cube.getInflate();
+                float inflate = cube.getInflate() + extraInflate;
 
                 // 当做普通 cube 存入
                 if (cubeRotation == null) {
@@ -251,11 +254,12 @@ public class BedrockModel {
             }
 
             // 塞入 Cube List
+            float extraInflate = getExtraCubeInflate(bones);
             for (CubesItem cube : bones.getCubes()) {
                 List<Float> uv = cube.getUv();
                 List<Float> size = cube.getSize();
                 boolean mirror = cube.isMirror();
-                float inflate = cube.getInflate();
+                float inflate = cube.getInflate() + extraInflate;
 
                 model.cubes.add(new BedrockCubeBox(uv.get(0), uv.get(1),
                         convertOrigin(bones, cube, 0), convertOrigin(bones, cube, 1), convertOrigin(bones, cube, 2),
@@ -359,8 +363,16 @@ public class BedrockModel {
         // Fallback: no-op for deprecated path. Callers should migrate to submit().
     }
     public void renderInto(PoseStack poseStack, ItemDisplayContext transformType, VertexConsumer consumer, int light, int overlay, float red, float green, float blue, float alpha) {
+        renderInto(poseStack, transformType, consumer, consumer, light, overlay, red, green, blue, alpha);
+    }
+    /** Immediate callers choose their own buffers. Supplying both allows illuminated subtrees
+     * to use a two-sided unshaded material; a single arbitrary buffer cannot change its shader. */
+    public void renderInto(PoseStack poseStack, ItemDisplayContext transformType, VertexConsumer consumer, VertexConsumer unshadedConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
         poseStack.pushPose();
-        for (BedrockPart model : shouldRender) { model.render(poseStack, transformType, consumer, light, overlay, red, green, blue, alpha); }
+        for (BedrockPart model : shouldRender) {
+            if (consumer == unshadedConsumer) model.render(poseStack, transformType, consumer, light, overlay, red, green, blue, alpha);
+            else model.render(poseStack, transformType, consumer, unshadedConsumer, light, overlay, red, green, blue, alpha);
+        }
         poseStack.popPose();
         for (IFunctionalRenderer renderer : delegateRenderers) { renderer.render(poseStack, consumer, transformType, light, overlay); }
         delegateRenderers = new ArrayList<>();
@@ -373,12 +385,7 @@ public class BedrockModel {
                 this, poseStack, transformType, light, overlay, red, green, blue, alpha
         );
 
-        if (!snapshot.isEmpty()) {
-            // Matrices in the snapshot already include the complete incoming item/entity pose.
-            // Submit from an identity stack to avoid applying that root transform twice.
-            PoseStack identity = new PoseStack();
-            collector.submitCustomGeometry(identity, renderType, (entryPose, consumer) -> snapshot.write(consumer));
-        }
+        snapshot.submitGeometry(collector, renderType, transformType != null && transformType.firstPerson());
         snapshot.submitFunctionalTasks(collector);
 
         // Legacy delegate renderers cannot safely submit nested RenderTypes from a VertexConsumer

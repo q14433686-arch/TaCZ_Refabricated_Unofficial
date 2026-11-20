@@ -20,7 +20,7 @@
 A. `src/main/java/com/tacz/guns/block/` 下的方块类（不含 `entity/`）不得出现
    `popResource` / `Block.popResource` —— 方块的产出只允许由战利品表决定。
    （`StatueBlockEntity` 掉的是雕像上的**枪**，不在方块战利品表里，属正常，不在此目录下。）
-B. 六份 `data/tacz/loot_table/blocks/*.json` 必须是 26.2 认的**旧 schema**
+B. `data/tacz/loot_table/blocks/*.json` 必须是 26.2 认的**旧 schema**
    （`conditions` / `functions` / `block_state_property`），并且：
    - 双方块（B/C/statue/target）的产出条件必须锁在**根**半边（`part=foot` / `half=lower`），
      与 Java 侧 `isRoot()` 一致；
@@ -37,164 +37,130 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-BLOCK_DIR = ROOT / "src/main/java/com/tacz/guns/block"
-LOOT_DIR = ROOT / "src/main/resources/data/tacz/loot_table/blocks"
-
-# 双方块：loot 条件属性名 -> 必须是根半边的值
-DOUBLE_BLOCK_LOOT = {
-    "gun_smith_table.json": ("part", "foot"),
-    "workbench_b.json": ("part", "foot"),
-    "workbench_c.json": ("half", "lower"),
-    "statue.json": ("half", "lower"),
-    "target.json": ("half", "lower"),
+BLOCK_DIR = Path("src/main/java/com/tacz/guns/block")
+LOOT_DIR = Path("src/main/resources/data/tacz/loot_table/blocks")
+ROOT_STATES = {
+    "gun_smith_table": ("part", "foot"),
+    "workbench_b": ("part", "foot"),
+    "workbench_c": ("half", "lower"),
+    "statue": ("half", "lower"),
+    "target": ("half", "lower"),
 }
-# 需要从方块实体拷 BlockId 的物品（枪包工作台）
-BLOCK_ID_LOOT = {"workbench_a.json", "workbench_b.json", "workbench_c.json"}
-
-errors: list[str] = []
-notes: list[str] = []
+STORAGE = {"ammo_storage", "ammo_storage_gold", "ammo_storage_diamond"}
+RACKS = {"gun_display_case", "gun_pegboard", "glow_gun_pegboard"}
+WORKBENCHES = {"workbench_a", "workbench_b", "workbench_c"}
 
 
-def check_no_manual_drops() -> None:
-    """A. 方块类里不得手工 popResource。"""
-    offenders = []
-    for path in sorted(BLOCK_DIR.rglob("*.java")):
-        if "entity" in path.relative_to(BLOCK_DIR).parts:
-            continue
-        text = path.read_text(encoding="utf-8")
-        for lineno, line in enumerate(text.splitlines(), 1):
-            stripped = line.strip()
-            if stripped.startswith("//") or stripped.startswith("*"):
-                continue
-            if re.search(r"\bpopResource\s*\(", stripped):
-                offenders.append(f"{path.relative_to(ROOT)}:{lineno}: {stripped}")
-    if offenders:
-        errors.append(
-            "方块类里出现了手工掉落调用（掉落应只由战利品表负责）：\n  "
-            + "\n  ".join(offenders)
-        )
+def java_code(path: Path) -> str:
+    text = path.read_text(encoding="utf-8")
+    return re.sub(r"/\*.*?\*/|//[^\n]*", "", text, flags=re.S)
 
 
-def iter_conditions(node, out: list[dict]) -> None:
-    """收集 JSON 里所有 dict（旧 schema 的 condition 对象也在其中）。"""
+def method_body(text: str, name: str) -> str:
+    match = re.search(r"\b" + re.escape(name) + r"\s*\([^)]*\)\s*\{", text)
+    if not match:
+        return ""
+    start = match.end()
+    depth = 1
+    for pos in range(start, len(text)):
+        if text[pos] == "{":
+            depth += 1
+        elif text[pos] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start:pos]
+    return ""
+
+
+def walk(node):
     if isinstance(node, dict):
-        out.append(node)
-        for value in node.values():
-            iter_conditions(value, out)
+        yield node
+        for child in node.values():
+            yield from walk(child)
     elif isinstance(node, list):
-        for value in node:
-            iter_conditions(value, out)
+        for child in node:
+            yield from walk(child)
 
 
-def check_loot_tables() -> None:
-    """B. 六份战利品表的 schema 与根半边条件。"""
-    expected = set(DOUBLE_BLOCK_LOOT) | {"workbench_a.json"}
-    present = {p.name for p in LOOT_DIR.glob("*.json")}
-    missing = expected - present
-    if missing:
-        errors.append(f"缺少战利品表：{sorted(missing)}")
+def check(root: Path) -> list[str]:
+    errors: list[str] = []
+    block_dir = root / BLOCK_DIR
+    loot_dir = root / LOOT_DIR
+    if not block_dir.is_dir() or not loot_dir.is_dir():
+        return ["missing block source or loot-table directory"]
 
-    for name in sorted(present & expected):
-        path = LOOT_DIR / name
+    for path in sorted(block_dir.glob("*.java")):
+        if re.search(r"\bpopResource\s*\(", java_code(path)):
+            errors.append(f"{path.name}: block class manually spawns drops")
+
+    for name in sorted(set(ROOT_STATES) | WORKBENCHES | STORAGE | RACKS):
+        path = loot_dir / f"{name}.json"
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            errors.append(f"{name}: JSON 解析失败：{exc}")
+            table = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            errors.append(f"{path.name}: cannot read loot table: {exc}")
             continue
-
-        raw = path.read_text(encoding="utf-8")
-        # 26.3 的新 schema 键（condition/modifier/match_block）在 26.2 会被静默忽略
-        if re.search(r'"(modifier|random_sequence|match_block)"', raw):
-            errors.append(
-                f"{name}: 出现了 26.3 的战利品表 schema 键（modifier/random_sequence/match_block）。"
-                " 26.2 仍用 conditions/functions/block_state_property，混用的后果是条件与函数被静默丢弃。"
-            )
-
-        dicts: list[dict] = []
-        iter_conditions(data, dicts)
-
-        if name in DOUBLE_BLOCK_LOOT:
-            prop, root_value = DOUBLE_BLOCK_LOOT[name]
-            matched = False
-            for node in dicts:
-                if node.get("condition") != "minecraft:block_state_property":
-                    continue
-                props = node.get("properties") or {}
-                if props.get(prop) == root_value:
-                    matched = True
-                    break
-            if not matched:
-                errors.append(
-                    f"{name}: 缺少 block_state_property 的 {prop}={root_value} 产出条件"
-                    "（否则被连带清掉的另一半也会掉落 → 一次破坏掉两个）"
-                )
-
-        if name in BLOCK_ID_LOOT:
-            has_copy = any(
-                node.get("function") == "minecraft:copy_custom_data" for node in dicts
-            )
-            if not has_copy:
-                errors.append(
-                    f"{name}: 缺少 copy_custom_data 函数（掉落物会丢 BlockId → 紫黑无名工作台）"
-                )
-
-
-def check_is_root_matches_loot() -> None:
-    """Java 的 isRoot 必须指向 loot 条件里的根半边。"""
-    expectations = [
-        (
-            BLOCK_DIR / "GunSmithTableBlockB.java",
-            r'Part\.FOOT',
-            "GunSmithTableBlockB",
-        ),
-        (
-            BLOCK_DIR / "GunSmithTableBlockC.java",
-            r'TableHalf\.LOWER',
-            "GunSmithTableBlockC",
-        ),
-    ]
-    for path, needle, label in expectations:
-        text = path.read_text(encoding="utf-8")
-        match = re.search(r"public boolean isRoot\(BlockState blockState\)\s*\{(.*?)\n    \}", text, re.S)
-        if not match:
-            errors.append(f"{label}: 找不到 isRoot(...) 方法体，无法核对根半边")
+        # A valid-looking condition/function under an ignored 26.3 key is NOT applied.
+        if any({"modifier", "match_block"} & node.keys() or isinstance(node.get("condition"), dict)
+               or node.get("type") == "minecraft:match_block" for node in walk(table)):
+            errors.append(f"{path.name}: incompatible loot schema for 26.2")
+        entries = [(pool, entry) for pool in table.get("pools", []) for entry in pool.get("entries", [])
+                   if entry.get("type") == "minecraft:item" and entry.get("name") == f"tacz:{name}"]
+        if len(entries) != 1:
+            errors.append(f"{path.name}: expected exactly one item entry, got {len(entries)}")
             continue
-        if not re.search(needle, match.group(1)):
-            errors.append(
-                f"{label}: isRoot() 不再是 {needle}，与战利品表的根半边条件不一致"
-            )
+        pool, entry = entries[0]
+        if name in ROOT_STATES:
+            prop, value = ROOT_STATES[name]
+            if not any(c.get("condition") == "minecraft:block_state_property" and c.get("block") == f"tacz:{name}"
+                       and c.get("properties", {}).get(prop) == value for c in entry.get("conditions", [])):
+                errors.append(f"{path.name}: missing {prop}={value} condition on the item entry")
+        if name in WORKBENCHES | STORAGE:
+            key = "BlockId" if name in WORKBENCHES else "Entries"
+            functions = pool.get("functions", []) + entry.get("functions", [])
+            if not any(fn.get("function") == "minecraft:copy_custom_data" and fn.get("source") == "block_entity"
+                       and {"source": key, "target": key, "op": "replace"} in fn.get("ops", []) for fn in functions):
+                errors.append(f"{path.name}: missing effective copy_custom_data for {key}")
+
+    for filename, root_part, broken_part, other_part in (
+        ("GunSmithTableBlockB.java", "BedPart.FOOT", "BedPart.HEAD", "BedPart.FOOT"),
+        ("GunSmithTableBlockC.java", "TableHalf.LOWER", "TableHalf.UPPER", "TableHalf.LOWER"),
+    ):
+        try:
+            code = java_code(block_dir / filename)
+        except OSError as exc:
+            errors.append(f"{filename}: {exc}")
+            continue
+        if root_part not in method_body(code, "isRoot"):
+            errors.append(f"{filename}: isRoot no longer matches the loot table ({root_part})")
+        destroy = method_body(code, "playerWillDestroy")
+        if not all(part in destroy for part in (
+            "player.isCreative()", broken_part, other_part, "Block.UPDATE_SUPPRESS_DROPS"
+        )):
+            errors.append(f"{filename}: missing creative-mode companion drop suppression")
+        # Merely mentioning both parts is insufficient: check which half is being broken.
+        if not re.search(r"\b(?:bedPart|half)\s*==\s*" + re.escape(broken_part), destroy):
+            errors.append(f"{filename}: creative suppression must trigger when breaking {broken_part}")
+        if not re.search(r"blockstate\.getValue\([^)]*\)\s*==\s*" + re.escape(other_part), destroy):
+            errors.append(f"{filename}: creative suppression must remove {other_part}")
+
+    return errors
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="校验方块掉落接线（离线静态检查）")
-    parser.add_argument("--strict", action="store_true", help="有问题时退出 1")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--strict", action="store_true", help="return nonzero on a regression")
+    parser.add_argument("--root", type=Path, default=ROOT, help=argparse.SUPPRESS)
     args = parser.parse_args()
-
-    if not BLOCK_DIR.is_dir():
-        print(f"[ERR] 找不到 {BLOCK_DIR}", file=sys.stderr)
-        return 1 if args.strict else 0
-
-    check_no_manual_drops()
-    check_loot_tables()
-    check_is_root_matches_loot()
-
-    print("掉落接线检查：")
-    print("  A. 方块类无手工 popResource —— %s" % ("FAIL" if errors else "OK"))
-    print("  B. 六份战利品表 schema + 根半边条件 —— %s" % ("见下" if errors else "OK"))
-    print("  C. isRoot() 与 loot 根半边一致 —— %s" % ("见下" if errors else "OK"))
-    for note in notes:
-        print(f"  · {note}")
+    errors = check(args.root)
     for error in errors:
         print(f"[FAIL] {error}")
-
     if not errors:
-        print("全部通过。注意：这只是静态检查，不替代编译与实机掉落测试。")
-        return 0
-    return 1 if args.strict else 0
+        print("26.2 block drop wiring: OK (static checks only; in-game testing still required)")
+    return int(bool(errors) and args.strict)
 
 
 if __name__ == "__main__":

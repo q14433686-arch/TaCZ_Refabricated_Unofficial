@@ -20,7 +20,7 @@ public class GunSmithTableDisplay extends BasicDisplay {
         super(EntryIngredients.ofIngredients(recipe.getInputs().stream()
                         .map(com.tacz.guns.crafting.GunSmithTableIngredient::getIngredient)
                         .collect(Collectors.toList())),
-                Collections.singletonList(EntryIngredients.of(recipe.getOutput())), Optional.ofNullable(entry.getKey()));
+                Collections.singletonList(EntryIngredients.of(recipe.getOutput())), Optional.of(recipe.getId()));
         this.recipe = recipe;
         this.entry = entry;
     }

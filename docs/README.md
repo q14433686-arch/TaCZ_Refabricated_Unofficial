@@ -9,7 +9,10 @@
 | 文件 | 内容 |
 |---|---|
 | `MESH_LOADER.md` | 内置 TML（mesh 高模加载 + GPU 静态烘焙）的当前状态、配置、边界 |
-| `CHANGELOG_26_2_R2.md` | 26.2 线 R2 起的 release notes（R3 段落在此追加） |
+| [26.2 玩家指南](PLAYER_GUIDE_26_2.md) | 1.2.0 安装、从旧构建升级、开镜设置与反馈 |
+| [26.2 · 1.2.0 变更记录](CHANGELOG_26_2_1_2_0.md) | 本线基线、版本约束、验收范围与成品 |
+| [26.2 枪包转换指南](GUNPACK_CONVERSION_26_2.md) | 检查、导出、备份与 26.2 格式差异 |
+| `CHANGELOG_26_2_R2.md` | 旧 1.1.8 线的 R2/R3 记录 |
 | `PORTING_NOTES.md` | 26.2 移植经验总结（字节码级验证过的结论，供后续移植者） |
 | `COMPAT_AND_ROADMAP.md` | 兼容与移植过程记录（历史长文，读前看文件头的取代声明） |
 | `AMMO_SOURCE_API.md` | 可替换弹药 API 表面 |
@@ -18,11 +21,17 @@
 | `FIRST_PERSON_ANIMATION_COMPAT_26_2.md` | 第一人称动画兼容 |
 | `README_26_1_2.md` | **26.1.2 分支根 README 的替换蓝本**（AGENTS.md §3：改 26.2 README 结构时同步它） |
 
+## `wiki/` —— 本移植的枪包作者文档
+
+[Fabric 26.2 枪包 Wiki](wiki/GUNPACK_26_2.md)：怎样写版本谓词、选覆盖层，怎样区分工作台配方、瞄具显示和模型引用。
+
 ## `investigations/` —— 日期型调查/审计记录（完结即入，不再更新）
 
 文件名带日期的专题记录：bug 取证链、性能方向盘点、一次性审计。
 结论可能已被后续代码推翻，**引用前先看文件头的状态标注**。
 （2026-08-31 从根目录迁入 12 份；此前平铺在 `docs/` 根下。）
+
+[26.2 · Complementary Reimagined r5.8.1 开镜红板与热像缺面](investigations/ADS_COMPLEMENTARY_R581_26_2.md)：默认瞄具逐档画面、热像暴露／遮挡对照和可复查的构建。
 
 **开 26.3 线之前先读**：`PORT_26_3_FEASIBILITY_2026_09_02.md`（账本 #16）——
 26.3 移植可行性实测评估：Fabric API 侧风险、Mojang 渲染层换代（blaze3d→renderpearl / OIT /
@@ -32,7 +41,8 @@
 
 | 文件 | 内容 |
 |---|---|
-| `HANDOFF_LEDGER.md` | **同步账本（单一事实源）**：所有跨分支交接的状态（OPEN/DONE/DECLINED） |
+| [HANDOFF_LEDGER.md](lineage/HANDOFF_LEDGER.md) | **同步账本（单一事实源）**：所有跨分支交接的状态（OPEN/DONE/DECLINED） |
+| [从 26.2 接收 TaCZ 1.2.0](lineage/26.2-backports/README.md) | 当前 1.2.0 供体、分批验收；执行单：[Fabric 26.1.2](lineage/26.2-backports/26.1.2.md) · [Fabric 1.21.11](lineage/26.2-backports/1.21.11.md) · [NeoForge 姊妹仓](lineage/26.2-backports/neoforge.md) |
 | `SYNC_ROUNDUP_R3_20260831.md` | **R3 定稿轮总纲（当前索引起点）**：四线进度底账、移植主次、工作流同步、旧指导时效标注 |
 | `FAMILY_TREE_2026_08_30.md` | 六分支谱系实测 |
 | `SYNC_GOVERNANCE_PROPOSAL.md` | 同步治理原则 |

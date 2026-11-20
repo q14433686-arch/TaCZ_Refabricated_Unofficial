@@ -1,0 +1,19 @@
+{
+  "filter": "port_test:specialist",
+  "tabs": [
+    {
+      "id": "tacz:ammo",
+      "name": "Test ammo",
+      "icon": {
+        "id": "minecraft:paper"
+      }
+    },
+    {
+      "id": "tacz:shotgun_shells",
+      "name": "Fixture shells",
+      "icon": {
+        "id": "minecraft:paper"
+      }
+    }
+  ]
+}

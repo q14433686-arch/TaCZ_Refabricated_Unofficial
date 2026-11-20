@@ -36,6 +36,9 @@ public class BulletHoleOption implements ParticleOptions {
         }
     };
 
+    // Only the impact notification sets this. The vanilla decal particle wire format stays unchanged.
+    private final boolean incendiary;
+    public boolean isIncendiary() { return incendiary; }
     private final Direction direction;
     private final BlockPos pos;
     private final String ammoId;
@@ -43,14 +46,15 @@ public class BulletHoleOption implements ParticleOptions {
     private final String gunDisplayId;
 
     public BulletHoleOption(int dir, long pos, String ammoId, String gunId, String gunDisplayId) {
-        this.direction = Direction.values()[dir];
-        this.pos = BlockPos.of(pos);
-        this.ammoId = ammoId;
-        this.gunId = gunId;
-        this.gunDisplayId = gunDisplayId;
+        this(Direction.values()[dir], BlockPos.of(pos), ammoId, gunId, gunDisplayId);
     }
 
     public BulletHoleOption(Direction dir, BlockPos pos, String ammoId, String gunId, String gunDisplayId) {
+        this(dir, pos, ammoId, gunId, gunDisplayId, false);
+    }
+
+    public BulletHoleOption(Direction dir, BlockPos pos, String ammoId, String gunId, String gunDisplayId, boolean incendiary) {
+        this.incendiary = incendiary;
         this.direction = dir;
         this.pos = pos;
         this.ammoId = ammoId;
