@@ -27,6 +27,34 @@ import java.util.Map;
 public final class ScopeProjection {
     private static final Map<Object, Matrix4f> MIRRORS = new IdentityHashMap<>();
 
+    /**
+     * 最近一次写进 {@code PerspectiveProjectionMatrixBuffer} 的矩阵 —— 也就是<b>关卡投影</b>。
+     *
+     * <p>26.2 的 {@code CameraRenderState#projectionMatrix} 字段在 1.21.11 的
+     * {@code CameraRenderState} 上不存在（那个版本把投影留在渲染系统里，只把 UBO 切片交给驱动）。
+     * 1.2.0 有三个消费点要用它的 {@code m11()}：散布像素换算（{@code GunSpread}）、
+     * 表面光源的像素级间隙（{@code SurfaceLights}）、测距仪落点预测的斜率投影
+     * （{@code ImpactMarkerRender}）。这三处都发生在关卡提取/渲染期间，此时
+     * {@code GameRenderer} 刚把当帧的关卡投影交给 {@code PerspectiveProjectionMatrixBuffer}
+     * （手部投影走的是另一个类 {@code CachedPerspectiveProjectionMatrixBuffer}），所以镜像无歧义。</p>
+     */
+    private static @Nullable Matrix4f levelProjection;
+
+    /** 由 {@code PerspectiveProjectionMixin} 在 {@code PerspectiveProjectionMatrixBuffer#getBuffer} 处调用。 */
+    public static void mirroredLevel(Object buffer, Matrix4fc matrix) {
+        mirrored(buffer, matrix);
+        if (levelProjection == null) {
+            levelProjection = new Matrix4f(matrix);
+        } else {
+            levelProjection.set(matrix);
+        }
+    }
+
+    /** 当帧关卡投影的 {@code m11()}；从未写过则为 0（调用方的除法都有下限保护）。 */
+    public static float levelProjectionM11() {
+        return levelProjection == null ? 0.0f : levelProjection.m11();
+    }
+
     /** 由 {@code CachedPerspectiveProjectionMatrixBufferMixin} 在其 {@code createProjectionMatrix} 返回处调用。 */
     public static void mirrored(Object buffer, Matrix4fc matrix) {
         Matrix4f mirror = MIRRORS.get(buffer);
@@ -45,6 +73,7 @@ public final class ScopeProjection {
     /** 资源重载/退出世界时丢弃镜像，避免持有旧矩阵。 */
     public static void clear() {
         MIRRORS.clear();
+        levelProjection = null;
     }
 
     /** 仅测试/诊断用：当前镜像条目数。 */

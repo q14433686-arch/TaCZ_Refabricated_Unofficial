@@ -39,7 +39,7 @@ public record ImpactMarkerRender(List<BedrockPart> path, Rangefinder settings) {
         var mc = Minecraft.getInstance();
         var camera = mc.gameRenderer.getLevelRenderState().cameraRenderState;
         if (!camera.initialized) return;
-        double projected = -slope * camera.projectionMatrix.m11();
+        double projected = -slope * com.tacz.guns.client.render.scope.ScopeProjection.levelProjectionM11();
         // 1.21.11 侧同一对量（见 ScopePipRenderState#currentWorldZoom 的说明）：
         // 26.2 的 suppressesWorldFovZoom()/currentWorldZoom() 在这里都要开镜进度。
         float partialTicks = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);

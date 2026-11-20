@@ -94,8 +94,13 @@ public final class DisplayRackHighlight {
                     var shape = Shapes.create(cell.box);
                     var cellPose = new PoseStack();
                     cellPose.last().set(pose.last());
-                    out.submitCustomGeometry(cellPose, Material.LINES, (entryPose, consumer) ->
-                            ShapeRenderer.renderShape(entryPose, consumer, shape, 0.0D, 0.0D, 0.0D, cell.color, 1.0F));
+                    out.submitCustomGeometry(cellPose, Material.LINES, (entryPose, consumer) -> {
+                        // 26.2 的 submitShapeOutline 收 PoseStack；1.21.11 的几何回调只给 Pose。
+                        // ShapeRenderer.renderShape 要的是 PoseStack，所以复制一份只含该 Pose 的栈。
+                        PoseStack shapePose = new PoseStack();
+                        shapePose.last().set(entryPose);
+                        ShapeRenderer.renderShape(shapePose, consumer, shape, 0.0D, 0.0D, 0.0D, cell.color, 1.0F);
+                    });
                 }
                 pose.popPose();
             }

@@ -384,7 +384,12 @@ public class BedrockModel {
                 this, poseStack, transformType, light, overlay, red, green, blue, alpha
         );
 
-        snapshot.submitGeometry(collector, renderType, transformType != null && transformType.firstPerson());
+        if (!snapshot.isEmpty()) {
+            // Matrices in the snapshot already include the complete incoming item/entity pose.
+            // Submit from an identity stack to avoid applying that root transform twice.
+            PoseStack identity = new PoseStack();
+            collector.submitCustomGeometry(identity, renderType, (entryPose, consumer) -> snapshot.write(consumer));
+        }
         snapshot.submitFunctionalTasks(collector);
 
         // Legacy delegate renderers cannot safely submit nested RenderTypes from a VertexConsumer

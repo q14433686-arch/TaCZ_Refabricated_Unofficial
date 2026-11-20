@@ -213,7 +213,7 @@ public final class SurfaceLights {
         // Terrain and emissive entities can have different subpixel jitter under Iris. A
         // .002-block normal offset disappears behind a jittered floor at grazing incidence.
         // Bound the clearance in BOTH screen pixels and blocks; never disable depth testing.
-        double pixelSlope=IrisCompat.isUsingRenderPack() ? 2.0/(Math.max(1,mc.getWindow().getHeight())*Math.max(.1,Math.abs(state.projectionMatrix.m11()))) : 0;
+        double pixelSlope=IrisCompat.isUsingRenderPack() ? 2.0/(Math.max(1,mc.getWindow().getHeight())*Math.max(.1,Math.abs(com.tacz.guns.client.render.scope.ScopeProjection.levelProjectionM11()))) : 0;
         for (var p:pulses) {
             boolean firstBuild=p.patches==null;
             if ((firstBuild || (p.refreshCrater && tick>p.builtTick)) && builds<MAX_PULSES && (p.eye==null || muzzleBuilds<MAX_MUZZLES)) {

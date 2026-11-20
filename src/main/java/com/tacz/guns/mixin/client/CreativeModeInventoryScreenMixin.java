@@ -27,6 +27,18 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
     @Unique
     private CreativePackFilters tacz$packFilters;
 
+    /**
+     * mixin 类继承了目标类，就<b>必须</b>给出一个能对上目标构造器的构型，否则编译器会生成
+     * 隐式的无参构造器去调 {@code super()}，直接编译失败。
+     *
+     * <p>26.2 的 {@code AbstractContainerScreen} 构造器多两个尺寸形参（195×136），
+     * 1.21.11 的只有 {@code (menu, inventory, title)}。</p>
+     */
+    protected CreativeModeInventoryScreenMixin(CreativeModeInventoryScreen.ItemPickerMenu menu,
+                                               Inventory inventory, Component title) {
+        super(menu, inventory, title);
+    }
+
     @Inject(method = "init", at = @At("TAIL"))
     private void tacz$initPackFilters(CallbackInfo ci) {
         if (tacz$packFilters == null) {

@@ -35,7 +35,7 @@ final class GunSpread {
         if (heat != null) spread = withHeat(spread, heat, gun.getHeatAmount(stack));
         var camera = mc.gameRenderer.getLevelRenderState().cameraRenderState;
         if (!camera.initialized) return 0;
-        return pixels(spread, camera.projectionMatrix.m11(), (float) mc.getWindow().getHeight() / mc.getWindow().getGuiScale(), scalePercent);
+        return pixels(spread, com.tacz.guns.client.render.scope.ScopeProjection.levelProjectionM11(), (float) mc.getWindow().getHeight() / mc.getWindow().getGuiScale(), scalePercent);
     }
 
     static float baseSpread(@Nullable Map<InaccuracyType, Float> base, InaccuracyType stance, @Nullable GunFireModeAdjustData adjust) {
