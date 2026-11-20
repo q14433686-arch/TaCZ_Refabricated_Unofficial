@@ -7,7 +7,7 @@ import com.tacz.guns.client.resource.ClientAssetsManager;
 import com.tacz.guns.client.resource.pojo.PackInfo;
 import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -264,7 +264,7 @@ public class CreativePackFilters {
         }
 
         @Override
-        protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        protected void renderContents(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
             if (option == null) {
                 return;
             }
@@ -276,10 +276,10 @@ public class CreativePackFilters {
                 // UVs cover the full image, independently of its pixel dimensions.
                 graphics.blit(RenderPipelines.GUI_TEXTURED, option.logo(), getX() + 8, getY() + 5, 0, 0, 16, 16, 16, 16);
             } else {
-                graphics.item(option.icon(), getX() + 8, getY() + 5);
+                graphics.renderItem(option.icon(), getX() + 8, getY() + 5);
             }
             if (isFocused() && Minecraft.getInstance().getLastInputType().isKeyboard()) {
-                graphics.outline(getX() + 5, getY() + 3, 22, 20, 0xFFFFFFFF);
+                graphics.renderOutline(getX() + 5, getY() + 3, 22, 20, 0xFFFFFFFF);
             }
         }
     }

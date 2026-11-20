@@ -3,7 +3,7 @@ package com.tacz.guns.client.gui;
 import com.tacz.guns.client.tuning.TuningValues;
 import com.tacz.guns.config.client.ViewTuningConfig;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -79,10 +79,10 @@ final class TuningColorPicker {
             this.rgb = rgb;
             setTooltip(Tooltip.create(name));
         }
-        @Override protected void extractContents(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta) {
+        @Override protected void renderContents(GuiGraphics gui, int mouseX, int mouseY, float delta) {
             int x = getX(), y = getY(), w = getWidth();
             gui.fill(x + 1, y + 1, x + w - 1, y + 15, 0xFF000000 | rgb);
-            gui.outline(x, y, w, 16, isHoveredOrFocused() ? -1 : 0xFF64747E);
+            gui.renderOutline(x, y, w, 16, isHoveredOrFocused() ? -1 : 0xFF64747E);
             if (draft.get(ViewTuningConfig.RGB) == rgb) gui.fill(x + 2, y + 16, x + w - 2, y + 18, -1);
         }
     }
@@ -105,8 +105,8 @@ final class TuningColorPicker {
             String number = channel == 0 ? Math.round(value * 360) + "°" : Math.round(value * 100) + "%";
             setMessage(label("value", label(CHANNELS[channel]), number));
         }
-        @Override public void extractWidgetRenderState(GuiGraphicsExtractor gui, int mx, int my, float dt) {
-            super.extractWidgetRenderState(gui, mx, my, dt);
+        @Override public void renderWidget(GuiGraphics gui, int mx, int my, float dt) {
+            super.renderWidget(gui, mx, my, dt);
             int x = getX() + 4, y = getY() + getHeight() - 4, width = getWidth() - 8;
             for (int i = 0; i < width; i += 4) {
                 float f = i / (float) (width - 1);

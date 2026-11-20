@@ -1,7 +1,7 @@
 package com.tacz.guns.mixin.client;
 
 import com.tacz.guns.client.gui.components.CreativePackFilters;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.network.chat.Component;
@@ -55,7 +55,7 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
     }
 
     @Inject(method = "extractRenderState", at = @At("HEAD"))
-    private void tacz$updatePackFilters(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+    private void tacz$updatePackFilters(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
         if (tacz$packFilters != null) {
             tacz$packFilters.updateTab(selectedTab, false);
         }

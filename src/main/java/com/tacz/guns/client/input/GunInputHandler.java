@@ -54,7 +54,7 @@ public final class GunInputHandler {
     private static boolean closeRefit(InputConstants.Key key) {
         var mc = Minecraft.getInstance();
         if (matches(RefitKey.REFIT_KEY, key) && mc.isWindowActive() && mc.gui.overlay() == null
-                && mc.gui.screen() instanceof GunRefitScreen screen) {
+                && mc.screen instanceof GunRefitScreen screen) {
             screen.onClose();
             return true;
         }

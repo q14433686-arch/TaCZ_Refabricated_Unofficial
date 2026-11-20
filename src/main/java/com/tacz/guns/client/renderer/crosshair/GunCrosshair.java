@@ -15,7 +15,7 @@ import com.tacz.guns.config.client.ViewTuningConfig.Shape;
 import com.tacz.guns.config.client.ViewTuningConfig.TextureCenter;
 import com.tacz.guns.util.time.GunTime;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 
@@ -35,12 +35,12 @@ public final class GunCrosshair {
         }
     }
 
-    public static void draw(GuiGraphicsExtractor gui, float x, float y, TuningValues values) {
+    public static void draw(GuiGraphics gui, float x, float y, TuningValues values) {
         draw(gui, x, y, values, Integer.MAX_VALUE, 0);
     }
 
     /** Only the editor supplies a fit limit and an optional preview-only shot. */
-    public static void draw(GuiGraphicsExtractor gui, float x, float y, TuningValues v, int fitRadius, float previewShot) {
+    public static void draw(GuiGraphics gui, float x, float y, TuningValues v, int fitRadius, float previewShot) {
         int opacity = v.get(Measure.OPACITY.option);
         if (opacity == 0) return;
         int color = opacity << 24 | v.get(ViewTuningConfig.RGB);
@@ -66,7 +66,7 @@ public final class GunCrosshair {
 
     private static float dim(TuningValues v, Dimension d) { return v.get(d.option).floatValue(); }
 
-    private static void designer(GuiGraphicsExtractor gui, TuningValues v, float aspect, float spread, float reserve, boolean dynamic, int color, int fitRadius) {
+    private static void designer(GuiGraphics gui, TuningValues v, float aspect, float spread, float reserve, boolean dynamic, int color, int fitRadius) {
         Shape shape = v.get(ViewTuningConfig.SHAPE);
         float t = dim(v, Dimension.THICKNESS), dot = dim(v, Dimension.DOT_SIZE);
         dot = v.get(ViewTuningConfig.DOT) ? (dot == 0 ? t : dot) : 0;
@@ -102,7 +102,7 @@ public final class GunCrosshair {
         }
     }
 
-    private static void image(GuiGraphicsExtractor gui, TuningValues v, float aspect, float spread, float reserve, boolean dynamic, int color, int fitRadius) {
+    private static void image(GuiGraphics gui, TuningValues v, float aspect, float spread, float reserve, boolean dynamic, int color, int fitRadius) {
         boolean preset = v.get(ViewTuningConfig.MODE) == Mode.PRESET;
         var type = v.get(RenderConfig.CROSSHAIR_TYPE);
         if (preset && type == CrosshairType.EMPTY) return;
@@ -121,11 +121,11 @@ public final class GunCrosshair {
         if (dotPreset && dynamic) lines(gui, Shape.CROSS, inner, 2, 2, 1, color, false);
     }
 
-    private static void fit(GuiGraphicsExtractor gui, float extent, int available) {
+    private static void fit(GuiGraphics gui, float extent, int available) {
         if (extent > available) gui.pose().scale(available / extent, available / extent);
     }
 
-    private static void lines(GuiGraphicsExtractor gui, Shape shape, float inner, float len, float vertical, float t, int color, boolean border) {
+    private static void lines(GuiGraphics gui, Shape shape, float inner, float len, float vertical, float t, int color, boolean border) {
         if (shape == Shape.BOX) {
             float x = inner + len, y = inner + vertical, stroke = Math.min(t, Math.min(x, y));
             if (border) {
@@ -149,12 +149,12 @@ public final class GunCrosshair {
         }
     }
 
-    private static void part(GuiGraphicsExtractor gui, float x, float y, float w, float h, int color, boolean border) {
+    private static void part(GuiGraphics gui, float x, float y, float w, float h, int color, boolean border) {
         if (border) frame(gui, x - 1, y - 1, w + 2, h + 2, 1, color);
         else rect(gui, x, y, w, h, color);
     }
 
-    private static void frame(GuiGraphicsExtractor gui, float x, float y, float w, float h, float stroke, int color) {
+    private static void frame(GuiGraphics gui, float x, float y, float w, float h, float stroke, int color) {
         if (w <= 0 || h <= 0) return;
         if (2 * stroke >= Math.min(w, h)) { rect(gui, x, y, w, h, color); return; }
         // Four non-overlapping bands: translucent corners have the same opacity as their sides.
@@ -164,14 +164,14 @@ public final class GunCrosshair {
         rect(gui, x + w - stroke, y + stroke, stroke, h - 2*stroke, color);
     }
 
-    private static void rect(GuiGraphicsExtractor gui, float x, float y, float w, float h, int color) {
+    private static void rect(GuiGraphics gui, float x, float y, float w, float h, int color) {
         gui.pose().pushMatrix();
         gui.pose().translate(x, y).scale(w, h);
         gui.fill(0, 0, 1, 1, color);
         gui.pose().popMatrix();
     }
 
-    private static void texture(GuiGraphicsExtractor gui, Identifier tex, float w, float h, TextureCenter center, int color) {
+    private static void texture(GuiGraphics gui, Identifier tex, float w, float h, TextureCenter center, int color) {
         // The full UV square is exactly [-w/2,w/2] x [-h/2,h/2] for ANY fractional dimensions.
         gui.pose().pushMatrix();
         gui.pose().scale(w / 16, h / 16);
@@ -183,7 +183,7 @@ public final class GunCrosshair {
         gui.pose().popMatrix();
     }
 
-    private static void tile(GuiGraphicsExtractor gui, Identifier tex, int u, int v, int w, int h, int color) {
+    private static void tile(GuiGraphics gui, Identifier tex, int u, int v, int w, int h, int color) {
         gui.blit(RenderPipelines.GUI_TEXTURED, tex, u - 8, v - 8, u, v, w, h, w, h, 16, 16, color);
     }
 

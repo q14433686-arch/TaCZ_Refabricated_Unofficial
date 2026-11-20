@@ -3,7 +3,7 @@ package com.tacz.guns.client.gui.overlay;
 import com.tacz.guns.block.GunDisplayCaseBlock;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
@@ -43,11 +43,11 @@ public final class DisplayCaseLockHint {
         }
     }
 
-    public static void render(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
+    public static void render(GuiGraphics graphics, DeltaTracker deltaTracker) {
         if (remaining == 0) return;
         var mc = Minecraft.getInstance();
-        if (mc.level != level || mc.gui.hud.isHidden()) return;
-        graphics.text(mc.font, message, (graphics.guiWidth() - mc.font.width(message)) / 2,
+        if (mc.level != level || mc.options.hideGui) return;
+        graphics.drawString(mc.font, message, (graphics.guiWidth() - mc.font.width(message)) / 2,
                 graphics.guiHeight() / 2 + 32, 0xff000000 | TextColor.YELLOW.getValue(), false);
     }
 }

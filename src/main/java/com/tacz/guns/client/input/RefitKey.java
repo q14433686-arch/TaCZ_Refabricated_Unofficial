@@ -24,12 +24,12 @@ public class RefitKey {
             return;
         }
         if (isInGame()) {
-            if (IGun.mainHandHoldGun(player) && Minecraft.getInstance().gui.screen() == null) {
+            if (IGun.mainHandHoldGun(player) && Minecraft.getInstance().screen == null) {
                 IGun iGun = IGun.getIGunOrNull(player.getMainHandItem());
                 if (iGun != null && iGun.hasAttachmentLock(player.getMainHandItem())) {
                     return;
                 }
-                Minecraft.getInstance().gui.setScreen(new GunRefitScreen());
+                Minecraft.getInstance().setScreen(new GunRefitScreen());
             }
         }
     }

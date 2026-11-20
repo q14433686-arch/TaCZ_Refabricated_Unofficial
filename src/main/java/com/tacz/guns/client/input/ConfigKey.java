@@ -38,7 +38,7 @@ public class ConfigKey {
                     style.withColor(0x5555FF).withUnderlined(true).withClickEvent(clickEvent).withHoverEvent(hoverEvent));
             player.sendSystemMessage(component);
         } else {
-            CompatRegistry.checkModLoad(CompatRegistry.CLOTH_CONFIG, () -> Minecraft.getInstance().gui.setScreen(MenuIntegration.getConfigScreen(null)));
+            CompatRegistry.checkModLoad(CompatRegistry.CLOTH_CONFIG, () -> Minecraft.getInstance().setScreen(MenuIntegration.getConfigScreen(null)));
         }
     }
 }

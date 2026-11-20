@@ -21,7 +21,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
@@ -42,12 +42,12 @@ public class RenderCrosshairEvent {
     /**
      * 当玩家手上拿着枪时，播放特定动画、或瞄准时需要隐藏准心
      */
-    public static void onRenderOverlay(GuiGraphicsExtractor guiGraphics, Window window) {
+    public static void onRenderOverlay(GuiGraphics guiGraphics, Window window) {
         onRenderOverlay(guiGraphics, window, Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true));
     }
 
     /** Use the HUD extraction's own frame time, which need not equal the client's advancing timer. */
-    public static void onRenderOverlay(GuiGraphicsExtractor guiGraphics, Window window, float partialTick) {
+    public static void onRenderOverlay(GuiGraphics guiGraphics, Window window, float partialTick) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
             return;
@@ -101,10 +101,10 @@ public class RenderCrosshairEvent {
 
     public static void onRenderTick(RenderTickEvent event) {
         // 奇迹的是，RenderGameOverlayEvent.PreLayer 事件中，screen 还未被赋值...
-        isRefitScreen = Minecraft.getInstance().gui.screen() instanceof GunRefitScreen;
+        isRefitScreen = Minecraft.getInstance().screen instanceof GunRefitScreen;
     }
 
-    private static void renderCrosshair(GuiGraphicsExtractor graphics, Window window) {
+    private static void renderCrosshair(GuiGraphics graphics, Window window) {
         Options options = Minecraft.getInstance().options;
         // 越肩视角可以强制显示准星
         boolean shoulderSurfingForceShow = ShoulderSurfingCompat.showCrosshair();
@@ -120,13 +120,13 @@ public class RenderCrosshairEvent {
             return;
         }
         // The editor has its own preview. Never draw it twice (especially with partial opacity).
-        if (Minecraft.getInstance().gui.screen() instanceof ViewTuningScreen editor && editor.isCrosshairTab()) return;
+        if (Minecraft.getInstance().screen instanceof ViewTuningScreen editor && editor.isCrosshairTab()) return;
         // The GUI ortho projection uses framebuffer dimensions / scale, *not* ceil(gui dimensions).
         float divisor = 2f * window.getGuiScale();
         GunCrosshair.draw(graphics, window.getWidth() / divisor, window.getHeight() / divisor, TuningProfiles.forStack(Minecraft.getInstance().player.getMainHandItem()));
     }
 
-    private static void renderHitMarker(GuiGraphicsExtractor graphics, Window window) {
+    private static void renderHitMarker(GuiGraphics graphics, Window window) {
         long remainHitTime = GunTime.nowMillis() - hitTimestamp;
         long remainKillTime = GunTime.nowMillis() - killTimestamp;
         long remainHeadShotTime = GunTime.nowMillis() - headShotTimestamp;

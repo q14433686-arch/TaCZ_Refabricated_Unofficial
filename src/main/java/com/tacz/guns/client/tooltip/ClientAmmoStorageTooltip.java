@@ -3,7 +3,7 @@ package com.tacz.guns.client.tooltip;
 import com.tacz.guns.inventory.tooltip.AmmoStorageTooltip;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.network.chat.Component;
 
@@ -35,23 +35,23 @@ public class ClientAmmoStorageTooltip implements ClientTooltipComponent {
     }
 
     @Override
-    public void extractText(GuiGraphicsExtractor graphics, Font font, int x, int y) {
+    public void extractText(GuiGraphics graphics, Font font, int x, int y) {
         int yOffset = y;
         for (AmmoStorageTooltip.Entry entry : tooltip.getEntries()) {
-            graphics.text(font, entry.getAmmoName(), x + 20, yOffset + 4, 0xFFFFAA00, false);
-            graphics.text(font, getCount(entry), x + 20, yOffset + 15, 0xFF666666, false);
+            graphics.drawString(font, entry.getAmmoName(), x + 20, yOffset + 4, 0xFFFFAA00, false);
+            graphics.drawString(font, getCount(entry), x + 20, yOffset + 15, 0xFF666666, false);
             yOffset += ENTRY_HEIGHT;
         }
         if (tooltip.getHidden() > 0) {
-            graphics.text(font, getHidden(), x, yOffset, 0xFF9E9E9E, false);
+            graphics.drawString(font, getHidden(), x, yOffset, 0xFF9E9E9E, false);
         }
     }
 
     @Override
-    public void extractImage(Font font, int x, int y, int width, int height, GuiGraphicsExtractor guiGraphics) {
+    public void extractImage(Font font, int x, int y, int width, int height, GuiGraphics guiGraphics) {
         int yOffset = y;
         for (AmmoStorageTooltip.Entry entry : tooltip.getEntries()) {
-            guiGraphics.item(entry.ammo(), x, yOffset + 5);
+            guiGraphics.renderItem(entry.ammo(), x, yOffset + 5);
             yOffset += ENTRY_HEIGHT;
         }
     }

@@ -15,7 +15,7 @@ import net.minecraft.resources.Identifier;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
 import java.util.Locale;
@@ -34,14 +34,14 @@ public class GunAttachmentQueryCategory implements IRecipeCategory<GunAttachment
     }
 
     @Override
-    public void draw(GunAttachmentQueryEntry entry, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor guiGraphics, double mouseX, double mouseY) {
+    public void draw(GunAttachmentQueryEntry entry, IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics, double mouseX, double mouseY) {
         Font font = Minecraft.getInstance().font;
         Component typeName = Component.translatable("tacz.type." + entry.getAttachmentType().name().toLowerCase(Locale.ROOT) + ".name");
         Component groupTitle = Component.translatable("jei.tacz.gun_attachment_query.group", typeName, entry.getTotalAttachmentCount());
-        guiGraphics.text(font, groupTitle, (WIDTH - font.width(groupTitle)) / 2, 22, 0xFF555555, false);
+        guiGraphics.drawString(font, groupTitle, (WIDTH - font.width(groupTitle)) / 2, 22, 0xFF555555, false);
         if (entry.getPageCount() > 1) {
             Component page = Component.translatable("jei.tacz.gun_attachment_query.page", entry.getPageNumber(), entry.getPageCount());
-            guiGraphics.text(font, page, (WIDTH - font.width(page)) / 2, 145, 0xFF555555, false);
+            guiGraphics.drawString(font, page, (WIDTH - font.width(page)) / 2, 145, 0xFF555555, false);
         }
     }
 

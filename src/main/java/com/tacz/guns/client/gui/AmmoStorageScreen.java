@@ -8,7 +8,7 @@ import com.tacz.guns.inventory.AmmoStorageMenu;
 import com.tacz.guns.network.message.ClientMessageAmmoStorageClick;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -23,13 +23,14 @@ public class AmmoStorageScreen extends AbstractContainerScreen<AmmoStorageMenu> 
     private int virtualClickButton = -1;
 
     public AmmoStorageScreen(AmmoStorageMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, 176, 114 + CONTAINER_ROWS * 18 + AmmoStorageMenu.STATUS_HEIGHT);
+        super(menu, inventory, title);
+        imageWidth = 176;
+        imageHeight = 114 + CONTAINER_ROWS * 18 + AmmoStorageMenu.STATUS_HEIGHT;
         inventoryLabelY = imageHeight - 94;
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        super.extractBackground(graphics, mouseX, mouseY, partialTick);
+    protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         int storageHeight = CONTAINER_ROWS * 18 + 17 + AmmoStorageMenu.STATUS_HEIGHT;
         graphics.blit(RenderPipelines.GUI_TEXTURED, CONTAINER_LOCATION, leftPos, topPos, 0, 0, imageWidth, 17, 256, 256);
         // Extend a plain scanline of the chest header, including its bevel/transparent margins.
@@ -47,7 +48,7 @@ public class AmmoStorageScreen extends AbstractContainerScreen<AmmoStorageMenu> 
             AmmoStorageEntry entry = entries.get(i);
             int x = leftPos + AmmoStorageMenu.INVENTORY_X + i % AmmoStorageMenu.STORAGE_COLUMNS * 18;
             int y = topPos + AmmoStorageMenu.STORAGE_Y + i / AmmoStorageMenu.STORAGE_COLUMNS * 18;
-            graphics.item(entry.sample(), x, y);
+            graphics.renderItem(entry.sample(), x, y);
             renderSizeLabel(graphics, x, y, formatCount(entry.count()));
         }
         int hovered = getVirtualCell(mouseX, mouseY);
@@ -59,7 +60,7 @@ public class AmmoStorageScreen extends AbstractContainerScreen<AmmoStorageMenu> 
     }
 
     @Override
-    protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+    protected void renderTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
         if (isHovering(8, 17, 160, 21, mouseX, mouseY)) {
             graphics.setTooltipForNextFrame(font, List.of(
                     Component.translatable("gui.tacz.ammo_storage.capacity_detail", menu.getUsedStacks(), menu.getCapacityStacks()),
@@ -77,7 +78,7 @@ public class AmmoStorageScreen extends AbstractContainerScreen<AmmoStorageMenu> 
             graphics.setTooltipForNextFrame(font, tooltip, entry.sample().getTooltipImage(), mouseX, mouseY);
             return;
         }
-        super.extractTooltip(graphics, mouseX, mouseY);
+        super.renderTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
@@ -122,7 +123,7 @@ public class AmmoStorageScreen extends AbstractContainerScreen<AmmoStorageMenu> 
         return -1;
     }
 
-    private void renderCapacity(GuiGraphicsExtractor graphics) {
+    private void renderCapacity(GuiGraphics graphics) {
         Component capacity = Component.translatable("gui.tacz.ammo_storage.capacity", menu.getUsedStacks(), menu.getCapacityStacks());
         Component types = Component.translatable("gui.tacz.ammo_storage.types", menu.getEntries().size(), AmmoStorageMenu.STORAGE_SLOT_COUNT);
         renderStatusLabel(graphics, capacity, leftPos + 8, false, 0xFF404040);
@@ -138,14 +139,14 @@ public class AmmoStorageScreen extends AbstractContainerScreen<AmmoStorageMenu> 
         graphics.fill(x + 1, y + 1, x + 1 + (int) Math.round(158 * fullness), y + 5, color);
     }
 
-    private void renderStatusLabel(GuiGraphicsExtractor graphics, Component text, int x, boolean right, int color) {
+    private void renderStatusLabel(GuiGraphics graphics, Component text, int x, boolean right, int color) {
         // Each status owns half the inner width, even with long translated labels or large counts.
         int width = font.width(text);
         float scale = Math.min(1F, 78F / Math.max(1, width));
         graphics.pose().pushMatrix();
         graphics.pose().translate(x, topPos + 18);
         graphics.pose().scale(scale, scale);
-        graphics.text(font, text, right ? -width : 0, 0, color, false);
+        graphics.drawString(font, text, right ? -width : 0, 0, color, false);
         graphics.pose().popMatrix();
     }
 
@@ -168,11 +169,11 @@ public class AmmoStorageScreen extends AbstractContainerScreen<AmmoStorageMenu> 
         return decimal == 0 || whole >= 10 ? whole + suffix : whole + "." + decimal + suffix;
     }
 
-    private void renderSizeLabel(GuiGraphicsExtractor graphics, int x, int y, String text) {
+    private void renderSizeLabel(GuiGraphics graphics, int x, int y, String text) {
         float scale = 0.666F;
         graphics.pose().pushMatrix();
         graphics.pose().scale(scale, scale);
-        graphics.text(font, text, (int) ((x + 17 - font.width(text) * scale) / scale),
+        graphics.drawString(font, text, (int) ((x + 17 - font.width(text) * scale) / scale),
                 (int) ((y + 12) / scale), 0xFFFFFFFF, true);
         graphics.pose().popMatrix();
     }

@@ -15,7 +15,7 @@ import net.minecraft.resources.Identifier;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
 public class AmmoQueryCategory implements IRecipeCategory<AmmoQueryEntry> {
@@ -32,13 +32,13 @@ public class AmmoQueryCategory implements IRecipeCategory<AmmoQueryEntry> {
     }
 
     @Override
-    public void draw(AmmoQueryEntry entry, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor guiGraphics, double mouseX, double mouseY) {
+    public void draw(AmmoQueryEntry entry, IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics, double mouseX, double mouseY) {
         Font font = Minecraft.getInstance().font;
         Component gunsLabel = Component.translatable("jei.tacz.ammo_query.guns", entry.getTotalGunCount());
-        guiGraphics.text(font, gunsLabel, (WIDTH - font.width(gunsLabel)) / 2, 22, 0xFF555555, false);
+        guiGraphics.drawString(font, gunsLabel, (WIDTH - font.width(gunsLabel)) / 2, 22, 0xFF555555, false);
         if (entry.getPageCount() > 1) {
             Component page = Component.translatable("jei.tacz.ammo_query.page", entry.getPageNumber(), entry.getPageCount());
-            guiGraphics.text(font, page, (WIDTH - font.width(page)) / 2, 145, 0xFF555555, false);
+            guiGraphics.drawString(font, page, (WIDTH - font.width(page)) / 2, 145, 0xFF555555, false);
         }
     }
 

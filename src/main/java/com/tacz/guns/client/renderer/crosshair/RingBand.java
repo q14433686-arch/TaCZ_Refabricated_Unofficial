@@ -2,7 +2,7 @@ package com.tacz.guns.client.renderer.crosshair;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.render.TextureSetup;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -22,7 +22,7 @@ record RingBand(Matrix3x2f pose, float ix, float iy, float ox, float oy, int col
         }
     }
 
-    static void draw(GuiGraphicsExtractor gui, float ix, float iy, float ox, float oy, int color) {
+    static void draw(GuiGraphics gui, float ix, float iy, float ox, float oy, int color) {
         if (ox <= 0 || oy <= 0) return;
         var pose = new Matrix3x2f(gui.pose());
         int x = (int) Math.ceil(ox), y = (int) Math.ceil(oy);

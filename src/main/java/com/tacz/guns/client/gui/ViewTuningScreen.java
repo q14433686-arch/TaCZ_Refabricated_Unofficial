@@ -19,7 +19,7 @@ import com.tacz.guns.config.client.ViewTuningConfig.TextureCenter;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -28,7 +28,7 @@ import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
 import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 
 import javax.annotation.Nullable;
@@ -78,7 +78,7 @@ public final class ViewTuningScreen extends Screen {
 
     public static void open(@Nullable Screen parent) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null) mc.gui.setScreen(new ViewTuningScreen(parent));
+        if (mc.player != null) mc.setScreen(new ViewTuningScreen(parent));
     }
 
     private ViewTuningScreen(@Nullable Screen parent) {
@@ -364,22 +364,22 @@ public final class ViewTuningScreen extends Screen {
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta) {
+    public void renderBackground(GuiGraphics gui, int mouseX, int mouseY, float delta) {
         // No panorama, full-screen tint or blur: the world and actual held model are the preview.
         gui.fill(X - 4, top - 2, X + W + 4, top + 226, 0xDD172028);
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics gui, int mouseX, int mouseY, float delta) {
         if (!isCurrentAccount()) return;
         Component heading = !invalid.isEmpty() ? label("invalid") : saveFailed ? label("save_failed") : !crosshairTab ? title
                 : target.scope == Scope.DEFAULT ? label("editing_default") : label("value", label("scope." + key(target.scope)), target.name(target.key()));
-        gui.text(font, font.plainSubstrByWidth(heading.getString(), W - 2), X + 1, top + 5, invalid.isEmpty() && !saveFailed ? -1 : 0xFFFF9999, false);
+        gui.drawString(font, font.plainSubstrByWidth(heading.getString(), W - 2), X + 1, top + 5, invalid.isEmpty() && !saveFailed ? -1 : 0xFFFF9999, false);
         if (crosshairTab) {
             Mode mode = draft.get(ViewTuningConfig.MODE);
             switch (page) {
                 case STYLE -> {
-                    if (mode == Mode.PRESET) gui.centeredText(font, draft.get(RenderConfig.CROSSHAIR_TYPE).name(), X + W / 2, row(1) + 5, -1);
+                    if (mode == Mode.PRESET) gui.drawCenteredString(font, draft.get(RenderConfig.CROSSHAIR_TYPE).name(), X + W / 2, row(1) + 5, -1);
                     if (!draft.get(ViewTuningConfig.DYNAMIC)) hint(gui, label(mode == Mode.PNG ? "png_hint" : "spread_hint"), row(4));
                 }
                 case GEOMETRY -> {
@@ -387,15 +387,15 @@ public final class ViewTuningScreen extends Screen {
                     else if (draft.get(ViewTuningConfig.SHAPE) == Shape.RING) hint(gui, label("ring_hint"), row(2) + 4);
                 }
                 case COLOR -> {
-                    gui.text(font, label("rgb"), X + 2, row(4) + 5, -1, false);
+                    gui.drawString(font, label("rgb"), X + 2, row(4) + 5, -1, false);
                     gui.fill(X + W - 96, row(4) + 3, X + W - 84, row(4) + 15, 0xFF000000 | draft.get(ViewTuningConfig.RGB));
                 }
                 case RULES -> {
                     if (target.scope == Scope.DEFAULT) hint(gui, label("rule_hint"), row(2));
                     else {
-                        gui.text(font, font.plainSubstrByWidth(target.name(target.key()).getString(), W - 4), X + 2, row(1) + 5, -1, false);
+                        gui.drawString(font, font.plainSubstrByWidth(target.name(target.key()).getString(), W - 4), X + 2, row(1) + 5, -1, false);
                         if (shareStatus != null) status(gui, row(5) + 4);
-                        else gui.text(font, font.plainSubstrByWidth(target.key(), W - 4), X + 2, row(5) + 4, 0xFFE0E7E9, false);
+                        else gui.drawString(font, font.plainSubstrByWidth(target.key(), W - 4), X + 2, row(5) + 4, 0xFFE0E7E9, false);
                     }
                 }
                 case SHARE -> {
@@ -408,29 +408,29 @@ public final class ViewTuningScreen extends Screen {
             if (r > 4) {
                 gui.fill(cx - r, cy - r, cx, cy + r, 0xFF35414B);
                 gui.fill(cx, cy - r, cx + r, cy + r, 0xFF8D999E);
-                gui.centeredText(font, label("preview"), cx, cy - r - 12, -1);
+                gui.drawCenteredString(font, label("preview"), cx, cy - r - 12, -1);
                 GunCrosshair.draw(gui, cx, cy, draft, r - 3, previewShots.sample(Util.getMillis()));
             }
         } else {
             hint(gui, label("model_hint"), top + 102);
             status(gui, top + 163);
         }
-        super.extractRenderState(gui, mouseX, mouseY, delta);
+        super.render(gui, mouseX, mouseY, delta);
     }
 
-    private void status(GuiGraphicsExtractor gui, int y) {
-        if (shareStatus != null) gui.text(font, label(shareStatus), X + 2, y,
+    private void status(GuiGraphics gui, int y) {
+        if (shareStatus != null) gui.drawString(font, label(shareStatus), X + 2, y,
                 shareStatus.equals("bad_code") ? 0xFFFF9999 : 0xFF9EEDB5, false);
     }
 
-    private void hint(GuiGraphicsExtractor gui, Component message, int y) {
+    private void hint(GuiGraphics gui, Component message, int y) {
         for (var line : font.split(message, W - 4)) {
-            gui.text(font, line, X + 2, y, 0xFFE0E7E9, false);
+            gui.drawString(font, line, X + 2, y, 0xFFE0E7E9, false);
             y += font.lineHeight;
         }
     }
 
-    @Override public void onClose() { minecraft.gui.setScreen(parent); }
+    @Override public void onClose() { minecraft.setScreen(parent); }
 
     private static final class Slider extends AbstractSliderButton {
         private final Component name;

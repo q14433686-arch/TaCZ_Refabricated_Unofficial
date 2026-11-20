@@ -15,7 +15,7 @@ import net.minecraft.resources.Identifier;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
 public class GunAmmoQueryCategory implements IRecipeCategory<GunAmmoQueryEntry> {
@@ -32,9 +32,9 @@ public class GunAmmoQueryCategory implements IRecipeCategory<GunAmmoQueryEntry> 
     }
 
     @Override
-    public void draw(GunAmmoQueryEntry entry, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor guiGraphics, double mouseX, double mouseY) {
+    public void draw(GunAmmoQueryEntry entry, IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics, double mouseX, double mouseY) {
         Font font = Minecraft.getInstance().font;
-        guiGraphics.text(font, AMMO_LABEL, (WIDTH - font.width(AMMO_LABEL)) / 2, 24, 0xFF555555, false);
+        guiGraphics.drawString(font, AMMO_LABEL, (WIDTH - font.width(AMMO_LABEL)) / 2, 24, 0xFF555555, false);
     }
 
     @Override

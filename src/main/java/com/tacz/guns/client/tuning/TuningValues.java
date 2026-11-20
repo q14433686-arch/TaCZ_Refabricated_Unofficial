@@ -15,7 +15,7 @@ public interface TuningValues {
     /** Preview while the editor is on top; account-wide pose otherwise. The HUD resolves the actual held stack. */
     static TuningValues visible() {
         var mc = Minecraft.getInstance();
-        if (mc.gui.screen() instanceof ViewTuningScreen editor && editor.isCurrentAccount()) return editor.draft();
+        if (mc.screen instanceof ViewTuningScreen editor && editor.isCurrentAccount()) return editor.draft();
         return TuningProfiles.current().base();
     }
 

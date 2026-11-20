@@ -58,20 +58,23 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # 日志可能很大，只保留头 200 行 + 尾 800 行
-          LOG=build-reports/compile-java.log
-          LINES=$(wc -l < "$LOG")
-          if [ "$LINES" -gt 1000 ]; then
-            { head -n 200 "$LOG"; echo "...[truncated ${LINES} lines total]..."; tail -n 800 "$LOG"; } > /tmp/log-trimmed
-            mv /tmp/log-trimmed "$LOG"
-          fi
           echo "" >> "$LOG"
           echo "== job status: ${{ job.status }} ==" >> "$LOG"
           BRANCH="${{ github.ref_name }}"
           SHA=$(gh api "repos/${{ github.repository }}/contents/$LOG?ref=$BRANCH" --jq .sha 2>/dev/null || true)
-          ARGS=(-X PUT "repos/${{ github.repository }}/contents/$LOG"
-                -f message="ci-log: compile result (${{ job.status }}) for ${{ github.sha }}"
-                -f branch="$BRANCH"
-                -f content="$(base64 -w0 "$LOG")")
-          if [ -n "$SHA" ]; then ARGS+=(-f sha="$SHA"); fi
-          gh api "${ARGS[@]}" --jq .commit.sha
+          # Put base64 in the request body, not one command-line argument (Linux limits a
+          # single argument to 128 KiB; long javac diagnostics used to lose the entire log).
+          export LOG BRANCH SHA
+          python3 - <<'PYLOG' | gh api -X PUT "repos/${{ github.repository }}/contents/$LOG" --input - --jq .commit.sha
+          import base64, json, os
+          from pathlib import Path
+          data = Path(os.environ["LOG"]).read_bytes()
+          limit = 740_000  # stay below the JSON Contents API's inline blob limit
+          if len(data) > limit:
+              data = data[:500_000] + b"\n...[truncated]...\n" + data[-230_000:]
+          payload = {"message": "ci-log: compile result (${{ job.status }}) for ${{ github.sha }}",
+                     "branch": os.environ["BRANCH"], "content": base64.b64encode(data).decode()}
+          if os.environ["SHA"]:
+              payload["sha"] = os.environ["SHA"]
+          print(json.dumps(payload))
+          PYLOG

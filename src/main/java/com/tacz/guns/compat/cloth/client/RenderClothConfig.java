@@ -206,42 +206,78 @@ public class RenderClothConfig {
                 .setMin(0.0).setMax(1.0).setDefaultValue(0.5).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_sharpness.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_PIP_SHARPNESS::set).build());
 
-        // ================= Mesh Loader（poly_mesh）配置 =================
-        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_gpu_baking"), MeshyConfig.GPU_BAKING.get())
-                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_baking.desc"))
-                .setSaveConsumer(MeshyConfig.GPU_BAKING::set).build());
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.illuminated_real_sky"), RenderConfig.ILLUMINATED_REAL_SKY.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.illuminated_real_sky.desc"))
+                .setSaveConsumer(RenderConfig.ILLUMINATED_REAL_SKY::set).build());
 
-        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_gpu_world"), MeshyConfig.GPU_WORLD.get())
-                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_world.desc"))
-                .setSaveConsumer(MeshyConfig.GPU_WORLD::set).build());
-
-        render.addEntry(entryBuilder.startIntField(Component.translatable("config.tacz.client.render.mesh_gpu_light_cache_size"), MeshyConfig.GPU_LIGHT_CACHE_SIZE.get())
-                .setMin(1).setMax(16).setDefaultValue(4).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_light_cache_size.desc"))
-                .setSaveConsumer(MeshyConfig.GPU_LIGHT_CACHE_SIZE::set).build());
-
-        render.addEntry(entryBuilder.startIntField(Component.translatable("config.tacz.client.render.mesh_gpu_bake_budget"), MeshyConfig.GPU_BAKE_BUDGET_PER_FRAME.get())
-                .setMin(1).setMax(64).setDefaultValue(4).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_bake_budget.desc"))
-                .setSaveConsumer(MeshyConfig.GPU_BAKE_BUDGET_PER_FRAME::set).build());
+        // ================= Mesh Loader =================
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_enable"), MeshyConfig.ENABLE_MESH.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_enable.desc"))
+                .setSaveConsumer(MeshyConfig.ENABLE_MESH::set).build());
 
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_poly_mirror_reverse_winding"), MeshyConfig.POLY_MIRROR_REVERSE_WINDING.get())
                 .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_poly_mirror_reverse_winding.desc"))
                 .setSaveConsumer(MeshyConfig.POLY_MIRROR_REVERSE_WINDING::set).build());
 
-        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_poly_prefer_pack_normals"), MeshyConfig.POLY_PREFER_PACK_NORMALS.get())
-                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_poly_prefer_pack_normals.desc"))
-                .setSaveConsumer(MeshyConfig.POLY_PREFER_PACK_NORMALS::set).build());
-
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_poly_invert_normals"), MeshyConfig.POLY_INVERT_NORMALS.get())
                 .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_poly_invert_normals.desc"))
                 .setSaveConsumer(MeshyConfig.POLY_INVERT_NORMALS::set).build());
 
-        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.illuminated_real_sky"), RenderConfig.ILLUMINATED_REAL_SKY.get())
-                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.illuminated_real_sky.desc"))
-                .setSaveConsumer(RenderConfig.ILLUMINATED_REAL_SKY::set).build());
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_poly_prefer_pack_normals"), MeshyConfig.POLY_PREFER_PACK_NORMALS.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_poly_prefer_pack_normals.desc"))
+                .setSaveConsumer(MeshyConfig.POLY_PREFER_PACK_NORMALS::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_poly_illuminated_real_sky"), MeshyConfig.POLY_ILLUMINATED_REAL_SKY.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_poly_illuminated_real_sky.desc"))
+                .setSaveConsumer(MeshyConfig.POLY_ILLUMINATED_REAL_SKY::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_poly_in_preview"), MeshyConfig.POLY_IN_PREVIEW.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_poly_in_preview.desc"))
+                .setSaveConsumer(MeshyConfig.POLY_IN_PREVIEW::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_poly_in_shadow"), MeshyConfig.POLY_IN_SHADOW.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_poly_in_shadow.desc"))
+                .setSaveConsumer(MeshyConfig.POLY_IN_SHADOW::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_log_stats"), MeshyConfig.LOG_STATS.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_log_stats.desc"))
+                .setSaveConsumer(MeshyConfig.LOG_STATS::set).build());
+
+        render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.mesh_max_render_distance"), MeshyConfig.MAX_RENDER_DISTANCE.get())
+                .setMin(0.0).setMax(1_000_000.0).setDefaultValue(48.0).setTooltip(Component.translatable("config.tacz.client.render.mesh_max_render_distance.desc"))
+                .setSaveConsumer(MeshyConfig.MAX_RENDER_DISTANCE::set).build());
+
+        render.addEntry(entryBuilder.startIntField(Component.translatable("config.tacz.client.render.mesh_gui_max_vertices"), MeshyConfig.GUI_MAX_VERTICES.get())
+                .setMin(0).setMax(10_000_000).setDefaultValue(65536).setTooltip(Component.translatable("config.tacz.client.render.mesh_gui_max_vertices.desc"))
+                .setSaveConsumer(MeshyConfig.GUI_MAX_VERTICES::set).build());
+
+        render.addEntry(entryBuilder.startIntField(Component.translatable("config.tacz.client.render.mesh_world_max_vertices"), MeshyConfig.WORLD_MAX_VERTICES.get())
+                .setMin(0).setMax(10_000_000).setDefaultValue(120000).setTooltip(Component.translatable("config.tacz.client.render.mesh_world_max_vertices.desc"))
+                .setSaveConsumer(MeshyConfig.WORLD_MAX_VERTICES::set).build());
+
+        render.addEntry(entryBuilder.startIntField(Component.translatable("config.tacz.client.render.mesh_max_model_vertices"), MeshyConfig.MAX_MODEL_VERTICES.get())
+                .setMin(0).setMax(10_000_000).setDefaultValue(120000).setTooltip(Component.translatable("config.tacz.client.render.mesh_max_model_vertices.desc"))
+                .setSaveConsumer(MeshyConfig.MAX_MODEL_VERTICES::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_gpu_baking"), MeshyConfig.GPU_BAKING.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_baking.desc"))
+                .setSaveConsumer(MeshyConfig.GPU_BAKING::set).build());
 
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_gpu_under_shaders"), MeshyConfig.GPU_UNDER_SHADERS.get())
-                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_under_shaders.desc"))
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_under_shaders.desc"))
                 .setSaveConsumer(MeshyConfig.GPU_UNDER_SHADERS::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_gpu_world"), MeshyConfig.GPU_WORLD.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_world.desc"))
+                .setSaveConsumer(MeshyConfig.GPU_WORLD::set).build());
+
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_gpu_world_under_shaders"), MeshyConfig.GPU_WORLD_UNDER_SHADERS.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_world_under_shaders.desc"))
+                .setSaveConsumer(MeshyConfig.GPU_WORLD_UNDER_SHADERS::set).build());
+
+        render.addEntry(entryBuilder.startIntField(Component.translatable("config.tacz.client.render.mesh_gpu_light_cache_size"), MeshyConfig.GPU_LIGHT_CACHE_SIZE.get())
+                .setMin(1).setMax(16).setDefaultValue(4).setTooltip(Component.translatable("config.tacz.client.render.mesh_gpu_light_cache_size.desc"))
+                .setSaveConsumer(MeshyConfig.GPU_LIGHT_CACHE_SIZE::set).build());
 
         render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.mesh_world_full_detail_distance"), MeshyConfig.WORLD_FULL_DETAIL_DISTANCE.get())
                 .setMin(0.0).setMax(1024.0).setDefaultValue(16.0).setTooltip(Component.translatable("config.tacz.client.render.mesh_world_full_detail_distance.desc"))

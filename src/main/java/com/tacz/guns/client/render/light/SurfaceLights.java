@@ -87,7 +87,7 @@ public final class SurfaceLights {
 
     private static @Nullable LivingEntity holder(ItemDisplayContext ctx) {
         var mc = Minecraft.getInstance();
-        if (ctx == null || mc.player == null || mc.gui.screen() != null || IrisCompat.isRenderShadow() || ScopePipRenderer.isInsideScopeLevelRender()) return null;
+        if (ctx == null || mc.player == null || mc.screen != null || IrisCompat.isRenderShadow() || ScopePipRenderer.isInsideScopeLevelRender()) return null;
         if (ctx.firstPerson()) return mc.options.getCameraType().isFirstPerson() && MuzzleFlashRender.isSelf ? mc.player : null;
         if (ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND || ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND) {
             if (GunItemRendererWrapper.IS_MAIN_HAND_SUBMIT && level.getEntity(NativeMuzzleEffects.currentOwner()) instanceof LivingEntity entity
