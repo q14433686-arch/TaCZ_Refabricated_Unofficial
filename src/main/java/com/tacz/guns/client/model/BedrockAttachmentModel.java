@@ -162,6 +162,18 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     private boolean isScope = false;
     private boolean isSight = false;
 
+    /**
+     * 瞄具镜片配置（来自 {@code display.scope_lens}）。
+     *
+     * <p>26.2 在 {@code ScopeMaskGeometry#finishOcular(start, isScope ? scopeLens : null)} 里用它
+     * 决定目镜孔径的描边/净空；本线（1.21.11）的目镜遮罩走深度孔径
+     * （{@code ScopeDepthCopyState} + {@code ScopeRenderTypes}），不需要这份几何参数，
+     * 因此这里只保留数据搬运：两个装载点
+     * （{@code ClientAttachmentIndex#checkTextureAndModel}、{@code RefitOptionModel}）照常写入，
+     * 免得调用方与数据模型分叉。将来本线若也做"按镜片配置裁剪孔径"，直接从这里取。</p>
+     */
+    private com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig scopeLens;
+
     public BedrockAttachmentModel(BedrockModelPOJO pojo, BedrockVersion version) {
         super(pojo, version);
         scopeViewPaths = new ArrayList<>();
@@ -420,6 +432,14 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
 
     public void setIsSight(boolean isSight) {
         this.isSight = isSight;
+    }
+
+    public void setScopeLens(com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig scopeLens) {
+        this.scopeLens = scopeLens;
+    }
+
+    public com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig getScopeLens() {
+        return scopeLens;
     }
 
     public boolean isScope() {

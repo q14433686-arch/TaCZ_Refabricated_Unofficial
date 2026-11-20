@@ -17,6 +17,8 @@ import com.tacz.guns.config.client.ViewTuningConfig.Mode;
 import com.tacz.guns.config.client.ViewTuningConfig.Shape;
 import com.tacz.guns.config.client.ViewTuningConfig.TextureCenter;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+// Fabric 0.141.6 的 Screens 只暴露 getButtons(Screen)/getTextRenderer/getClient，
+        // 26.2 的 getWidgets(Screen) 在这条线上不存在（按钮列表就是 AbstractWidget 列表）。
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -70,7 +72,7 @@ public final class ViewTuningScreen extends Screen {
         ScreenEvents.AFTER_INIT.register((mc, screen, width, height) -> {
             if (screen instanceof PauseScreen pause && pause.showsPauseMenu() && mc.player != null) {
                 Component title = label("title");
-                Screens.getWidgets(screen).add(Button.builder(title, b -> open(pause))
+                Screens.getButtons(screen).add(Button.builder(title, b -> open(pause))
                         .bounds(4, height - 24, mc.font.width(title) + 16, 20).build());
             }
         });

@@ -22,8 +22,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.ItemOwner;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import org.joml.Matrix4f;
-import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -121,11 +119,9 @@ public final class TaczDynamicItemModel implements ItemModel {
     };
 
     private final ModelRenderProperties properties;
-    private final Matrix4fc transformation;
 
-    private TaczDynamicItemModel(ModelRenderProperties properties, Matrix4fc transformation) {
+    private TaczDynamicItemModel(ModelRenderProperties properties) {
         this.properties = properties;
-        this.transformation = new Matrix4f(transformation);
     }
 
     /** Must run during client initialization, before client item JSON files are decoded. */
@@ -150,7 +146,11 @@ public final class TaczDynamicItemModel implements ItemModel {
         }
 
         layer.setExtents(EXTENTS);
-        layer.setLocalTransform(this.transformation);
+        // 26.2 在这里还有一句 layer.setLocalTransform(this.transformation)（模型 JSON 里可选的
+        // "transformation" 矩阵）。1.21.11 的 LayerRenderState 只有 setTransform(ItemTransform)，
+        // 而且那个槽位被 applyToLayer 用来写 display-context 变换（来自基模型的 display 块）——
+        // 没有"再叠一个任意矩阵"的位置。本 mod 的所有 items/*.json 都没写 "transformation"，
+        // 该路径恒为单位阵，故本线按原版契约走：只应用 display-context 变换。
         this.properties.applyToLayer(layer, displayContext);
 
         Identifier sprite = DroppedGunSprite.select(stack, displayContext, owner);
@@ -217,16 +217,22 @@ public final class TaczDynamicItemModel implements ItemModel {
     private static final class TaczSpecialRenderer implements SpecialModelRenderer<RenderArgument> {
         @Override
         public void submit(RenderArgument argument,
+                           ItemDisplayContext displayContext,
                            PoseStack poseStack,
                            SubmitNodeCollector collector,
                            int light,
                            int overlay,
                            boolean hasFoil,
                            int outlineColor) {
+            // 1.21.11 的 SpecialModelRenderer#submit 多一个 ItemDisplayContext 形参（26.2 去掉了它，
+            // 因为 26.2 的 extractArgument 已经把上下文冻进参数里）。这里两个来源都有：
+            // 形参是权威值；仅当它退化为 NONE（例如掉落物走通用路径）时回落到参数里冻的那份。
+            ItemDisplayContext effective = displayContext == ItemDisplayContext.NONE
+                    ? argument.displayContext() : displayContext;
             BuiltinItemRendererRegistry.DynamicItemRenderer renderer =
                     BuiltinItemRendererRegistry.INSTANCE.get(argument.stack().getItem());
             if (renderer != null) {
-                renderer.render(argument.stack(), argument.displayContext(), poseStack, collector, light, overlay);
+                renderer.render(argument.stack(), effective, poseStack, collector, light, overlay);
             }
         }
 
@@ -243,6 +249,9 @@ public final class TaczDynamicItemModel implements ItemModel {
     }
 
     public record Unbaked(Identifier base, Optional<Transformation> transformation) implements ItemModel.Unbaked {
+        /** 同一模型每帧都会重新 bake，告警只打一次。 */
+        private static volatile boolean warnedTransformation;
+
         public static final MapCodec<Unbaked> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
                 Identifier.CODEC.fieldOf("base").forGetter(Unbaked::base),
                 Transformation.EXTENDED_CODEC.optionalFieldOf("transformation").forGetter(Unbaked::transformation)
@@ -253,14 +262,31 @@ public final class TaczDynamicItemModel implements ItemModel {
             resolver.markDependency(this.base);
         }
 
+        /**
+         * 1.21.11 的 {@code ItemModel.Unbaked#bake} 只有一个 {@code BakingContext} 形参
+         * （26.2 多一个 {@code inheritedTransform}，并用 26.2 才有的
+         * {@code Transformation.compose(...)} 静态重载合成）。
+         *
+         * <p>本线不需要那套矩阵：变换完全由 {@link ModelRenderProperties}（基模型的
+         * {@code display} 块）承载。若某个资源真的在 {@code dynamic_item} 上写了
+         * {@code "transformation"}，这里会打一条一次性告警而不是静默忽略 —— 本 mod 自带的
+         * {@code items/*.json} 都没有这个字段。</p>
+         */
         @Override
-        public ItemModel bake(ItemModel.BakingContext context, Matrix4fc inheritedTransform) {
-            Matrix4fc composedTransform = Transformation.compose(inheritedTransform, this.transformation);
+        public ItemModel bake(ItemModel.BakingContext context) {
+            this.transformation.ifPresent(t -> {
+                if (!t.equals(Transformation.identity()) && !warnedTransformation) {
+                    warnedTransformation = true;
+                    GunMod.LOGGER.warn("[TACZ ItemModel] dynamic_item 的 \"transformation\" 字段在 1.21.11 上不生效"
+                            + "（该版本用 LayerRenderState#setTransform(ItemTransform) 承载 display 变换）；"
+                            + "模型 {} 的该项已被忽略。", this.base);
+                }
+            });
             ModelBaker baker = context.blockModelBaker();
             ResolvedModel resolved = baker.getModel(this.base);
             TextureSlots slots = resolved.getTopTextureSlots();
             ModelRenderProperties properties = ModelRenderProperties.fromResolvedModel(baker, resolved, slots);
-            return new TaczDynamicItemModel(properties, composedTransform);
+            return new TaczDynamicItemModel(properties);
         }
 
         @Override

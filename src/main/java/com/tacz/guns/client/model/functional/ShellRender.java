@@ -137,13 +137,11 @@ public class ShellRender implements IFunctionalSubmitter {
     }
 
     private static RenderType shellRenderType(ItemDisplayContext displayContext, Identifier texture) {
-        // In Iris/Sulkan first-person hand passes, vanilla ENTITY_* pipelines may be assigned to
-        // the world/entity program instead of the hand program.  Shells are visually part of the
-        // held item in first person, so use the ITEM_CUTOUT pipeline there; third-person/world
-        // rendering keeps the entity pipeline for vanilla parity.
-        return displayContext.firstPerson()
-                ? RenderTypes.itemCutout(texture)
-                : RenderTypes.entityCutout(texture);
+        // 26.2 第一人称走 RenderTypes.itemCutout（ITEM_CUTOUT 管线），因为 Iris/Sulkan 的手部
+        // pass 可能把 vanilla ENTITY_* 管线分到世界程序上，弹壳看起来就不像"手持物的一部分"了。
+        // 1.21.11 没有 ITEM_CUTOUT 管线，手持物与实体共用 ENTITY_CUTOUT，因此两个分支合一。
+        // 保留 displayContext 形参与调用点不变：等本线引入手部专用管线再拆开。
+        return RenderTypes.entityCutout(texture);
     }
 
     private void checkShellQueue(long lifeTime) {

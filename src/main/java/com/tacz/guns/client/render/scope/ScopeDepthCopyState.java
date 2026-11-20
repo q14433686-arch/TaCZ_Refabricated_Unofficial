@@ -180,6 +180,17 @@ public final class ScopeDepthCopyState {
     private static boolean backupValid;
     private static boolean maskValid;
     /**
+     * 26.2 的 {@code ScopePipRenderer#frameNumber()} 等价物：当前客户端帧号。
+     *
+     * <p>1.2.0 的表面光源/枪口锚点用它做"这份锚点还新不新鲜"的判定（{@code frame - a.frame <= 2}），
+     * 因此这里暴露的就是 {@link #onClientFrameStart()} 递增的那个计数，不再单独维护第二个计数器
+     * ——两个计数器一旦不同步，"新鲜度"判据会静默失效。</p>
+     */
+    public static int frameNumber() {
+        return frameCounter;
+    }
+
+    /**
      * 帧计数（{@link #onClientFrameStart()} 递增）与最近一次成功掩码周期的帧戳。
      * 初值 MIN_VALUE：任何「本帧/上一帧」查询在第一个周期完成前都为假（fail-closed）。
      */

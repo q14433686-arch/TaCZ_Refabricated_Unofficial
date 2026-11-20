@@ -16,6 +16,7 @@ import com.tacz.guns.client.animation.statemachine.ItemAnimationStateContext;
 import com.tacz.guns.client.model.BedrockAnimatedModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.sound.SoundPlayManager;
+import com.tacz.guns.util.time.GunTime;
 import com.tacz.guns.util.math.MathUtil;
 import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
 import net.minecraft.client.Minecraft;
@@ -425,6 +426,44 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
                 });
             }
         };
+    }
+
+    /**
+     * 【RecoilDebug 探针 · 手持相机动画】记录动画四元数左乘/右乘到手部基座之前的
+     * 完整状态：四元数、乘子、以及<b>叠加前</b>的手部基座矩阵（3x3 旋转 + 平移）。
+     *
+     * <p>若手部基座在 vanilla 管线混入非纯旋转内容（缩放/切变），視空间后乘假设即被破坏，
+     * 误差随朝向出现 —— 对角朝向的固定侧偏正属此类指纹；Iris 手部 pass 基座≈单位阵时则天然豁免，
+     * 与「开光影正常」的目击吻合。本探针在 26.2 与 1.21.11 上取值语义完全一致（纯日志），
+     * 故原样移植。</p>
+     */
+    protected static void debugRecoilItemCam(Quaternionf q, float mult, PoseStack poseStack) {
+        try {
+            double angleDeg = Math.toDegrees(2 * Math.acos(Math.min(1, Math.abs(q.w()))));
+            if (angleDeg < 0.05) {
+                return;
+            }
+            Matrix4f b = poseStack.last().pose();
+            LocalPlayer player = Minecraft.getInstance().player;
+            float facingY = player == null ? Float.NaN : Mth.wrapDegrees(player.getYRot());
+            float facingX = player == null ? Float.NaN : player.getXRot();
+            com.tacz.guns.GunMod.LOGGER.info(
+                    "[TACZ RecoilDebug] itemCam ms={} q=({},{},{},{}) mult={} ang={} base3x3=[{},{},{}; {},{},{}; {},{},{}] baseT=({},{},{}) facing=({},{}) shader={} irisHand={}",
+                    GunTime.nowMillis(),
+                    f(q.x()), f(q.y()), f(q.z()), f(q.w()), f(mult), f(angleDeg),
+                    f(b.m00()), f(b.m01()), f(b.m02()),
+                    f(b.m10()), f(b.m11()), f(b.m12()),
+                    f(b.m20()), f(b.m21()), f(b.m22()),
+                    f(b.m30()), f(b.m31()), f(b.m32()),
+                    f(facingX), f(facingY),
+                    com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack(),
+                    com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive());
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static String f(double v) {
+        return Double.isFinite(v) ? String.format(java.util.Locale.ROOT, "%.4f", v) : "-";
     }
 
     @Override

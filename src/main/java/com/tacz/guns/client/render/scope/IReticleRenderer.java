@@ -2,7 +2,7 @@ package com.tacz.guns.client.render.scope;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
-import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.world.item.ItemDisplayContext;
 
@@ -26,7 +26,7 @@ import net.minecraft.world.item.ItemDisplayContext;
  * <h2>实现约定</h2>
  * <ol>
  *   <li>只能走 <b>submit 快照</b>链路（{@code BedrockRenderSnapshot}），
- *       <b>不要</b>调用 legacy {@code renderTempPart}——它在 26.2 是 no-op；</li>
+ *       <b>不要</b>调用 legacy {@code renderTempPart}——它在 26.1.2 是 no-op；</li>
  *   <li>若修改了 {@link BedrockPart#visible}，必须在 {@code finally} 里还原：
  *       模型节点是<b>跨帧共享</b>的，不还原会污染第三人称与物品栏；</li>
  *   <li>实现应当是无状态的（单例即可），所有每帧数据从 {@link Context} 取。</li>
@@ -59,23 +59,27 @@ public interface IReticleRenderer {
      * 一帧内准星绘制所需的全部上下文。
      *
      * @param poseStack      当前矩阵（已包含瞄具自身的变换）
-     * @param collector      26.2 的提交收集器
+     * @param collector      26.1.2 的提交收集器
      * @param displayContext 显示上下文（第一人称 / 第三人称 / GUI…）
      * @param baseRenderType 瞄具本体使用的 RenderType（贴图已绑定）
      * @param light          继承的光照
      * @param overlay        overlay 坐标
      * @param aimingProgress 开镜进度 0~1，可用于淡入淡出
-     */
-    /**
      * @param baseRenderType 准星应当使用的 RenderType。掩码生效时它是「反向裁剪」版
      *                       （只在目镜投影内绘制）；否则是普通的 entityCutout。
      * @param maskActive     本帧目镜掩码是否真的生效。
      *                       <p>{@link EtchedReticleRenderer} 必须看这个标志：
      *                       {@code division} 里混着大块遮光板，只有在掩码把它们裁掉时
      *                       才能安全绘制，否则会糊住屏幕（第 9 轮的教训）。</p>
+     * @param deferToIrisTranslucent true 时只冻结快照，交由
+     *                                {@link ScopeLateReticleState} 在 Iris 的较晚
+     *                                {@code HAND_TRANSLUCENT} pass 提交。
+     * @param deferToIrisFinalOverlay true 时保留同一份 3D 快照，交由
+     *                                {@link ScopeFinalOverlayState} 在 Iris final composite
+     *                                之后提交，以避开不可覆盖的屏幕空间雾。
      */
     record Context(PoseStack poseStack,
-                   SubmitNodeCollector collector,
+                   OrderedSubmitNodeCollector collector,
                    ItemDisplayContext displayContext,
                    RenderType baseRenderType,
                    RenderType illuminatedRenderType,
@@ -83,27 +87,7 @@ public interface IReticleRenderer {
                    int overlay,
                    float aimingProgress,
                    boolean maskActive,
-                   net.minecraft.resources.Identifier texture) {
-        public Context(PoseStack poseStack, SubmitNodeCollector collector, ItemDisplayContext displayContext,
-                       RenderType baseRenderType, RenderType illuminatedRenderType, int light, int overlay,
-                       float aimingProgress, boolean maskActive) {
-            this(poseStack, collector, displayContext, baseRenderType, illuminatedRenderType, light, overlay, aimingProgress, maskActive, null);
-        }
-        public void submit(com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot snapshot, boolean emissive) {
-            // A collimated display is foreground ink. Subpixel markings also disappear in
-            // a pack's hand/TAA pass on sights with no optical post-process of their own.
-            // Reuse the real hand projection and inverse aperture, not an unmasked HUD cross.
-            if (maskActive && texture != null && !ScopePipRenderState.opaqueCameraMedium()
-                    && com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack()) {
-                // 26.2: ScopeBodyRenderTypes#finalReticle(texture, emissive)（Iris 终局覆盖层）。
-                // 1.21.11 的终局覆盖层把"蚀刻/发光"拆成两个类型，语义一一对应。
-                ScopeFinalOverlayState.queueReticle(snapshot, emissive
-                        ? ScopeRenderTypes.finalVisibleReticle(texture)
-                        : ScopeRenderTypes.finalEtchedReticle(texture));
-                return; // Do not bake display graphics into the scene subsequently thermally mapped.
-            }
-            collector.submitCustomGeometry(new PoseStack(), emissive ? illuminatedRenderType : baseRenderType,
-                    (pose, consumer) -> snapshot.write(consumer));
-        }
+                   boolean deferToIrisTranslucent,
+                   boolean deferToIrisFinalOverlay) {
     }
 }

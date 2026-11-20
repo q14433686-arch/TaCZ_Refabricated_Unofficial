@@ -383,7 +383,11 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             // 每档各烘各的，缓存正确性不受影响。
             int boneLight = polyMeshModel.isIlluminatedBone(boneName)
                     ? com.tacz.guns.util.IlluminatedLights.resolve(lightKey) : lightKey;
-            PolyMeshGpuRenderer.BakedBone baked = PolyMeshGpuRenderer.bakeBone(entry.getValue(), boneLight);
+            // 1.21.11 的 bakeBone 多一个 VertexFormat 形参：pass 消费端读的是
+            // PolyMeshGpuRenderer#bakeFormat() 问出来的实际格式（光影下是 Iris 扩展实体格式，
+            // 无光影时 NEW_ENTITY），烘焙端必须问同一个 getter，不能写死。
+            PolyMeshGpuRenderer.BakedBone baked = PolyMeshGpuRenderer.bakeBone(
+                    entry.getValue(), boneLight, PolyMeshGpuRenderer.bakeFormat());
             if (baked == null) {
                 allOk = false;
                 continue;
@@ -442,7 +446,9 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
         if (cached != null) {
             return cached;
         }
-        if (!PolyMeshGpuRenderer.tryReserveBake()) {
+        // 1.21.11 的额度闸门要知道 LRU 容量：每帧最多烘 "max(4, 档位容量)" 次，
+        // 否则光照档数超过容量的病理场景会退化成逐帧「逐出-重烘」。
+        if (!PolyMeshGpuRenderer.tryReserveBake(Math.max(1, MeshyConfig.GPU_LIGHT_CACHE_SIZE.get()))) {
             return null;
         }
         Map<String, PolyMeshGpuRenderer.BakedBone> bones = new HashMap<>();
@@ -457,7 +463,11 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             // 每档各烘各的，缓存正确性不受影响。
             int boneLight = polyMeshModel.isIlluminatedBone(boneName)
                     ? com.tacz.guns.util.IlluminatedLights.resolve(lightKey) : lightKey;
-            PolyMeshGpuRenderer.BakedBone baked = PolyMeshGpuRenderer.bakeBone(entry.getValue(), boneLight);
+            // 1.21.11 的 bakeBone 多一个 VertexFormat 形参：pass 消费端读的是
+            // PolyMeshGpuRenderer#bakeFormat() 问出来的实际格式（光影下是 Iris 扩展实体格式，
+            // 无光影时 NEW_ENTITY），烘焙端必须问同一个 getter，不能写死。
+            PolyMeshGpuRenderer.BakedBone baked = PolyMeshGpuRenderer.bakeBone(
+                    entry.getValue(), boneLight, PolyMeshGpuRenderer.bakeFormat());
             if (baked == null) {
                 allOk = false;
                 break;

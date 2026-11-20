@@ -8,9 +8,11 @@ import net.fabricmc.fabric.api.client.rendering.v1.RenderStateDataKey;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.ShapeRenderer;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
@@ -82,8 +84,19 @@ public final class DisplayRackHighlight {
                 pose.translate(pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z);
                 // The picked rack is already visibility/range checked by vanilla's block pick.
                 // Do not let a stored item's depth hide the edges of its own selected cell.
+                // 26.2: OrderedSubmitNodeCollector#submitShapeOutline(pose, shape, Material.LINES, color, 1f, false)。
+                // 1.21.11 没有形状提交节点，只有 submitCustomGeometry；等价做法是在几何回调里直接用
+                // ShapeRenderer.renderShape（LevelRenderer 画方块描边用的就是它），线宽同为 1。
+                // 注意：回调延迟到 feature 阶段才执行，所以每个格子的 PoseStack 必须各自独立，
+                // 不能复用外层那个会被 popPose 掉的实例。
                 var out = context.commandQueue().order(1);
-                for (var cell : cells) out.submitShapeOutline(pose, Shapes.create(cell.box), Material.LINES, cell.color, 1f, false);
+                for (var cell : cells) {
+                    var shape = Shapes.create(cell.box);
+                    var cellPose = new PoseStack();
+                    cellPose.last().set(pose.last());
+                    out.submitCustomGeometry(cellPose, Material.LINES, (entryPose, consumer) ->
+                            ShapeRenderer.renderShape(entryPose, consumer, shape, 0.0D, 0.0D, 0.0D, cell.color, 1.0F));
+                }
                 pose.popPose();
             }
             return true;

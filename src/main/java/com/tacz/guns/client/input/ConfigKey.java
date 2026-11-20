@@ -36,7 +36,9 @@ public class ConfigKey {
             HoverEvent hoverEvent = new HoverEvent.ShowText(Component.translatable("gui.tacz.cloth_config_warning.download"));
             MutableComponent component = Component.translatable("gui.tacz.cloth_config_warning.tips").withStyle(style ->
                     style.withColor(0x5555FF).withUnderlined(true).withClickEvent(clickEvent).withHoverEvent(hoverEvent));
-            player.sendSystemMessage(component);
+            // 1.21.11 没有 Player#sendSystemMessage(Component)，客户端聊天栏走 displayClientMessage
+            // （第二个参数是"显示在 actionbar 而不是聊天栏"，这里要聊天栏故为 false）。
+            player.displayClientMessage(component, false);
         } else {
             CompatRegistry.checkModLoad(CompatRegistry.CLOTH_CONFIG, () -> Minecraft.getInstance().setScreen(MenuIntegration.getConfigScreen(null)));
         }

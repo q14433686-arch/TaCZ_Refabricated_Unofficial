@@ -6,7 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextColor;
+import net.minecraft.ChatFormatting;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 
@@ -48,6 +48,6 @@ public final class DisplayCaseLockHint {
         var mc = Minecraft.getInstance();
         if (mc.level != level || mc.options.hideGui) return;
         graphics.drawString(mc.font, message, (graphics.guiWidth() - mc.font.width(message)) / 2,
-                graphics.guiHeight() / 2 + 32, 0xff000000 | TextColor.YELLOW.getValue(), false);
+                graphics.guiHeight() / 2 + 32, 0xff000000 | ChatFormatting.YELLOW.getColor(), false);
     }
 }

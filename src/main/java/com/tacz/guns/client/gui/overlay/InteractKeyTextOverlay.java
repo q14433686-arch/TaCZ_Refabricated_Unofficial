@@ -18,7 +18,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextColor;
+import net.minecraft.ChatFormatting;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -163,14 +163,16 @@ public class InteractKeyTextOverlay {
     private static void renderText(GuiGraphics graphics, int width, int height,
                                    Font font, String keyName, Component filter) {
         Component title = Component.translatable("gui.tacz.interact_key.text.desc", StringUtils.capitalize(keyName));
-        // 颜色补 alpha：TextColor#getValue 给的是六位色，26.2 会把 alpha=0 的整段丢弃。
+        // 颜色补 alpha：{@code ChatFormatting#getColor()} 给的是六位色，alpha=0 的整段会被丢弃。
+        // 26.2 的 net.minecraft.util.TextColor.YELLOW/GRAY 在 1.21.11 不存在，具名颜色常量
+        // 由 ChatFormatting 提供（getColor() 返回 Integer，YELLOW/GRAY 恒非 null）。
         graphics.drawString(font, title,
                 (int) ((width - font.width(title)) / 2.0f), (int) (height / 2.0f - 25),
-                0xFF000000 | TextColor.YELLOW.getValue(), false);
+                0xFF000000 | ChatFormatting.YELLOW.getColor(), false);
         if (filter != null) {
             graphics.drawString(font, filter,
                     (int) ((width - font.width(filter)) / 2.0f), (int) (height / 2.0f - 14),
-                    0xFF000000 | TextColor.GRAY.getValue(), false);
+                    0xFF000000 | ChatFormatting.GRAY.getColor(), false);
         }
     }
 }

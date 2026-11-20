@@ -36,7 +36,7 @@ public class InteractKey {
     /** On 26.2 Friends and Interact both default to O. Yield the global shortcut only
      * where the bound gun action can actually use the current target. Do not dispatch it here. */
     public static boolean hasWorldTarget(InputConstants.Key key) {
-        if (INTERACT_KEY.isUnbound() || !INTERACT_KEY.matches(key) || !isInGame()) return false;
+        if (INTERACT_KEY.isUnbound() || !GunInputHandler.matches(INTERACT_KEY, key) || !isInGame()) return false;
         var mc = Minecraft.getInstance();
         var player = mc.player;
         if (player == null || player.isSpectator() || !IGun.mainHandHoldGun(player)) return false;

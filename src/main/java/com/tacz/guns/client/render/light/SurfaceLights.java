@@ -209,7 +209,7 @@ public final class SurfaceLights {
         var sources = new ArrayList<WorldFlashFrame.Source>(MAX_PULSES);
         var draws=new ArrayList<Draw>(MAX_PULSES);
         var mc=Minecraft.getInstance();
-        var state=mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
+        var state=mc.gameRenderer.getLevelRenderState().cameraRenderState;
         // Terrain and emissive entities can have different subpixel jitter under Iris. A
         // .002-block normal offset disappears behind a jittered floor at grazing incidence.
         // Bound the clearance in BOTH screen pixels and blocks; never disable depth testing.

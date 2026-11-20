@@ -37,7 +37,7 @@ public record ImpactMarkerRender(List<BedrockPart> path, Rangefinder settings) {
         double slope = RangefinderReadout.impactSlope(stack, settings);
         if (!Double.isFinite(slope)) return;
         var mc = Minecraft.getInstance();
-        var camera = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
+        var camera = mc.gameRenderer.getLevelRenderState().cameraRenderState;
         if (!camera.initialized) return;
         double projected = -slope * camera.projectionMatrix.m11();
         // 1.21.11 侧同一对量（见 ScopePipRenderState#currentWorldZoom 的说明）：

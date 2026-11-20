@@ -10,6 +10,9 @@ import com.tacz.guns.client.gui.overlay.DisplayCaseLockHint;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
 import java.util.List;
 import static com.tacz.guns.util.InputExtraCheck.isInGame;
 
@@ -47,13 +50,24 @@ public final class GunInputHandler {
         });
     }
 
-    private static boolean matches(KeyMapping mapping, InputConstants.Key key) {
-        return !mapping.isUnbound() && mapping.matches(key);
+    /**
+     * 1.21.11 的 {@code KeyMapping#matches} 只接受 {@code KeyEvent}，鼠标另有
+     * {@code matchesMouse(MouseButtonEvent)}；26.2 那个 {@code matches(InputConstants.Key)}
+     * 重载已经不存在。这里按 {@link InputConstants.Key#getType()} 还原成对应事件，
+     * 键码/按钮号原样带过去（枪械按键都不带修饰键，因此修饰符填 0 与 26.2 行为一致）。
+     */
+    static boolean matches(KeyMapping mapping, InputConstants.Key key) {
+        if (mapping.isUnbound()) return false;
+        return switch (key.getType()) {
+            case KEYSYM -> mapping.matches(new KeyEvent(key.getValue(), 0, 0));
+            case SCANCODE -> mapping.matches(new KeyEvent(InputConstants.UNKNOWN.getValue(), key.getValue(), 0));
+            case MOUSE -> mapping.matchesMouse(new MouseButtonEvent(0.0D, 0.0D, new MouseButtonInfo(key.getValue(), 0)));
+        };
     }
 
     private static boolean closeRefit(InputConstants.Key key) {
         var mc = Minecraft.getInstance();
-        if (matches(RefitKey.REFIT_KEY, key) && mc.isWindowActive() && mc.gui.overlay() == null
+        if (matches(RefitKey.REFIT_KEY, key) && mc.isWindowActive() && mc.getOverlay() == null
                 && mc.screen instanceof GunRefitScreen screen) {
             screen.onClose();
             return true;

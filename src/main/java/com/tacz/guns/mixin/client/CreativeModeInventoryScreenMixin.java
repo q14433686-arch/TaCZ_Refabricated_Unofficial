@@ -27,10 +27,6 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
     @Unique
     private CreativePackFilters tacz$packFilters;
 
-    protected CreativeModeInventoryScreenMixin(CreativeModeInventoryScreen.ItemPickerMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, 195, 136);
-    }
-
     @Inject(method = "init", at = @At("TAIL"))
     private void tacz$initPackFilters(CallbackInfo ci) {
         if (tacz$packFilters == null) {

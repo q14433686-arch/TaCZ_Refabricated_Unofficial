@@ -69,6 +69,23 @@ public final class IrisCompat {
         }
     }
 
+    /**
+     * 光影包存在时是否应当整条关掉目镜掩码。
+     *
+     * <p>26.2 的结论：<b>不关</b>。路线是 assignPipeline → Iris 的 HAND 程序，再由
+     * {@code tacz.iris.mixins.json} 给 Iris 的 HAND shader 注入默认关闭的
+     * {@code tacz_ScopeMaskMode} 分支 —— 只有当前 draw 带着掩码采样器、且管线是我们自己的
+     * {@code tacz:pipeline/scope_*} 时才启用裁切。本线（1.21.11）的 scope 管线同样经
+     * {@link #assignPipelineToIris} 挂到 HAND 程序上，{@code tacz.iris.mixins.json} 里也有
+     * 对应的 {@code IrisHandRendererReticlePassMixin}，因此保持同一结论。</p>
+     *
+     * <p>唯一的例外是 Sulkan：它没有公开等价的接管 API，无法保证"只有我们的 draw 被裁切"，
+     * 因此保守回退成整条关闭掩码（宁可没有镜内裁切，也不要整屏糊掉）。</p>
+     */
+    public static boolean shouldDisableScopeMaskUnderShaderPack() {
+        return FabricLoader.getInstance().isModLoaded("sulkan");
+    }
+
     /** Classifies a TACZ custom pipeline through Iris' public API while keeping Iris optional. */
     public static synchronized boolean assignPipelineToIris(RenderPipeline pipeline,
                                                             String irisProgramName,
