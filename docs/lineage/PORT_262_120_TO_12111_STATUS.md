@@ -43,6 +43,18 @@ LIBGL_ALWAYS_SOFTWARE=true ALSOFT_DRIVERS=null \
    1.21.11 的社交界面键是 `Options#keySocialInteractions`（默认 P），与枪械交互键 O 不冲突，
    因此这条「Friends 抢键」裁决整段删除，而不是换个注入点硬塞。
 
+### 已知不稳定（按原样记录，不粉饰）
+
+客户端 GameTest 有一个**已观测到的偶发失败**：仅改文档的提交 `0941a48`
+（run `44783500156`）在同一份源码上失败过一次，而它的前一次（`740e157`，run `44782235664`）
+与后一次（`7fa5684`，push run `44784838763` 与 PR run `44784854439`）都通过，
+三次客户端 job 的墙钟时长都在 3 分钟左右、没有撞到 24 分钟上限，因此不是超时挂死。
+失败点在 `Port12111Smoke` 的"索引同步"等待（`level/player/clientGunIndex/commonGunIndex/slotAdapter`
+四合一，1200 tick）。为了下一次能直接看出卡在哪一环，该等待超时时会先按分量各打一行
+`[TACZ Port12111Smoke] waitFor(index sync) 超时：...`，再原样抛出；本轮已提交。
+**在拿到那次失败 job 的 `latest.log`（artifact `game-12111-runClientGameTest-<sha>.zip`）之前，
+不宣称这条链路稳定**，也不把偶发失败当成"环境问题"糊过去。
+
 ### 本轮实际搬过来的 1.2.0 行为
 
 - 渲染提交链路：`ScopeRenderTypes`（孔径/可见准星/发光/臂裁切/终局与 late 家族）承接 26.2 的
