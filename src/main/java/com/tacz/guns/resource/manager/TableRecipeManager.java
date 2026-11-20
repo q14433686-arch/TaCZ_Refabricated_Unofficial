@@ -75,10 +75,13 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
     /** 旧目录的扫描器。与父类那个 {@code recipe} 扫描器<b>并列</b>使用，不是替代。 */
     private static final FileToIdConverter LEGACY_CONVERTER = FileToIdConverter.json(LEGACY_RECIPE_DIRECTORY);
 
-    public TableRecipeManager() {
+    private final java.util.function.Predicate<Identifier> registryAllows;
+
+    public TableRecipeManager(java.util.function.Predicate<Identifier> registryAllows) {
         // 目录与原版数据包配方一致（data/<ns>/recipe），这是上游的既定布局，不能改。
         // 旧枪包的 data/<ns>/recipes（复数）由下面的 prepare() 覆写额外扫描。
         super(DataType.RECIPES, TableRecipe.class, CommonAssetsManager.GSON, "recipe", "TableRecipeLoader");
+        this.registryAllows = registryAllows;
     }
 
     /**
@@ -124,7 +127,10 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
         // LinkedHashMap 保序，便于复现问题时对照日志顺序。
         Map<Identifier, JsonElement> ours = new LinkedHashMap<>();
         for (Map.Entry<Identifier, JsonElement> entry : pObject.entrySet()) {
-            if (isGunSmithTableRecipe(entry.getValue())) {
+            // The 26.2 vanilla RecipeManager already evaluated Fabric's conditions against this
+            // reload's registries/tags. Never resurrect a disabled recipe in our menu/network cache.
+            if (isGunSmithTableRecipe(entry.getValue()) && (!entry.getValue().getAsJsonObject().has("fabric:load_conditions")
+                    || registryAllows.test(entry.getKey()))) {
                 ours.put(entry.getKey(), entry.getValue());
             }
         }

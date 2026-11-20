@@ -94,7 +94,23 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Full build
-        run: ./gradlew build --console=plain --stacktrace --no-daemon
+        run: |
+          set -o pipefail
+          ./gradlew --init-script scripts/ci-central.init.gradle build --console=plain --no-daemon 2>&1 | tee "$RUNNER_TEMP/build.log"
+
+      - name: Real integrated client (26.2 OpenGL / Mesa)
+        timeout-minutes: 12
+        env:
+          LIBGL_ALWAYS_SOFTWARE: 'true'
+          ALSOFT_DRIVERS: 'null'
+        run: |
+          set -o pipefail
+          xvfb-run -a ./gradlew --init-script scripts/ci-central.init.gradle -PtaczClientSmoke runClientGameTest --console=plain 2>&1 | tee "$RUNNER_TEMP/client.log"
+          grep -F 'exported ZIP loaded through /reload path' build/run/clientGameTest/logs/latest.log
+
+      - name: Annotate target failures
+        if: failure()
+        run: python3 scripts/report_ci_failures.py "$RUNNER_TEMP/build.log" "$RUNNER_TEMP/client.log" build/run/{gameTest,clientGameTest}/logs/latest.log
 
       - name: Upload jars
         uses: actions/upload-artifact@v4

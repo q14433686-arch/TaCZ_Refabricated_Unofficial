@@ -2,6 +2,7 @@ package com.tacz.guns.client.event;
 
 import com.tacz.guns.client.compat.RecipeViewerReloadBridge;
 import com.tacz.guns.client.resource.ClientIndexManager;
+import com.tacz.guns.network.message.ServerMessageSyncGunPackPart;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.network.CommonNetworkCache;
 import net.fabricmc.api.EnvType;
@@ -26,7 +27,7 @@ public class CommonNetworkCacheEvent {
      * 于是退出时 {@code ClientIndexManager.clear()} 等三行<u>根本不执行</u></b>，
      * 客户端索引/缓存跨存档残留。</p>
      *
-     * <p>而索引的唯一重建入口是 {@code ServerMessageSyncGunPack#doSync} →
+     * <p>而索引的唯一重建入口是 {@code ServerMessageSyncGunPack#installCache} →
      * {@code ClientIndexManager.reload()}，且它对单人也只在收到同步包时才跑。
      * 于是「残留的旧索引」与「新世界的实体」之间会出现一段不一致窗口。</p>
      *
@@ -47,11 +48,20 @@ public class CommonNetworkCacheEvent {
      * 需先加日志确认：跨维度/重进存档后 {@code GUN_DISPLAY} 是否为空、
      * {@code reload()} 何时被调用。此处已有过多次基于推理的错误修改，务必先取证。</p>
      */
-    public static void onClientPlayerLoggingIn(ClientPacketListener handler, Minecraft client) {
+    public static void onDisconnect(ClientPacketListener handler, Minecraft client) {
+        // Packet application, viewer state and the chunk receiver are game-thread owned.
+        client.execute(() -> {
+            var current = client.getConnection();
+            if (current == null || current == handler) clearDisconnected(handler);
+        });
+    }
+
+    private static void clearDisconnected(ClientPacketListener handler) {
+        ServerMessageSyncGunPackPart.clearPendingSync();
+        RecipeViewerReloadBridge.clear();
         if (handler.getConnection() == null || handler.getConnection().isMemoryConnection()) {
             return;
         }
-        RecipeViewerReloadBridge.clear();
         CommonAssetsManager.clearInstance();
         CommonNetworkCache.INSTANCE.clear();
         ClientIndexManager.clear();

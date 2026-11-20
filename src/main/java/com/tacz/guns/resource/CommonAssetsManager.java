@@ -12,8 +12,7 @@ import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
 import com.tacz.guns.crafting.result.GunSmithTableResult;
 import com.tacz.guns.init.ModRecipe;
-import com.tacz.guns.network.NetworkHandler;
-import com.tacz.guns.network.message.ServerMessageSyncGunPack;
+import com.tacz.guns.network.message.ServerMessageSyncGunPackPart;
 import com.tacz.guns.resource.filter.RecipeFilter;
 import com.tacz.guns.resource.index.CommonAmmoIndex;
 import com.tacz.guns.resource.index.CommonAttachmentIndex;
@@ -67,6 +66,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
             .registerTypeAdapter(TabConfig.class, new TabConfig.Deserializer())
             .create();
 
+    private ServerMessageSyncGunPackPart.Snapshot networkSnapshot;
     private final List<INetworkCacheReloadListener> listeners = new ArrayList<>();
     private CommonDataManager<GunData> gunData;
     private CommonDataManager<AttachmentData> attachmentData;
@@ -105,13 +105,17 @@ public class CommonAssetsManager implements ICommonResourceProvider {
         // 必须用 TableRecipeManager 而非裸的 CommonDataManager：该目录里混着原版
         // 与其他模组的配方（实测原版 1585 条），不按 "type" 过滤会全部灌进
         // TableRecipe 的解析器刷屏，并被原样打进同步包。详见该类的注释。
-        tableRecipe = register(new TableRecipeManager());
+        tableRecipe = register(new TableRecipeManager(id -> recipeManager.byKey(net.minecraft.resources.ResourceKey.create(
+                net.minecraft.core.registries.Registries.RECIPE, id)).isPresent()));
 
         listeners.forEach(register);
         register.accept((sharedState, backgroundExecutor, barrier, gameExecutor) -> {
             return barrier
                     .wait(null)
-                    .thenRunAsync(AllowAttachmentTagMatcher::resetCache, gameExecutor);
+                    .thenRunAsync(() -> {
+                        AllowAttachmentTagMatcher.resetCache();
+                        networkSnapshot = ServerMessageSyncGunPackPart.prepare(getNetworkCache());
+                    }, gameExecutor);
         });
     }
 
@@ -305,11 +309,8 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     }
 
     public static void OnDatapackSync(ServerPlayer player, boolean joined) {
-        if (getInstance() == null) {
-            return;
-        }
-        ServerMessageSyncGunPack message = new ServerMessageSyncGunPack(getInstance().getNetworkCache());
-        NetworkHandler.sendToClientPlayer(message, player);
+        var manager = getInstance();
+        if (player != null && manager != null && manager.networkSnapshot != null) manager.networkSnapshot.send(player);
 
     }
 

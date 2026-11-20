@@ -56,6 +56,13 @@ public class NetworkHandler {
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunHurt.TYPE, ServerMessageGunHurt.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunKill.TYPE, ServerMessageGunKill.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageUpdateEntityData.TYPE, ServerMessageUpdateEntityData.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(ServerMessageSyncGunPackPart.TYPE, ServerMessageSyncGunPackPart.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(ServerMessagePackWarnings.TYPE, ServerMessagePackWarnings.CODEC);
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            var names = com.tacz.guns.resource.GunPackLoader.INSTANCE.getPacksNeedingConversion(net.minecraft.server.packs.PackType.SERVER_DATA);
+            if (!names.isEmpty() && ServerPlayNetworking.canSend(handler.player, ServerMessagePackWarnings.TYPE))
+                ServerPlayNetworking.send(handler.player, new ServerMessagePackWarnings(names));
+        });
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageSyncGunPack.TYPE, ServerMessageSyncGunPack.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunDraw.TYPE, ServerMessageGunDraw.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ServerMessageGunFire.TYPE, ServerMessageGunFire.CODEC);
@@ -112,6 +119,8 @@ public class NetworkHandler {
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunHurt.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunKill.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageUpdateEntityData.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
+        ClientPlayNetworking.registerGlobalReceiver(ServerMessagePackWarnings.TYPE, ServerMessagePackWarnings::handle);
+        ClientPlayNetworking.registerGlobalReceiver(ServerMessageSyncGunPackPart.TYPE, (msg, ctx) -> msg.handle(ctx.player().connection.getConnection()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageSyncGunPack.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunDraw.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunFire.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));

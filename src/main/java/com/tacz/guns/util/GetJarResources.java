@@ -106,7 +106,8 @@ public final class GetJarResources {
 
     private static void exportFolderIfChanged(Class<?> resourceClass, String srcPath, URL sourceUrl, Path root, String path) throws IOException {
         String stateKey = getExportStateKey(resourceClass, srcPath, path);
-        String sourceFingerprint = calculateSourceFingerprint(sourceUrl);
+        String sourceFingerprint = calculateSourceFingerprint(sourceUrl, FabricLoader.getInstance()
+                .getModContainer(GunMod.MOD_ID).orElseThrow().getMetadata().getVersion().getFriendlyString());
         ExportStateFile stateFile = readExportState(root);
         Path targetPath = root.resolve(path);
         String previousFingerprint = stateFile.entries.get(stateKey);
@@ -152,10 +153,11 @@ public final class GetJarResources {
         }
     }
 
-    private static String calculateSourceFingerprint(URL sourceUrl) throws IOException {
+    static String calculateSourceFingerprint(URL sourceUrl, String modVersion) throws IOException {
         List<String> lines = "jar".equals(sourceUrl.getProtocol())
                 ? collectJarFingerprintLines(sourceUrl)
                 : collectPathFingerprintLines(resolveSourcePath(sourceUrl));
+        lines.add("mod-version|" + modVersion);
         Collections.sort(lines);
         return Md5Utils.md5Hex(String.join("\n", lines).getBytes(StandardCharsets.UTF_8));
     }

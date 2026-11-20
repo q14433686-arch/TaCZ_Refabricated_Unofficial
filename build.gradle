@@ -11,12 +11,19 @@ base {
 }
 
 fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = 'tacz_port_test'
+        enableGameTests = true
+        enableClientGameTests = project.hasProperty('taczClientSmoke')
+    }
     configureDataGeneration {
         client = true
     }
 }
 
 loom {
+    mods { tacz { sourceSet sourceSets.main } }
     accessWidenerPath = file("src/main/resources/tacz.accesswidener")
     // From Loom 1.17: mixin AP is no longer enabled by default.
     // The legacy mixin AP requires mappings, which don't exist in 26.1+.
@@ -121,6 +128,9 @@ repositories {
 }
 
 dependencies {
+    testImplementation platform('org.junit:junit-bom:5.12.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     // ================================================================
     // 从 26.1+: Minecraft 不再混淆，Loom 使用未混淆模式
     // 因此不再需要 mappings 依赖
@@ -232,6 +242,8 @@ dependencies {
     // Accelerated Rendering
     // implementation "maven.modrinth:accrelatedrendering-refabricated:1.0.8-1.20.1-alpha-fabric.1"
 }
+
+test { useJUnitPlatform() }
 
 processResources {
     inputs.property "version", project.version
