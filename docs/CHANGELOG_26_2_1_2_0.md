@@ -34,4 +34,4 @@
 
 本提交共 **10 个工作流、22 个作业通过**，包括分开安装的 [JEI / REI](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44676085982)、[PAL](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44676086109) 和 [Controllable](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/44676086030)。
 
-[玩家指南](PLAYER_GUIDE_26_2.md) · [枪包 Wiki](wiki/GUNPACK_26_2.md) · [转换说明](GUNPACK_CONVERSION_26_2.md) · [旧基线记录](CHANGELOG_26_2_R2.md) · [来源与许可](../LICENSES.md)
+[玩家指南](PLAYER_GUIDE_26_2.md) · [枪包 Wiki](wiki/GUNPACK_26_2.md) · [转换说明](GUNPACK_CONVERSION_26_2.md) · [给旧 Fabric 线和 NeoForge 的移植指导](lineage/26.2-backports/README.md) · [旧基线记录](CHANGELOG_26_2_R2.md) · [来源与许可](../LICENSES.md)
