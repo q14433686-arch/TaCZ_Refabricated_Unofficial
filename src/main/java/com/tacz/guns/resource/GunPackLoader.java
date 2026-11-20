@@ -34,6 +34,11 @@ import java.util.zip.ZipFile;
 public enum GunPackLoader {
     INSTANCE;
     private boolean firstLoad = true;
+    private volatile List<String> serverWarnings = List.of(), clientWarnings = List.of();
+
+    public List<String> getPacksNeedingConversion(PackType type) {
+        return type == PackType.SERVER_DATA ? serverWarnings : clientWarnings;
+    }
 
     /** Server and client repositories coexist on an integrated server. */
     public static RepositorySource forType(PackType type) {
@@ -57,6 +62,7 @@ public enum GunPackLoader {
     private Pack discoverExtensions(PackType type) {
         Path root = FabricLoader.getInstance().getGameDir().resolve("tacz");
         List<GunPack> packs = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
         try {
             prepareDirectory(root);
             Version minecraft = Version.parse(SharedConstants.getCurrentVersion().name());
@@ -73,9 +79,9 @@ public enum GunPackLoader {
                         var requiredMc = meta.getDependencies() == null ? null : meta.getDependencies().get("minecraft");
                         var overlays = GunPackOverlayResolver.resolve(meta, minecraft);
                         if (requiredMc != null && !GunPackVersions.matches(requiredMc, minecraft) && overlays.isEmpty()) {
-                            GunMod.LOGGER.warn("Skipping gun pack {}: Minecraft {} does not match {} and there is no matching overlay",
+                            GunMod.LOGGER.warn("Gun pack {}: Minecraft {} does not match {} and there is no matching overlay; trying base",
                                     path.getFileName(), minecraft, requiredMc);
-                            continue;
+                            warnings.add(path.getFileName().toString());
                         }
                         packs.add(new GunPack(path, meta.getName(), overlays));
                     } catch (IOException | JsonParseException | VersionParsingException | IllegalArgumentException e) {
@@ -87,6 +93,8 @@ public enum GunPackLoader {
             GunMod.LOGGER.error("Failed to scan gun packs at {}", root, e);
             return null;
         }
+        if (type == PackType.SERVER_DATA) serverWarnings = List.copyOf(warnings);
+        else clientWarnings = List.copyOf(warnings);
         GunMod.LOGGER.info("Found {} possible gunpack(s) in {}", packs.size(), root);
         var location = new PackLocationInfo("tacz_resources", Component.literal("TACZ Resources"), PackSource.BUILT_IN, Optional.empty());
         var meta = new PackMetadataSection(Component.translatable("tacz.resources.modresources"),

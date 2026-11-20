@@ -1,0 +1,24 @@
+{
+  "materials": [
+    {
+      "item": "#c:gems/diamond",
+      "count": 1
+    },
+    {
+      "item": "#c:ingots/gold",
+      "count": 32
+    },
+    {
+      "item": "#c:ingots/iron",
+      "count": 16
+    },
+    {
+      "item": "#c:rods/blaze"
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:deagle_golden"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

@@ -15,11 +15,11 @@ public class ConstraintObject implements AnimationListenerSupplier {
     public Vector3f translationConstraint = new Vector3f(0, 0, 0);
     public Vector3f rotationConstraint = new Vector3f(0, 0, 0);
     /**
-     * 当相机的节点为根时，node为空
+     * 约束节点（含根节点）；使用模型已转换的局部旋转。
      */
     public BedrockPart node;
     /**
-     * 当相机的节点不为根时，bonesItem为空
+     * 根约束使用原始 pivot 恢复位移；子节点则使用相对位移。
      */
     public BonesItem bonesItem;
 

@@ -25,13 +25,12 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-/** New channel: legacy 1.21.11 clients still decode the original uncompressed map. */
+/** New channel rather than reinterpreting an R1-hotfix3 payload as compressed bytes. */
 public record ServerMessageSyncGunPackPart(GunPackSync.Part part) implements CustomPacketPayload {
     public static final Type<ServerMessageSyncGunPackPart> TYPE = new Type<>(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "s2c_sync_gunpack_part"));
     public static final StreamCodec<FriendlyByteBuf, ServerMessageSyncGunPackPart> CODEC = StreamCodec.ofMember(
             ServerMessageSyncGunPackPart::write, buf -> new ServerMessageSyncGunPackPart(new GunPackSync.Part(
                     buf.readUUID(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readByteArray(GunPackSync.CHUNK_SIZE))));
-    private static final int LEGACY_MAX_BYTES = 1024 * 1024;
     private static final GunPackSync.Receiver RECEIVER = new GunPackSync.Receiver();
 
     private void write(FriendlyByteBuf buf) {
@@ -44,22 +43,48 @@ public record ServerMessageSyncGunPackPart(GunPackSync.Part part) implements Cus
 
     @Override public Type<ServerMessageSyncGunPackPart> type() { return TYPE; }
 
-    public record Snapshot(List<ServerMessageSyncGunPackPart> messages, @Nullable ServerMessageSyncGunPack legacy) {
+    // An A-batch client understands chunks but not the additional index ordinals / object-form OEMs.
+    // Negotiate a distinct schema before sending any bytes; keep A and published R1 usable with old packs.
+    public record Extended(ServerMessageSyncGunPackPart payload) implements CustomPacketPayload {
+        public static final Type<Extended> TYPE = new Type<>(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "s2c_pack_part_120"));
+        public static final StreamCodec<FriendlyByteBuf, Extended> CODEC = ServerMessageSyncGunPackPart.CODEC.map(Extended::new, Extended::payload);
+        @Override public Type<Extended> type() { return TYPE; }
+    }
+
+    public record Snapshot(List<ServerMessageSyncGunPackPart> messages, @Nullable ServerMessageSyncGunPack legacy, boolean extended) {
         public void send(ServerPlayer player) {
-            if (ServerPlayNetworking.canSend(player, TYPE)) {
+            if (extended) {
+                if (ServerPlayNetworking.canSend(player, Extended.TYPE)) {
+                    messages.forEach(message -> NetworkHandler.sendToClientPlayer(new Extended(message), player));
+                } else {
+                    player.connection.disconnect(Component.literal("This gun pack uses TaCZ attachment data not supported by your client."));
+                }
+            } else if (ServerPlayNetworking.canSend(player, TYPE)) {
                 messages.forEach(message -> NetworkHandler.sendToClientPlayer(message, player));
             } else if (legacy != null && ServerPlayNetworking.canSend(player, ServerMessageSyncGunPack.TYPE)) {
                 NetworkHandler.sendToClientPlayer(legacy, player);
             } else {
-                player.connection.disconnect(Component.translatableWithFallback("tacz.network.pack_sync_incompatible",
-                        "This server's gun pack requires a compatible TaCZ client with chunked pack sync."));
+                player.connection.disconnect(Component.literal("This gun pack needs a TaCZ client with chunked pack sync."));
             }
         }
     }
 
+    private static boolean usesNewBuiltinFormat(String json) {
+        if (!json.contains("builtin_attachments")) return false;
+        var root = com.google.gson.JsonParser.parseString(json);
+        if (!root.isJsonObject()) return false;
+        var options = root.getAsJsonObject().get("builtin_attachments");
+        return options != null && options.isJsonObject() && options.getAsJsonObject().entrySet().stream()
+                .anyMatch(entry -> !entry.getValue().isJsonPrimitive() || !entry.getValue().getAsJsonPrimitive().isString());
+    }
+
     public static Snapshot prepare(Map<DataType, Map<Identifier, String>> input) {
         var cache = new EnumMap<DataType, Map<Identifier, String>>(DataType.class);
-        input.forEach((type, entries) -> cache.put(type, Map.copyOf(entries)));
+        input.forEach((type, map) -> {
+            if (!type.needsExtendedSchema() || !map.isEmpty()) cache.put(type, Map.copyOf(map));
+        });
+        boolean extended = cache.keySet().stream().anyMatch(DataType::needsExtendedSchema)
+                || cache.getOrDefault(DataType.GUN_DATA, Map.of()).values().stream().anyMatch(ServerMessageSyncGunPackPart::usesNewBuiltinFormat);
         var buf = new FriendlyByteBuf(Unpooled.buffer(256, GunPackSync.MAX_SYNC_SIZE));
         try {
             ServerMessageSyncGunPack.writeCache(buf, cache, GunPackSync.MAX_SYNC_SIZE);
@@ -68,10 +93,10 @@ public record ServerMessageSyncGunPackPart(GunPackSync.Part part) implements Cus
             var parts = GunPackSync.compressAndSplit(data);
             GunMod.LOGGER.info("Prepared gun pack sync: {} bytes -> {} compressed bytes, {} part(s)",
                     data.length, parts.getFirst().compressedSize(), parts.size());
-            boolean fitsLegacy = data.length <= LEGACY_MAX_BYTES && cache.values().stream().flatMap(map -> map.values().stream())
+            boolean fitsLegacy = !extended && data.length <= 1024 * 1024 && cache.values().stream().flatMap(map -> map.values().stream())
                     .allMatch(json -> json.length() <= Short.MAX_VALUE);
             return new Snapshot(parts.stream().map(ServerMessageSyncGunPackPart::new).toList(),
-                    fitsLegacy ? new ServerMessageSyncGunPack(cache) : null);
+                    fitsLegacy ? new ServerMessageSyncGunPack(cache) : null, extended);
         } catch (IOException e) {
             throw new UncheckedIOException("Cannot prepare gun pack snapshot", e);
         } finally {

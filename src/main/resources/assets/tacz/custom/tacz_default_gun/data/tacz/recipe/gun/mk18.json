@@ -1,0 +1,24 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 48
+    },
+    {
+      "item": "#c:gems/lapis",
+      "count": 8
+    },
+    {
+      "item": "#minecraft:logs",
+      "count": 10
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:mk18",
+    "attachments": {
+      "stock": "tacz:stock_militech_b5"
+    }
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

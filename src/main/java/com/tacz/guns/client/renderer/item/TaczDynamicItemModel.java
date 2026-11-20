@@ -17,12 +17,11 @@ import net.minecraft.client.renderer.special.SpecialModelRenderer;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ResolvableModel;
 import net.minecraft.client.resources.model.ResolvedModel;
-import net.minecraft.client.renderer.block.model.TextureSlots;
+import net.minecraft.client.resources.model.sprite.TextureSlots;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.ItemOwner;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.joml.Vector3f;
@@ -33,13 +32,16 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * Production 26.1.2 item-model bridge for TACZ's dynamic renderers.
+ * Compile-level prototype for the 26.2 item model bridge.
  *
- * <p>This replaces the removed BuiltinItemRendererRegistry integration with a custom
- * {@link ItemModel} type. {@link #update} freezes both the stack and display context into an
- * immutable argument; the special renderer then routes gun, attachment, ammo and workbench models
- * through their collector-aware submission methods. Bedrock geometry and functional nodes are
- * captured as immutable snapshots before delayed drawing.</p>
+ * <p>This replaces the removed BuiltinItemRendererRegistry integration with a
+ * custom ItemModel type. ItemModel.update still has the ItemDisplayContext, so
+ * it can freeze both the stack and context into an immutable argument before
+ * the delayed SpecialModelRenderer submit phase.</p>
+ *
+ * <p>Do not treat this class as a complete rendering migration. The existing
+ * renderers still need to stop calling the deprecated no-op BedrockModel.render
+ * path and must snapshot mutable Bedrock model state before deferred submission.</p>
  */
 public final class TaczDynamicItemModel implements ItemModel {
     public static final Identifier TYPE_ID = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "dynamic_item");
@@ -147,11 +149,18 @@ public final class TaczDynamicItemModel implements ItemModel {
             state.setAnimated();
         }
 
-        // 1.21.11: layer.setLocalTransform(...) 不存在，改由 submit() 施加（见 RenderArgument）。
-        RenderArgument argument = new RenderArgument(stack.copy(), displayContext, this.transformation);
         layer.setExtents(EXTENTS);
-        layer.setupSpecialModel(SPECIAL_RENDERER, argument);
+        layer.setLocalTransform(this.transformation);
         this.properties.applyToLayer(layer, displayContext);
+
+        Identifier sprite = DroppedGunSprite.select(stack, displayContext, owner);
+        if (sprite != null) {
+            // Freeze only the appearance, not the entity, a mutable stack, or a high-detail rig.
+            layer.setupSpecialModel(DroppedGunSprite.INSTANCE, sprite);
+            state.appendModelIdentityElement(sprite);
+            return;
+        }
+        layer.setupSpecialModel(SPECIAL_RENDERER, new RenderArgument(stack.copy(), displayContext));
 
         // 26.2 修复：物品栏图标空白的根因。
         //
@@ -198,23 +207,16 @@ public final class TaczDynamicItemModel implements ItemModel {
         );
     }
 
-    /**
-     * 1.21.11 的 LayerRenderState 没有 setLocalTransform，模型自带的 transformation
-     * 只能在 submit() 里手动套到 PoseStack 上，因此随参数一起传下去。
-     * displayContext 在 1.21.11 由 submit 形参直接提供，这里保留字段仅为
-     * extractArgument 的兜底路径服务。
-     */
-    public record RenderArgument(ItemStack stack,
-                                 ItemDisplayContext displayContext,
-                                 @Nullable Matrix4fc localTransform) {
+    public record RenderArgument(ItemStack stack, ItemDisplayContext displayContext) {
+    }
+
+    static void visitExtents(Consumer<Vector3fc> output) {
+        for (var extent : EXTENTS.get()) output.accept(extent);
     }
 
     private static final class TaczSpecialRenderer implements SpecialModelRenderer<RenderArgument> {
         @Override
         public void submit(RenderArgument argument,
-                           // 1.21.11 新增：display context 直接由调用方给出，
-                           // 不必再依赖 RenderArgument 里 setupSpecialModel 时记下的那份。
-                           ItemDisplayContext displayContext,
                            PoseStack poseStack,
                            SubmitNodeCollector collector,
                            int light,
@@ -223,35 +225,20 @@ public final class TaczDynamicItemModel implements ItemModel {
                            int outlineColor) {
             BuiltinItemRendererRegistry.DynamicItemRenderer renderer =
                     BuiltinItemRendererRegistry.INSTANCE.get(argument.stack().getItem());
-            if (renderer == null) {
-                return;
-            }
-            Matrix4fc localTransform = argument.localTransform();
-            if (localTransform == null) {
-                renderer.render(argument.stack(), displayContext, poseStack, collector, light, overlay);
-                return;
-            }
-            // 代替 26.1 的 LayerRenderState#setLocalTransform。
-            poseStack.pushPose();
-            poseStack.last().pose().mul(localTransform);
-            try {
-                renderer.render(argument.stack(), displayContext, poseStack, collector, light, overlay);
-            } finally {
-                poseStack.popPose();
+            if (renderer != null) {
+                renderer.render(argument.stack(), argument.displayContext(), poseStack, collector, light, overlay);
             }
         }
 
         @Override
         public void getExtents(Consumer<Vector3fc> output) {
-            for (Vector3fc extent : EXTENTS.get()) {
-                output.accept(extent);
-            }
+            visitExtents(output);
         }
 
         @Override
         public RenderArgument extractArgument(ItemStack stack) {
             // The custom ItemModel supplies the real display context via setupSpecialModel.
-            return new RenderArgument(stack.copy(), ItemDisplayContext.NONE, null);
+            return new RenderArgument(stack.copy(), ItemDisplayContext.NONE);
         }
     }
 
@@ -267,12 +254,8 @@ public final class TaczDynamicItemModel implements ItemModel {
         }
 
         @Override
-        // 1.21.11: ItemModel.Unbaked#bake 没有 inheritedTransform 形参（26.1 才加的），
-        // 因此这里只用本模型自己声明的 transformation。
-        public ItemModel bake(ItemModel.BakingContext context) {
-            Matrix4fc composedTransform = this.transformation
-                    .map(Transformation::getMatrix)
-                    .orElse(new Matrix4f());
+        public ItemModel bake(ItemModel.BakingContext context, Matrix4fc inheritedTransform) {
+            Matrix4fc composedTransform = Transformation.compose(inheritedTransform, this.transformation);
             ModelBaker baker = context.blockModelBaker();
             ResolvedModel resolved = baker.getModel(this.base);
             TextureSlots slots = resolved.getTopTextureSlots();

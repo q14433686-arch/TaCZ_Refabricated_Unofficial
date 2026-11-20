@@ -4,8 +4,6 @@
   "package": "cn.sh1rocu.tacz.compat.meshloader.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "GunDisplayInstanceMixin",
-    "ClientAttachmentIndexMixin",
     "ClientAmmoIndexMixin",
     "ClientBlockIndexMixin"
   ],

@@ -1,0 +1,23 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 3
+    },
+    {
+      "item": "#c:ingots/copper",
+      "count": 30
+    },
+    {
+      "item": "#c:gunpowders",
+      "count": 12
+    }
+  ],
+  "result": {
+    "type": "ammo",
+    "group": "explosives",
+    "id": "tacz:rpg_rocket",
+    "count": 3
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

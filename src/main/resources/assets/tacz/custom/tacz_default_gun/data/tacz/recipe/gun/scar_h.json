@@ -1,0 +1,25 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/gold",
+      "count": 16
+    },
+    {
+      "item": "#c:ingots/iron",
+      "count": 96
+    },
+    {
+      "item": "#c:gems/diamond",
+      "count": 2
+    },
+    {
+      "item": "#c:rods/blaze",
+      "count": 4
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:scar_h"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

@@ -1,0 +1,21 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 20
+    },
+    {
+      "item": "#c:ingots/gold",
+      "count": 8
+    },
+    {
+      "item": "#c:gems/lapis",
+      "count": 8
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:extended_mag_2"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

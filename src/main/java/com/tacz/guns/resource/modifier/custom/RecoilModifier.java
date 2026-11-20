@@ -86,10 +86,9 @@ public class RecoilModifier implements IAttachmentModifier<Pair<Modifier, Modifi
     @Environment(EnvType.CLIENT)
     public List<DiagramsData> getPropertyDiagramsData(ItemStack gunItem, GunData gunData, AttachmentCacheProperty cacheProperty) {
         ParameterizedCachePair<Float, Float> propertyCache = cacheProperty.getCache(RecoilModifier.ID);
-        GunRecoil recoil = gunData.getRecoil();
-
+        // Use the same base sample as the cache, including zero for an omitted axis.
         double pitch = propertyCache.left().getDefaultValue();
-        double modifiedPitch = propertyCache.left().eval(getMaxInGunRecoilKeyFrame(recoil.getPitch()));
+        double modifiedPitch = propertyCache.left().eval(pitch);
         double pitchModifier = modifiedPitch - pitch;
         double pitchPercent = Math.min(pitch / 5.0, 1);
         double pitchModifierPercent = Math.min(pitchModifier / 5.0, 1);
@@ -99,7 +98,7 @@ public class RecoilModifier implements IAttachmentModifier<Pair<Modifier, Modifi
         String pitchDefaultString = String.format("%.2f", modifiedPitch);
 
         double yaw = propertyCache.right().getDefaultValue();
-        double modifiedYaw = propertyCache.right().eval(getMaxInGunRecoilKeyFrame(recoil.getYaw()));
+        double modifiedYaw = propertyCache.right().eval(yaw);
         double yawModifier = modifiedYaw - yaw;
         double yawPercent = Math.min(yaw / 5.0, 1);
         double yawModifierPercent = Math.min(yawModifier / 5.0, 1);
@@ -121,8 +120,8 @@ public class RecoilModifier implements IAttachmentModifier<Pair<Modifier, Modifi
         return 2;
     }
 
-    private static float getMaxInGunRecoilKeyFrame(GunRecoilKeyFrame[] frames) {
-        if (frames.length == 0) {
+    private static float getMaxInGunRecoilKeyFrame(@Nullable GunRecoilKeyFrame[] frames) {
+        if (frames == null || frames.length == 0) {
             return 0;
         }
         float[] value = frames[0].getValue();

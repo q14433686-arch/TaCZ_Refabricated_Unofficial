@@ -56,6 +56,7 @@ import org.jetbrains.annotations.Nullable;
  * </ul>
  */
 public class StunGrenadeEntity extends ThrowableItemEntity {
+    public static final int FLASH_PARTICLES = 12;
     public static final ResourceKey<EntityType<?>> KEY = ResourceKey.create(
             Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(EquipmentMod.MOD_ID, "stun_grenade"));
 
@@ -103,7 +104,7 @@ public class StunGrenadeEntity extends ThrowableItemEntity {
             Vec3 pos = this.position();
             ParticleUtil.sendParticle(serverLevel,
                     ColorParticleOption.create(ParticleTypes.FLASH, 0xFFFFFF),
-                    pos.x(), pos.y() + 0.5, pos.z(), 12, 0.2, 0.2, 0.2, 8, true);
+                    pos.x(), pos.y() + 0.5, pos.z(), FLASH_PARTICLES, 0.2, 0.2, 0.2, 8, true);
         }
         super.onDeath(hitResult);
     }

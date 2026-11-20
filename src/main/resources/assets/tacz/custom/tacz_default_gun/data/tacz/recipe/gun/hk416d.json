@@ -1,0 +1,24 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/gold",
+      "count": 16
+    },
+    {
+      "item": "#c:ingots/iron",
+      "count": 64
+    },
+    {
+      "item": "#c:gems/quartz",
+      "count": 8
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:hk416d",
+    "attachments": {
+      "stock": "tacz:stock_hk_slim_line"
+    }
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

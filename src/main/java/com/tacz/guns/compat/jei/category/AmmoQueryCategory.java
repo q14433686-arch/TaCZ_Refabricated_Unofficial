@@ -10,70 +10,46 @@ import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
-import mezz.jei.api.recipe.category.IRecipeCategory;
 import mezz.jei.api.recipe.types.IRecipeType;
+import net.minecraft.resources.Identifier;
+import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.item.ItemStack;
 
-import java.util.List;
-
-/** Displays every loaded gun that consumes a selected TACZ ammunition type. */
-public final class AmmoQueryCategory implements IRecipeCategory<AmmoQueryEntry> {
-    public static final IRecipeType<AmmoQueryEntry> AMMO_QUERY = IRecipeType.create(
-            Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "ammo_query"), AmmoQueryEntry.class);
-
+public class AmmoQueryCategory implements IRecipeCategory<AmmoQueryEntry> {
+    public static final IRecipeType<AmmoQueryEntry> AMMO_QUERY = IRecipeType.create(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "ammo_query"), AmmoQueryEntry.class);
     private static final Component TITLE = Component.translatable("jei.tacz.ammo_query.title");
-
+    private static final int WIDTH = 162;
+    private static final int COLUMNS = 9;
     private final IDrawable slotDraw;
     private final IDrawable iconDraw;
 
     public AmmoQueryCategory(IGuiHelper guiHelper) {
         this.slotDraw = guiHelper.getSlotDrawable();
-        this.iconDraw = guiHelper.createDrawableIngredient(
-                VanillaTypes.ITEM_STACK, ModCreativeTabs.AMMO_TAB.getIconItem());
+        this.iconDraw = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK, ModCreativeTabs.AMMO_TAB.getIconItem());
     }
 
     @Override
-    public void draw(AmmoQueryEntry entry, IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics,
-                     double mouseX, double mouseY) {
-        if (!entry.getExtraGunStacks().isEmpty()) {
-            Font font = Minecraft.getInstance().font;
-            guiGraphics.drawString(font, Component.translatable("jei.tacz.ammo_query.more"),
-                    128, 134, 0xFF555555, false);
+    public void draw(AmmoQueryEntry entry, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor guiGraphics, double mouseX, double mouseY) {
+        Font font = Minecraft.getInstance().font;
+        Component gunsLabel = Component.translatable("jei.tacz.ammo_query.guns", entry.getTotalGunCount());
+        guiGraphics.text(font, gunsLabel, (WIDTH - font.width(gunsLabel)) / 2, 22, 0xFF555555, false);
+        if (entry.getPageCount() > 1) {
+            Component page = Component.translatable("jei.tacz.ammo_query.page", entry.getPageNumber(), entry.getPageCount());
+            guiGraphics.text(font, page, (WIDTH - font.width(page)) / 2, 145, 0xFF555555, false);
         }
     }
 
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, AmmoQueryEntry entry, IFocusGroup focuses) {
-        List<ItemStack> gunStacks = entry.getGunStacks();
-        List<ItemStack> extraGunStacks = entry.getExtraGunStacks();
-
-        // Keep the queried ammunition in the same prominent top-centre position as the existing
-        // attachment query; the compatible guns fill rows below it.
-        builder.addSlot(RecipeIngredientRole.OUTPUT, 72, 0)
-                .add(entry.getAmmoStack())
-                .setBackground(slotDraw, -1, -1);
-
-        int xOffset = 0;
-        int yOffset = 20;
-        for (int i = 0; i < gunStacks.size(); i++) {
-            int column = i % 9;
-            int row = i / 9;
-            xOffset = column * 18;
-            yOffset = 20 + row * 18;
-            builder.addSlot(RecipeIngredientRole.INPUT, xOffset, yOffset)
-                    .add(gunStacks.get(i))
-                    .setBackground(slotDraw, -1, -1);
-        }
-
-        if (!extraGunStacks.isEmpty()) {
-            builder.addSlot(RecipeIngredientRole.INPUT, xOffset + 18, yOffset)
-                    .addItemStacks(extraGunStacks)
-                    .setBackground(slotDraw, -1, -1);
+        // 弹药作为输出，从其 JEI 配方页查询全部适用枪械。
+        builder.addSlot(RecipeIngredientRole.OUTPUT, 73, 1).add(entry.getAmmoStack()).setBackground(slotDraw, -1, -1);
+        for (int i = 0; i < entry.getGunStacks().size(); i++) {
+            int x = 1 + i % COLUMNS * 18;
+            int y = 35 + i / COLUMNS * 18;
+            builder.addSlot(RecipeIngredientRole.INPUT, x, y).add(entry.getGunStacks().get(i)).setBackground(slotDraw, -1, -1);
         }
     }
 
@@ -88,14 +64,10 @@ public final class AmmoQueryCategory implements IRecipeCategory<AmmoQueryEntry> 
     }
 
     @Override
-    public int getWidth() {
-        return 160;
-    }
+    public int getWidth() { return WIDTH; }
 
     @Override
-    public int getHeight() {
-        return 145;
-    }
+    public int getHeight() { return 156; }
 
     @Override
     public IDrawable getIcon() {

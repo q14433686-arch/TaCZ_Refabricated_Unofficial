@@ -6,7 +6,7 @@ import com.tacz.guns.client.gui.overlay.GunHudOverlay;
 import com.tacz.guns.client.gui.overlay.HeatBarOverlay;
 import com.tacz.guns.client.gui.overlay.InteractKeyTextOverlay;
 import com.tacz.guns.client.gui.overlay.KillAmountOverlay;
-
+import com.tacz.guns.client.gui.overlay.ScopeMaskDebugOverlay;
 import com.tacz.guns.client.input.*;
 import com.tacz.guns.client.resource.ClientAssetsManager;
 import com.tacz.guns.client.tooltip.ClientAmmoBoxTooltip;
@@ -15,6 +15,7 @@ import com.tacz.guns.client.tooltip.ClientBlockItemTooltip;
 import com.tacz.guns.client.tooltip.ClientGunTooltip;
 import com.tacz.guns.compat.ar.ARCompat;
 import com.tacz.guns.compat.controllable.ControllableCompat;
+import com.tacz.guns.compat.firstperson.FirstPersonAnimationCompat;
 import com.tacz.guns.compat.immediatelyfast.ImmediatelyFastCompat;
 import com.tacz.guns.compat.playeranimator.PlayerAnimatorCompat;
 import com.tacz.guns.compat.shouldersurfing.ShoulderSurfingCompat;
@@ -26,8 +27,8 @@ import com.tacz.guns.inventory.tooltip.GunTooltip;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.rendering.v1.TooltipComponentCallback;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.rendering.v1.ClientTooltipComponentCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.client.KeyMapping;
@@ -45,23 +46,14 @@ public class ClientSetupEvent {
     }
 
     public static void registerKeyMappings() {
-        // 注册键位 (26.2: MKB 不可用，直接注册 KeyMapping)
-        KeyBindingHelper.registerKeyBinding(InspectKey.INSPECT_KEY);
-        KeyBindingHelper.registerKeyBinding(ReloadKey.RELOAD_KEY);
-        KeyBindingHelper.registerKeyBinding(ShootKey.SHOOT_KEY);
-        KeyBindingHelper.registerKeyBinding(InteractKey.INTERACT_KEY);
-        KeyBindingHelper.registerKeyBinding(FireSelectKey.FIRE_SELECT_KEY);
-        KeyBindingHelper.registerKeyBinding(AimKey.AIM_KEY);
-        KeyBindingHelper.registerKeyBinding(CrawlKey.CRAWL_KEY);
-        KeyBindingHelper.registerKeyBinding(RefitKey.REFIT_KEY);
-        KeyBindingHelper.registerKeyBinding(ZoomKey.ZOOM_KEY);
-        KeyBindingHelper.registerKeyBinding(MeleeKey.MELEE_KEY);
-        KeyBindingHelper.registerKeyBinding(ConfigKey.OPEN_CONFIG_KEY);
+        GunInputHandler.registerMappings();
     }
 
     public static void registerClientTooltips() {
-        // 注册文本提示 (26.2: TooltipComponentCallback → TooltipComponentCallback)
-        TooltipComponentCallback.EVENT.register(tooltip -> {
+        // 注册文本提示 (26.2: TooltipComponentCallback → ClientTooltipComponentCallback)
+        ClientTooltipComponentCallback.EVENT.register(tooltip -> {
+            if (tooltip instanceof com.tacz.guns.inventory.tooltip.AmmoStorageTooltip storage)
+                return new com.tacz.guns.client.tooltip.ClientAmmoStorageTooltip(storage);
             if (tooltip instanceof GunTooltip gunTooltip) {
                 return new ClientGunTooltip(gunTooltip);
             }
@@ -90,8 +82,11 @@ public class ClientSetupEvent {
     public static void registerGuiOverlays() {
         HudElementRegistry.addLast(id("gun_hud"), (graphics, deltaTracker) -> GunHudOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
         HudElementRegistry.addLast(id("heat_bar"), (graphics, deltaTracker) -> HeatBarOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
+        HudElementRegistry.addLast(id("display_case_lock_hint"), com.tacz.guns.client.gui.overlay.DisplayCaseLockHint::render);
         HudElementRegistry.addLast(id("interact_key_text"), (graphics, deltaTracker) -> InteractKeyTextOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
         HudElementRegistry.addLast(id("kill_amount"), (graphics, deltaTracker) -> KillAmountOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
+        // 【Step 1 调试】瞄具掩码预览，由 RenderConfig.SCOPE_MASK_DEBUG 控制，默认关闭。
+        HudElementRegistry.addLast(id("scope_mask_debug"), (graphics, deltaTracker) -> ScopeMaskDebugOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
     }
 
     private static Identifier id(String path) {
@@ -101,8 +96,6 @@ public class ClientSetupEvent {
     public static void onClientSetup() {
         // 注册自己的的硬编码第三人称动画
         ThirdPersonManager.registerDefault();
-
-        com.tacz.guns.compat.firstperson.FirstPersonAnimationCompat.init();
 
         // 26.2 已解决: ColorProviderRegistry.ITEM 与 ItemProperties 均已移除。
         // 弹药箱染色改由 items/ammo_box.json 模型里的 minecraft:dye tint 完成；
@@ -114,6 +107,9 @@ public class ClientSetupEvent {
 
 //        // 与 player animator 的兼容
 //       PlayerAnimatorCompat.init();
+
+        // 第一人称身体/手部动画 Mod：持有 TACZ 动画物品时交还 viewmodel 渲染权。
+        FirstPersonAnimationCompat.init();
 
         // 与 Shoulder Surfing Reloaded 的兼容
         ShoulderSurfingCompat.init();

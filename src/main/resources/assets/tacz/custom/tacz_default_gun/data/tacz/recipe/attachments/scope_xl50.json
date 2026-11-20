@@ -1,0 +1,41 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 24
+    },
+    {
+      "item": "#c:ingots/copper",
+      "count": 16
+    },
+    {
+      "item": "#c:gems/amethyst",
+      "count": 12
+    },
+    {
+      "item": "#c:dusts/redstone",
+      "count": 24
+    },
+    {
+      "item": "#c:dusts/glowstone",
+      "count": 16
+    },
+    {
+      "item": "minecraft:shroomlight",
+      "count": 8
+    },
+    {
+      "item": "minecraft:observer",
+      "count": 2
+    },
+    {
+      "item": "minecraft:ender_eye",
+      "count": 1
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:scope_xl50"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

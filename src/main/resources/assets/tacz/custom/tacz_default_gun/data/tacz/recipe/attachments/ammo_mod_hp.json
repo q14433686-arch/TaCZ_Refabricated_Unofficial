@@ -1,0 +1,17 @@
+{
+  "materials": [
+    {
+      "item": "minecraft:crying_obsidian",
+      "count": 3
+    },
+    {
+      "item": "#c:ingots/gold",
+      "count": 8
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:ammo_mod_hp"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

@@ -1,0 +1,17 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 16
+    },
+    {
+      "item": "#c:leathers",
+      "count": 5
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:grip_rk1_b25u"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

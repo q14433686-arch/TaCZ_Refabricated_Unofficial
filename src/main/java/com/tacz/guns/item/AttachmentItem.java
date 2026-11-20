@@ -22,6 +22,7 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
+import com.tacz.guns.util.ContentPackOrder;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
@@ -45,7 +46,7 @@ public class AttachmentItem extends Item implements AttachmentItemDataAccessor, 
     }
 
     private static Comparator<Map.Entry<Identifier, CommonAttachmentIndex>> idNameSort() {
-        return Comparator.comparingInt(m -> m.getValue().getSort());
+        return ContentPackOrder.byPackThenSort(CommonAttachmentIndex::getSort);
     }
 
     public static NonNullList<ItemStack> fillItemCategory(AttachmentType type) {

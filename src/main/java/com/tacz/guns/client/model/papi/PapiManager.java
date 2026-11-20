@@ -1,27 +1,31 @@
 package com.tacz.guns.client.model.papi;
 
 import com.google.common.collect.Maps;
+import com.tacz.guns.client.resource.pojo.display.gun.Rangefinder;
+import org.jetbrains.annotations.Nullable;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.locale.Language;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 @Environment(EnvType.CLIENT)
 public final class PapiManager {
-    private static final Map<String, Function<ItemStack, String>> PAPI = Maps.newHashMap();
+    private static final Map<String, BiFunction<ItemStack, Rangefinder, String>> PAPI = Maps.newHashMap();
 
     // 注册，不知道放哪里，先放这
     static {
         addPapi(PlayerNamePapi.NAME, new PlayerNamePapi());
         addPapi(AmmoCountPapi.NAME, new AmmoCountPapi());
+        PAPI.put("%rangefinder%", RangefinderReadout::read);
     }
 
     public static void addPapi(String textKey, Function<ItemStack, String> function) {
         textKey = "%" + textKey + "%";
-        PAPI.put(textKey, function);
+        PAPI.put(textKey, (stack, ignored) -> function.apply(stack));
     }
 
     /**
@@ -43,10 +47,15 @@ public final class PapiManager {
      * （TEMP 块在 {@code build.gradle}，输出进 {@code build-reports/compile-java.log}）。</p>
      */
     public static String getTextShow(String textKey, ItemStack stack) {
+        return getTextShow(textKey, stack, null);
+    }
+
+    public static String getTextShow(String textKey, ItemStack stack, @Nullable Rangefinder config) {
         String text = Language.getInstance().getOrDefault(textKey);
         for (var entry : PAPI.entrySet()) {
             String placeholder = entry.getKey();
-            String data = entry.getValue().apply(stack);
+            if (!text.contains(placeholder)) continue; // No world queries for an ammo count or literal.
+            String data = entry.getValue().apply(stack, config);
             text = text.replace(placeholder, data);
         }
         return text;

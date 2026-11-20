@@ -1,5 +1,6 @@
 package com.tacz.guns.client.animation.screen;
 
+import com.tacz.guns.util.time.GunTime;
 import cn.sh1rocu.simplebedrockmodel.api.event.RenderTickEvent;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.gui.GunRefitScreen;
@@ -23,7 +24,7 @@ public class RefitTransform {
 
     public static void init() {
         refitScreenTransformProgress = 1;
-        refitScreenTransformTimestamp = System.currentTimeMillis();
+        refitScreenTransformTimestamp = GunTime.nowMillis();
         oldTransformType = AttachmentType.NONE;
         currentTransformType = AttachmentType.NONE;
     }
@@ -53,35 +54,44 @@ public class RefitTransform {
         oldTransformType = currentTransformType;
         currentTransformType = attachmentType;
         refitScreenTransformProgress = 0;
-        refitScreenTransformTimestamp = System.currentTimeMillis();
+        refitScreenTransformTimestamp = GunTime.nowMillis();
         return true;
     }
 
     public static void tickInterpolation(RenderTickEvent event) {
         // tick opening progress
         if (refitScreenOpeningTimestamp == -1) {
-            refitScreenOpeningTimestamp = System.currentTimeMillis();
+            refitScreenOpeningTimestamp = GunTime.nowMillis();
         }
-        if (Minecraft.getInstance().screen instanceof GunRefitScreen) {
-            refitScreenOpeningProgress += (System.currentTimeMillis() - refitScreenOpeningTimestamp) / (REFIT_SCREEN_TRANSFORM_TIMES * 1000);
+        if (Minecraft.getInstance().gui.screen() instanceof GunRefitScreen) {
+            refitScreenOpeningProgress += (GunTime.nowMillis() - refitScreenOpeningTimestamp) / (REFIT_SCREEN_TRANSFORM_TIMES * 1000);
             if (refitScreenOpeningProgress > 1) {
                 refitScreenOpeningProgress = 1;
             }
         } else {
-            refitScreenOpeningProgress -= (System.currentTimeMillis() - refitScreenOpeningTimestamp) / (REFIT_SCREEN_TRANSFORM_TIMES * 1000);
+            refitScreenOpeningProgress -= (GunTime.nowMillis() - refitScreenOpeningTimestamp) / (REFIT_SCREEN_TRANSFORM_TIMES * 1000);
             if (refitScreenOpeningProgress < 0) {
                 refitScreenOpeningProgress = 0;
             }
         }
-        refitScreenOpeningTimestamp = System.currentTimeMillis();
+        refitScreenOpeningTimestamp = GunTime.nowMillis();
         // tick transform progress
         if (refitScreenTransformTimestamp == -1) {
-            refitScreenTransformTimestamp = System.currentTimeMillis();
+            refitScreenTransformTimestamp = GunTime.nowMillis();
         }
-        refitScreenTransformProgress += (System.currentTimeMillis() - refitScreenTransformTimestamp) / (REFIT_SCREEN_TRANSFORM_TIMES * 1000);
+        refitScreenTransformProgress += (GunTime.nowMillis() - refitScreenTransformTimestamp) / (REFIT_SCREEN_TRANSFORM_TIMES * 1000);
         if (refitScreenTransformProgress > 1) {
             refitScreenTransformProgress = 1;
         }
-        refitScreenTransformTimestamp = System.currentTimeMillis();
+        refitScreenTransformTimestamp = GunTime.nowMillis();
+    }
+
+    public static void resetTimestamps() {
+        refitScreenTransformProgress = 1;
+        refitScreenTransformTimestamp = -1;
+        refitScreenOpeningProgress = 0;
+        refitScreenOpeningTimestamp = -1;
+        oldTransformType = AttachmentType.NONE;
+        currentTransformType = AttachmentType.NONE;
     }
 }

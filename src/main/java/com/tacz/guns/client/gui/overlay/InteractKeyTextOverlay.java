@@ -4,16 +4,21 @@ import com.tacz.guns.api.item.IAmmo;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.block.AbstractGunSmithTableBlock;
+import com.tacz.guns.block.AmmoStorageBlock;
+import com.tacz.guns.block.GunDisplayCaseBlock;
+import com.tacz.guns.block.GunDisplayCaseSlotHelper;
+import com.tacz.guns.block.entity.GunDisplayCaseBlockEntity;
+import com.tacz.guns.config.util.GunPegboardItemConfigRead;
 import com.tacz.guns.client.input.InteractKey;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.config.util.InteractKeyConfigRead;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -56,19 +61,18 @@ import org.apache.commons.lang3.StringUtils;
  *
  * <h2>26.2 侧的两处改写</h2>
  * <ul>
- *   <li>{@code GuiGraphics#drawString} → {@code GuiGraphics#text}。</li>
- *   <li><b>颜色取值按 26.1.2 的 API 写</b>：26.1.2 的 {@code ChatFormatting#getColor()}
- *       依然存在（已对 26.1.2 jar 字节码确认，返回 {@code Integer}），
- *       与上游 1.21.1 写法一致；而 26.2 补丁用的 {@code TextColor.YELLOW/GRAY}
- *       具名常量是<b>26.2 新增</b>的（26.1.2 的 {@code TextColor} 只有
- *       {@code CODEC/NAMED_COLORS} 等几个字段，没有任何具名颜色常量），直接套用会编译失败。
- *       同理，「{@code ChatFormatting#getColor()} 已删除」是 26.2 的变更，不适用于本版。
- *       必须补 alpha —— {@code ChatFormatting#getColor()} 给的是六位色，
- *       {@code text()} 见 alpha=0 会整段短路丢弃（见 docs/PORTING_NOTES.md §1）。</li>
+ *   <li>{@code GuiGraphics#drawString} → {@code GuiGraphicsExtractor#text}。</li>
+ *   <li><b>{@code ChatFormatting#getColor()} 在 26.2 已经不存在了</b>（字节码确认：
+ *       该枚举只剩 {@code code} 与 {@code toString} 两个字段，没有任何颜色访问器）。
+ *       颜色改由 {@code net.minecraft.network.chat.TextColor} 的具名常量承载，
+ *       取值用 {@code getValue()}。上游那句 {@code ChatFormatting.YELLOW.getColor()}
+ *       照搬过来是<b>编译不过</b>的。
+ *       同时必须补 alpha —— {@code TextColor#getValue} 给的是六位色，
+ *       26.2 的 {@code text()} 见 alpha=0 会整段短路丢弃（见 docs/PORTING_NOTES.md §1）。</li>
  * </ul>
  */
 public class InteractKeyTextOverlay {
-    public static void render(GuiGraphics graphics, float partialTick) {
+    public static void render(GuiGraphicsExtractor graphics, float partialTick) {
         if (RenderConfig.DISABLE_INTERACT_HUD_TEXT.get()) {
             return;
         }
@@ -93,10 +97,25 @@ public class InteractKeyTextOverlay {
         }
     }
 
-    private static void renderBlockText(GuiGraphics graphics, int width, int height,
+    private static void renderBlockText(GuiGraphicsExtractor graphics, int width, int height,
                                         BlockHitResult blockHitResult, LocalPlayer player, Minecraft mc) {
         BlockPos blockPos = blockHitResult.getBlockPos();
         BlockState block = player.level().getBlockState(blockPos);
+        if (block.getBlock() instanceof GunDisplayCaseBlock) {
+            if (blockHitResult.getType() != HitResult.Type.BLOCK) return;
+            if (!block.getValue(GunDisplayCaseBlock.LOCKED) && IGun.mainHandHoldGun(player) && InteractKeyConfigRead.canInteractBlock(block)
+                    && player.level().getBlockEntity(blockPos) instanceof GunDisplayCaseBlockEntity rack) {
+                int slot = GunDisplayCaseSlotHelper.getSlot(block, blockPos, blockHitResult.getLocation());
+                if (slot >= 0 && (!rack.getItem(slot).isEmpty() || GunPegboardItemConfigRead.canPlace(player.getMainHandItem())))
+                    renderText(graphics, width, height, mc.font, InteractKey.INTERACT_KEY.getTranslatedKeyMessage().getString(), false);
+            }
+            return;
+        }
+        if (block.getBlock() instanceof AmmoStorageBlock && IGun.mainHandHoldGun(player)) {
+            renderText(graphics, width, height, mc.font, InteractKey.INTERACT_KEY.getTranslatedKeyMessage().getString(),
+                    Component.translatable("gui.tacz.interact_key.text.ammo_storage_pickup"));
+            return;
+        }
         if (!InteractKeyConfigRead.canInteractBlock(block)) {
             return;
         }
@@ -114,7 +133,7 @@ public class InteractKeyTextOverlay {
         }
     }
 
-    private static void renderEntityText(GuiGraphics graphics, int width, int height,
+    private static void renderEntityText(GuiGraphicsExtractor graphics, int width, int height,
                                          EntityHitResult entityHitResult, Minecraft mc) {
         if (mc.player == null || !IGun.mainHandHoldGun(mc.player)) {
             return;
@@ -135,19 +154,23 @@ public class InteractKeyTextOverlay {
         return item instanceof IGun || item instanceof IAttachment || item instanceof IAmmo;
     }
 
-    private static void renderText(GuiGraphics graphics, int width, int height,
+    private static void renderText(GuiGraphicsExtractor graphics, int width, int height,
                                    Font font, String keyName, boolean willFilterByHand) {
+        renderText(graphics, width, height, font, keyName,
+                willFilterByHand ? Component.translatable("gui.tacz.interact_key.text.gun_smith_table_filter") : null);
+    }
+
+    private static void renderText(GuiGraphicsExtractor graphics, int width, int height,
+                                   Font font, String keyName, Component filter) {
         Component title = Component.translatable("gui.tacz.interact_key.text.desc", StringUtils.capitalize(keyName));
-        // 颜色补 alpha：ChatFormatting#getColor 给的是六位色，text() 会把 alpha=0 的整段丢弃。
-        // （26.1.2 用上游同款 ChatFormatting；TextColor.YELLOW/GRAY 具名常量是 26.2 才有的。）
-        graphics.drawString(font, title,
+        // 颜色补 alpha：TextColor#getValue 给的是六位色，26.2 会把 alpha=0 的整段丢弃。
+        graphics.text(font, title,
                 (int) ((width - font.width(title)) / 2.0f), (int) (height / 2.0f - 25),
-                0xFF000000 | ChatFormatting.YELLOW.getColor(), false);
-        if (willFilterByHand) {
-            Component filter = Component.translatable("gui.tacz.interact_key.text.gun_smith_table_filter");
-            graphics.drawString(font, filter,
+                0xFF000000 | TextColor.YELLOW.getValue(), false);
+        if (filter != null) {
+            graphics.text(font, filter,
                     (int) ((width - font.width(filter)) / 2.0f), (int) (height / 2.0f - 14),
-                    0xFF000000 | ChatFormatting.GRAY.getColor(), false);
+                    0xFF000000 | TextColor.GRAY.getValue(), false);
         }
     }
 }

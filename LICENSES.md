@@ -1,0 +1,69 @@
+# Licensing Notice
+
+This repository is an unofficial community port of Timeless & Classics Guns: Zero and related compatibility code.
+
+Different parts of this repository may be covered by different licenses.
+
+## Code
+
+Unless otherwise stated, the source code in this repository follows the license of the corresponding upstream project.
+
+- TaCZ / Timeless & Classics Guns: Zero code: GPL-3.0, according to the upstream project license.
+- LRTactical / LesRaisins Tactical Equipements code portions: GPL-3.0, according to the upstream project license.
+- TacZ Mesh Loader [TML] code portions (package `cn.sh1rocu.tacz.compat.meshloader`): GPL-3.0,
+  ported from VellEagle/TacZMeshLoader `1.21.1_fabric` v0.1.7
+  (https://github.com/VellEagle/TacZMeshLoader), author VellEagle.
+  The port includes substantial adaptation to the 26.2 rendering API plus
+  additions original to this repository — first-person GPU static baking,
+  world-context GPU baking (per-gun persistent VBOs shared by third-person /
+  dropped-item / item-frame renders, quantized-lighting LRU cache and per-frame
+  bake budget), vertex-budget gates, near-distance full-detail exemption,
+  sight-distance compensation for the baked detail gates, and the scope
+  picture-in-picture pass adaptations (per-pass submit/draw bookkeeping so the
+  in-lens re-render pass bakes like the main pass); those additions
+  are likewise GPL-3.0 as derivative work of the same module.
+  See `docs/MESH_LOADER.md` for the exact scope of the ported versus original parts.
+- Porting changes made in this repository are provided under the same license as the corresponding code they modify.
+- Mayday Animation Engine (MAE) 1.1.1 is bundled as a runtime library under the MIT License
+  (`com.maydaymemory:mae`, https://github.com/286799714/MaydayAnimationEngine).
+
+The root `LICENSE` file is provided for GitHub license detection and applies to the code portions of this repository where applicable.
+
+## Assets
+
+Art assets, including but not limited to textures, models, animations, sounds, icons, and gun pack resources, may be covered by separate licenses from their original authors.
+
+This repository does not claim ownership of upstream assets.
+
+Some assets may be licensed under terms such as CC BY-NC-ND 4.0 or other licenses specified by their original projects or authors.
+
+If you are redistributing, modifying, or reusing assets from this repository, please check the original license and attribution requirements for those assets.
+
+The bundled default pack credits **TACZ Dev Team** and specifies **CC BY-NC-ND 4.0**
+(see its `assets/tacz/gunpack_info.json`). The incremental 1.2.0 resources are tracked
+in [`RESOURCE_IMPORT_120.tsv`](RESOURCE_IMPORT_120.tsv), pinned to
+[Sh1roCu/TACZ-Refabricated `356bdf9`](https://github.com/Sh1roCu/TACZ-Refabricated/tree/356bdf9d48f2225bac6ceb56adc5576a418517a8).
+The full effective built-in pack is tracked in [`DEFAULT_PACK_120.tsv`](DEFAULT_PACK_120.tsv):
+source blob for every file, shipped SHA-256, source/overlay path and adaptation. Models,
+textures, animations and audio are not redrawn, transcoded or relicensed. The adaptation
+column identifies 26.2 metadata, recipes, advancements, loot and script changes. See
+[`scripts/port_default_pack_120.py`](scripts/port_default_pack_120.py) to reproduce it.
+These resources are not relicensed as GPL; this port is not a new distribution permission.
+
+## Third-party Content Packs
+
+Gun packs, resource packs, data packs, and addon content may have their own licenses.
+
+Compatibility with such content does not imply that this repository owns or relicenses that content.
+
+## Disclaimer
+
+This project is not affiliated with, endorsed by, or officially maintained by the original TaCZ development team or the LRTactical authors.
+
+If any license notice or attribution is missing or incorrect, please open an issue with details so it can be corrected.
+
+## SimpleBedrockModel particle/Molang source port
+
+The relocated particle data/runtime and Molang compiler derive from SimpleBedrockModel
+71ad526 (LGPL-3.0). See [source notice](LICENSES/SimpleBedrockModel.NOTICE.md) and
+[license text](LICENSES/SimpleBedrockModel-LGPL-3.0.txt). Default gun-pack artwork is not part of this port.

@@ -1,7 +1,9 @@
 package com.tacz.guns.client.event;
 
+import com.tacz.guns.util.time.GunTime;
 import cn.sh1rocu.simplebedrockmodel.api.event.ViewportEvent;
 import cn.sh1rocu.tacz.api.event.ComputeFovModifierEvent;
+import com.tacz.guns.GunMod;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.event.BeforeRenderHandEvent;
@@ -9,14 +11,17 @@ import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.client.other.KeepingItemRenderer;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.event.common.GunFireEvent;
+import com.tacz.guns.api.event.common.GunFirePostEvent;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor;
 import com.tacz.guns.api.modifier.ParameterizedCachePair;
-import com.tacz.guns.client.render.scope.ScopePipRenderState;
+import com.tacz.guns.client.render.scope.ScopePipRenderer;
 import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
 import com.tacz.guns.client.resource.GunDisplayInstance;
+import com.tacz.guns.client.resource.pojo.display.gun.AdsFov;
+import com.tacz.guns.util.math.Easing;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
@@ -38,10 +43,17 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.item.ItemStack;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 
+import java.util.Locale;
 import java.util.Optional;
 
 @Environment(EnvType.CLIENT)
 public class CameraSetupEvent {
+    /**
+     * 【RecoilDebug 探针】开火时对 pitch/yaw 两条后坐力样条做定点包络采样（毫秒）。
+     * 采样值 = 该发子弹的随机抽取 × 配件/瞄准修正，跨多发求均值即可分辨
+     * 「yaw 样条本身系统性偏置」与「渲染层朝向耦合」（前者此处即现身，后者这里必然干净）。
+     */
+    private static final double[] RECOIL_DEBUG_SAMPLE_MS = {0, 40, 80, 120, 160, 240, 320, 480};
     /**
      * 用于平滑 FOV 变化
      */
@@ -96,42 +108,35 @@ public class CameraSetupEvent {
                 event.setFOV(fov);
                 return;
             }
-            float zoom = iGun.getAimingZoom(stack);
-            // Gate on the same interpolated progress the fallback below uses (frame partial-tick),
-            // so a boundary frame cannot "fall through" with a non-1x aim value. A fixed 0/1 tick
-            // value is one frame out of phase at one side of the transition and still caused the
-            // exit POV jump.
-            if (ScopePipRenderState.suppressesWorldFovZoom((float) event.getPartialTick())) {
-                // Step 3 (real PIP): the lens owns the scope zoom, but part of it may be assigned to
-                // the world by ScopePipWorldZoomShare. Apply exactly that share using the same
-                // progress formula as the non-PIP fallback below, and keep WORLD_FOV_DYNAMICS tracking
-                // it (sprint's moving base FOV must not snap on exit). With the default share=0 this
-                // reduces to "keep the live base FOV" — the previous suppression behavior.
-                float aimingProgress;
-                if (livingEntity instanceof LocalPlayer localPlayer) {
-                    IClientPlayerGunOperator gunOperator = IClientPlayerGunOperator.fromLocalPlayer(localPlayer);
-                    aimingProgress = gunOperator.getClientAimingProgress((float) event.getPartialTick());
-                } else {
-                    IGunOperator gunOperator = IGunOperator.fromLivingEntity(livingEntity);
-                    aimingProgress = gunOperator.getSynAimingProgress();
-                }
-                float worldZoom = ScopePipRenderState.worldZoomAtProgress(aimingProgress);
-                float baseFov = (float) event.getFOV();
-                float fov = WORLD_FOV_DYNAMICS.update((float) MathUtil.magnificationToFov(worldZoom, baseFov));
+            // 【镜内画中画】开着 PIP 时，倍镜的放大由镜内那一遍窄 FOV 世界渲染负责，
+            // 世界 FOV 必须原样不动 —— 否则镜外也跟着被拉近，两处放大叠在一起。
+            //
+            // 判据刻意【不看开镜进度】：抬镜途中若判据翻转，世界 FOV 会毫无理由地跳一下。
+            // PIP 生效时自始至终不碰世界 FOV，孔径自己会随进度张开。
+            //
+            // 每帧重新问一次、不缓存：PIP 若在运行期出错自我停用，
+            // 下一帧整屏变焦就自动接管，不会留下「既没 PIP 也没放大」的死角。
+            if (ScopePipRenderer.suppressesWorldFovZoom()) {
+                // 【倍率拆分】默认 ScopePipWorldZoomShare=0.0 时 worldZoom 恒为 1，
+                // magnificationToFov(1, fov) == fov，于是这里与「完全不动世界 FOV」逐位等价 ——
+                // 老行为一点没变。
+                //
+                // 玩家把它调大，就是在用「镜外放大一点」换「镜内清晰一点」：
+                // 世界放大 W 之后镜内只需再放大 Z/W，于是镜内拿到的真实像素多 W 倍。
+                // 合成那一侧会把 W 除掉（见 ScopePipRenderer 的两个 runComposite 调用），
+                // 两边相乘恒等于总倍率，所以镜内外看到的放大程度始终一致。
+                float worldZoom = ScopePipRenderer.currentWorldZoom();
+                float fov = WORLD_FOV_DYNAMICS.update(worldZoom > 1.0f
+                        ? (float) MathUtil.magnificationToFov(worldZoom, event.getFOV())
+                        : (float) event.getFOV());
                 event.setFOV(fov);
                 return;
             }
-            if (livingEntity instanceof LocalPlayer localPlayer) {
-                IClientPlayerGunOperator gunOperator = IClientPlayerGunOperator.fromLocalPlayer(localPlayer);
-                float aimingProgress = gunOperator.getClientAimingProgress((float) event.getPartialTick());
-                float fov = WORLD_FOV_DYNAMICS.update((float) MathUtil.magnificationToFov(1 + (zoom - 1) * aimingProgress, event.getFOV()));
-                event.setFOV(fov);
-            } else {
-                IGunOperator gunOperator = IGunOperator.fromLivingEntity(livingEntity);
-                float aimingProgress = gunOperator.getSynAimingProgress();
-                float fov = WORLD_FOV_DYNAMICS.update((float) MathUtil.magnificationToFov(1 + (zoom - 1) * aimingProgress, event.getFOV()));
-                event.setFOV(fov);
-            }
+            float zoom = iGun.getAimingZoom(stack);
+            AdsFov.Channel curve = TimelessAPI.getGunDisplay(stack).map(GunDisplayInstance::getAdsFov).map(AdsFov::getWorld).orElse(null);
+            float progress = fovProgress(livingEntity, (float) event.getPartialTick(), curve);
+            float target = (float) MathUtil.magnificationToFov(1 + (zoom - 1) * progress, event.getFOV());
+            event.setFOV(applyFovCurve(WORLD_FOV_DYNAMICS, target, curve));
         }
     }
 
@@ -153,69 +158,81 @@ public class CameraSetupEvent {
             }
             CompoundTag scopeTag = iGun.getAttachmentTag(stack, AttachmentType.SCOPE);
             int zoomNumber = AttachmentItemDataAccessor.getZoomNumberFromTag(scopeTag);
-            // 尝试使用配件fov修改，若无则尝试使用枪械本身fov修改，否则维持不变
-            float modifiedFov = TimelessAPI.getClientAttachmentIndex(scopeItemId)
-                    .map(index -> {
-                        float[] viewsFov = index.getViewsFov();
-                        return viewsFov[zoomNumber % viewsFov.length];
-                    })
-                    .orElse(
-                            TimelessAPI.getGunDisplay(stack)
-                                    .map(GunDisplayInstance::getZoomModelFov)
-                                    .orElse((float) event.getFOV())
-                    );
-            if (livingEntity instanceof LocalPlayer localPlayer) {
-                IClientPlayerGunOperator gunOperator = IClientPlayerGunOperator.fromLocalPlayer(localPlayer);
-                float aimingProgress = gunOperator.getClientAimingProgress((float) event.getPartialTick());
-                float fov = ITEM_MODEL_FOV_DYNAMICS.update(Mth.lerp(aimingProgress, (float) event.getFOV(), modifiedFov));
-                event.setFOV(fov);
-            } else {
-                IGunOperator gunOperator = IGunOperator.fromLivingEntity(livingEntity);
-                float aimingProgress = gunOperator.getSynAimingProgress();
-                float fov = ITEM_MODEL_FOV_DYNAMICS.update(Mth.lerp(aimingProgress, (float) event.getFOV(), modifiedFov));
-                event.setFOV(fov);
-            }
+            var display = TimelessAPI.getGunDisplay(stack);
+            float base = display.map(GunDisplayInstance::getModelFov).orElse((float) event.getFOV());
+            Identifier resolved = scopeItemId;
+            var fovs = TimelessAPI.getClientAttachmentVariantIndex(resolved, scopeTag).map(index -> index.getViewsFov())
+                    .or(() -> TimelessAPI.getClientAttachmentIndex(resolved).map(index -> index.getViewsFov()));
+            float modified = fovs.map(fov -> fov[Math.floorMod(zoomNumber, fov.length)])
+                    .orElseGet(() -> display.map(GunDisplayInstance::getZoomModelFov).orElse(base));
+            AdsFov.Channel curve = display.map(GunDisplayInstance::getAdsFov).map(AdsFov::getModel).orElse(null);
+            float progress = fovProgress(livingEntity, (float) event.getPartialTick(), curve);
+            event.setFOV(applyFovCurve(ITEM_MODEL_FOV_DYNAMICS, Mth.lerp(progress, base, modified), curve));
         }
     }
 
+    private static float fovProgress(LivingEntity entity, float partialTick, AdsFov.Channel curve) {
+        float progress = entity instanceof LocalPlayer player
+                ? IClientPlayerGunOperator.fromLocalPlayer(player).getClientAimingProgress(partialTick)
+                : IGunOperator.fromLivingEntity(entity).getSynAimingProgress();
+        return curve == null ? (float) Easing.easeInExpo(progress) : curve.evaluate(progress);
+    }
+
+    private static float applyFovCurve(SecondOrderDynamics smoother, float target, AdsFov.Channel curve) {
+        // Even in direct mode advance the smoother so switching guns doesn't restore a stale FOV.
+        float smoothed = smoother.update(target);
+        return curve == null || curve.isSmooth() ? smoothed : target;
+    }
+
+    // Kept callable for 26.3 integrations. Our own listener only runs after all pre callbacks voted.
     public static void initialCameraRecoil(GunFireEvent event) {
-        if (event.getLogicalSide().isClient()) {
-            LivingEntity shooter = event.getShooter();
-            LocalPlayer player = Minecraft.getInstance().player;
-            if (!shooter.equals(player)) {
-                return;
-            }
-            ItemStack mainHandItem = player.getMainHandItem();
-            if (!(mainHandItem.getItem() instanceof IGun iGun)) {
-                return;
-            }
-            AttachmentCacheProperty cacheProperty = IGunOperator.fromLivingEntity(player).getCacheProperty();
-            if (cacheProperty == null) {
-                return;
-            }
-            Identifier gunId = iGun.getGunId(mainHandItem);
-            Optional<ClientGunIndex> gunIndexOptional = TimelessAPI.getClientGunIndex(gunId);
-            if (gunIndexOptional.isEmpty()) {
-                return;
-            }
-            ClientGunIndex gunIndex = gunIndexOptional.get();
-            GunData gunData = gunIndex.getGunData();
-            // 获取所有配件对摄像机后坐力的修改
-            ParameterizedCachePair<Float, Float> attachmentRecoilModifier = cacheProperty.getCache(RecoilModifier.ID);
-            IClientPlayerGunOperator clientPlayerGunOperator = IClientPlayerGunOperator.fromLocalPlayer(player);
-            float partialTicks = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
-            float aimingProgress = clientPlayerGunOperator.getClientAimingProgress(partialTicks);
-            float zoom = iGun.getAimingZoom(mainHandItem);
-            float aimingRecoilModifier = 1 - aimingProgress + aimingProgress / (float) Math.min(Math.sqrt(zoom), 1.5);
-            // 如果是趴下，那么后坐力按 data 设计减少（默认为降低一半）
-            if (!player.isSwimming() && player.getPose() == Pose.SWIMMING) {
-                aimingRecoilModifier = aimingRecoilModifier * gunData.getCrawlRecoilMultiplier();
-            }
-            pitchSplineFunction = gunData.getRecoil().genPitchSplineFunction((float) attachmentRecoilModifier.left().eval(aimingRecoilModifier));
-            yawSplineFunction = gunData.getRecoil().genYawSplineFunction((float) attachmentRecoilModifier.right().eval(aimingRecoilModifier));
-            shootTimeStamp = System.currentTimeMillis();
-            xRotO = 0;
-            yRotO = 0;
+        if (!event.isCanceled() && event.getLogicalSide().isClient()) initialCameraRecoil(event.getShooter());
+    }
+
+    public static void initialCameraRecoilPost(GunFirePostEvent event) {
+        if (event.getLogicalSide().isClient()) initialCameraRecoil(event.getShooter());
+    }
+
+    private static void initialCameraRecoil(LivingEntity shooter) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (!shooter.equals(player)) {
+            return;
+        }
+        ItemStack mainHandItem = player.getMainHandItem();
+        if (!(mainHandItem.getItem() instanceof IGun iGun)) {
+            return;
+        }
+        AttachmentCacheProperty cacheProperty = IGunOperator.fromLivingEntity(player).getCacheProperty();
+        if (cacheProperty == null) {
+            return;
+        }
+        Identifier gunId = iGun.getGunId(mainHandItem);
+        Optional<ClientGunIndex> gunIndexOptional = TimelessAPI.getClientGunIndex(gunId);
+        if (gunIndexOptional.isEmpty()) {
+            return;
+        }
+        ClientGunIndex gunIndex = gunIndexOptional.get();
+        GunData gunData = gunIndex.getGunData();
+        // 获取所有配件对摄像机后坐力的修改
+        ParameterizedCachePair<Float, Float> attachmentRecoilModifier = cacheProperty.getCache(RecoilModifier.ID);
+        IClientPlayerGunOperator clientPlayerGunOperator = IClientPlayerGunOperator.fromLocalPlayer(player);
+        float partialTicks = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
+        float aimingProgress = clientPlayerGunOperator.getClientAimingProgress(partialTicks);
+        float zoom = iGun.getAimingZoom(mainHandItem);
+        float aimingRecoilModifier = 1 - aimingProgress + aimingProgress / (float) Math.min(Math.sqrt(zoom), 1.5);
+        // 如果是趴下，那么后坐力按 data 设计减少（默认为降低一半）
+        if (!player.isSwimming() && player.getPose() == Pose.SWIMMING) {
+            aimingRecoilModifier = aimingRecoilModifier * gunData.getCrawlRecoilMultiplier();
+        }
+        float pitchMod = (float) attachmentRecoilModifier.left().eval(aimingRecoilModifier);
+        float yawMod = (float) attachmentRecoilModifier.right().eval(aimingRecoilModifier);
+        pitchSplineFunction = gunData.getRecoil().genPitchSplineFunction(pitchMod);
+        yawSplineFunction = gunData.getRecoil().genYawSplineFunction(yawMod);
+        shootTimeStamp = GunTime.nowMillis();
+        xRotO = 0;
+        yRotO = 0;
+        if (RenderConfig.RECOIL_DEBUG.get()) {
+            debugLogRecoilFire(player, aimingRecoilModifier, pitchMod, yawMod, pitchSplineFunction, yawSplineFunction);
         }
     }
 
@@ -224,17 +241,73 @@ public class CameraSetupEvent {
         if (player == null) {
             return;
         }
-        long timeTotal = System.currentTimeMillis() - shootTimeStamp;
+        long timeTotal = GunTime.nowMillis() - shootTimeStamp;
+        double dPitch = 0;
+        double dYaw = 0;
         if (pitchSplineFunction != null && pitchSplineFunction.isValidPoint(timeTotal)) {
             double value = pitchSplineFunction.value(timeTotal);
-            player.setXRot(player.getXRot() - (float) (value - xRotO));
+            dPitch = value - xRotO;
+            player.setXRot(player.getXRot() - (float) dPitch);
             xRotO = value;
         }
         if (yawSplineFunction != null && yawSplineFunction.isValidPoint(timeTotal)) {
             double value = yawSplineFunction.value(timeTotal);
-            player.setYRot(player.getYRot() - (float) (value - yRotO));
+            dYaw = value - yRotO;
+            player.setYRot(player.getYRot() - (float) dYaw);
             yRotO = value;
         }
+        // 【RecoilDebug 探针】后坐力对玩家视角的逐帧增量。
+        // 叠加对象是玩家自身 xRot/yRot（自身坐标系，与朝向无关），
+        // 故本通道理论上不可能产生随朝向的固定偏置——若下轮日志在
+        // 对角朝向上量出系统性 dYaw 偏移，说明还有第三处在写玩家旋转。
+        if (RenderConfig.RECOIL_DEBUG.get() && (dPitch != 0 || dYaw != 0)) {
+            GunMod.LOGGER.info(
+                    "[TACZ RecoilDebug] apply t={} dPitch={} dYaw={} player=({},{}) camEvent=({},{}) shader={} irisHand={}",
+                    timeTotal, fmt(dPitch), fmt(dYaw),
+                    fmt(player.getXRot()), fmt(Mth.wrapDegrees(player.getYRot())),
+                    fmt(event.getYaw()), fmt(event.getPitch()),
+                    com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack(),
+                    com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive());
+        }
+    }
+
+    /**
+     * 【RecoilDebug 探针】开火瞬间记录两条后坐力样条在固定时刻的包络值，
+     * 连同配件修正、瞄准进度修正与玩家朝向。多发射击后按朝向分桶对比
+     * yawEnv 均值，直接判定「yaw 后坐力本身是否带系统性偏置」。
+     */
+    private static void debugLogRecoilFire(LocalPlayer player, float aimingRecoilModifier, float pitchMod, float yawMod,
+                                           @javax.annotation.Nullable PolynomialSplineFunction pitchSpline,
+                                           @javax.annotation.Nullable PolynomialSplineFunction yawSpline) {
+        try {
+            GunMod.LOGGER.info(
+                    "[TACZ RecoilDebug] fire facing=({},{}) aimMod={} pmod={} ymod={} pitchEnv=[{}] yawEnv=[{}] shader={} irisHand={}",
+                    fmt(player.getXRot()), fmt(Mth.wrapDegrees(player.getYRot())),
+                    fmt(aimingRecoilModifier), fmt(pitchMod), fmt(yawMod),
+                    sampleSpline(pitchSpline), sampleSpline(yawSpline),
+                    com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack(),
+                    com.tacz.guns.compat.iris.IrisCompat.isHandRendererActive());
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static String sampleSpline(@javax.annotation.Nullable PolynomialSplineFunction spline) {
+        if (spline == null) {
+            return "null";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < RECOIL_DEBUG_SAMPLE_MS.length; i++) {
+            if (i > 0) {
+                sb.append(", ");
+            }
+            double t = RECOIL_DEBUG_SAMPLE_MS[i];
+            sb.append(fmt(spline.isValidPoint(t) ? spline.value(t) : Double.NaN));
+        }
+        return sb.toString();
+    }
+
+    private static String fmt(double v) {
+        return String.format(Locale.ROOT, "%+.4f", v);
     }
 
     public static void onComputeMovementFov(ComputeFovModifierEvent event) {
@@ -250,5 +323,13 @@ public class CameraSetupEvent {
             }
             event.setNewFovModifier(player.isSprinting() ? 1.15f * f : f);
         }
+    }
+
+    public static void resetTimestamp() {
+        shootTimeStamp = -1;
+        pitchSplineFunction = null;
+        yawSplineFunction = null;
+        xRotO = 0;
+        yRotO = 0;
     }
 }

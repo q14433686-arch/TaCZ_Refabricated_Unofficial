@@ -1,0 +1,17 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 16
+    },
+    {
+      "item": "#c:ingots/gold",
+      "count": 2
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:shotgun_extended_mag_2"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

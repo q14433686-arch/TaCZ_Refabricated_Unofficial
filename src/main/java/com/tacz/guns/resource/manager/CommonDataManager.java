@@ -42,9 +42,11 @@ public class CommonDataManager<T> extends JsonDataManager<T> implements INetwork
         super.apply(pObject, pResourceManager, pProfiler);
 
         ImmutableMap.Builder<Identifier, String> builder = ImmutableMap.builder();
-        pObject.forEach((id, element) -> builder.put(id, element.toString()));
+        pObject.forEach((id, element) -> builder.put(id, toNetwork(id, element)));
         this.networkCache = builder.build();
     }
+
+    protected String toNetwork(Identifier id, JsonElement element) { return element.toString(); }
 
     public void clear() {
         this.dataMap.clear();

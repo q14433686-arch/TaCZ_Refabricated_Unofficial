@@ -1,0 +1,29 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 98
+    },
+    {
+      "item": "#c:ingots/gold",
+      "count": 18
+    },
+    {
+      "item": "#c:gems/diamond",
+      "count": 3
+    },
+    {
+      "item": "#c:rods/blaze",
+      "count": 5
+    },
+    {
+      "item": "#c:gems/lapis",
+      "count": 2
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:svd"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

@@ -1,0 +1,25 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 12
+    },
+    {
+      "item": "#c:ingots/gold",
+      "count": 5
+    },
+    {
+      "item": "#c:dusts/redstone",
+      "count": 6
+    },
+    {
+      "item": "#c:glass_blocks",
+      "count": 4
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:sight_552"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

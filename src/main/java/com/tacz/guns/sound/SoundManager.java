@@ -68,6 +68,7 @@ public class SoundManager {
     /**
      * 拉栓声音
      */
+    public static final String UNLOAD_SOUND = "unload";
     public static String BOLT_SOUND = "bolt";
     /**
      * 切换开关模式的声音

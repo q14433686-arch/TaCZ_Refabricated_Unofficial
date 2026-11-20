@@ -297,6 +297,8 @@ processResources {
 
     from(zipTree(bundledSourcesAndResources)) {
         exclude "META-INF/**"
+        // The pinned 1.2 catalog is complete; never revive retired recipes or audio from the old bundle.
+        exclude "assets/tacz/custom/tacz_default_gun/**"
         exclude "**/*.java"
         exclude "fabric.mod.json"
         exclude "*.mixins.json"

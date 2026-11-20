@@ -79,6 +79,8 @@ public interface IGunOperator {
      */
     void reload();
 
+    void unloadAmmo();
+
     /**
      * 服务端取消换弹逻辑
      */

@@ -1,0 +1,14 @@
+[
+  "tacz:oem_side_cover",
+  "tacz:oem_grip_cover",
+  "#tacz:scope",
+  "#tacz:muzzle",
+  "#tacz:extended_mag",
+  "#tacz:stock",
+  "#tacz:grip",
+  "#tacz:ammo_mod",
+  "#tacz:ar_laser",
+  "#tacz:pistol_laser",
+  "#tacz:adapter/pistol_riser",
+  "#tacz:adapter/rail_mid"
+]

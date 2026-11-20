@@ -11,10 +11,16 @@ public class LoadingConfigEvent {
      * 客户端和服务端启动时，会触发此事件
      */
     public static void onLoadingConfig(ModConfig config) {
+        // FCAP 保存断桥修复：记下 ModConfig 实例，Cloth 保存后好调 getLoadedConfig().save()。
+        com.tacz.guns.config.ConfigPersist.track(config);
+        if (config.getType() == ModConfig.Type.COMMON) {
+            com.tacz.guns.config.util.AmmoBlockConfigRead.init();
+        }
         String fileName = config.getFileName();
         if (CONFIG_NAME.equals(fileName)) {
             HeadShotAABBConfigRead.init();
             InteractKeyConfigRead.init();
+            com.tacz.guns.config.util.GunPegboardItemConfigRead.init();
         }
     }
 
@@ -22,10 +28,15 @@ public class LoadingConfigEvent {
      * 玩家进入服务端，或者服务端自动重置配置时，会触发此方法
      */
     public static void onReloadingConfig(ModConfig config) {
+        com.tacz.guns.config.ConfigPersist.track(config);
+        if (config.getType() == ModConfig.Type.COMMON) {
+            com.tacz.guns.config.util.AmmoBlockConfigRead.init();
+        }
         String fileName = config.getFileName();
         if (CONFIG_NAME.equals(fileName)) {
             HeadShotAABBConfigRead.init();
             InteractKeyConfigRead.init();
+            com.tacz.guns.config.util.GunPegboardItemConfigRead.init();
 //            if (FabricLoader.getInstance().getEnvironmentType()== EnvType.CLIENT) ClientGunPackDownloadManager::downloadClientGunPack;
         }
     }

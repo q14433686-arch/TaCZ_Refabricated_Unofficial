@@ -1,5 +1,6 @@
 package com.tacz.guns.init;
 
+import com.tacz.guns.crafting.AmmoStorageUpgradeRecipe;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.crafting.GunSmithTableSerializer;
@@ -16,6 +17,7 @@ public class ModRecipe {
     }
 
     public static RecipeSerializer<GunSmithTableRecipe> GUN_SMITH_TABLE_RECIPE_SERIALIZER = registerSerializer("gun_smith_table_crafting", GunSmithTableSerializer.create());
+    public static final RecipeSerializer<AmmoStorageUpgradeRecipe> AMMO_STORAGE_UPGRADE = registerSerializer("ammo_storage_upgrade", AmmoStorageUpgradeRecipe.serializer());
     public static RecipeType<GunSmithTableRecipe> GUN_SMITH_TABLE_CRAFTING = registerRecipe("gun_smith_table_crafting", new RecipeType<>() {
         @Override
         public String toString() {

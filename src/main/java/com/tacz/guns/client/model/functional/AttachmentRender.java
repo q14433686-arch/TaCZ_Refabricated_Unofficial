@@ -11,6 +11,9 @@ import com.tacz.guns.client.model.IFunctionalSubmitter;
 import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.renderer.item.AttachmentItemRenderer;
 import com.tacz.guns.util.RenderDistance;
+import com.tacz.guns.util.SlotAdapterHelper;
+import com.tacz.guns.client.resource.index.RefitOptionModel;
+import org.joml.Vector3f;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -47,9 +50,27 @@ public class AttachmentRender implements IFunctionalSubmitter {
         TimelessAPI.getClientAttachmentIndex(attachmentId).ifPresentOrElse(attachmentIndex -> {
             BedrockAttachmentModel model = attachmentIndex.getAttachmentModel();
             Identifier texture = attachmentIndex.getModelTexture();
+            var variant = TimelessAPI.getClientAttachmentVariantIndex(attachmentItem).orElse(null);
+            var adapterId = SlotAdapterHelper.getEffectiveSlotAdapter(gunItem, iAttachment.getType(attachmentItem), attachmentId);
+            if (adapterId != null) TimelessAPI.getClientSlotAdapterIndex(adapterId).ifPresent(adapter -> {
+                submitOption(adapter, ItemStack.EMPTY, gunItem, poseStack, transformType, collector, light, overlay);
+                applyMountOffset(poseStack, adapter.getMountOffset());
+            });
+            boolean replaced = false;
+            if (variant != null) {
+                if (variant.isOverlayMode()) {
+                    submitOption(variant, attachmentItem, gunItem, poseStack, transformType, collector, light, overlay);
+                    applyMountOffset(poseStack, variant.getMountOffset());
+                } else if (variant.getAttachmentModel() != null && variant.getModelTexture() != null) {
+                    model = variant.getAttachmentModel();
+                    texture = variant.getModelTexture();
+                    applyMountOffset(poseStack, variant.getMountOffset());
+                    replaced = true;
+                }
+            }
             if (model != null && texture != null) {
                 Pair<BedrockAttachmentModel, Identifier> lodModel = attachmentIndex.getLodModel();
-                if (lodModel != null && !RenderDistance.inRenderHighPolyModelDistance(poseStack) && !transformType.firstPerson()) {
+                if (!replaced && lodModel != null && !RenderDistance.inRenderHighPolyModelDistance(poseStack) && !transformType.firstPerson()) {
                     model = lodModel.getLeft();
                     texture = lodModel.getRight();
                 }
@@ -69,6 +90,22 @@ public class AttachmentRender implements IFunctionalSubmitter {
                         poseStack, buffer, light, overlay, 1.0F, 1.0F, 1.0F, 1.0F
                 )
         ));
+    }
+
+    private static void applyMountOffset(PoseStack pose, Vector3f offset) {
+        if (offset != null) pose.translate(offset.x / 16f, -offset.y / 16f, offset.z / 16f);
+    }
+
+    private static void submitOption(RefitOptionModel option, ItemStack part, ItemStack gun, PoseStack pose,
+                                     ItemDisplayContext context, SubmitNodeCollector collector, int light, int overlay) {
+        var model = option.getModel();
+        var texture = option.getModelTexture();
+        if (model == null || texture == null) return;
+        var body = com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.clipForViewmodel(
+                RenderTypes.entityCutout(texture), texture, context.firstPerson());
+        pose.pushPose();
+        model.submit(part, gun, pose, context, collector, body, texture, light, overlay);
+        pose.popPose();
     }
 
     @Override

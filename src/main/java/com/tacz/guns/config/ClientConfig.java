@@ -5,14 +5,19 @@ import com.tacz.guns.config.client.*;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 public class ClientConfig {
+    private static ForgeConfigSpec spec;
+    public static boolean isLoaded() { return spec != null && spec.isLoaded(); }
+
     public static ForgeConfigSpec init() {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
         KeyConfig.init(builder);
         RenderConfig.init(builder);
+        ViewTuningConfig.init(builder);
         ResourceConfig.init(builder);
         SoundConfig.init(builder);
         ZoomConfig.init(builder);
         MeshyConfig.init(builder);
-        return builder.build();
+        spec = builder.build();
+        return spec;
     }
 }

@@ -2,7 +2,6 @@ package cn.sh1rocu.tacz.compat.rei.category;
 
 import cn.sh1rocu.tacz.compat.rei.REIClientPlugin;
 import cn.sh1rocu.tacz.compat.rei.display.AmmoQueryDisplay;
-import com.tacz.guns.compat.recipeviewer.AmmoQueryEntry;
 import com.tacz.guns.init.ModCreativeTabs;
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
@@ -11,7 +10,6 @@ import me.shedaniel.rei.api.client.gui.widgets.Widget;
 import me.shedaniel.rei.api.client.gui.widgets.Widgets;
 import me.shedaniel.rei.api.client.registry.display.DisplayCategory;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
-import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -20,46 +18,44 @@ import net.minecraft.network.chat.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-/** REI counterpart of the built-in ammunition compatibility query. */
-public final class AmmoQueryCategory implements DisplayCategory<AmmoQueryDisplay> {
+public class AmmoQueryCategory implements DisplayCategory<AmmoQueryDisplay> {
     private static final Component TITLE = Component.translatable("jei.tacz.ammo_query.title");
+    private static final int WIDTH = 162;
+    private static final int COLUMNS = 9;
+    private final Renderer icon;
 
-    private final Renderer icon = EntryStacks.of(ModCreativeTabs.AMMO_TAB.getIconItem());
+    public AmmoQueryCategory() {
+        this.icon = EntryStacks.of(ModCreativeTabs.AMMO_TAB.getIconItem());
+    }
 
     @Override
     public List<Widget> setupDisplay(AmmoQueryDisplay display, Rectangle bounds) {
-        List<EntryIngredient> inputs = display.getInputEntries();
-        List<EntryIngredient> outputs = display.getOutputEntries();
         List<Widget> widgets = new ArrayList<>();
+        var entry = display.getEntry();
 
-        int startX = bounds.x + 5;
-        int startY = bounds.y + 5;
         widgets.add(Widgets.createRecipeBase(bounds));
-        widgets.add(Widgets.createSlot(new Point(startX + 72, startY))
-                .entries(outputs.getFirst())
-                .markOutput());
+        var inputs = display.getInputEntries();
+        int startX = bounds.x;
+        int startY = bounds.y;
 
-        int xOffset = 0;
-        int yOffset = 20;
-        int visibleCount = Math.min(inputs.size(), AmmoQueryEntry.MAX_GUN_SHOW_COUNT);
-        for (int i = 0; i < visibleCount; i++) {
-            int column = i % 9;
-            int row = i / 9;
-            xOffset = column * 18;
-            yOffset = 20 + row * 18;
-            widgets.add(Widgets.createSlot(new Point(startX + xOffset, startY + yOffset))
-                    .entries(inputs.get(i))
-                    .markInput());
+        // 弹药作为输出，从其 REI 配方页查询全部适用枪械。
+        widgets.add(Widgets.createSlot(new Point(startX + 73, startY + 1)).entries(display.getOutputEntries().getFirst()).markOutput());
+        for (int i = 0; i < entry.getGunStacks().size(); i++) {
+            int x = 1 + i % COLUMNS * 18;
+            int y = 35 + i / COLUMNS * 18;
+            widgets.add(Widgets.createSlot(new Point(startX + x, startY + y)).entries(inputs.get(i)).markInput());
         }
 
-        if (inputs.size() > AmmoQueryEntry.MAX_GUN_SHOW_COUNT) {
-            Font font = Minecraft.getInstance().font;
-            widgets.add(Widgets.createDrawableWidget((guiGraphics, mouseX, mouseY, delta) ->
-                    guiGraphics.drawString(font, Component.translatable("jei.tacz.ammo_query.more"),
-                            startX + 128, startY + 134, 0x555555, false)));
-            widgets.add(Widgets.createSlot(new Point(startX + xOffset + 18, startY + yOffset))
-                    .entries(inputs.getLast())
-                    .markInput());
+        Font font = Minecraft.getInstance().font;
+        Component gunsLabel = Component.translatable("jei.tacz.ammo_query.guns", entry.getTotalGunCount());
+        widgets.add(Widgets.createDrawableWidget((guiGraphics, mouseX, mouseY, delta) -> {
+            guiGraphics.drawString(font, gunsLabel, startX + (WIDTH - font.width(gunsLabel)) / 2, startY + 22, 0xFF555555, false);
+        }));
+        if (entry.getPageCount() > 1) {
+            Component page = Component.translatable("jei.tacz.ammo_query.page", entry.getPageNumber(), entry.getPageCount());
+            widgets.add(Widgets.createDrawableWidget((guiGraphics, mouseX, mouseY, delta) -> {
+                guiGraphics.drawString(font, page, startX + (WIDTH - font.width(page)) / 2, startY + 145, 0xFF555555, false);
+            }));
         }
 
         return widgets;
@@ -82,11 +78,11 @@ public final class AmmoQueryCategory implements DisplayCategory<AmmoQueryDisplay
 
     @Override
     public int getDisplayHeight() {
-        return 145;
+        return 156;
     }
 
     @Override
     public int getDisplayWidth(AmmoQueryDisplay display) {
-        return 170;
+        return WIDTH;
     }
 }

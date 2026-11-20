@@ -8,10 +8,7 @@ import cn.sh1rocu.tacz.compat.meshloader.core.PolyMeshModel;
 import cn.sh1rocu.tacz.compat.meshloader.core.PolyMeshSnapshot;
 import cn.sh1rocu.tacz.compat.meshloader.core.PolyMeshSupport;
 import cn.sh1rocu.tacz.compat.meshloader.render.PolyMeshGpuRenderer;
-import cn.sh1rocu.tacz.compat.meshloader.render.ScreenRenderTracker;
-import cn.sh1rocu.tacz.compat.meshloader.render.ShaderStateTracker;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.other.GunModelTypeManager;
 import com.tacz.guns.client.model.BedrockGunModel;
@@ -21,6 +18,7 @@ import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
 import com.tacz.guns.client.resource.pojo.model.BedrockVersion;
+import com.tacz.guns.util.RenderDistance;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -31,7 +29,6 @@ import org.joml.Matrix4f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,34 +39,28 @@ import java.util.Optional;
 /**
  * 支持 poly_mesh 的枪械模型。
  *
- * <h2>GPU 路径（第 1 步：无光影第一人称，见 {@link PolyMeshGpuRenderer}）</h2>
- * <p>{@code shouldSubmitGpu}=true 时 cutout 顶点常驻 GPU（骨骼本地系 + light 烘进顶点），
- * 每帧只登记「骨骼矩阵 + 纹理 + VBO」，绘制发生在手部 pass 的 RETURN 点。
- * translucent 骨骼不烘（混合顺序交给 collector），换弹 additional_magazine
- * 恒走 collector（矩阵语义不同且不是顶点热点）。</p>
- *
  * <h2>弹匣（关 PR #70 的教训）</h2>
  * 上游 TML 在 {@code loadPolyMesh} 之后把 {@code additional_magazine} 的
  * FunctionalRenderer 包一层：立方体走原 {@code IMirrorGeometry}，poly 在
  * {@code additional_magazine.visible} 时按该节点变换再画一遍 {@code magazine}。
  * 关 PR #70 没接这条链路，纯 mesh 枪的弹匣会丢。
  *
- * <p>本仓快照遍历器认 {@link IMirrorGeometry} 画立方体镜像。本类保留那条路径，
+ * <p>26.2 快照遍历器认 {@link IMirrorGeometry} 画立方体镜像。本类保留那条路径，
  * 再按原版 TML 在主 submit 里补 poly：
  * <ol>
  *   <li>exclude {@code additional_magazine} 子树，避免主遍历把它画在错误位置；</li>
  *   <li>{@code super.submit} 照常走立方体 + {@code IMirrorGeometry}；</li>
- *   <li>主 poly（含 {@code magazine}）走 collector；</li>
+ *   <li>主 poly（含 {@code magazine}）走 GPU（第一人称手部 pass、无光影）
+ *       或 collector（其余一切场景）；</li>
  *   <li>{@code additional_magazine.visible} 时在该节点变换下再提交 magazine /
  *       additional_magazine 的 poly（与上游 TML 的 {@code renderSubtreeDirect} 同构）。</li>
  * </ol>
  *
- * <h2>性能边界（如实声明，见 docs/MESH_LOADER.md）</h2>
- * <p>collector 路径每帧对每个可见 poly 顶点做一次 CPU 变换 + 逐顶点
- * VertexConsumer 调用。36 万顶点级高模在第一人称<b>仍然有帧率成本</b> ——
- * 第 0 步内置只保证「能用、不劣化无 mesh 场景、GUI/世界有预算闸门」；
- * O(顶点)→O(骨骼) 的 GPU 静态烘焙是第 1 步，见
- * docs/TML_GPU_FEASIBILITY_1211_20260831.md §5。</p>
+ * <h2>GPU 路径（O(顶点)→O(骨骼)，见 {@link PolyMeshGpuRenderer}）</h2>
+ * <p>{@code shouldSubmitGpu}=true 时顶点常驻 GPU（骨骼本地系 + light 烘进顶点），
+ * 每帧只登记「骨骼矩阵 + 纹理 + VBO」，绘制发生在手部 executeSolid 之后。
+ * translucent 骨骼不烘（混合顺序交给 collector 的排序），换弹 additional_magazine
+ * 恒走 collector（矩阵语义不同且不是顶点热点）。</p>
  *
  * <p>移植自 VellEagle/TacZMeshLoader 1.21.1_fabric (GPL-3.0)。</p>
  */
@@ -87,33 +78,23 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
     private final Map<String, PolyMeshGpuRenderer.BakedBone> bakedBones = new HashMap<>();
     private int bakedLightKey = -1;
     private int bakedGeneration = -1;
-    /**
-     * 这批 VBO 烘焙时用的顶点格式（{@link PolyMeshGpuRenderer#bakeFormat()}）。
-     * 光影激活时它是 Iris 的扩展实体格式，与 NEW_ENTITY 的 stride 不同，格式一变必须重烘。
-     */
-    private VertexFormat bakedFormat = null;
     private long lastRebakeMs = 0L;
     private boolean gpuBaked = false;
     /**
-     * 世界语境的烘焙缓存：量化光照档 → 该档的整套骨骼 VBO（access-order 当 LRU 用）。
+     * 世界语境的烘焙缓存：量化光照档 → 该档的整套骨骼 VBO。
      *
-     * <p>第一人称的单档缓存 {@link #bakedBones} 保持原样：手上只有一把枪、光照单值，
-     * 单档 + 1 秒节流已实测 PASS，没必要合并进 LRU 添变数。世界里同屏可能有几十把
-     * 不同光照的枪，单档缓存会互相挤掉、逐帧重烘（比 collector 还慢），所以必须多档共存。</p>
+     * <p>access-order 的 {@link LinkedHashMap} 当 LRU 用（上游 TML 的
+     * {@code PolyMesh#vboCache} 同构，它按未量化 light 缓存 8 档；我们先量化
+     * 再缓存，{@code MeshGpuLightCacheSize} 档就够覆盖同屏光照差异）。
+     * 逐出的 VBO 走 {@link PolyMeshGpuRenderer#releaseDeferred}（下一帧才 close）
+     * —— 本帧可能已有 WORLD_DRAWS 条目引用它，当场 close 是悬空引用。</p>
      *
-     * <p>逐出的 VBO 走 {@link PolyMeshGpuRenderer#releaseDeferred}（下一帧才 close）——
-     * 本帧的 WORLD_DRAWS 可能已经引用它（同型号两把枪一先一后 submit，前者登记、
-     * 后者触发逐出）。</p>
+     * <p>第一人称的 {@link #bakedBones} 单档缓存保持原样不动：手上只有一把枪、
+     * 光照单值，单档 + 1 秒节流已实测 PASS，没必要合并进 LRU 添变数。</p>
      */
     private final java.util.LinkedHashMap<Integer, Map<String, PolyMeshGpuRenderer.BakedBone>> worldBakedByLight =
             new java.util.LinkedHashMap<>(8, 0.75f, true);
-    private static String worldSkipReason = null;
-    private static int worldSkipCount = 0;
-
     private int worldBakedGeneration = -1;
-    private VertexFormat worldBakedFormat = null;
-    /** 世界烘焙日志只在前两次用 info（光照档来回切时逐次 info 会刷屏）。 */
-    private int worldBakeLogCount = 0;
     private boolean loggedFirstSubmit = false;
     private boolean loggedGuiVertexCap = false;
     private boolean loggedWorldVertexCap = false;
@@ -132,7 +113,7 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
     @Override
     public void submit(PoseStack poseStack, ItemStack gunItem, ItemDisplayContext transformType,
                        SubmitNodeCollector collector, RenderType renderType,
-                       @Nullable Identifier gunTexture, int light, int overlay) {
+                       @javax.annotation.Nullable Identifier gunTexture, int light, int overlay) {
         if (!hasPolyMesh()) {
             super.submit(poseStack, gunItem, transformType, collector, renderType, gunTexture, light, overlay);
             return;
@@ -162,36 +143,27 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             return;
         }
 
-        boolean gpu = PolyMeshGpuRenderer.shouldSubmitGpu() && ensureBaked(texture, light);
-        // 世界语境（第三人称手持 / 掉落物 / 展示框 / 展示台）的 GPU 路径。两级闸门：
-        // ① isWorldGpuContext —— 按 transformType 排除 GUI 系语境（热栏图标以 GUI 语境在
-        //    HUD 里提取，<b>没有 Screen</b>，ScreenRenderTracker 拦不住，只能按语境挡；
-        //    GUI 的 pose 带正交投影，落进世界表必画错）；
-        // ② PolyMeshGpuRenderer.shouldSubmitGpuWorld —— 手部/Screen 提取/镜内/阴影/
-        //    光影未放行 逐个拒收，并要求世界 flush 钩子的存活证明。
+        // Opaque VBOs bypass the collector. Only the ghost takes the tinted CPU snapshot path.
+        boolean preview = collector instanceof com.tacz.guns.client.renderer.block.RackPreviewCollector;
+        boolean gpu = !preview && PolyMeshGpuRenderer.shouldSubmitGpu() && ensureBaked(texture, light);
+        // 世界语境（第三人称/掉落物/展示框/展示台）的 GPU 路径。两级闸门：
+        // ① isWorldGpuContext —— 按 transformType 排除 GUI 系语境。热栏图标
+        //    以 GUI 语境在 HUD 提取（没有 Screen！ScreenRenderTracker 拦不住），
+        //    带着 GUI 投影的 pose 落进世界表就是关 PR #33 的「枪画进世界」；
+        // ② shouldSubmitGpuWorld —— Screen 提取窗口/镜内/阴影/手部（提交侧防泄漏）。
         Map<String, PolyMeshGpuRenderer.BakedBone> worldBaked = null;
-        if (!gpu && isWorldGpuContext(transformType)) {
-            if (PolyMeshGpuRenderer.shouldSubmitGpuWorld()) {
-                worldBaked = ensureWorldBaked(light);
-                if (worldBaked == null && worldBakedByLight.isEmpty()) {
-                    noteWorldSkip("bake refused: per-frame bake budget exhausted, or the bake failed"
-                            + " for the current vertex format (see the earlier [TacZMeshLoader] lines)");
-                }
-            } else if (worldBakedByLight.isEmpty()) {
-                // 门闸拒收本来是静默的（正确行为，但现场不留痕迹），这里补一行原因。
-                String blocker = PolyMeshGpuRenderer.worldSubmitBlocker();
-                noteWorldSkip(blocker != null ? blocker : "world gate closed");
-            }
+        if (!gpu && !preview && isWorldGpuContext(transformType) && PolyMeshGpuRenderer.shouldSubmitGpuWorld()) {
+            worldBaked = ensureWorldBaked(light);
         }
 
-        // 顶点预算只保护【collector 路径】—— 它防的是 O(顶点) 的 CPU 提交成本。GPU 路径
-        // 每帧只传 O(骨骼) 个矩阵，预算对它没有保护对象；反过来，若在这里拦掉 GPU，
-        // 「多人一堆高模枪」根本没解决。烘焙失败/额度耗尽回退 collector 时预算照常生效
-        // （那才是它该保护的场景）。第一人称从不吃预算（原语义不变）。
+        // 顶点预算只保护【collector 路径】—— 它防的是 O(顶点) 的 CPU 提交成本。
+        // GPU 路径每帧只传 O(骨骼) 个矩阵，预算对它没有保护对象；反过来，
+        // 预算若在这里拦掉 GPU 路径，16 格外的高模枪照旧整层消失，
+        // 「多人一堆高模枪」的问题就没解决。烘焙失败/额度耗尽回退 collector 时，
+        // 预算恢复生效（正是它该保护的场景）。第一人称从不受预算限制（原语义）。
         if (!gpu && worldBaked == null && !withinContextBudget(transformType, poseStack)) {
             return;
         }
-
         if (!loggedFirstSubmit) {
             loggedFirstSubmit = true;
             LOGGER.info("[TacZMeshLoader] poly submit: bones={} verts={} gpu={} gpuWorld={} firstPerson={} texture={}",
@@ -220,9 +192,9 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             PolyMeshSnapshot translucentOnly = polyMeshModel.capture(poseStack, light, this::isGpuBone);
             submitPolyMeshTranslucent(translucentOnly, collector, texture, overlay);
         } else if (worldBaked != null) {
-            // 世界 GPU：与手部同构 —— 每骨骼一条「pose + VBO」进世界表，帧末在世界那次
-            // feature flush 后统一绘制。同型号多把枪共享同一模型实例 = 共享同一套 VBO，
-            // 各自登记各自的骨骼 pose（pose 已含相机相对平移，见 EntityRenderDispatcher）。
+            // 世界 GPU：与手部同构 —— 每骨骼一条「矩阵 + VBO」进世界表，
+            // 帧末在主世界那次 renderAllFeatures 的 executeSolid 之后统一绘制。
+            // 同型号多把枪共享本模型实例 = 共享同一套 VBO，各自登记各自的矩阵。
             final Map<String, PolyMeshGpuRenderer.BakedBone> baked = worldBaked;
             polyMeshModel.visitBones(poseStack, true, (boneName, bonePose) -> {
                 if (polyMeshModel.isTranslucentBone(boneName)) {
@@ -245,254 +217,14 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
     }
 
     /**
-     * 这个 transformType 是不是「世界 GPU 表」可以收的语境。
-     *
-     * <ul>
-     *   <li>{@code GUI} / {@code GUI_LEFTHAND} / {@code GUI_RIGHTHAND} / {@code FIXED_GUI}*
-     *       一律不收 —— 它们带正交投影的 pose；</li>
-     *   <li>{@code FIRST_PERSON} 系列永远轮不到这里（手部 pass 的 submit 由
-     *       {@code shouldSubmitGpuWorld} 的 inHandPass 闸门拒收），显式排除是防「第三人称
-     *       视角下手里那把枪」被两个语境各登记一次；</li>
-     *   <li>{@code FIXED} / {@code HEAD} 是双面语境（世界展示框/雕像 vs 枪匠桌 GUI 预览）：
-     *       Screen 内的预览已被 {@code ScreenRenderTracker} 拦，这里再按
-     *       {@code com.tacz.guns.util.RenderDistance.isGuiRender()}（枪匠桌的 100ms
-     *       标记）补一道 ——
-     *       代价只是「枪匠桌开着的瞬间世界雕像回退 collector」，比反向泄漏便宜得多。</li>
-     * </ul>
-     */
-    private static boolean isWorldGpuContext(ItemDisplayContext transformType) {
-        if (transformType == null || transformType == ItemDisplayContext.GUI) {
-            return false;
-        }
-        String name = transformType.name();
-        if (name.startsWith("GUI") || name.startsWith("FIXED_GUI")) {
-            return false;
-        }
-        if (transformType == ItemDisplayContext.FIXED || transformType == ItemDisplayContext.HEAD) {
-            return !com.tacz.guns.util.RenderDistance.isGuiRender();
-        }
-        return !transformType.firstPerson();
-    }
-
-    /** 该骨骼的 cutout 是否已由 GPU 覆盖（capture 时跳过，避免画两遍）。 */
-    private boolean isGpuBone(String boneName) {
-        return bakedBones.containsKey(boneName) && !polyMeshModel.isTranslucentBone(boneName);
-    }
-
-    private void submitPolyMeshTranslucent(PolyMeshSnapshot snapshot, SubmitNodeCollector collector,
-                                           Identifier texture, int overlay) {
-        if (!snapshot.hasTranslucent()) {
-            return;
-        }
-        collector.submitCustomGeometry(new PoseStack(), RenderTypes.entityTranslucent(texture),
-                (entryPose, consumer) -> snapshot.writeTranslucent(consumer, overlay));
-    }
-
-    /**
-     * 确保当前光照档的骨骼 VBO 已就绪。
-     *
-     * <p>光照被 {@link PolyMeshGpuRenderer#quantizeLight} 量化成 4 级档位烘进顶点；
-     * 跨档才重烘，且有 1 秒节流。illuminated 骨骼的光照值走
-     * {@link PolyRenderPolicy#illuminatedLight(int)}，与 collector 语义一致：无光影时恒
-     * FULL_BRIGHT，装光影包时 sky 换成环境真值（光影状态翻转本来就会让烘焙世代失效重烘，
-     * 见 {@code ShaderStateTracker}，所以这里不需要额外失效逻辑）。</p>
-     */
-    private boolean ensureBaked(Identifier texture, int currentLight) {
-        if (polyMeshModel == null) {
-            return false;
-        }
-        int lightKey = PolyMeshGpuRenderer.quantizeLight(currentLight);
-        int generation = PolyMeshGpuRenderer.getBakeGeneration();
-        VertexFormat bakeFormat = PolyMeshGpuRenderer.bakeFormat();
-        if (gpuBaked) {
-            if (generation != bakedGeneration || bakeFormat != bakedFormat) {
-                // 光影包开关翻转、或 pass 实际消费的顶点格式变了（Iris 会在光影激活时把
-                // NEW_ENTITY 换成扩展实体格式）：旧 VBO 按新 stride 解读就是模型拉伸，
-                // 必须立即重烘，不受 1 秒光照节流约束。
-                releaseBaked();
-            } else if (lightKey == bakedLightKey) {
-                return true;
-            } else {
-                long now = System.currentTimeMillis();
-                if (now - lastRebakeMs < 1000L) {
-                    // 节流窗口内先用旧光照档画，避免闪烁边界上逐帧重烘。
-                    return true;
-                }
-                releaseBaked();
-            }
-        }
-        boolean allOk = true;
-        for (Map.Entry<String, List<PolyMesh>> entry : polyMeshModel.getMeshMap().entrySet()) {
-            String boneName = entry.getKey();
-            if (polyMeshModel.isTranslucentBone(boneName)) {
-                continue;
-            }
-            // 与 collector 同源：装了光影包时自发光骨骼的 sky 用环境真值
-            // （PolyRenderPolicy#illuminatedLight），否则光影包会读成「永远晒得到太阳月亮」
-            int boneLight = polyMeshModel.isIlluminatedBone(boneName)
-                    ? PolyRenderPolicy.illuminatedLight(lightKey) : lightKey;
-            PolyMeshGpuRenderer.BakedBone baked = PolyMeshGpuRenderer.bakeBone(entry.getValue(), boneLight, bakeFormat);
-            if (baked == null) {
-                allOk = false;
-                continue;
-            }
-            bakedBones.put(boneName, baked);
-        }
-        gpuBaked = allOk && !bakedBones.isEmpty();
-        if (gpuBaked) {
-            bakedLightKey = lightKey;
-            bakedGeneration = generation;
-            bakedFormat = bakeFormat;
-            lastRebakeMs = System.currentTimeMillis();
-            LOGGER.info("[TacZMeshLoader] GPU-baked {} bones ({} vertices) for {} at quantized light {}",
-                    bakedBones.size(), polyMeshModel.getTotalVertexCount(), texture,
-                    Integer.toHexString(lightKey));
-        } else {
-            // 部分失败宁可整体回 collector：半 GPU 半 collector 的 cutout 集合难以对账。
-            releaseBaked();
-        }
-        return gpuBaked;
-    }
-
-    /**
-     * 世界语境版 {@link #ensureBaked}：按量化光照档 LRU 缓存整套骨骼 VBO。
-     *
-     * <p>与第一人称单档缓存的三点差异：</p>
-     * <ol>
-     *   <li><b>多档共存</b>：同屏的掉落枪 / 其他玩家光照各不相同，单档会互相挤掉并逐帧
-     *       重烘；LRU 容量 {@code MeshGpuLightCacheSize}（默认 4），量化到 4 级步进后
-     *       同屏超过 4 档的场景极罕见；</li>
-     *   <li><b>烘焙额度</b>：{@link PolyMeshGpuRenderer#tryReserveBake} 限制每帧新烘焙次数
-     *       —— 光照档数超过 LRU 容量的病理场景下，宁可让部分枪回退 collector 一帧，
-     *       也不许「逐出-重烘」逐帧打摆；</li>
-     *   <li><b>延迟释放</b>：逐出的 VBO 交 {@link PolyMeshGpuRenderer#releaseDeferred}
-     *       下一帧才 close（本帧 WORLD_DRAWS 可能已引用它）。</li>
-     * </ol>
-     *
-     * @return 该光照档的骨骼 VBO 表；无法就绪（额度耗尽 / 烘焙失败）返回 null，调用方回退 collector。
-     */
-    @Nullable
-    /**
-     * 「世界 GPU 被拒」的一次性原因日志：同一原因只记一次，原因切换时补一行累计次数。
-     *
-     * <p>为什么要有：{@code shouldSubmitGpuWorld()} 静默回退 collector 是<b>正确</b>的
-     * （宁可不优化也不能画错），但它让「光影下世界路径怎么没生效」这种问题在 latest.log 里
-     * 一个字都不留，只能靠加日志复现。放在静态字段上 = 全模型共用一条，不会每把枪各刷一行。
-     * 级别用 INFO：既不该被当成错误（多半是配置/语境使然），又默认可见。</p>
-     */
-    private static void noteWorldSkip(String reason) {
-        if (reason.equals(worldSkipReason)) {
-            worldSkipCount++;
-            return;
-        }
-        if (worldSkipReason != null) {
-            LOGGER.info("[TacZMeshLoader] previous GPU world-submit refusal \"{}\" lasted {} submission(s)",
-                    worldSkipReason, worldSkipCount);
-        }
-        worldSkipReason = reason;
-        worldSkipCount = 1;
-        LOGGER.info("[TacZMeshLoader] GPU world submit refused: {} (mesh guns keep the collector path)"
-                + " -- not an error unless you expected the world GPU path", reason);
-    }
-
-    private Map<String, PolyMeshGpuRenderer.BakedBone> ensureWorldBaked(int currentLight) {
-        if (polyMeshModel == null) {
-            return null;
-        }
-        int generation = PolyMeshGpuRenderer.getBakeGeneration();
-        VertexFormat bakeFormat = PolyMeshGpuRenderer.bakeFormat();
-        if (generation != worldBakedGeneration || bakeFormat != worldBakedFormat) {
-            // 光影包开关翻转、或 pass 消费的顶点格式变了：所有档位的 buffer 布局一起作废，
-            // 与第一人称 bakedGeneration 同一根因（按错 stride 解读就是模型拉伸）。
-            releaseWorldBaked();
-            worldBakedGeneration = generation;
-            worldBakedFormat = bakeFormat;
-        }
-        int lightKey = PolyMeshGpuRenderer.quantizeLight(currentLight);
-        Map<String, PolyMeshGpuRenderer.BakedBone> cached = worldBakedByLight.get(lightKey);
-        if (cached != null) {
-            return cached;
-        }
-        int cap = Math.max(1, MeshyConfig.GPU_LIGHT_CACHE_SIZE.get());
-        if (!PolyMeshGpuRenderer.tryReserveBake(cap)) {
-            return null;
-        }
-        Map<String, PolyMeshGpuRenderer.BakedBone> bones = new HashMap<>();
-        boolean allOk = true;
-        for (Map.Entry<String, List<PolyMesh>> entry : polyMeshModel.getMeshMap().entrySet()) {
-            String boneName = entry.getKey();
-            if (polyMeshModel.isTranslucentBone(boneName)) {
-                continue;
-            }
-            // 与 collector 同源：装了光影包时自发光骨骼的 sky 用环境真值
-            // （PolyRenderPolicy#illuminatedLight），否则光影包会读成「永远晒得到太阳月亮」
-            int boneLight = polyMeshModel.isIlluminatedBone(boneName)
-                    ? PolyRenderPolicy.illuminatedLight(lightKey) : lightKey;
-            PolyMeshGpuRenderer.BakedBone baked =
-                    PolyMeshGpuRenderer.bakeBone(entry.getValue(), boneLight, bakeFormat);
-            if (baked == null) {
-                allOk = false;
-                break;
-            }
-            bones.put(boneName, baked);
-        }
-        if (!allOk || bones.isEmpty()) {
-            // 半套缓存没有意义（哪根骨骼该谁画对不上账），全释放、本档回 collector。
-            for (PolyMeshGpuRenderer.BakedBone baked : bones.values()) {
-                PolyMeshGpuRenderer.releaseDeferred(baked);
-            }
-            return null;
-        }
-        worldBakedByLight.put(lightKey, bones);
-        while (worldBakedByLight.size() > cap) {
-            // access-order LinkedHashMap：迭代器首位即最久未访问档。
-            var it = worldBakedByLight.entrySet().iterator();
-            Map<String, PolyMeshGpuRenderer.BakedBone> evicted = it.next().getValue();
-            it.remove();
-            for (PolyMeshGpuRenderer.BakedBone baked : evicted.values()) {
-                PolyMeshGpuRenderer.releaseDeferred(baked);
-            }
-        }
-        if (worldBakeLogCount < 2) {
-            worldBakeLogCount++;
-            LOGGER.info("[TacZMeshLoader] GPU world-baked {} bones ({} vertices) at quantized light {}"
-                            + " ({} level(s) cached, format={})",
-                    bones.size(), polyMeshModel.getTotalVertexCount(), Integer.toHexString(lightKey),
-                    worldBakedByLight.size(), bakeFormat);
-        } else {
-            LOGGER.debug("[TacZMeshLoader] GPU world-baked {} bones at quantized light {}",
-                    bones.size(), Integer.toHexString(lightKey));
-        }
-        return bones;
-    }
-
-    private void releaseWorldBaked() {
-        for (Map<String, PolyMeshGpuRenderer.BakedBone> level : worldBakedByLight.values()) {
-            for (PolyMeshGpuRenderer.BakedBone baked : level.values()) {
-                PolyMeshGpuRenderer.releaseDeferred(baked);
-            }
-        }
-        worldBakedByLight.clear();
-        worldBakedFormat = null;
-    }
-
-    private void releaseBaked() {
-        for (PolyMeshGpuRenderer.BakedBone baked : bakedBones.values()) {
-            baked.close();
-        }
-        bakedBones.clear();
-        gpuBaked = false;
-        bakedLightKey = -1;
-        bakedGeneration = -1;
-        bakedFormat = null;
-    }
-
-    /**
      * 换弹时留在枪上的那份弹匣。立方体已由 {@link IMirrorGeometry} 处理；
      * 这里只补 poly，且仅在 {@code additional_magazine.visible} 时画。
      *
      * <p>captureSubtree 的矩阵语义与上游 TML {@code renderSubtreeDirect} 一致：
      * 该节点及其祖先的变换先由调用方乘进 pose，根骨骼自身不再套变换。</p>
+     *
+     * <p><b>始终走 collector</b>：换弹弹匣不是 36 万顶点热点，且 mirrorRoot
+     * 的矩阵语义与 visitBones 不同 —— 硬套 GPU 路径会把枪树变换乘两遍。</p>
      */
     private void submitAdditionalMagazinePoly(PoseStack poseStack, SubmitNodeCollector collector,
                                               Identifier texture, int overlay, int light) {
@@ -524,18 +256,46 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
         }
     }
 
+    /** 该骨骼的 cutout 是否已由 GPU 覆盖（capture 时跳过，避免画两遍）。 */
+    private boolean isGpuBone(String boneName) {
+        return bakedBones.containsKey(boneName) && !polyMeshModel.isTranslucentBone(boneName);
+    }
+
+    /**
+     * 这个 transformType 是不是「世界 GPU 表」可以收的语境。
+     *
+     * <ul>
+     *   <li>{@code GUI} 一律不收 —— 热栏/背包图标在 HUD 提取阶段跑，
+     *       <b>没有 Screen</b>，{@code ScreenRenderTracker} 拦不住它，
+     *       只能按语境挡；GUI 的 pose 是正交投影，进世界表必画错；</li>
+     *   <li>{@code FIXED}/{@code HEAD} 是双面语境（世界展示框/雕像 vs 枪匠桌
+     *       GUI 预览）：Screen 内的预览已被 {@code ScreenRenderTracker} 拦，
+     *       这里再按 {@code RenderDistance.isGuiRender()}（枪匠桌标记的 100ms
+     *       时间戳）补一道 —— 代价只是「枪匠桌开着的瞬间世界雕像回退 collector」，
+     *       比反过来（GUI 预览泄漏进世界表）便宜得多；</li>
+     *   <li>第一人称语境永远轮不到这里 —— 手部 pass 里
+     *       {@code shouldSubmitGpuWorld} 的 isInHandPass 闸门直接拒收。</li>
+     * </ul>
+     */
+    private static boolean isWorldGpuContext(ItemDisplayContext transformType) {
+        if (transformType == null || transformType == ItemDisplayContext.GUI) {
+            return false;
+        }
+        if (transformType == ItemDisplayContext.FIXED || transformType == ItemDisplayContext.HEAD) {
+            return !RenderDistance.isGuiRender();
+        }
+        return !transformType.firstPerson();
+    }
+
     private boolean withinContextBudget(ItemDisplayContext transformType, PoseStack poseStack) {
         if (transformType == ItemDisplayContext.GUI
                 || transformType == ItemDisplayContext.FIXED
                 || transformType == ItemDisplayContext.HEAD) {
-            // FIXED/HEAD 是双面语境：既出现在枪匠桌 GUI 预览，也出现在世界里的
-            // 展示台雕像/物品展示框/背枪。只有世界侧允许按相机距离豁免——展示台上
-            // 的高模枪正是走 FIXED 被 GUI 预算拦掉的。这里用
-            // {@code ScreenRenderTracker.isRenderingScreen()} 精确判定「正在画 GUI
-            // 画面」，而非「菜单开着」——避免菜单开着时世界内无关 FIXED/HEAD 渲染
-            // 被误判进 GUI 预算档。
+            // FIXED/HEAD 是双面语境：既出现在枪匠桌 GUI 预览（100ms 时间戳内），
+            // 也出现在世界里的展示台雕像/物品展示框/背枪。只有世界侧允许按
+            // 相机距离豁免——展示台上的高模枪正是走 FIXED 被 GUI 预算拦掉的。
             if (transformType != ItemDisplayContext.GUI
-                    && !ScreenRenderTracker.isRenderingScreen()
+                    && !RenderDistance.isGuiRender()
                     && PolyRenderPolicy.withinFullDetailDistance(poseStack)) {
                 return true;
             }
@@ -573,6 +333,188 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
         return false;
     }
 
+    private void submitPolyMeshTranslucent(PolyMeshSnapshot snapshot, SubmitNodeCollector collector,
+                                           Identifier texture, int overlay) {
+        if (!snapshot.hasTranslucent()) {
+            return;
+        }
+        collector.submitCustomGeometry(new PoseStack(), RenderTypes.entityTranslucent(texture),
+                (entryPose, consumer) -> snapshot.writeTranslucent(consumer, overlay));
+    }
+
+    /**
+     * 确保当前光照档的骨骼 VBO 已就绪。
+     *
+     * <p>光照被 {@link PolyMeshGpuRenderer#quantizeLight} 量化成 4 级档位烘进顶点；
+     * 跨档才重烘，且有 1 秒节流 —— 光照剧变（进出洞穴）最多滞后 1 秒，
+     * 换来的是稳态零重烘。illuminated 骨骼恒烘 FULL_BRIGHT，与 collector 语义一致。</p>
+     */
+    private boolean ensureBaked(Identifier texture, int currentLight) {
+        if (polyMeshModel == null) {
+            return false;
+        }
+        int lightKey = PolyMeshGpuRenderer.quantizeLight(currentLight);
+        int generation = PolyMeshGpuRenderer.getBakeGeneration();
+        if (gpuBaked) {
+            if (generation != bakedGeneration) {
+                // 光影包开关翻转：Iris 激活与否改变实体顶点格式的写出布局，
+                // 旧 VBO 在新管线下属性错位（模型拉伸）。立即重烘，
+                // 不受下面的光照档 1 秒节流约束——旧 buffer 一帧都不能再用。
+                releaseBaked();
+            } else if (lightKey == bakedLightKey) {
+                return true;
+            } else {
+                long now = System.currentTimeMillis();
+                if (now - lastRebakeMs < 1000L) {
+                    // 节流窗口内先用旧光照档画，避免闪烁边界上逐帧重烘。
+                    return true;
+                }
+                releaseBaked();
+            }
+        }
+        boolean allOk = true;
+        for (Map.Entry<String, List<PolyMesh>> entry : polyMeshModel.getMeshMap().entrySet()) {
+            String boneName = entry.getKey();
+            if (polyMeshModel.isTranslucentBone(boneName)) {
+                continue;
+            }
+            // 光影下发光骨骼 sky 列走环境真值（IlluminatedRealSky，两层同一开关）。
+            // resolve 依赖 lightKey 的 sky 列 —— 烘焙缓存本就按 lightKey 分档，
+            // 每档各烘各的，缓存正确性不受影响。
+            int boneLight = polyMeshModel.isIlluminatedBone(boneName)
+                    ? com.tacz.guns.util.IlluminatedLights.resolve(lightKey) : lightKey;
+            PolyMeshGpuRenderer.BakedBone baked = PolyMeshGpuRenderer.bakeBone(entry.getValue(), boneLight);
+            if (baked == null) {
+                allOk = false;
+                continue;
+            }
+            bakedBones.put(boneName, baked);
+        }
+        gpuBaked = allOk && !bakedBones.isEmpty();
+        if (gpuBaked) {
+            bakedLightKey = lightKey;
+            bakedGeneration = generation;
+            lastRebakeMs = System.currentTimeMillis();
+            LOGGER.info("[TacZMeshLoader] GPU-baked {} bones ({} vertices) for {} at quantized light {}",
+                    bakedBones.size(), polyMeshModel.getTotalVertexCount(), texture,
+                    Integer.toHexString(lightKey));
+        } else {
+            // 部分失败宁可整体回 collector：半 GPU 半 collector 的 cutout 集合
+            // 难以对账（哪根骨骼谁画的说不清），干脆二选一。
+            releaseBaked();
+        }
+        return gpuBaked;
+    }
+
+    /**
+     * 世界语境版 {@link #ensureBaked}：按量化光照档 LRU 缓存整套骨骼 VBO。
+     *
+     * <p>与第一人称单档缓存的三点差异：</p>
+     * <ol>
+     *   <li><b>多档共存</b>：同屏的掉落枪/其他玩家光照各不相同，单档会互相
+     *       触发重烘打摆。LRU 容量 {@code MeshGpuLightCacheSize}（默认 4），
+     *       量化(4 级步进 ⇒ block/sky 各 4 档)后同屏超过 4 档的场景极罕见；</li>
+     *   <li><b>烘焙额度</b>：{@link PolyMeshGpuRenderer#tryReserveBake} 限制
+     *       每帧新烘焙次数 —— 光照档数超过 LRU 容量的病理场景下宁可让部分枪
+     *       回退 collector 一帧，也不许「逐出-重烘」逐帧打摆；</li>
+     *   <li><b>延迟释放</b>：逐出的 VBO 交 {@link PolyMeshGpuRenderer#releaseDeferred}
+     *       下一帧 close —— 本帧的 WORLD_DRAWS 可能已引用它（同型号两把枪
+     *       一先一后 submit，前者登记、后者触发逐出）。</li>
+     * </ol>
+     *
+     * @return 该光照档的骨骼 VBO 表；无法就绪（额度耗尽/烘焙失败）返回 null，
+     *         调用方回退 collector。
+     */
+    @javax.annotation.Nullable
+    private Map<String, PolyMeshGpuRenderer.BakedBone> ensureWorldBaked(int currentLight) {
+        if (polyMeshModel == null) {
+            return null;
+        }
+        int generation = PolyMeshGpuRenderer.getBakeGeneration();
+        if (generation != worldBakedGeneration) {
+            // 光影开关翻转：顶点布局随管线变化，全部档位一律作废
+            // （与第一人称 bakedGeneration 同一根因，见 PolyMeshGpuRenderer#bakeGeneration）。
+            releaseWorldBaked();
+            worldBakedGeneration = generation;
+        }
+        int lightKey = PolyMeshGpuRenderer.quantizeLight(currentLight);
+        Map<String, PolyMeshGpuRenderer.BakedBone> cached = worldBakedByLight.get(lightKey);
+        if (cached != null) {
+            return cached;
+        }
+        if (!PolyMeshGpuRenderer.tryReserveBake()) {
+            return null;
+        }
+        Map<String, PolyMeshGpuRenderer.BakedBone> bones = new HashMap<>();
+        boolean allOk = true;
+        for (Map.Entry<String, List<PolyMesh>> entry : polyMeshModel.getMeshMap().entrySet()) {
+            String boneName = entry.getKey();
+            if (polyMeshModel.isTranslucentBone(boneName)) {
+                continue;
+            }
+            // 光影下发光骨骼 sky 列走环境真值（IlluminatedRealSky，两层同一开关）。
+            // resolve 依赖 lightKey 的 sky 列 —— 烘焙缓存本就按 lightKey 分档，
+            // 每档各烘各的，缓存正确性不受影响。
+            int boneLight = polyMeshModel.isIlluminatedBone(boneName)
+                    ? com.tacz.guns.util.IlluminatedLights.resolve(lightKey) : lightKey;
+            PolyMeshGpuRenderer.BakedBone baked = PolyMeshGpuRenderer.bakeBone(entry.getValue(), boneLight);
+            if (baked == null) {
+                allOk = false;
+                break;
+            }
+            bones.put(boneName, baked);
+        }
+        if (!allOk || bones.isEmpty()) {
+            // 半套缓存没有意义（哪根骨骼谁画的对不上账），全释放、本档回 collector。
+            for (PolyMeshGpuRenderer.BakedBone baked : bones.values()) {
+                PolyMeshGpuRenderer.releaseDeferred(baked);
+            }
+            return null;
+        }
+        worldBakedByLight.put(lightKey, bones);
+        int cap = Math.max(1, MeshyConfig.GPU_LIGHT_CACHE_SIZE.get());
+        while (worldBakedByLight.size() > cap) {
+            // access-order LinkedHashMap：迭代器首位即最久未访问档。
+            var it = worldBakedByLight.entrySet().iterator();
+            Map<String, PolyMeshGpuRenderer.BakedBone> evicted = it.next().getValue();
+            it.remove();
+            for (PolyMeshGpuRenderer.BakedBone baked : evicted.values()) {
+                PolyMeshGpuRenderer.releaseDeferred(baked);
+            }
+        }
+        LOGGER.info("[TacZMeshLoader] GPU world-baked {} bones ({} vertices) at quantized light {} ({} levels cached)",
+                bones.size(), polyMeshModel.getTotalVertexCount(),
+                Integer.toHexString(lightKey), worldBakedByLight.size());
+        return bones;
+    }
+
+    private void releaseWorldBaked() {
+        for (Map<String, PolyMeshGpuRenderer.BakedBone> level : worldBakedByLight.values()) {
+            for (PolyMeshGpuRenderer.BakedBone baked : level.values()) {
+                PolyMeshGpuRenderer.releaseDeferred(baked);
+            }
+        }
+        worldBakedByLight.clear();
+    }
+
+    /** Called on the render thread when this display is retired; submitted draws may still reference its buffers. */
+    public void retire() {
+        releaseWorldBaked();
+        bakedBones.values().forEach(PolyMeshGpuRenderer::releaseDeferred);
+        bakedBones.clear();
+        gpuBaked = false;
+    }
+
+    private void releaseBaked() {
+        for (PolyMeshGpuRenderer.BakedBone baked : bakedBones.values()) {
+            baked.close();
+        }
+        bakedBones.clear();
+        gpuBaked = false;
+        bakedLightKey = -1;
+        bakedGeneration = -1;
+    }
+
     private void submitPolyMesh(PolyMeshSnapshot snapshot, SubmitNodeCollector collector,
                                 Identifier texture, int overlay) {
         if (snapshot.isEmpty()) {
@@ -607,10 +549,8 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
 
     public void loadPolyMesh(Identifier geoPath) {
         // 换模型必须先放掉旧 VBO —— 资源重载会走到这里，不放就泄漏 GPU 内存。
-        // 世界表走延迟释放池：本帧可能已有条目引用这些 buffer。
         releaseBaked();
         releaseWorldBaked();
-        worldBakedGeneration = -1;
         try {
             this.cachedRootChildren = null;
             this.polyMeshModel = PolyMeshSupport.load(geoPath, () -> {
@@ -623,10 +563,6 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             if (this.polyMeshModel == null) {
                 return;
             }
-            // 注册给 ShaderStateTracker（弱引用）：光影包开关翻转时失效 VBO。
-            // 第 0 步无 GPU 烘焙缓存，invalidateVboCache 为空操作；第 1 步 GPU
-            // 落地后这里就是 VBO 失效的完整链路。
-            ShaderStateTracker.registerModel(this.polyMeshModel);
             this.cachedTexture = null;
             this.cachedHasMagMesh = this.polyMeshModel.hasMeshInSubtree(GunModelConstant.MAG_NORMAL_NODE);
             this.cachedHasAdditionalMagMesh = this.polyMeshModel.hasMeshInSubtree(GunModelConstant.MAG_ADDITIONAL_NODE);

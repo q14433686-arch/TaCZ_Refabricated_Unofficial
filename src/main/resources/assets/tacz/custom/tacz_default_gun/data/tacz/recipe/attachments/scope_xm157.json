@@ -1,0 +1,37 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 24
+    },
+    {
+      "item": "#c:gems/amethyst",
+      "count": 12
+    },
+    {
+      "item": "#c:dusts/glowstone",
+      "count": 8
+    },
+    {
+      "item": "#c:dusts/redstone",
+      "count": 16
+    },
+    {
+      "item": "#c:gems/diamond",
+      "count": 3
+    },
+    {
+      "item": "minecraft:observer",
+      "count": 2
+    },
+    {
+      "item": "minecraft:ender_eye",
+      "count": 1
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:scope_xm157"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}
