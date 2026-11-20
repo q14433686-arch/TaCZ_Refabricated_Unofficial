@@ -7,7 +7,7 @@ import com.tacz.guns.client.particle.bedrock.particle.runtime.*;
 import com.tacz.guns.client.particle.bedrock.particle.render.BillboardHelper;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -79,8 +79,10 @@ public final class WorldEmitterManager {
             if(mc.level!=level){clear();level=mc.level;}
             if(mc.level!=null&&!mc.isPaused())tick();
         });
-        LevelRenderEvents.COLLECT_SUBMITS.register(ctx->{
-            if(Minecraft.getInstance().level==level)submit(ctx.submitNodeCollector(),ctx.levelState().cameraRenderState.pos);
+        // 26.2 的 LevelRenderEvents.COLLECT_SUBMITS → 1.21.11 Fabric API 的
+        // WorldRenderEvents.BEFORE_ENTITIES（主 pass 内、实体提交之前，同一个 collector）。
+        WorldRenderEvents.BEFORE_ENTITIES.register(ctx->{
+            if(Minecraft.getInstance().level==level)submit(ctx.commandQueue(),ctx.worldState().cameraRenderState.pos);
         });
     }
     public ParticleEmitterInstance addEmitter(ClientLevel world,Vec3 pos,Vec3 velocity,ParticleEffectDefinition definition){

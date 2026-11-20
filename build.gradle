@@ -270,6 +270,11 @@ dependencies {
     modCompileOnly "dev.architectury:architectury-fabric:${architectury_version}"
     modCompileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:$rei_version"
     modCompileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei_version"
+    // 1.2.0 的 ReiPackRefresh（枪包同步后替换本 mod 自己的 display，且必须等 REI 的空闲屏障）
+    // 用到 REI 的实现类：DisplayRegistryImpl#holder()/getDisplayOrigin()、ReloadManagerImpl。
+    // 这两个类在 1.21.11 的 REI（21.11.816）里就是这两个路径，只是 api-fabric 不含它们；
+    // 26.2 侧是直接依赖完整的 RoughlyEnoughItems-fabric。这里同样只加编译期整包依赖。
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-fabric:$rei_version") { transitive = false }
 
     // Spark
     // runtimeOnly "curse.maven:spark-361579:4738953"

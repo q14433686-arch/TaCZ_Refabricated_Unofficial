@@ -124,8 +124,9 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
         // 本轮不动 —— 残余至多是镜内仍见缩半的柔光，不属于回归风险。
         // （本 extract 在枪模 functional 遍历中被调用，时序晚于瞄具登记掩码，故此刻
         //   读 ScopeBodyRenderTypes.maskReadyForViewmodel 即可拿到当帧结果。）
-        boolean flashMaskReady = com.tacz.guns.client.render.scope.ScopeBodyRenderTypes
-                .maskReadyForViewmodel(context.displayContext() != null && context.displayContext().firstPerson());
+        // 1.21.11："掩码就绪" → "本帧这套视模要按孔径裁"（ScopeRenderTypes#shouldClipViewmodel）。
+        boolean flashMaskReady = (context.displayContext() == null || context.displayContext().firstPerson())
+                && com.tacz.guns.client.render.scope.ScopeRenderTypes.shouldClipViewmodel();
         // 【FlashDebug 探针】用户实测「枪身/配件已裁、火光仍在镜内」——时序桌面推演机制上
         // 成立，需要现场确认是哪个分量把开关打掉了。挂在 ScopeMaskDebug 下（同属掩码诊断），
         // 火光窗口内 1 秒节流，常态零噪音。
@@ -137,8 +138,10 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
                     context.displayContext(),
                     com.tacz.guns.config.client.RenderConfig.SCOPE_MASK_ENABLE.get(),
                     IrisCompat.shouldDisableScopeMaskUnderShaderPack(),
-                    com.tacz.guns.client.render.scope.ScopeMaskGeometry.isEmpty(),
-                    com.tacz.guns.client.render.scope.ScopeMaskTextureHandle.syncToMaskTarget());
+                    // 26.2 这里还会打"掩码几何为空/掩码目标同步"两项；本线的深度孔径路径没有
+                    // 那两张中间纹理，改用"本帧孔径周期是否有效"这一个等价判据。
+                    !com.tacz.guns.client.render.scope.ScopeDepthCopyState.isMaskCycleValid(),
+                    com.tacz.guns.client.render.scope.ScopeDepthCopyState.hasMaskCycleThisFrame());
         }
         RenderType flashQuadType = FlashMaterials.legacyStrip(muzzleFlash.getTexture(), flashMaskReady);
         RenderType glowType = FlashMaterials.swirl(muzzleFlash.getTexture(), flashMaskReady, flashMaskReady ? 0 : 1);

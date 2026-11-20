@@ -53,8 +53,11 @@ jobs:
           ./gradlew compileJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
 
       - name: Push compile log back via contents API
-        # 只有 arena/** 回推：主分支的提交历史必须干净
-        if: always() && startsWith(github.ref, 'refs/heads/arena/')
+        # 只有 arena/** 回推：主分支的提交历史必须干净。
+        # v5：PR 事件也回推（推到 PR 的 head 分支）。此前 PR 运行的日志只存在于
+        # Actions 的 blob 域，而受限沙箱下载不了它 —— 于是「PR 上打红叉」看得到、
+        # 「到底哪一行错」看不到。head 分支必须是 arena/**，否则跳过。
+        if: always() && (startsWith(github.ref, 'refs/heads/arena/') || (github.event_name == 'pull_request' && startsWith(github.event.pull_request.head.ref, 'arena/')))
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -82,7 +85,8 @@ jobs:
             mv /tmp/log-trimmed "$LOG"
           fi
           echo "== job status: ${{ job.status }} ==" >> "$LOG"
-          BRANCH="${{ github.ref_name }}"
+          # pull_request 的 ref_name 是 "126/merge"，必须是 head 分支才推得对。
+          BRANCH="${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}"
           SHA=$(gh api "repos/${{ github.repository }}/contents/$LOG?ref=$BRANCH" --jq .sha 2>/dev/null || true)
           ARGS=(-X PUT "repos/${{ github.repository }}/contents/$LOG"
                 -f message="ci-log: compile result (${{ job.status }}) for ${{ github.sha }}"

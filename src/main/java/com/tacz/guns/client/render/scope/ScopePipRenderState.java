@@ -326,6 +326,33 @@ public final class ScopePipRenderState {
         return 1.0f + (target - 1.0f) * Mth.clamp(aimingProgress, 0.0f, 1.0f);
     }
 
+    /**
+     * 26.2 {@code ScopePipRenderer#opaqueCameraMedium()}：眼睛泡在岩浆里时镜内画面是不透光介质，
+     * 终局覆盖层（分划板）不该被当成"最后画上去的前景"。
+     *
+     * <p>这条判据与渲染架构无关（只是相机介质判断），故按 26.2 原样保留；1.21.11 侧此前没有消费者，
+     * 随 1.2.0 的 {@code IReticleRenderer} 一起进入本线。</p>
+     */
+    public static boolean opaqueCameraMedium() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.player != null && mc.options.getCameraType().isFirstPerson()
+                && mc.player.isEyeInFluid(net.minecraft.tags.FluidTags.LAVA);
+    }
+
+    /**
+     * 26.2 {@code ScopePipRenderer#currentWorldZoom()} 在本线的等价入口：当帧世界实际放大的倍数。
+     *
+     * <p>26.2 的 {@code ImpactMarkerRender} 用 {@code currentDetailZoom() / currentWorldZoom()}
+     * 把测距仪落点预测框的斜率换算到"镜内像素"尺度；1.21.11 侧的同一对量分别是
+     * {@link #currentDetailZoom()}（总放大，含开镜进度插值）与
+     * {@link #worldZoomAtProgress(float)}（世界实际放大，含开镜进度插值），
+     * 所以这里只补一个取当帧开镜进度的公开包装，算式与 26.2 逐项一致。</p>
+     */
+    public static float currentWorldZoom(float partialTicks) {
+        Minecraft mc = Minecraft.getInstance();
+        return worldZoomAtProgress(currentAimingProgress(mc, partialTicks));
+    }
+
     private static float sharpness() {
         return RenderConfig.SCOPE_PIP_SHARPNESS == null
                 ? 0.0f

@@ -20,6 +20,10 @@ import java.util.List;
 public final class WorldFlashFrame {
     record Source(SpillField field, float strength, int rgb) {}
     private static final ThreadLocal<WorldFlashFrame> ACTIVE = new ThreadLocal<>();
+    /** 本帧写入的 lightCoords 还原动作（{@link #beginWorld}/{@link #endWorld} 成对使用）。 */
+    private static final ThreadLocal<List<Runnable>> RESTORE = new ThreadLocal<>();
+    /** 嵌套窗口（例如光影窄遍）里被我们盖住的上一层帧。 */
+    private static final ThreadLocal<WorldFlashFrame> PREVIOUS = new ThreadLocal<>();
     final ClientLevel level;
     final List<Source> sources;
     final List<SurfaceLights.Draw> draws;
@@ -30,25 +34,46 @@ public final class WorldFlashFrame {
     }
     public static @Nullable WorldFlashFrame current() { return ACTIVE.get(); }
 
-    public static void submitWorld(LevelRenderState state, Runnable original) {
+    /**
+     * 1.21.11 版提交窗口（替代 26.2 的 {@code LevelRenderer#submitFeatures} mixin）。
+     *
+     * <p>26.2 用 {@code @WrapMethod(LevelRenderer#submitFeatures)} 把"应用光照 → 原样提交 →
+     * 还原"包成一个同步窗口。1.21.11 <b>没有</b> {@code submitFeatures}：实体的提交发生在
+     * {@code addMainPass} 里的 lambda（{@code method_62214}）中，编译期名字是合成名，
+     * 本分支明令禁止 mixin 挂合成名（AGENTS.md §3）。因此这里改用接收端自己的公开事件：
+     * Fabric API 的 {@code WorldRenderEvents.BEFORE_ENTITIES}（主 pass 内、所有实体/方块实体
+     * 提交<b>之前</b>）与 {@code AFTER_ENTITIES}（本批绘制完成之后）。</p>
+     *
+     * <p>时序上等价：光照写进 {@code EntityRenderState#lightCoords} 后，提交会把它抄进
+     * {@code SubmitNodeStorage.ModelSubmit}，所以"提交后立刻还原"不影响本帧画出来的亮度
+     * —— 26.2 的窗口语义同样只保证"提交那一刻生效"。</p>
+     */
+    public static void beginWorld(LevelRenderState state) {
         var frame = SurfaceLights.prepare(state.cameraRenderState.pos);
         var previous = ACTIVE.get();
-        if (frame == null && previous == null) { original.run(); return; }
-        if (frame == null) ACTIVE.remove();
-        else ACTIVE.set(frame);
-        var restore = new ArrayList<Runnable>();
-        try {
-            // Secondary passes can reuse extracted states; restore all changes on exit.
-            if (frame != null) frame.applyLights(state, restore);
-            original.run();
-        } finally {
-            try {
-                for (var undo : restore) undo.run();
-            } finally {
-                if (previous == null) ACTIVE.remove();
-                else ACTIVE.set(previous);
-            }
+        if (frame == null) {
+            if (previous != null) ACTIVE.remove();
+            RESTORE.remove();
+            return;
         }
+        if (previous != null) PREVIOUS.set(previous);
+        ACTIVE.set(frame);
+        var restore = new ArrayList<Runnable>();
+        RESTORE.set(restore);
+        // 二次渲染/光影窄遍会复用同一批提取状态，退出时逐条还原。
+        frame.applyLights(state, restore);
+    }
+
+    public static void endWorld() {
+        var restore = RESTORE.get();
+        RESTORE.remove();
+        if (restore != null) {
+            for (var undo : restore) undo.run();
+        }
+        var previous = PREVIOUS.get();
+        PREVIOUS.remove();
+        if (previous == null) ACTIVE.remove();
+        else ACTIVE.set(previous);
     }
 
     private void applyLights(LevelRenderState state, List<Runnable> restore) {

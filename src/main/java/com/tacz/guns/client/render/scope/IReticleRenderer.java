@@ -93,9 +93,13 @@ public interface IReticleRenderer {
             // A collimated display is foreground ink. Subpixel markings also disappear in
             // a pack's hand/TAA pass on sights with no optical post-process of their own.
             // Reuse the real hand projection and inverse aperture, not an unmasked HUD cross.
-            if (maskActive && texture != null && !ScopePipRenderer.opaqueCameraMedium()
+            if (maskActive && texture != null && !ScopePipRenderState.opaqueCameraMedium()
                     && com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack()) {
-                ScopeFinalOverlayState.queueReticle(snapshot, ScopeBodyRenderTypes.finalReticle(texture, emissive));
+                // 26.2: ScopeBodyRenderTypes#finalReticle(texture, emissive)（Iris 终局覆盖层）。
+                // 1.21.11 的终局覆盖层把"蚀刻/发光"拆成两个类型，语义一一对应。
+                ScopeFinalOverlayState.queueReticle(snapshot, emissive
+                        ? ScopeRenderTypes.finalVisibleReticle(texture)
+                        : ScopeRenderTypes.finalEtchedReticle(texture));
                 return; // Do not bake display graphics into the scene subsequently thermally mapped.
             }
             collector.submitCustomGeometry(new PoseStack(), emissive ? illuminatedRenderType : baseRenderType,

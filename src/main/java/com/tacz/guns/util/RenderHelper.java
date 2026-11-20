@@ -3,7 +3,7 @@ package com.tacz.guns.util;
 import com.tacz.guns.client.render.ViewmodelFlash;
 import com.tacz.guns.client.render.FlashMaterials;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
+import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.compat.ar.ARCompat;
 import com.tacz.guns.compat.firstperson.FirstPersonAnimationCompat;
 import net.fabricmc.api.EnvType;
@@ -179,11 +179,12 @@ public final class RenderHelper {
      * 与枪身/火光同一失败哲学，最坏回到「镜内见手臂」的现状。</p>
      */
     private static SubmitNodeCollector wrapForScopeClip(SubmitNodeCollector real, Identifier skinTexture) {
-        if (!ScopeBodyRenderTypes.maskReadyForViewmodel(true)) {
+        // 1.21.11 的目镜遮罩走深度孔径："掩码就绪"等价于"本帧这套视模要按孔径裁"。
+        if (!ScopeRenderTypes.shouldClipViewmodel()) {
             return real;
         }
         final RenderType vanillaArm = net.minecraft.client.renderer.rendertype.RenderTypes.entityTranslucent(skinTexture);
-        final RenderType clippedArm = ScopeBodyRenderTypes.armClipped(skinTexture);
+        final RenderType clippedArm = ScopeRenderTypes.armClipped(skinTexture);
         return (SubmitNodeCollector) Proxy.newProxyInstance(
                 SubmitNodeCollector.class.getClassLoader(),
                 new Class<?>[]{SubmitNodeCollector.class},

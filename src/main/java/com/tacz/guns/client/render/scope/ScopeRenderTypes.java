@@ -41,6 +41,8 @@ public final class ScopeRenderTypes {
     private static final Map<Identifier, RenderType> FINAL_VISIBLE_RETICLES = new HashMap<>();
     private static final Map<Identifier, RenderType> FINAL_OCULAR_RINGS = new HashMap<>();
     private static final Map<Identifier, RenderType> VIEWMODEL_CUTOUT_TYPES = new HashMap<>();
+    /** 1.2.0 rangefinder impact marker: unmasked full-bright cutout (see {@link #emissive}). */
+    private static final Map<Identifier, RenderType> EMISSIVE_TYPES = new HashMap<>();
     private static final Map<Identifier, RenderType> FLASH_TRANSLUCENT_TYPES = new HashMap<>();
     private static final Map<Identifier, RenderType> FLASH_SWIRL_TYPES = new HashMap<>();
     /**
@@ -106,6 +108,9 @@ public final class ScopeRenderTypes {
      * world depth restored by cleanup.
      */
     private static final RenderPipeline VISIBLE_RETICLE_PIPELINE = createVisibleReticlePipeline();
+
+    /** Full-bright, unmasked cutout for the 1.2.0 rangefinder impact marker (see {@link #emissive}). */
+    private static final RenderPipeline EMISSIVE_PIPELINE = createEmissivePipeline();
 
     /**
      * R9 Iris-only foreground versions. They are submitted after world transparency, so their near
@@ -215,6 +220,39 @@ public final class ScopeRenderTypes {
 
     public static RenderType visibleReticle(Identifier texture) {
         return VISIBLE_RETICLES.computeIfAbsent(texture, ScopeRenderTypes::createVisibleReticleType);
+    }
+
+    /**
+     * 1.21.11 版 26.2 {@code ScopeBodyRenderTypes#emissive}：<b>不</b>参与目镜遮罩的全亮
+     * cutout 材质，供测距仪落点预测框（{@link com.tacz.guns.client.model.functional.ImpactMarkerRender}）
+     * 这种"镜内镜外都要画、且不能被方向光染色"的几何使用。
+     *
+     * <p>26.2 那里是自建管线（{@code ENTITY_SNIPPET} + {@code ALPHA_CUTOUT} + {@code EMISSIVE}
+     * + {@code NO_CARDINAL_LIGHTING} + 自写 {@code core/scope_body} 着色器）。本线不需要复制那套
+     * 着色器：1.21.11 的 {@code ENTITY_CUTOUT} 管线加同样的两个 define 就是逐状态等价的东西，
+     * 且它没有任何掩码采样器绑定，故不包 {@code DepthCopyRenderType}（不参与 depth-copy 边界）。</p>
+     */
+    public static RenderType emissive(Identifier texture) {
+        return EMISSIVE_TYPES.computeIfAbsent(texture, ScopeRenderTypes::createEmissiveType);
+    }
+
+    private static RenderType createEmissiveType(Identifier texture) {
+        RenderSetup setup = RenderSetup.builder(EMISSIVE_PIPELINE)
+                .withTexture("Sampler0", texture)
+                .useLightmap()
+                .useOverlay()
+                .createRenderSetup();
+        return RenderType.create("tacz_scope_emissive", setup);
+    }
+
+    private static RenderPipeline createEmissivePipeline() {
+        RenderPipeline.Builder builder = clonePipeline(
+                RenderPipelines.ENTITY_CUTOUT,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_emissive"));
+        // 与 26.2 自建管线同一组 define：满亮、跳过方向光。ENTITY_CUTOUT 自带 ALPHA_CUTOUT 0.1。
+        builder.withShaderDefine("EMISSIVE");
+        builder.withShaderDefine("NO_CARDINAL_LIGHTING");
+        return RenderPipelines.register(builder.build());
     }
 
     /**

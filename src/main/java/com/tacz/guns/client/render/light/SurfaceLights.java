@@ -5,7 +5,8 @@ import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.model.functional.MuzzleFlashRender;
 import com.tacz.guns.client.particle.NativeMuzzleEffects;
 import com.tacz.guns.client.render.FlashMaterials;
-import com.tacz.guns.client.render.scope.ScopePipRenderer;
+import com.tacz.guns.client.render.scope.ScopeDepthCopyState;
+import com.tacz.guns.client.render.scope.ScopePipRerender;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.config.client.RenderConfig;
@@ -87,7 +88,7 @@ public final class SurfaceLights {
 
     private static @Nullable LivingEntity holder(ItemDisplayContext ctx) {
         var mc = Minecraft.getInstance();
-        if (ctx == null || mc.player == null || mc.screen != null || IrisCompat.isRenderShadow() || ScopePipRenderer.isInsideScopeLevelRender()) return null;
+        if (ctx == null || mc.player == null || mc.screen != null || IrisCompat.isRenderShadow() || ScopePipRerender.isInsideScopeLevelRender()) return null;
         if (ctx.firstPerson()) return mc.options.getCameraType().isFirstPerson() && MuzzleFlashRender.isSelf ? mc.player : null;
         if (ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND || ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND) {
             if (GunItemRendererWrapper.IS_MAIN_HAND_SUBMIT && level.getEntity(NativeMuzzleEffects.currentOwner()) instanceof LivingEntity entity
@@ -107,7 +108,7 @@ public final class SurfaceLights {
         var holder = holder(ctx);
         var gun = IGun.getIGunOrNull(stack);
         if (holder == null || gun == null || IGun.getIGunOrNull(holder.getMainHandItem()) == null) return;
-        int id = holder.getId(); long frame = ScopePipRenderer.frameNumber();
+        int id = holder.getId(); long frame = ScopeDepthCopyState.frameNumber();
         if (anchors.size() >= MAX_ANCHORS && !anchors.containsKey(id)) {
             anchors.values().removeIf(a -> frame-a.frame>2);
             if (anchors.size() >= MAX_ANCHORS && holder != Minecraft.getInstance().player) return;
@@ -122,7 +123,7 @@ public final class SurfaceLights {
         var a = anchors.get(shooter.getId());
         Vec3 forward = shooter.getViewVector(1).normalize();
         Vec3 pos = eye.add(forward.scale(.65)).add(0,-.12,0);
-        if (a!=null && a.first==first && a.gun.equals(gun) && a.display.equals(display) && ScopePipRenderer.frameNumber()-a.frame<=2) {
+        if (a!=null && a.first==first && a.gun.equals(gun) && a.display.equals(display) && ScopeDepthCopyState.frameNumber()-a.frame<=2) {
             var actual = a.ray.origin.add(a.ray.delta.scale(offsetBb/16f));
             if (actual.isFinite() && actual.distanceToSqr(eye)<16) {
                 pos=actual;
@@ -199,7 +200,7 @@ public final class SurfaceLights {
     /** Take one clock sample for this main world submission, BEFORE vanilla consumes the
      * extracted entity lights. Terrain and objects must see the same first and last frame. */
     static @Nullable WorldFlashFrame prepare(Vec3 camera) {
-        if (pulses.isEmpty() || !ready() || ScopePipRenderer.isInsideScopeLevelRender() || IrisCompat.isRenderShadow()) return null;
+        if (pulses.isEmpty() || !ready() || ScopePipRerender.isInsideScopeLevelRender() || IrisCompat.isRenderShadow()) return null;
         long now=GunTime.nowMillis(), tick=level.getGameTime();
         if (tick!=buildTick) { buildTick=tick; builds=muzzleBuilds=0; }
         pulses.removeIf(p -> p.expired(now) || !(p.eye==null ? RenderConfig.EXPLOSION_SURFACE_LIGHT.get()

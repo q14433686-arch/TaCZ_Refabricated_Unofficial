@@ -6,8 +6,9 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.papi.RangefinderReadout;
-import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
-import com.tacz.guns.client.render.scope.ScopePipRenderer;
+import com.tacz.guns.client.render.scope.ScopePipRenderState;
+import com.tacz.guns.client.render.scope.ScopeProjection;
+import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.resource.pojo.display.gun.Rangefinder;
 import com.tacz.guns.client.resource.pojo.display.gun.TextShow;
 import com.tacz.guns.mixin.client.GameRendererProjectionAccessor;
@@ -39,7 +40,12 @@ public record ImpactMarkerRender(List<BedrockPart> path, Rangefinder settings) {
         var camera = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
         if (!camera.initialized) return;
         double projected = -slope * camera.projectionMatrix.m11();
-        if (ScopePipRenderer.suppressesWorldFovZoom()) projected *= ScopePipRenderer.currentDetailZoom() / ScopePipRenderer.currentWorldZoom();
+        // 1.21.11 侧同一对量（见 ScopePipRenderState#currentWorldZoom 的说明）：
+        // 26.2 的 suppressesWorldFovZoom()/currentWorldZoom() 在这里都要开镜进度。
+        float partialTicks = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        if (ScopePipRenderState.suppressesWorldFovZoom(partialTicks)) {
+            projected *= ScopePipRenderState.currentDetailZoom() / ScopePipRenderState.currentWorldZoom(partialTicks);
+        }
         if (!Double.isFinite(projected) || Math.abs(projected) > 1) return;
 
         PoseStack pose = new PoseStack();
@@ -49,7 +55,11 @@ public record ImpactMarkerRender(List<BedrockPart> path, Rangefinder settings) {
         pose.mulPose(Axis.ZP.rotationDegrees(180));
         pose.scale(2f/300, -2f/300, -2f/300);
         var clip = new Matrix4f();
-        ((GameRendererProjectionAccessor)(Object)mc.gameRenderer).tacz$getHudProjection().getMatrix(clip);
+        var handProjection = ScopeProjection.lastOf(
+                ((GameRendererProjectionAccessor)(Object)mc.gameRenderer).tacz$getHudProjectionBuffer());
+        // 手部投影还没被算出来过（首帧、或窗口刚变化）：本帧不画，下一帧就有镜像了。
+        if (handProjection == null) return;
+        clip.set(handProjection);
         // The hand pose includes the inverse camera basis. Match the actual GPU transform
         // (and the ocular mask's submit-time capture); pose alone is not camera-local.
         // Only the CPU projection needs this factor. The collector applies ModelView at draw time.
@@ -66,7 +76,10 @@ public record ImpactMarkerRender(List<BedrockPart> path, Rangefinder settings) {
         float half = Math.max(3f, px * 2) * settings.getImpactScale();
         float line = Math.min(half, Math.max(px, half / 3));
         int color = settings.getImpactColor();
-        var type = clipped ? ScopeBodyRenderTypes.reticleEmissive(BeamRenderer.LASER_BEAM_TEXTURE) : ScopeBodyRenderTypes.emissive(BeamRenderer.LASER_BEAM_TEXTURE);
+        // 26.2: reticleEmissive = 掩码(只留镜内) + 满亮；本线对应 visibleReticle（同样是
+        // "孔径遮罩 + 满亮"，只是在深度孔径路径上实现）。未裁切时用无遮罩的满亮 cutout。
+        var type = clipped ? ScopeRenderTypes.visibleReticle(BeamRenderer.LASER_BEAM_TEXTURE)
+                : ScopeRenderTypes.emissive(BeamRenderer.LASER_BEAM_TEXTURE);
         collector.submitCustomGeometry(pose, type, (frozen, vertices) -> drawBox(frozen, vertices, y, half, line, color, overlay));
     }
 

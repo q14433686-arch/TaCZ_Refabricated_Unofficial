@@ -4,9 +4,9 @@ import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.compat.iris.IrisCompat;
-import com.tacz.guns.mixin.client.ThermalRenderSetupAccessor;
-import com.tacz.guns.mixin.client.ThermalRenderTypeAccessor;
-import com.tacz.guns.mixin.client.ThermalTextureBindingAccessor;
+import com.tacz.guns.mixin.client.RenderSetupTextureAccessor;
+import com.tacz.guns.mixin.client.RenderTypeStateAccessor;
+import com.tacz.guns.mixin.client.TextureBindingAccessor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -44,9 +44,9 @@ public final class IlluminatedMaterials {
 
     public static Identifier texture(RenderType type) {
         type = ScopeRenderTypes.unwrapDepthCopy(type);
-        var setup = ((ThermalRenderTypeAccessor)(Object)type).tacz$thermalSetup();
-        var binding = ((ThermalRenderSetupAccessor)(Object)setup).tacz$thermalTextures().get("Sampler0");
-        return binding instanceof ThermalTextureBindingAccessor sampler ? sampler.tacz$thermalTexture() : null;
+        var setup = ((RenderTypeStateAccessor)(Object)type).tacz$renderSetup();
+        var binding = ((RenderSetupTextureAccessor)(Object)setup).tacz$textures().get("Sampler0");
+        return binding instanceof TextureBindingAccessor sampler ? sampler.tacz$location() : null;
     }
     private static Body classify(RenderType original, Identifier texture) {
         if (texture == null) return null;

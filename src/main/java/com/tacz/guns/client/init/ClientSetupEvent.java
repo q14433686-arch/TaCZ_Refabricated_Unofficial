@@ -6,7 +6,6 @@ import com.tacz.guns.client.gui.overlay.GunHudOverlay;
 import com.tacz.guns.client.gui.overlay.HeatBarOverlay;
 import com.tacz.guns.client.gui.overlay.InteractKeyTextOverlay;
 import com.tacz.guns.client.gui.overlay.KillAmountOverlay;
-import com.tacz.guns.client.gui.overlay.ScopeMaskDebugOverlay;
 import com.tacz.guns.client.input.*;
 import com.tacz.guns.client.resource.ClientAssetsManager;
 import com.tacz.guns.client.tooltip.ClientAmmoBoxTooltip;
@@ -85,8 +84,9 @@ public class ClientSetupEvent {
         HudElementRegistry.addLast(id("display_case_lock_hint"), com.tacz.guns.client.gui.overlay.DisplayCaseLockHint::render);
         HudElementRegistry.addLast(id("interact_key_text"), (graphics, deltaTracker) -> InteractKeyTextOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
         HudElementRegistry.addLast(id("kill_amount"), (graphics, deltaTracker) -> KillAmountOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
-        // 【Step 1 调试】瞄具掩码预览，由 RenderConfig.SCOPE_MASK_DEBUG 控制，默认关闭。
-        HudElementRegistry.addLast(id("scope_mask_debug"), (graphics, deltaTracker) -> ScopeMaskDebugOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
+        // 26.2 的 scope_mask_debug HUD 层读的是它自己那套掩码纹理（ScopeMaskRenderer +
+        // ScopeMaskTextureHandle）。本线的目镜遮罩走深度孔径，没有那张"掩码纹理"可预览，
+        // 故本轮不搬这一层 —— RenderConfig.SCOPE_MASK_DEBUG 在本线只影响日志，不再画 HUD。
     }
 
     private static Identifier id(String path) {

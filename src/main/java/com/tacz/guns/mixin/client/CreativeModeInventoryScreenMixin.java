@@ -54,7 +54,9 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
         }
     }
 
-    @Inject(method = "extractRenderState", at = @At("HEAD"))
+    // 26.2 的屏幕被拆成 extract/render 两段，这里原本注入 extractRenderState；
+    // 1.21.11 的屏幕仍是单段 AbstractContainerScreen#render(GuiGraphics,int,int,float)。
+    @Inject(method = "render", at = @At("HEAD"))
     private void tacz$updatePackFilters(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
         if (tacz$packFilters != null) {
             tacz$packFilters.updateTab(selectedTab, false);

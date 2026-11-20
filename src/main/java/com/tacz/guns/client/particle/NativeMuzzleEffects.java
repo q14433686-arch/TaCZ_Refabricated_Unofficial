@@ -11,14 +11,15 @@ import com.tacz.guns.client.particle.bedrock.particle.data.ParticleEffectDefinit
 import com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader;
 import com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager;
 import com.tacz.guns.client.model.IFunctionalSubmitter;
-import com.tacz.guns.client.render.scope.ScopeBodyRenderTypes;
+import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.render.FlashMaterials;
 import com.tacz.guns.client.render.light.SurfaceLights;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.util.time.GunTime;
 import net.fabricmc.fabric.api.client.rendering.v1.RenderStateDataKey;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
+import com.tacz.guns.client.render.light.WorldFlashFrame;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
@@ -77,12 +78,23 @@ public final class NativeMuzzleEffects {
 
     public static void register() {
         GunFirePostEvent.EVENT.register(NativeMuzzleEffects::onShot);
-        LevelRenderEvents.COLLECT_SUBMITS.register(context -> {
+        // 26.2 的 LevelRenderEvents.COLLECT_SUBMITS 在 1.21.11 的 Fabric API 里叫
+        // WorldRenderEvents.BEFORE_ENTITIES：同样是"世界提交阶段、主 pass 内、所有实体提交之前"，
+        // 且同样能拿到当帧的 SubmitNodeCollector。晚于它（AFTER_ENTITIES）已经画完，追加的几何
+        // 会掉到粒子 pass，就不是同一次合批了。
+        WorldRenderEvents.BEFORE_ENTITIES.register(context -> {
             synchronizeSession();
-            var camera = context.levelState().cameraRenderState;
-            submitSmoke(context.submitNodeCollector(), camera.pos);
-            SurfaceLights.submit(context.submitNodeCollector(), camera.pos);
+            var state = context.worldState();
+            var camera = state.cameraRenderState;
+            SubmitNodeCollector collector = context.commandQueue();
+            // 26.2 的 LevelRenderer#submitFeatures 窗口在本线的落点：先把本帧枪口/爆炸面光源
+            // 写进各 RenderState#lightCoords（提交前生效），再交同样的 collector 提交自己的几何。
+            WorldFlashFrame.beginWorld(state);
+            submitSmoke(collector, camera.pos);
+            SurfaceLights.submit(collector, camera.pos);
         });
+        // 提交已经发生（lightCoords 已被抄进 SubmitNode），此处只负责还原提取状态。
+        WorldRenderEvents.AFTER_ENTITIES.register(context -> WorldFlashFrame.endWorld());
     }
     public static void extracted(Entity entity, EntityRenderState state) {
         if (state != null) state.setData(OWNER, entity.getId());
@@ -197,7 +209,7 @@ public final class NativeMuzzleEffects {
         float size = effect.flashScale() * .45f;
         if (!Float.isFinite(size) || size > 32) return true;
         pose.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(shot.rotation));
-        boolean clipped = first && ScopeBodyRenderTypes.maskReadyForViewmodel(true);
+        boolean clipped = first && ScopeRenderTypes.shouldClipViewmodel();
         RenderType type = FlashMaterials.swirl(FLASH_TEXTURE, clipped, 0);
         float u = shot.frame / 18f;
         context.add(out -> quad(out, pose, type, size, size, u, u + 1f/18, 0xffffffff, 15728880));
@@ -217,7 +229,7 @@ public final class NativeMuzzleEffects {
         }
         if (id.equals(FLASH)) {
             if (!RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) {
-                var type = FlashMaterials.swirl(FLASH_TEXTURE, first && ScopeBodyRenderTypes.maskReadyForViewmodel(true), 0);
+                var type = FlashMaterials.swirl(FLASH_TEXTURE, first && ScopeRenderTypes.shouldClipViewmodel(), 0);
                 quad(collector, copy(pose), type, .45f, .45f, 4f/18, 5f/18, 0xffffffff, 15728880);
             }
             return true;
@@ -308,7 +320,7 @@ public final class NativeMuzzleEffects {
             int grey = (int)gradient(life, 140, 128, 64, 0);
             int color = alpha<<24 | grey<<16 | grey<<8 | grey;
             var type=puff.firstPerson && com.tacz.guns.client.render.scope.ScopeParticleClipping.ready(false)
-                    ? ScopeBodyRenderTypes.flashSwirlClipped(SMOKE_TEXTURE) : RenderTypes.energySwirl(SMOKE_TEXTURE, 0, 0);
+                    ? ScopeRenderTypes.flashSwirlClipped(SMOKE_TEXTURE) : RenderTypes.energySwirl(SMOKE_TEXTURE, 0, 0);
             quad(collector, pose, type, size, size, frame/6f, (frame+1)/6f, color, puff.light);
         }
     }
