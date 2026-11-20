@@ -47,7 +47,7 @@ public final class ScopeThermalCapture {
     static void beginFrame(boolean active) {
         if (!HOT.isEmpty()) HOT.clear();
         enabled = active && !failed;
-        shaderPack = enabled && com.tacz.guns.compat.iris.IrisCompat.hasActiveIrisPack();
+        shaderPack = enabled && com.tacz.guns.compat.iris.IrisCompat.isUsingRenderPack();
         bodies = null;
         recording = ready = false;
     }

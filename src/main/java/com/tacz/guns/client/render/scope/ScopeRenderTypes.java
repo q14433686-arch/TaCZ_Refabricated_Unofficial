@@ -301,6 +301,31 @@ public final class ScopeRenderTypes {
         return VIEWMODEL_CUTOUT_TYPES.computeIfAbsent(texture, ScopeRenderTypes::createViewmodelCutoutType);
     }
 
+    /** Material extension point for the depth-based 1.21.11 ocular mask. */
+    public static void addOutsideApertureShader(RenderPipeline.Builder builder) {
+        builder.withFragmentShader(Identifier.parse("tacz:core/scope_flash_clip"))
+                .withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM)
+                .withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
+    }
+
+    public static void addApertureBindings(RenderSetup.RenderSetupBuilder setup, Identifier placeholder) {
+        // The encoder replaces these placeholders with the live frame's depth textures.
+        setup.withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, placeholder)
+                .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, placeholder);
+    }
+
+    public static RenderType outsideAperture(RenderType base) {
+        return new DepthCopyRenderType("tacz_scope_material_outside", base, ScopeDepthCopyState.Operation.MASK_OUTSIDE);
+    }
+
+    public static RenderType unwrapDepthCopy(RenderType type) {
+        return type instanceof DepthCopyRenderType wrapped ? wrapped.wrapped : type;
+    }
+
+    public static boolean isClippedBody(RenderType original, Identifier texture) {
+        return original == VIEWMODEL_CUTOUT_TYPES.get(texture) || original == FLASH_TRANSLUCENT_TYPES.get(texture);
+    }
+
     /** Muzzle-flash background quad: retain vanilla appearance outside the ocular, discard inside. */
     public static RenderType flashTranslucentClipped(Identifier texture) {
         return FLASH_TRANSLUCENT_TYPES.computeIfAbsent(texture, ScopeRenderTypes::createFlashTranslucentType);
@@ -856,7 +881,7 @@ public final class ScopeRenderTypes {
         return pipeline;
     }
 
-    private static RenderPipeline.Builder clonePipeline(RenderPipeline source, Identifier location) {
+    public static RenderPipeline.Builder clonePipeline(RenderPipeline source, Identifier location) {
         RenderPipeline.Builder builder = RenderPipeline.builder()
                 .withLocation(location)
                 .withVertexShader(source.getVertexShader())

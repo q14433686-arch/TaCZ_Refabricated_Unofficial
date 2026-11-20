@@ -227,7 +227,7 @@ public final class NativeMuzzleEffects {
 
     private static Matrix4f worldPose(PoseStack pose, boolean first) {
         if (first) return GunItemRendererWrapper.muzzleWorldPose(pose.last().pose());
-        var camera = Minecraft.getInstance().gameRenderer.mainCamera().position();
+        var camera = Minecraft.getInstance().gameRenderer.getMainCamera().position();
         return new Matrix4f(pose.last().pose()).translateLocal((float)camera.x, (float)camera.y, (float)camera.z);
     }
 
@@ -292,7 +292,7 @@ public final class NativeMuzzleEffects {
     private static void submitSmoke(SubmitNodeCollector collector, Vec3 camera) {
         if (!RenderConfig.RENDER_MUZZLE_SMOKE.get()) return;
         long now = GunTime.nowMillis();
-        var rotation = Minecraft.getInstance().gameRenderer.mainCamera().rotation();
+        var rotation = Minecraft.getInstance().gameRenderer.getMainCamera().rotation();
         for (Puff puff : PUFFS) {
             float t = (now-puff.born)/1000f, life = t/puff.lifetime;
             if (life < 0 || life >= 1) continue;

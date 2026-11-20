@@ -92,11 +92,11 @@ public class ClientMessageAmmoStorageInteract implements CustomPacketPayload {
             }
             ((IEntityPersistentData) player).tacz$getPersistentData().putLong(LAST_PICKUP_TAG, gameTime);
             if (count == 0) {
-                player.sendOverlayMessage(Component.translatable("message.tacz.ammo_storage.no_gun_stock"));
+                player.displayClientMessage(Component.translatable("message.tacz.ammo_storage.no_gun_stock"), true);
                 return;
             }
             int accumulatedCount = getAccumulatedCount(player, ammoId, count, gameTime);
-            player.sendOverlayMessage(Component.translatable("message.tacz.ammo_storage.picked", AmmoStorageHelper.createAmmoStack(ammoId, 1).getHoverName(), accumulatedCount));
+            player.displayClientMessage(Component.translatable("message.tacz.ammo_storage.picked", AmmoStorageHelper.createAmmoStack(ammoId, 1).getHoverName(), accumulatedCount), true);
             player.level().playSound(null, player.blockPosition(), SoundEvents.ARMOR_EQUIP_IRON.value(), SoundSource.PLAYERS, 0.8F, 1.0F);
         });
     }

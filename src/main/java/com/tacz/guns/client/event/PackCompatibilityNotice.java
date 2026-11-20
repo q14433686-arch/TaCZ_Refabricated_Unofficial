@@ -4,7 +4,7 @@ import com.tacz.guns.config.common.OtherConfig;
 import com.tacz.guns.config.ConfigPersist;
 import com.tacz.guns.resource.GunPackLoader;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
@@ -34,8 +34,8 @@ public final class PackCompatibilityNotice {
                     .withClickEvent(new ClickEvent.RunCommand("/tacz_pack_compat guide")));
             var dismiss=Component.translatable("message.tacz.pack_compatibility.dismiss").withStyle(s->s.withColor(ChatFormatting.GRAY)
                     .withClickEvent(new ClickEvent.RunCommand("/tacz_pack_compat dismiss")));
-            client.player.sendSystemMessage(Component.translatable("message.tacz.pack_compatibility.notice",String.join(", ",fresh))
-                    .withStyle(ChatFormatting.YELLOW).append(" ").append(guide).append(" ").append(dismiss));
+            client.player.displayClientMessage(Component.translatable("message.tacz.pack_compatibility.notice",String.join(", ",fresh))
+                    .withStyle(ChatFormatting.YELLOW).append(" ").append(guide).append(" ").append(dismiss), false);
         });
         ClientCommandRegistrationCallback.EVENT.register((dispatcher,access)->dispatcher.register(literal("tacz_pack_compat")
             .then(literal("guide").executes(ctx->{ctx.getSource().sendFeedback(Component.translatable("message.tacz.pack_compatibility.help"));return 1;}))

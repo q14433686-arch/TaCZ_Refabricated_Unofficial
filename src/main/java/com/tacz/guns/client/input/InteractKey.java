@@ -14,7 +14,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
-import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -48,7 +48,7 @@ public class InteractKey {
     }
 
     public static boolean sharesUseBinding(KeyMapping use) {
-        return !use.isUnbound() && KeyMappingHelper.getBoundKeyOf(INTERACT_KEY).equals(KeyMappingHelper.getBoundKeyOf(use));
+        return !use.isUnbound() && KeyBindingHelper.getBoundKeyOf(INTERACT_KEY).equals(KeyBindingHelper.getBoundKeyOf(use));
     }
 
     // Only for the synchronous, allowlisted startUseItem call below. A pad (or a mouse rebind)

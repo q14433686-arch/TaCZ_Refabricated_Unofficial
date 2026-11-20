@@ -24,6 +24,15 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Run native receiver GameTest
         run: xvfb-run -a ./gradlew -PtaczGameTests "${{ matrix.task }}" --console=plain --no-daemon
+      - name: Check in-game receipts
+        run: |
+          if [ "${{ matrix.task }}" = runClientGameTest ]; then
+            grep -F 'PORT_12111_CLIENT: live world' build/run/clientGameTest/logs/latest.log
+            find build/run/clientGameTest/screenshots -name '*tacz_12111_catalog_and_viewmodel*.png' | grep -q .
+          else
+            grep -F 'PORT_CATALOG:' build/run/gameTest/logs/latest.log
+            grep -F 'PORT_SETTLEMENT:' build/run/gameTest/logs/latest.log
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:

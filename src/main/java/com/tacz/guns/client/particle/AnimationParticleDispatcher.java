@@ -48,8 +48,8 @@ public final class AnimationParticleDispatcher {
             PoseStack pose=new PoseStack();pose.last().pose().set(root.last().pose());pose.last().normal().set(root.last().normal());
             while(!chain.isEmpty())chain.pop().translateAndRotateAndScale(pose);
             Matrix4f world=first?GunItemRendererWrapper.muzzleWorldPose(pose.last().pose())
-                    :new Matrix4f(pose.last().pose()).translateLocal((float)mc.gameRenderer.mainCamera().position().x,
-                        (float)mc.gameRenderer.mainCamera().position().y,(float)mc.gameRenderer.mainCamera().position().z);
+                    :new Matrix4f(pose.last().pose()).translateLocal((float)mc.gameRenderer.getMainCamera().position().x,
+                        (float)mc.gameRenderer.getMainCamera().position().y,(float)mc.gameRenderer.getMainCamera().position().z);
             var definition=com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader.getInstance().getDefinition(event.effect());
             if(definition!=null){
                 var emitter=com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance()

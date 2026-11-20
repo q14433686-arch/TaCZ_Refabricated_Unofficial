@@ -120,7 +120,7 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
      * pass base once. Do not use global ModelView, whose contract differs under Iris. */
     public static Matrix4f muzzleWorldPose(Matrix4f locator) {
         var mc = Minecraft.getInstance();
-        var camera = mc.gameRenderer.mainCamera();
+        var camera = mc.gameRenderer.getMainCamera();
         Matrix4f local = new Matrix4f(handBasePoseEntry).invert().mul(locator);
         double ratio = Math.tan(Math.toRadians(CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get()) / 2)
                 / Math.tan(Math.toRadians(CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2);
@@ -132,7 +132,7 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
     /** Camera-relative muzzle transform. Include the attachment offset in the same hand/world basis. */
     public static Matrix4f surfaceLocator(Matrix4f locator, boolean first) {
         if (!first) return new Matrix4f(locator);
-        return new Matrix4f().rotation(Minecraft.getInstance().gameRenderer.mainCamera().rotation())
+        return new Matrix4f().rotation(Minecraft.getInstance().gameRenderer.getMainCamera().rotation())
                 .scale(1, 1, 1 / muzzleWorldScale()).mul(new Matrix4f(handBasePoseEntry).invert()).mul(locator);
     }
 
@@ -325,7 +325,7 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             if (RenderConfig.HAND_VIEW_LOCK_FIX != null && RenderConfig.HAND_VIEW_LOCK_FIX.get()
                     && !IrisCompat.isHandRendererActive()) {
                 try {
-                    org.joml.Matrix4f mvNow = com.mojang.blaze3d.systems.RenderSystem.getModelViewMatrixCopy();
+                    org.joml.Matrix4f mvNow = com.mojang.blaze3d.systems.new org.joml.Matrix4f(RenderSystem.getModelViewMatrix());
                     // 【案例⑧ · 第 29 轮取证】v5 受控辑拿：此处的 modelView 顶部读取在约 39% 帧上
                     // 携带 0.9933~1.0068 的均匀缩放，而旋转分部与同帧稍后两次读取逐位一致
                     // （离线验证 B=s·MVᵀ、MV·B 非对角元恒 0、colNormDev=0.0067、F 出现 s² 对角）。
@@ -504,8 +504,8 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
                 }
                 debugMuzzleSpaceLastLog = now;
             }
-            net.minecraft.client.Camera cam = Minecraft.getInstance().gameRenderer.mainCamera();
-            Matrix4f modelViewAtHand = RenderSystem.getModelViewMatrixCopy();
+            net.minecraft.client.Camera cam = Minecraft.getInstance().gameRenderer.getMainCamera();
+            Matrix4f modelViewAtHand = new org.joml.Matrix4f(RenderSystem.getModelViewMatrix());
             GunMod.LOGGER.info(
                     "[TACZ MuzzleSpace] camera=({},{}) irisHand={} baseT=({},{},{}) rawMuzzle=({},{},{}) viewMuzzle=({},{},{}) fovScale={} modelViewRot=[{},{},{}; {},{},{}; {},{},{}] modelViewT=({},{},{})",
                     trim2(cam.xRot()), trim2(cam.yRot()), IrisCompat.isHandRendererActive(),
@@ -653,7 +653,7 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             double mv00 = 0, mv01 = 0, mv02 = 0, mv10 = 0, mv11 = 0, mv12 = 0, mv20 = 0, mv21 = 0, mv22 = 0;
             double mvN0 = -1, mvN1 = -1, mvN2 = -1;
             try {
-                org.joml.Matrix4f mv4 = com.mojang.blaze3d.systems.RenderSystem.getModelViewMatrixCopy();
+                org.joml.Matrix4f mv4 = com.mojang.blaze3d.systems.new org.joml.Matrix4f(RenderSystem.getModelViewMatrix());
                 mv00 = mv4.m00(); mv01 = mv4.m01(); mv02 = mv4.m02();
                 mv10 = mv4.m10(); mv11 = mv4.m11(); mv12 = mv4.m12();
                 mv20 = mv4.m20(); mv21 = mv4.m21(); mv22 = mv4.m22();

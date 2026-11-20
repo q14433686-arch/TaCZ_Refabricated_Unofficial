@@ -25,7 +25,7 @@ public class LocalPlayerUnload {
 
     public void unloadAmmo() {
         if (!ClientPlayNetworking.canSend(ClientMessagePlayerUnloadGun.TYPE)) {
-            player.sendOverlayMessage(Component.translatable("message.tacz.unload.unsupported"));
+            player.displayClientMessage(Component.translatable("message.tacz.unload.unsupported"), true);
             return;
         }
         if (isLocallyBlocked()) {
@@ -49,12 +49,12 @@ public class LocalPlayerUnload {
             return;
         }
         if (!index.canUnloadAmmo() || gun.useInventoryAmmo(stack)) {
-            player.sendOverlayMessage(Component.translatable("message.tacz.unload.unsupported"));
+            player.displayClientMessage(Component.translatable("message.tacz.unload.unsupported"), true);
             return;
         }
         if (gun.getCurrentAmmoCount(stack) <= 0
                 && (index.getGunData().getBolt() == Bolt.OPEN_BOLT || !gun.hasBulletInBarrel(stack))) {
-            player.sendOverlayMessage(Component.translatable("message.tacz.unload.no_ammo"));
+            player.displayClientMessage(Component.translatable("message.tacz.unload.no_ammo"), true);
             return;
         }
 
@@ -75,7 +75,7 @@ public class LocalPlayerUnload {
     }
 
     private void showCannotUnload() {
-        player.sendOverlayMessage(Component.translatable("message.tacz.unload.cannot"));
+        player.displayClientMessage(Component.translatable("message.tacz.unload.cannot"), true);
     }
 
     private boolean isSyncBlocked(IGunOperator operator) {

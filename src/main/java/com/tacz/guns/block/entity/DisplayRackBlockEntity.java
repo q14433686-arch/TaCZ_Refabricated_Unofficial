@@ -1,8 +1,8 @@
 package com.tacz.guns.block.entity;
 
 import com.tacz.guns.config.util.GunPegboardItemConfigRead;
-import net.fabricmc.fabric.api.serialization.v1.value.FabricValueInput;
-import net.fabricmc.fabric.api.serialization.v1.value.FabricValueOutput;
+import com.mojang.serialization.Codec;
+import java.nio.ByteBuffer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -96,8 +96,8 @@ public abstract class DisplayRackBlockEntity extends BlockEntity implements Clea
             if (slot < 0 || slot >= slotCount() || !items[slot].isEmpty()) continue;
             entry.read("Item", ItemStack.CODEC).ifPresent(stack -> items[slot] = stack.copyWithCount(1));
         }
-        ((FabricValueInput) data).getOptionalByteArray("Rotations").ifPresent(bytes -> {
-            for (int i = 0; i < Math.min(bytes.length, slotCount()); ++i) rotations[i] = (byte) (bytes[i] & 7);
+        data.read("Rotations", Codec.BYTE_BUFFER).ifPresent(bytes -> {
+            for (int i = 0; i < slotCount() && bytes.hasRemaining(); ++i) rotations[i] = (byte) (bytes.get() & 7);
         });
     }
 
@@ -109,7 +109,7 @@ public abstract class DisplayRackBlockEntity extends BlockEntity implements Clea
             entry.putByte("Slot", (byte) i);
             entry.store("Item", ItemStack.CODEC, items[i]);
         }
-        ((FabricValueOutput) data).putByteArray("Rotations", rotations.clone());
+        data.store("Rotations", Codec.BYTE_BUFFER, ByteBuffer.wrap(rotations.clone()));
     }
 
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries) { return saveCustomOnly(registries); }

@@ -19,7 +19,7 @@ import java.util.List;
  * first-person hands, chunk cache, shadow/PIP replays or the server's light engine). */
 public final class WorldFlashFrame {
     record Source(SpillField field, float strength, int rgb) {}
-    private static final ScopedValue<WorldFlashFrame> ACTIVE = ScopedValue.newInstance();
+    private static final ThreadLocal<WorldFlashFrame> ACTIVE = new ThreadLocal<>();
     final ClientLevel level;
     final List<Source> sources;
     final List<SurfaceLights.Draw> draws;
@@ -28,21 +28,27 @@ public final class WorldFlashFrame {
     WorldFlashFrame(ClientLevel level, List<Source> sources, List<SurfaceLights.Draw> draws) {
         this.level = level; this.sources = sources; this.draws = draws;
     }
-    public static @Nullable WorldFlashFrame current() { return ACTIVE.isBound() ? ACTIVE.get() : null; }
+    public static @Nullable WorldFlashFrame current() { return ACTIVE.get(); }
 
     public static void submitWorld(LevelRenderState state, Runnable original) {
         var frame = SurfaceLights.prepare(state.cameraRenderState.pos);
-        if (frame == null && !ACTIVE.isBound()) { original.run(); return; }
-        ScopedValue.where(ACTIVE, frame).run(() -> {
-            if (frame == null) { original.run(); return; }
-            // Some secondary passes reuse the very same extracted states. Save only changed
-            // receivers; deferred draw nodes capture the light passed to submit, not a clock.
-            var restore = new ArrayList<Runnable>();
+        var previous = ACTIVE.get();
+        if (frame == null && previous == null) { original.run(); return; }
+        if (frame == null) ACTIVE.remove();
+        else ACTIVE.set(frame);
+        var restore = new ArrayList<Runnable>();
+        try {
+            // Secondary passes can reuse extracted states; restore all changes on exit.
+            if (frame != null) frame.applyLights(state, restore);
+            original.run();
+        } finally {
             try {
-                frame.applyLights(state, restore);
-                original.run();
-            } finally { for (var undo : restore) undo.run(); }
-        });
+                for (var undo : restore) undo.run();
+            } finally {
+                if (previous == null) ACTIVE.remove();
+                else ACTIVE.set(previous);
+            }
+        }
     }
 
     private void applyLights(LevelRenderState state, List<Runnable> restore) {
@@ -72,7 +78,7 @@ public final class WorldFlashFrame {
             objectRays--;
             if (visible(s, new Vec3(x,y,z), self, face)) best = value;
         }
-        return best == original ? ambient : LightTexture.withBlock(ambient, best);
+        return best == original ? ambient : LightTexture.pack(best, LightTexture.sky(ambient));
     }
 
     public int rackSlotLight(int ambient, BlockPos pos, Direction facing) {

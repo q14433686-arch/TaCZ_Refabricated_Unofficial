@@ -123,7 +123,7 @@ public class AmmoStorageBlock extends BaseEntityBlock {
     private InteractionResult fillAmmoBox(AmmoStorageBlockEntity storage, ItemStack boxStack, IAmmoBox ammoBox, Player player) {
         Identifier ammoId = ammoBox.getAmmoId(boxStack);
         if (ammoId.equals(DefaultAssets.EMPTY_AMMO_ID)) {
-            player.sendOverlayMessage(Component.translatable("message.tacz.ammo_storage.ammo_box_empty"));
+            player.displayClientMessage(Component.translatable("message.tacz.ammo_storage.ammo_box_empty"), true);
             return InteractionResult.CONSUME;
         }
         if (ammoBox.isCreative(boxStack) || ammoBox.isAllTypeCreative(boxStack)) return InteractionResult.CONSUME;
@@ -135,11 +135,11 @@ public class AmmoStorageBlock extends BaseEntityBlock {
         // Ammo boxes carry just an ammo id; never strip custom components from a different variant.
         ItemStack extracted = storage.extractAmmo(sample, (int) (max - current), false);
         if (extracted.isEmpty()) {
-            player.sendOverlayMessage(Component.translatable("message.tacz.ammo_storage.no_ammo_box_stock"));
+            player.displayClientMessage(Component.translatable("message.tacz.ammo_storage.no_ammo_box_stock"), true);
             return InteractionResult.CONSUME;
         }
         ammoBox.setAmmoCount(boxStack, current + extracted.getCount());
-        player.sendOverlayMessage(Component.translatable("message.tacz.ammo_storage.picked", extracted.getHoverName(), extracted.getCount()));
+        player.displayClientMessage(Component.translatable("message.tacz.ammo_storage.picked", extracted.getHoverName(), extracted.getCount()), true);
         player.level().playSound(null, player.blockPosition(), SoundEvents.ARMOR_EQUIP_IRON.value(), SoundSource.PLAYERS, 0.8F, 1.0F);
         return InteractionResult.CONSUME;
     }

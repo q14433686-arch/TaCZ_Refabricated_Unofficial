@@ -85,7 +85,7 @@ public class AmmoStorageSmoke {
             var recipe = level.getServer().getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level).orElseThrow();
             helper.assertTrue(!recipe.value().isSpecial() && recipe.value().display().getFirst() instanceof
                     net.minecraft.world.item.crafting.display.ShapedCraftingRecipeDisplay, "Missing vanilla 3x3 upgrade display");
-            stack = recipe.value().assemble(input);
+            stack = recipe.value().assemble(input, level.registryAccess());
             helper.assertTrue(stack.getCount() == 1 && stack.is(diamond ? ModItems.AMMO_STORAGE_DIAMOND : ModItems.AMMO_STORAGE_GOLD), "Incorrect upgrade");
         }
         helper.setBlock(pos, ModBlocks.AMMO_STORAGE_DIAMOND);

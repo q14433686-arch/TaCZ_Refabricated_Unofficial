@@ -7,7 +7,7 @@ import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.gui.GunRefitScreen;
 import com.tacz.guns.client.gui.ViewTuningScreen;
 import com.tacz.guns.client.gui.overlay.DisplayCaseLockHint;
-import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import java.util.List;
@@ -34,9 +34,9 @@ public final class GunInputHandler {
             new Binding(VIEW_TUNING_KEY, () -> ViewTuningScreen.open(null)));
 
     public static void registerMappings() {
-        BINDINGS.forEach(b -> KeyMappingHelper.registerKeyMapping(b.mapping));
-        KeyMappingHelper.registerKeyMapping(UNLOAD_KEY);
-        KeyMappingHelper.registerKeyMapping(ShootKey.SHOOT_KEY);
+        BINDINGS.forEach(b -> KeyBindingHelper.registerKeyBinding(b.mapping));
+        KeyBindingHelper.registerKeyBinding(UNLOAD_KEY);
+        KeyBindingHelper.registerKeyBinding(ShootKey.SHOOT_KEY);
     }
 
     public static void registerEvents() {

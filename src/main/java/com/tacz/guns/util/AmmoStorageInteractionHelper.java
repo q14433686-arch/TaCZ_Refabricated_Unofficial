@@ -34,7 +34,7 @@ public final class AmmoStorageInteractionHelper {
         if (remaining <= 0) {
             ammoBox.setAmmoId(boxStack, DefaultAssets.EMPTY_AMMO_ID);
         }
-        player.sendOverlayMessage(Component.translatable("message.tacz.ammo_storage.unloaded", ammoStack.getHoverName(), inserted));
+        player.displayClientMessage(Component.translatable("message.tacz.ammo_storage.unloaded", ammoStack.getHoverName(), inserted), true);
         player.level().playSound(null, player.blockPosition(), SoundEvents.BUNDLE_REMOVE_ONE, SoundSource.PLAYERS, 0.8F, 1.0F);
         return InteractionResult.CONSUME;
     }

@@ -1,6 +1,6 @@
 package com.tacz.guns.inventory;
 
-import net.fabricmc.fabric.api.menu.v1.ExtendedMenuType;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import com.tacz.guns.block.entity.AmmoStorageBlockEntity;
@@ -20,8 +20,8 @@ import java.util.Comparator;
 import java.util.List;
 
 public class AmmoStorageMenu extends AbstractContainerMenu {
-    public static final ExtendedMenuType<AmmoStorageMenu, BlockPos> TYPE =
-            new ExtendedMenuType<>((id, inventory, pos) -> new AmmoStorageMenu(id, inventory), BlockPos.STREAM_CODEC);
+    public static final ExtendedScreenHandlerType<AmmoStorageMenu, BlockPos> TYPE =
+            new ExtendedScreenHandlerType<>((id, inventory, pos) -> new AmmoStorageMenu(id, inventory), BlockPos.STREAM_CODEC);
     public static final int STORAGE_ROWS = 3;
     public static final int STORAGE_COLUMNS = 9;
     public static final int STORAGE_SLOT_COUNT = STORAGE_ROWS * STORAGE_COLUMNS;

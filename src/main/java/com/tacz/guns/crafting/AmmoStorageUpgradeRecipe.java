@@ -1,6 +1,9 @@
 package com.tacz.guns.crafting;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import com.tacz.guns.init.ModItems;
 import com.tacz.guns.init.ModRecipe;
 import net.minecraft.core.component.DataComponents;
@@ -50,7 +53,7 @@ public class AmmoStorageUpgradeRecipe implements CraftingRecipe {
     }
 
     @Override
-    public ItemStack assemble(CraftingInput input) {
+    public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
         // Preserve stock (including legacy typed BE data) and the name; never copy arbitrary item overrides.
         var result = new ItemStack(to);
         var center = input.getItem(4);
@@ -64,7 +67,15 @@ public class AmmoStorageUpgradeRecipe implements CraftingRecipe {
     public RecipeSerializer<AmmoStorageUpgradeRecipe> getSerializer() { return ModRecipe.AMMO_STORAGE_UPGRADE; }
 
     public static RecipeSerializer<AmmoStorageUpgradeRecipe> serializer() {
-        return new RecipeSerializer<>(Codec.BOOL.optionalFieldOf("diamond", false).xmap(AmmoStorageUpgradeRecipe::new, r -> r.diamond),
-                StreamCodec.of((buf, recipe) -> buf.writeBoolean(recipe.diamond), buf -> new AmmoStorageUpgradeRecipe(buf.readBoolean())));
+        return new RecipeSerializer<>() {
+            @Override public MapCodec<AmmoStorageUpgradeRecipe> codec() {
+                return Codec.BOOL.optionalFieldOf("diamond", false).xmap(AmmoStorageUpgradeRecipe::new, r -> r.diamond);
+            }
+
+            @Override public StreamCodec<RegistryFriendlyByteBuf, AmmoStorageUpgradeRecipe> streamCodec() {
+                return StreamCodec.of((buf, recipe) -> buf.writeBoolean(recipe.diamond),
+                        buf -> new AmmoStorageUpgradeRecipe(buf.readBoolean()));
+            }
+        };
     }
 }

@@ -9,7 +9,7 @@ public final class IrisSensorProgram implements AutoCloseable {
     private final boolean changed;
     private IrisSensorProgram(boolean changed) { this.changed = changed; }
     public static IrisSensorProgram begin() throws ReflectiveOperationException {
-        if (!IrisCompat.hasActiveIrisPack()) return UNCHANGED;
+        if (!IrisCompat.isUsingRenderPack()) return UNCHANGED;
         if (bypass == null) bypass = Class.forName("net.irisshaders.iris.vertices.ImmediateState").getField("bypass");
         boolean change = !bypass.getBoolean(null);
         if (change) bypass.setBoolean(null, true);

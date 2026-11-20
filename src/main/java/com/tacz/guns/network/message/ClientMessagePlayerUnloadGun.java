@@ -65,13 +65,13 @@ public class ClientMessagePlayerUnloadGun implements CustomPacketPayload {
                 return;
             }
             if (!index.canUnloadAmmo() || gun.useInventoryAmmo(stack)) {
-                player.sendOverlayMessage(Component.translatable("message.tacz.unload.unsupported"));
+                player.displayClientMessage(Component.translatable("message.tacz.unload.unsupported"), true);
                 return;
             }
             Bolt bolt = index.getGunData().getBolt();
             long ammoBefore = getLoadedAmmoCount(gun, stack, bolt);
             if (ammoBefore == 0) {
-                player.sendOverlayMessage(Component.translatable("message.tacz.unload.no_ammo"));
+                player.displayClientMessage(Component.translatable("message.tacz.unload.no_ammo"), true);
                 return;
             }
             var gunDisplayId = gun.getGunDisplayId(stack);
@@ -91,6 +91,6 @@ public class ClientMessagePlayerUnloadGun implements CustomPacketPayload {
     }
 
     private static void showCannotUnload(ServerPlayer player) {
-        player.sendOverlayMessage(Component.translatable("message.tacz.unload.cannot"));
+        player.displayClientMessage(Component.translatable("message.tacz.unload.cannot"), true);
     }
 }

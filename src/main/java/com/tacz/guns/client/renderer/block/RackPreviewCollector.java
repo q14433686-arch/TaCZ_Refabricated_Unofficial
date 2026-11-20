@@ -1,7 +1,7 @@
 package com.tacz.guns.client.renderer.block;
 
 import com.mojang.blaze3d.vertex.*;
-import com.tacz.guns.mixin.client.*;
+import com.tacz.guns.client.model.bedrock.IlluminatedMaterials;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
@@ -23,9 +23,8 @@ public final class RackPreviewCollector extends SubmitNodeStorage {
         return (color & 0xffffff) | Math.round((color >>> 24) * .65f) << 24;
     }
     private static RenderType material(RenderType original) {
-        var setup = ((ThermalRenderTypeAccessor)(Object)original).tacz$thermalSetup();
-        var sampler = ((ThermalRenderSetupAccessor)(Object)setup).tacz$thermalTextures().get("Sampler0");
-        return sampler instanceof ThermalTextureBindingAccessor t ? com.tacz.guns.client.model.bedrock.IlluminatedMaterials.preview(original, t.tacz$thermalTexture()) : original;
+        var texture = IlluminatedMaterials.texture(original);
+        return texture == null ? original : IlluminatedMaterials.preview(original, texture);
     }
     @Override public void submitCustomGeometry(PoseStack pose, RenderType type, CustomGeometryRenderer draw) {
         output.submitCustomGeometry(pose, material(type), (entry, out) -> draw.render(entry, new PreviewVertices(out)));

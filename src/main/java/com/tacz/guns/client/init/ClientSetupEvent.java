@@ -27,8 +27,8 @@ import com.tacz.guns.inventory.tooltip.GunTooltip;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
-import net.fabricmc.fabric.api.client.rendering.v1.ClientTooltipComponentCallback;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.rendering.v1.TooltipComponentCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.client.KeyMapping;
@@ -50,8 +50,8 @@ public class ClientSetupEvent {
     }
 
     public static void registerClientTooltips() {
-        // 注册文本提示 (26.2: TooltipComponentCallback → ClientTooltipComponentCallback)
-        ClientTooltipComponentCallback.EVENT.register(tooltip -> {
+        // 注册文本提示 (26.2: TooltipComponentCallback → TooltipComponentCallback)
+        TooltipComponentCallback.EVENT.register(tooltip -> {
             if (tooltip instanceof com.tacz.guns.inventory.tooltip.AmmoStorageTooltip storage)
                 return new com.tacz.guns.client.tooltip.ClientAmmoStorageTooltip(storage);
             if (tooltip instanceof GunTooltip gunTooltip) {

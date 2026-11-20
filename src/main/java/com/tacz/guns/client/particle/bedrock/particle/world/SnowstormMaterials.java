@@ -5,7 +5,6 @@ import com.tacz.guns.client.particle.bedrock.particle.data.ParticleDescription;
 import com.tacz.guns.client.render.FlashMaterials;
 import com.tacz.guns.client.render.scope.*;
 import com.tacz.guns.compat.iris.IrisCompat;
-import net.minecraft.client.renderer.BindGroupLayouts;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.*;
 import net.minecraft.resources.Identifier;
@@ -23,35 +22,32 @@ public final class SnowstormMaterials {
     public static RenderType type(ParticleDescription desc, boolean clipped, boolean hand) {
         Identifier texture = desc.getTexture();
         return switch (desc.getMaterial()) {
-            case PARTICLES_OPAQUE -> clipped ? ScopeBodyRenderTypes.clipped(texture) : RenderTypes.entityCutout(texture);
-            case PARTICLES_ALPHA, PARTICLES_BLEND -> clipped ? ScopeBodyRenderTypes.flashTranslucent(texture) : RenderTypes.entityTranslucent(texture);
+            case PARTICLES_OPAQUE -> clipped ? ScopeRenderTypes.clipForViewmodel(RenderTypes.entityCutout(texture), texture, true) : RenderTypes.entityCutout(texture);
+            case PARTICLES_ALPHA, PARTICLES_BLEND -> clipped ? ScopeRenderTypes.flashTranslucentClipped(texture) : RenderTypes.entityTranslucent(texture);
             case ENERGY_SWIRL -> FlashMaterials.swirl(texture, clipped, 1);
             case PARTICLES_ADD, PARTICLES_EMISSIVE -> TYPES.computeIfAbsent(
                     new Key(new Pass(desc.getMaterial() == ParticleDescription.Material.PARTICLES_EMISSIVE, clipped, hand || clipped), texture), key -> {
                 var setup = RenderSetup.builder(PIPELINES.computeIfAbsent(key.pass, SnowstormMaterials::pipeline))
                         .withTexture("Sampler0", texture).useLightmap().useOverlay().sortOnUpload();
-                if (clipped) setup.withTexture(ScopeBodyRenderTypes.maskSamplerName(), ScopeMaskTextureHandle.ID);
-                return RenderType.create("tacz_snowstorm", setup.createRenderSetup());
+                if (clipped) ScopeRenderTypes.addApertureBindings(setup, texture);
+                var type = RenderType.create("tacz_snowstorm", setup.createRenderSetup());
+                return clipped ? ScopeRenderTypes.outsideAperture(type) : type;
             });
         };
     }
 
     private static RenderPipeline pipeline(Pass pass) {
         String name = "snowstorm_" + (pass.emissive ? "emissive" : "add") + (pass.clipped ? "_clipped" : pass.hand ? "_hand" : "_world");
-        var shader = Identifier.parse(pass.clipped ? "tacz:core/scope_body" : "minecraft:core/entity");
-        var builder = RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
-                .withLocation(Identifier.parse("tacz:pipeline/" + name))
-                .withVertexShader(shader).withFragmentShader(shader)
-                .withBindGroupLayout(BindGroupLayouts.SAMPLER1).withCull(false)
+        var builder = ScopeRenderTypes.clonePipeline(RenderPipelines.ENTITY_SOLID, Identifier.parse("tacz:pipeline/" + name))
+                .withCull(false)
                 .withShaderDefine("ALPHA_CUTOUT", 0.1f)
-                .withColorTargetState(new ColorTargetState(BlendFunction.ADDITIVE));
+                .withBlend(BlendFunction.ADDITIVE);
         if (pass.emissive) builder.withShaderDefine("EMISSIVE").withShaderDefine("NO_CARDINAL_LIGHTING")
-                .withDepthStencilState(DepthStencilState.DEFAULT);
-        else builder.withShaderDefine("PER_FACE_LIGHTING").withDepthStencilState(new DepthStencilState(DepthStencilState.DEFAULT.depthTest(), false));
-        if (pass.clipped) builder.withShaderDefine("SCOPE_MASK").withBindGroupLayout(ScopeBodyRenderTypes.maskSamplerLayout());
+                .withDepthWrite(true);
+        else builder.withShaderDefine("PER_FACE_LIGHTING").withDepthWrite(false);
+        if (pass.clipped) ScopeRenderTypes.addOutsideApertureShader(builder);
         var pipeline = builder.build();
-        if (pass.emissive) IrisCompat.assignEmissivePipeline(pipeline);
-        else IrisCompat.assignEntityPipeline(pipeline, pass.hand, false);
+        IrisCompat.assignPipelineToIris(pipeline, pass.hand ? "HAND_TRANSLUCENT" : pass.emissive ? "EMISSIVE_ENTITIES" : "ENTITIES", name);
 
         return pipeline;
     }

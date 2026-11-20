@@ -1,13 +1,12 @@
 package com.tacz.guns.block.entity;
 
 import com.tacz.guns.api.item.IAmmo;
-import java.util.Set;
 import com.tacz.guns.block.AmmoStorageBlock;
 import com.tacz.guns.init.ModBlocks;
 import com.tacz.guns.inventory.AmmoStorageInventory;
 import com.tacz.guns.inventory.AmmoStorageMenu;
 import com.tacz.guns.util.AmmoStorageHelper;
-import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SidedStorageBlockEntity;
@@ -25,14 +24,14 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class AmmoStorageBlockEntity extends BlockEntity implements ExtendedMenuProvider<BlockPos>, SidedStorageBlockEntity {
-    public static final BlockEntityType<AmmoStorageBlockEntity> TYPE = new BlockEntityType<>(AmmoStorageBlockEntity::new,
-            Set.of(ModBlocks.AMMO_STORAGE, ModBlocks.AMMO_STORAGE_GOLD, ModBlocks.AMMO_STORAGE_DIAMOND));
+public class AmmoStorageBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory<BlockPos>, SidedStorageBlockEntity {
+    public static final BlockEntityType<AmmoStorageBlockEntity> TYPE = FabricBlockEntityTypeBuilder.create(AmmoStorageBlockEntity::new, ModBlocks.AMMO_STORAGE, ModBlocks.AMMO_STORAGE_GOLD, ModBlocks.AMMO_STORAGE_DIAMOND).build();
     public static final int MAX_AMMO_TYPES = 27;
 
     private final AmmoStorageInventory inventory = new AmmoStorageInventory(MAX_AMMO_TYPES, this::getCapacityStacks,
