@@ -18,6 +18,54 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / 'verification/packaged-runtime'
+RECEIVER = 'f9ae55af2b507a2d556c3846127aba1c57e47d1c'
+PACK = 'assets/tacz/custom/tacz_default_gun'
+STATE_KEY = f'com.tacz.guns.GunMod|/{PACK}|tacz_default_gun'
+
+
+def tree_hashes(root):
+    return {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in root.rglob('*') if p.is_file()}
+
+
+def zip_hashes(path, prefix=''):
+    result = {}
+    with zipfile.ZipFile(path) as archive:
+        for info in archive.infolist():
+            if info.is_dir() or not info.filename.startswith(prefix):
+                continue
+            name = info.filename.removeprefix(prefix)
+            if name in result:
+                raise ValueError(f'duplicate entry {name} in {path.name}')
+            with archive.open(info) as stream:
+                result[name] = hashlib.file_digest(stream, 'sha256').hexdigest()
+    return result
+
+
+def seed_previous_default(tacz):
+    # Only git objects from the pinned 26.2 receiver, never a live player's export.
+    old_zip = tacz.parent / 'receiver-source.zip'
+    subprocess.run(['git', '-C', ROOT, 'archive', '--format=zip', f'--output={old_zip}',
+                    f'{RECEIVER}:src/main/resources/{PACK}'], check=True)
+    pack = tacz / 'tacz_default_gun'
+    with zipfile.ZipFile(old_zip) as archive:
+        archive.extractall(pack)
+    old_zip.unlink()
+    # f9ae55a's directory-backed source fingerprint, BEFORE editing the exported copy.
+    lines = []
+    for file in pack.rglob('*'):
+        if file.is_file():
+            st = file.stat()
+            lines.append(f'{file.relative_to(pack).as_posix()}|{st.st_size}|{st.st_mtime_ns // 1_000_000}')
+    fingerprint = hashlib.md5('\n'.join(sorted(lines)).encode(), usedforsecurity=False).hexdigest()
+    (tacz / '.export-state.json').write_text(json.dumps({'version': 1, 'entries': {STATE_KEY: fingerprint}}))
+    index = pack / 'data/tacz/index/guns/ak47.json'
+    original = index.read_bytes()
+    edited = original.replace(b'tacz.gun.ak47.name', b'custom.upgrade.label', 1)
+    if edited == original: raise RuntimeError('expected a real legacy AK index to edit')
+    index.write_bytes(edited)
+    (pack / 'my-notes.txt').write_bytes(b'keep these edits\n')
+    return pack, tree_hashes(pack), fingerprint
 
 
 @contextlib.contextmanager
@@ -68,15 +116,7 @@ def main():
         indexes.mkdir(parents=True)
         (fixture/'gunpack.meta.json').write_text(json.dumps({'namespace': 'net_probe', 'dependencies': {'minecraft': '[26.2]'}}))
         (indexes/'first.json').write_text(json.dumps({'name': 'remote', 'type': 'rifle', 'data': 'tacz:ak47_data', 'display': 'tacz:ak47_display'}))
-        # A pre-upgrade, user-edited default export. The changed pack must be backed
-        # up byte-for-byte before replacement; a neighbouring user pack is not ours.
-        old_export = dedicated/'tacz/tacz_default_gun'
-        previous = {'gunpack.meta.json': b'{"namespace":"edited default"}',
-                    'my-notes.txt': b'keep these edits\n', 'data/tacz/index/guns/ak47.json': b'{"custom":true}'}
-        for name, content in previous.items():
-            path = old_export/name
-            path.parent.mkdir(exist_ok=True, parents=True)
-            path.write_bytes(content)
+        old_export, previous, old_fingerprint = seed_previous_default(dedicated/'tacz')
         with socket.socket() as sock:
             sock.bind(('127.0.0.1', 0))
             port = sock.getsockname()[1]
@@ -93,15 +133,19 @@ def main():
                 await_state(lambda: log.is_file() and 'For help, type "help"' in log.read_text(errors='replace'),
                             [server], 600, 'dedicated startup')
                 [backup] = (dedicated/'tacz_backup/tacz_default_gun').glob('backup-*.zip')
-                with zipfile.ZipFile(backup) as z:
-                    if {name: z.read(name) for name in z.namelist()} != previous:
-                        raise RuntimeError('incomplete original export in the upgrade backup')
-                with zipfile.ZipFile(jar) as z:
-                    name = 'data/tacz/index/guns/ak47.json'
-                    if (old_export/name).read_bytes() != z.read('assets/tacz/custom/tacz_default_gun/' + name):
-                        raise RuntimeError('default export did not upgrade to the distributed version')
-                if (old_export/'my-notes.txt').exists(): raise RuntimeError('retired file remained in the upgraded export')
-                print('::notice::PORT_EXPORT: replaced old default pack, exact prior files recovered from upgrade backup', flush=True)
+                if zip_hashes(backup) != previous:
+                    raise RuntimeError('incomplete or changed files in the previous default-pack backup')
+                shipped = zip_hashes(jar, PACK + '/')
+                if not shipped or tree_hashes(old_export) != shipped:
+                    raise RuntimeError('upgraded directory does not match the distributed default pack')
+                state = json.loads((old_export.parent/'.export-state.json').read_text())
+                if state['entries'][STATE_KEY] == old_fingerprint:
+                    raise RuntimeError('old export fingerprint survived the upgrade')
+                # The following real /reload must not undo a new user edit on unchanged sources.
+                note = old_export/'post-upgrade.txt'
+                note.write_bytes(b'keep on reload\n')
+                print(f'::notice::PORT_EXPORT: {RECEIVER[:7]} edited export: {len(previous)} exact files in backup; '
+                      f'{len(shipped)} upgraded files match the JAR', flush=True)
                 with launch(gradle('client', '-PprobeClient', f'-PprobeReady={ready}', f'-PprobePort={port}', 'runClientGameTest'), evidence/'client.log') as client:
                     await_state(ready.is_file, [server, client], 600, 'client did not receive server-only index')
                     (indexes/'first.json').rename(indexes/'second.json')
@@ -112,6 +156,8 @@ def main():
                 server.stdin.write('stop\n'); server.stdin.flush()
                 if server.wait(timeout=60) != 0:
                     raise RuntimeError('dedicated shutdown failed')
+            if note.read_bytes() != b'keep on reload\n' or list(backup.parent.glob('backup-*.zip')) != [backup]:
+                raise RuntimeError('ordinary reload replaced the edited export or created another backup')
             digest = hashlib.sha256(jar.read_bytes()).hexdigest()
             print(f'::notice::PORT_DISTRIBUTION: {jar.name} SHA-256 {digest}; separate TCP server and client passed')
         finally:

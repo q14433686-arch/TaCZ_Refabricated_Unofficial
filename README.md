@@ -11,7 +11,7 @@
 > **非官方社区移植，不是 TaCZ 官方发布，也未获 TACZ Dev Team 审核或背书。**
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
-的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.2 Fabric**。直接上游的版本号为
+的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.2 Fabric**。原移植基线为
 `0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.2.R3-hotfix4`**。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
@@ -337,6 +337,8 @@ gunpack.meta.json
 转换器会生成带 `gunpack.meta.json` 的输出；它不能保证自动修复所有旧资源、配方或脚本差异，
 请保留原包备份并检查游戏日志。
 
+**已有 `gunpack.meta.json`，但内部仍是旧版配方或物品栈？** 在本线的 1.2 回移构建上，先用 `/tacz convert universal "包名.zip" check` 查看报告，需要时再 `export`。输出在 `tacz-converted/`，不会替你安装。详见[26.2 转换指南](docs/GUNPACK_CONVERSION_26_2.md)。
+
 ### 版本约束
 
 枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
@@ -370,10 +372,7 @@ gunpack.meta.json
   `MeshWorldFullDetailDistance`（默认 16 格）内始终画全模，超出后受
   `MeshWorldMaxVertices` 顶点预算保护（超预算只画立方体）；这是刻意的
   远近取舍，不是渲染缺失。mesh 目镜不支持（与外置 TML 一致）。
-- TML 高模的**世界语境贴图**解析走的是枪包原始贴图路径，与第一人称的 `…/gun/uv/…`
-  变体不同源；把贴图放在 `uv/` 子目录下的枪包，世界里的高模枪会报
-  `Missing resource` 并显示缺材质贴图（第一人称正常）。**已知未修**，遇到时可游戏内
-  关 `MeshGpuWorld` 或把该枪包贴图同时放一份到不带 `uv/` 的路径。
+- 在本线回移构建中，TML 的第一人称、近景展示、远景 LOD 各用独立模型和所选 display 的贴图；已用 `uv/` 与 `lod/` 路径的测试包验证了选择、陈列提交及重载失效。历史报告里的第三方高模枪包并未逐包复测，不必先复制一套贴图到其它目录。
 - 「二次渲染下的镜内高模枪」修复、「开镜距离补偿」与「高模枪身镜内裁剪」三项
   **尚未经实机验证**，措辞与验收清单见 [`docs/MESH_LOADER.md`](docs/MESH_LOADER.md) §5.2。
 

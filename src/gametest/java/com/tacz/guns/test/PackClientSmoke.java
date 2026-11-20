@@ -168,6 +168,8 @@ public class PackClientSmoke implements FabricClientGameTest {
         else if (Boolean.getBoolean("tacz.test.controller")) expected = Set.of("controllable");
         else expected = Set.of();
         if (!actual.equals(expected)) throw new AssertionError("Expected isolated integration " + expected + ", found " + actual);
+        GunMod.LOGGER.info("PORT_INTEGRATIONS: {}", actual.stream().sorted().map(id -> id + "@" + FabricLoader.getInstance()
+                .getModContainer(id).orElseThrow().getMetadata().getVersion().getFriendlyString()).toList());
     }
 
     private static BlockPos checkRacks(ClientGameTestContext context, TestSingleplayerContext world, Identifier gunId) {

@@ -44,6 +44,9 @@ public final class TargetIdentitySmoke {
         var label = Component.literal("named placement fixture");
         for (var mode : new GameType[]{GameType.SURVIVAL, GameType.CREATIVE}) {
             var player = h.makeMockPlayer(mode);
+            // The helper overrides gameMode() but never installs the mode's abilities.
+            // Vanilla BlockItem.place -> ItemStack.consume consults instabuild, not gameMode().
+            mode.updatePlayerAbilities(player.getAbilities());
             var hand = InteractionHand.MAIN_HAND;
             var stack = new ItemStack(ModBlocks.TARGET);
             stack.set(DataComponents.CUSTOM_NAME, label);
