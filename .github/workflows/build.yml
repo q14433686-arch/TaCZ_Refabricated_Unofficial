@@ -84,7 +84,7 @@ jobs:
         run: python3 scripts/verify_block_entity_persistence.py --strict
 
       - name: Version consistency (与 consistency.yml 同一脚本，arena 分支也守门)
-        run: bash scripts/check_release_consistency.sh
+        run: bash scripts/check_release_consistency.sh --strict
 
       - uses: actions/setup-java@v4
         with:

@@ -172,8 +172,8 @@ poly_mesh geo）。`model_type: "mesh"` 只对枪本身必需；配件/弹药/�
 ### 5.1 编译（CI 闭环）——已打通
 
 `.github/workflows/compile-check.yml` 已由仓库所有者放入分支，每次 push
-自动跑 `./gradlew compileJava` 并把日志写回 `build-reports/compile-java.log`。
-本文档涉及的全部提交均 CI 编译绿。
+自动跑 `compileJava`；行为回移后的失败诊断见对应 Check，不再向测试分支回推日志。
+编译本身不是贴图或镜内画面的证明。
 
 ### 5.2 实机（下列 1-7 项 + GPU 各路径均已实测 PASS，2026-08-30）
 
