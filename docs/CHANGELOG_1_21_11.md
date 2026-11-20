@@ -5,6 +5,28 @@
 
 ---
 
+## 26.2 → 1.21.11 全量移植：编译与双入口冒烟打通（2026-11-20；**实机矩阵仍未执行**）
+
+供体 `307f063`，目标 `aac343a`。本轮把 1.2.0 的客户端渲染与输入层按 1.21.11 的实际 API 重写，
+不再是「复制 26.2 源码后逐条消错」的状态。
+
+- **验收（本仓库自己的入口，不是 26.2 平台的测试）**：`build` run `44782235664` 里
+  `compileJava` 通过、`./gradlew build`（含 remapJar）通过、
+  dedicated GameTest 与 Xvfb 客户端 GameTest 两个 job 均通过，且回执 grep 都命中
+  （`PORT_CATALOG`/`PORT_SETTLEMENT`/`PORT_STORAGE` 与 `PORT_12111_CLIENT: live world`+截图）。
+  逐条结论与证据见 [`lineage/PORT_262_120_TO_12111_STATUS.md`](lineage/PORT_262_120_TO_12111_STATUS.md)。
+- **真实出现过并修掉的运行期故障**：`MinecraftMixin` 注入 `Minecraft#handleGlobalKeyPress`
+  与 `KeyMapping#matches(InputConstants$Key)`——两者在 1.21.11 都不存在，客户端启动即 apply 失败
+  （dedicated GameTest 不加载客户端 mixin，所以这个故障只有客户端入口能暴露）。
+  1.21.11 的社交界面键是 `Options#keySocialInteractions`（默认 P），与枪械交互键 O 不冲突，
+  该「抢键」裁决整段删除。
+- **口径**：`ScopeMask*` 掩码纹理族与热成像本轮**未搬**（26.2 那套依赖 `SubmitNode`/`GpuFormat`/
+  `DepthStencilState`/`BindGroupLayout`，1.21.11 要按 `RenderPipelines` 重写），KubeJS / OptiFine /
+  旧 KosmX PlayerAnimator 兼容层在本线 `build.gradle` 里本就被排除于产物外。这三类都不是「已修好」，
+  是缺口。CI 产出的 jar 是开发构建，不等于已测试的 1.2.0 发行包。
+
+---
+
 ## R3-hotfix4 源码版本号（2026-10-27）
 
 在上述 26.2 新增项按本分支基线回移后，将构建元数据中的 `R3-hotfix3` 递增为 `R3-hotfix4`
