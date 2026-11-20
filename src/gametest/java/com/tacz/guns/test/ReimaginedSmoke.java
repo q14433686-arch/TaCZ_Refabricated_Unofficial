@@ -188,7 +188,7 @@ public final class ReimaginedSmoke {
         // Four complete renders on the SAME client tick. No advancing item bob/spin or actor
         // animation between the original-material reference and production footage.
         mc.gameRenderer.update(DeltaTracker.ONE); mc.gameRenderer.extract(DeltaTracker.ONE,true);
-        mc.gameRenderer.render(); RenderSystem.getDevice().createCommandEncoder().submit();
+        mc.gameRenderer.render(DeltaTracker.ONE, true); RenderSystem.getDevice().createCommandEncoder().submit();
         return depth();
     }
     private record Center(double x, double y, BitSet mask) {}
