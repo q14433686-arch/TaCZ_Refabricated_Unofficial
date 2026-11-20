@@ -14,7 +14,6 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Prediction;
 import net.minecraft.world.item.ItemStack;
 
 /** A request to select a pack-defined option, never a client-supplied stack. */
@@ -44,7 +43,7 @@ public record ClientMessageInstallVirtualAttachment(int slot, AttachmentType att
         var before = gun.copy();
         iGun.installAttachment(gun, part);
         if (!ItemStack.isSameItemSameComponents(part, iGun.getAttachment(gun, attachmentType))) return;
-        if (returnOld && !inventory.add(old)) player.drop(old, false, Prediction.SERVER_ONLY);
+        if (returnOld && !inventory.add(old)) player.drop(old, false);
         if (attachmentType == AttachmentType.EXTENDED_MAG) iGun.dropAllAmmo(player, gun);
         AttachmentPropertyManager.postChangeEvent(player, gun);
         GunRefitTrigger.INSTANCE.trigger(player, before, gun);

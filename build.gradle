@@ -243,6 +243,21 @@ dependencies {
     // implementation "maven.modrinth:accrelatedrendering-refabricated:1.0.8-1.20.1-alpha-fabric.1"
 }
 
+// An installed JEI or REI is tested in its own client. No viewer in the baseline runtime or nested JAR.
+configurations.gametestCompileOnly.extendsFrom(configurations.compileOnly)
+if (project.hasProperty('taczViewerSmoke')) {
+    if (!project.hasProperty('taczClientSmoke')) throw new GradleException('Viewer smoke needs a client')
+    def viewer = project.property('taczViewerSmoke')
+    loom.runs.clientGameTest.property 'tacz.test.viewer', viewer
+    dependencies {
+        if (viewer == 'jei') gametestRuntimeOnly "maven.modrinth:jei:${jei_version}"
+        else if (viewer == 'rei') {
+            gametestRuntimeOnly("me.shedaniel:RoughlyEnoughItems-fabric:${rei_version}") { transitive = false }
+            gametestRuntimeOnly('dev.architectury:architectury-fabric:21.0.2') { transitive = false }
+        } else throw new GradleException("Unknown viewer: $viewer")
+    }
+}
+
 // External game-test pack, never a production classpath resource.
 ['gameTest', 'clientGameTest'].each { run ->
     if (run == 'clientGameTest' && !project.hasProperty('taczClientSmoke')) return

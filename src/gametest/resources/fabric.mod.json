@@ -15,6 +15,9 @@
     ],
     "fabric-client-gametest": [
       "com.tacz.guns.test.PackClientSmoke"
+    ],
+    "jei_mod_plugin": [
+      "com.tacz.guns.test.JeiViewerSmoke"
     ]
   },
   "depends": {
