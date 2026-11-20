@@ -1,5 +1,9 @@
 package com.tacz.guns.block;
 
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+
 import com.tacz.guns.block.entity.GunPegboardBlockEntity;
 import com.tacz.guns.item.GunPegboardItem;
 import net.minecraft.core.BlockPos;
@@ -35,6 +39,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class GunPegboardBlock extends BaseEntityBlock {
+    public static final MapCodec<GunPegboardBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+            Codec.BOOL.fieldOf("glowing").forGetter(GunPegboardBlock::isGlowing),
+            propertiesCodec()).apply(i, GunPegboardBlock::new));
+    @Override protected MapCodec<GunPegboardBlock> codec() { return CODEC; }
+
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final BooleanProperty DYED = BooleanProperty.create("dyed");
     public static final EnumProperty<PegboardShape> SHAPE = EnumProperty.create("shape", PegboardShape.class);

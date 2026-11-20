@@ -29,6 +29,8 @@ public class GunPackList extends ContainerObjectSelectionList<GunPackList.Entry>
     private final Set<String> selectedNamespaces = new HashSet<>();
     private final Checkbox byHandCheckbox;
     private final EditBox byName;
+    private final Checkbox allCheckbox;
+    private boolean clearingFilters;
 
     public GunPackList(Minecraft pMinecraft, int pWidth, int pHeight, int pY0, int pY1, int pItemHeight,
                        Map<Identifier, List<Identifier>> recipes, GunSmithTableScreen parent) {
@@ -61,6 +63,7 @@ public class GunPackList extends ContainerObjectSelectionList<GunPackList.Entry>
         this.byName = new EditBox(pMinecraft.font, 3, 0, 94, 10, Component.empty());
         this.byName.setHint(Component.translatable("gui.tacz.gun_smith_table.filter.search"));
         this.byName.setResponder((pText) -> {
+            if (clearingFilters) return;
             parent.init();
             parent.setIndexPage(0);
         });
@@ -76,7 +79,7 @@ public class GunPackList extends ContainerObjectSelectionList<GunPackList.Entry>
         };
         this.addEntry(new Entry(byHandCheckbox));
 
-        Checkbox checkbox1 = new Checkbox(0, 0, 10, 10, Component.translatable("gui.tacz.gun_smith_table.filter.all"), true) {
+        allCheckbox = new Checkbox(0, 0, 10, 10, Component.translatable("gui.tacz.gun_smith_table.filter.all"), true) {
             @Override
             public void onPress(InputWithModifiers input) {
                 super.onPress(input);
@@ -84,7 +87,7 @@ public class GunPackList extends ContainerObjectSelectionList<GunPackList.Entry>
                 updateSelectedNamespaces();
             }
         };
-        this.addEntry(new Entry(checkbox1));
+        this.addEntry(new Entry(allCheckbox));
 
         for (String namespace : namespaces) {
             PackInfo packInfo = ClientAssetsManager.INSTANCE.getPackInfo(namespace);
@@ -94,7 +97,7 @@ public class GunPackList extends ContainerObjectSelectionList<GunPackList.Entry>
                 @Override
                 public void onPress(InputWithModifiers input) {
                     super.onPress(input);
-                    checkbox1.selected = gunPackList.stream().allMatch(Checkbox::selected);
+                    allCheckbox.selected = gunPackList.stream().allMatch(Checkbox::selected);
                     updateSelectedNamespaces();
                 }
             };
@@ -114,6 +117,22 @@ public class GunPackList extends ContainerObjectSelectionList<GunPackList.Entry>
 
     public void setByHandSelected(boolean selected) {
         byHandCheckbox.selected = selected;
+    }
+
+    /** Clear presentation filters without recursively rebuilding the screen while selecting a recipe. */
+    public void clearFilters() {
+        byHandCheckbox.selected = false;
+        allCheckbox.selected = true;
+        for (var pack : gunPackList) {
+            pack.selected = true;
+            selectedNamespaces.add(pack.getId());
+        }
+        clearingFilters = true;
+        try {
+            byName.setValue("");
+        } finally {
+            clearingFilters = false;
+        }
     }
 
     public Set<String> namespaceList() {

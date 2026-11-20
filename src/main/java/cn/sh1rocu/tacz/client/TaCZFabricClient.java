@@ -129,6 +129,11 @@ public class TaCZFabricClient implements ClientModInitializer {
 
         ClientPlayConnectionEvents.DISCONNECT.register(CommonNetworkCacheEvent::onDisconnect);
         PackCompatibilityNotice.register();
+        com.tacz.guns.client.gui.ViewTuningScreen.registerPauseButton();
+        com.tacz.guns.client.input.ViewTuningKey.register();
+        com.tacz.guns.api.event.common.GunFirePostEvent.EVENT.register(com.tacz.guns.client.renderer.crosshair.GunCrosshair::onLocalFire);
+        ClientTickEvents.START_CLIENT_TICK.register(mc -> com.tacz.guns.util.time.GunTime.setPaused(mc.level != null && mc.isPaused()));
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, mc) -> com.tacz.guns.util.time.GunTime.resetEpoch());
         ClientTickEvents.END_CLIENT_TICK.register(com.tacz.guns.client.gui.overlay.DisplayCaseLockHint::tick);
 
         // 26.2: 第一人称入口不再走 SimpleBedrockModel 的 RenderHandEvent。

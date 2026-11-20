@@ -1,5 +1,9 @@
 package com.tacz.guns.block;
 
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+
 import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.util.ItemNbtUtils;
 import net.minecraft.util.ProblemReporter;
@@ -37,6 +41,11 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class AmmoStorageBlock extends BaseEntityBlock {
+    public static final MapCodec<AmmoStorageBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+            Codec.intRange(1, Integer.MAX_VALUE).fieldOf("capacity_stacks").forGetter(AmmoStorageBlock::getCapacityStacks),
+            propertiesCodec()).apply(i, AmmoStorageBlock::new));
+    @Override protected MapCodec<AmmoStorageBlock> codec() { return CODEC; }
+
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final int IRON_CAPACITY_STACKS = 216;
     public static final int GOLD_CAPACITY_STACKS = 432;

@@ -347,6 +347,7 @@ public class LocalPlayerShoot {
             } else {
                 SoundPlayManager.playShootSound(player, display, gunData);
             }
+            com.tacz.guns.api.event.common.GunFirePostEvent.EVENT.invoker().post(new com.tacz.guns.api.event.common.GunFirePostEvent(player, mainHandItem, LogicalSide.CLIENT));
         }
     }
 

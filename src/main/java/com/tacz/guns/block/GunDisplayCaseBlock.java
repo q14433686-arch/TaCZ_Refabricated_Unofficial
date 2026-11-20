@@ -1,5 +1,7 @@
 package com.tacz.guns.block;
 
+import com.mojang.serialization.MapCodec;
+
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.block.entity.GunDisplayCaseBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -41,6 +43,9 @@ import java.util.List;
 import java.util.Set;
 
 public class GunDisplayCaseBlock extends BaseEntityBlock {
+    public static final MapCodec<GunDisplayCaseBlock> CODEC = simpleCodec(GunDisplayCaseBlock::new);
+    @Override protected MapCodec<GunDisplayCaseBlock> codec() { return CODEC; }
+
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final BooleanProperty LOCKED = BooleanProperty.create("locked");
     public static final BooleanProperty LEFT = BooleanProperty.create("left");

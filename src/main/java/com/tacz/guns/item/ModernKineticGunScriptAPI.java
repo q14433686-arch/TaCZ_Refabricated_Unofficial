@@ -189,6 +189,7 @@ public class ModernKineticGunScriptAPI {
                 String soundId = useSilenceSound ? SoundManager.SILENCE_3P_SOUND : SoundManager.SHOOT_3P_SOUND;
                 SoundManager.sendSoundToNearby(shooter, soundDistance, gunId, gunDisplayId, soundId, 0.8f, 0.9f + shooter.getRandom().nextFloat() * 0.125f);
             }
+            com.tacz.guns.api.event.common.GunFirePostEvent.EVENT.invoker().post(new com.tacz.guns.api.event.common.GunFirePostEvent(shooter, itemStack, LogicalSide.SERVER));
         }
         return true;
     }

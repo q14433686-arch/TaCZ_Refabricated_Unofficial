@@ -12,6 +12,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.function.Predicate;
 
 public class LocalPlayerDataHolder {
+    public final ShotEnvelope hudShotEnvelope = new ShotEnvelope();
     /**
      * 枪械操作的定时任务池（拔枪音效延时、连发节拍）。
      *
@@ -134,6 +135,7 @@ public class LocalPlayerDataHolder {
      * 重生后各种参数的重置
      */
     public void reset() {
+        hudShotEnvelope.clear();
         // 重置客户端的 shoot 时间戳
         isShootRecorded = true;
         clientShootTimestamp = -1;

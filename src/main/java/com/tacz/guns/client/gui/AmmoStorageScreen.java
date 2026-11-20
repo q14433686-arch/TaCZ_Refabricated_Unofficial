@@ -87,7 +87,7 @@ public class AmmoStorageScreen extends AbstractContainerScreen<AmmoStorageMenu> 
         int cell = getVirtualCell(mouseX, mouseY);
         if (cell >= 0 && (button == 0 || button == 1)) {
             int entryId = cell < menu.getEntries().size() ? menu.getEntries().get(cell).id() : -1;
-            AmmoStorageMenu.Action action = (InputConstants.isKeyDown(InputConstants.KEY_LSHIFT) || InputConstants.isKeyDown(InputConstants.KEY_RSHIFT)) ? AmmoStorageMenu.Action.QUICK_MOVE
+            AmmoStorageMenu.Action action = (InputConstants.isKeyDown(minecraft.getWindow(), InputConstants.KEY_LSHIFT) || InputConstants.isKeyDown(minecraft.getWindow(), InputConstants.KEY_RSHIFT)) ? AmmoStorageMenu.Action.QUICK_MOVE
                     : button == 1 ? AmmoStorageMenu.Action.PICKUP_HALF : AmmoStorageMenu.Action.PICKUP;
             ClientPlayNetworking.send(new ClientMessageAmmoStorageClick(menu.containerId, entryId, action));
             virtualClickButton = button;
