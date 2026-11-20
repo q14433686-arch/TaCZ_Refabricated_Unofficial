@@ -696,6 +696,7 @@ public final class ScopePipRenderer {
      * 是因为 render 侧的调用次数在光影下不是一帧一次（Iris 的手部 pass 一帧两趟）。
      */
     private static long frameIndex = 0;
+    public static long frameNumber() { return frameIndex; }
 
     /** 上一次真正跑完镜内那一遍的帧序号；从未跑过 = Long.MIN_VALUE。 */
     private static long lastScopePassFrame = Long.MIN_VALUE;

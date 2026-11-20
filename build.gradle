@@ -265,7 +265,7 @@ if (project.hasProperty('taczViewerSmoke')) {
         from 'src/gametest/fixtures/overlay'
         archiveFileName = 'tacz-port-smoke.zip'
         destinationDirectory = layout.buildDirectory.dir("run/${run}/tacz")
-        mustRunAfter tasks.named('deleteGameTestRunDir')
+        if (run == 'clientGameTest') dependsOn tasks.named('deleteGameTestRunDir')
     }
     tasks.named("run${run.capitalize()}") { dependsOn zip }
 }
