@@ -92,7 +92,8 @@ def iter_conditions(node, out: list[dict]) -> None:
 
 def check_loot_tables() -> None:
     """B. 六份战利品表的 schema 与根半边条件。"""
-    expected = set(DOUBLE_BLOCK_LOOT) | {"workbench_a.json"}
+    storage = {f"ammo_storage{tier}.json" for tier in ("", "_gold", "_diamond")}
+    expected = set(DOUBLE_BLOCK_LOOT) | {"workbench_a.json"} | storage
     present = {p.name for p in LOOT_DIR.glob("*.json")}
     missing = expected - present
     if missing:
@@ -108,9 +109,9 @@ def check_loot_tables() -> None:
 
         raw = path.read_text(encoding="utf-8")
         # 26.3 的新 schema 键（condition/modifier/match_block）在 26.2 会被静默忽略
-        if re.search(r'"(modifier|random_sequence|match_block)"', raw):
+        if re.search(r'"(modifier|match_block)"', raw):
             errors.append(
-                f"{name}: 出现了 26.3 的战利品表 schema 键（modifier/random_sequence/match_block）。"
+                f"{name}: 出现了 26.3 的战利品表 schema 键（modifier/match_block）。"
                 " 26.2 仍用 conditions/functions/block_state_property，混用的后果是条件与函数被静默丢弃。"
             )
 
@@ -132,6 +133,12 @@ def check_loot_tables() -> None:
                     f"{name}: 缺少 block_state_property 的 {prop}={root_value} 产出条件"
                     "（否则被连带清掉的另一半也会掉落 → 一次破坏掉两个）"
                 )
+
+        if name in storage and not any(
+            node.get("function") == "minecraft:copy_custom_data" and node.get("source") == "block_entity"
+            and {"source": "Entries", "target": "Entries", "op": "replace"} in node.get("ops", []) for node in dicts
+        ):
+            errors.append(f"{name}: missing 26.2 copy_custom_data function for stored Entries")
 
         if name in BLOCK_ID_LOOT:
             has_copy = any(

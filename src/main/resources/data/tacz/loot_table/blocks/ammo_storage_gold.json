@@ -5,18 +5,20 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "modifier": {
-            "type": "minecraft:copy_custom_data",
-            "source": "block_entity",
-            "ops": [
-              {
-                "op": "replace",
-                "source": "Entries",
-                "target": "Entries"
-              }
-            ]
-          },
-          "name": "tacz:ammo_storage_gold"
+          "name": "tacz:ammo_storage_gold",
+          "functions": [
+            {
+              "source": "block_entity",
+              "ops": [
+                {
+                  "op": "replace",
+                  "source": "Entries",
+                  "target": "Entries"
+                }
+              ],
+              "function": "minecraft:copy_custom_data"
+            }
+          ]
         }
       ],
       "rolls": 1,
