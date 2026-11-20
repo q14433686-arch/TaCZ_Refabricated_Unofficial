@@ -102,7 +102,7 @@ class GuardTests(unittest.TestCase):
         self.guard("verify_block_entity_persistence.py", False)
 
     def test_minecart_null_uuid_fails(self) -> None:
-        self.replace(MINECART, "return this.ownerProfile;",
+        self.replace(MINECART, "return profile == null ? null : profile.partialProfile();",
                      'return new GameProfile(null, "Alex");')
         self.guard("verify_block_entity_persistence.py", False)
 

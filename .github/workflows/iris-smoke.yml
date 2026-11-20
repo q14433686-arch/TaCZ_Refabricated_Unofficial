@@ -30,6 +30,11 @@ jobs:
           java-version: '25'
       - uses: gradle/actions/setup-gradle@v4
       - run: python3 scripts/prepare_iris_smoke.py
+      - name: Record depth convention from the installed Iris binary
+        if: matrix.color == ''
+        run: |
+          javap -p -c -classpath build/iris-smoke/iris.jar net.irisshaders.iris.mixin.UndoReverseZThree net.irisshaders.iris.mixin.UndoReverseZFour > build/iris-smoke/depth-convention.txt
+          cat build/iris-smoke/manifest.json
       - name: Real Iris and Sodium with the selected active shader pack (OpenGL software)
         env:
           SDL_VIDEO_DRIVER: x11
@@ -62,6 +67,17 @@ jobs:
               data=[s.split(') ',1)[-1] for s in lines if ('PORT_REIMAGINED:' in s or 'PORT_SCOPE_PARTICLE:' in s) and any(k in s for k in keys)]
               if data: print('::notice title='+name+'::'+' | '.join(data).replace('%','%25'))
           PY
+      - name: Report active-pack depth and particle controls
+        if: always() && matrix.color == ''
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          log = Path('build/run/clientGameTest/logs/latest.log')
+          if log.is_file():
+              for line in log.read_text(errors='replace').splitlines():
+                  if any(k in line for k in ('PORT_HEAT_DEPTH:', 'PORT_THERMAL_SLIME:', 'PORT_THERMAL_DYNAMIC:', 'PORT_LENS: XL50 restored', 'PORT_HAND_MATERIALS:')):
+                      print('::notice::' + line[line.index('PORT_'):].replace('%', '%25'))
+          PY
       - name: Summarize failures
         if: failure()
         run: python3 scripts/report_ci_failures.py "$RUNNER_TEMP/tacz-client.log" build/run/clientGameTest/logs/latest.log
@@ -71,6 +87,7 @@ jobs:
           name: ${{ matrix.artifact }}-${{ github.sha }}
           path: |
             build/iris-smoke/manifest.json
+            build/iris-smoke/depth-convention.txt
             build/run/clientGameTest/logs/latest.log
             build/run/clientGameTest/screenshots/**/*.png
             build/run/clientGameTest/diagnostics/*.txt

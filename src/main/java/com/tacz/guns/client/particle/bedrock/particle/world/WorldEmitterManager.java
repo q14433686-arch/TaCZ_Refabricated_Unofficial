@@ -18,7 +18,7 @@ import org.joml.Vector3f;
 import javax.annotation.Nullable;
 import java.util.*;
 
-/** Fabric 26.3 lifecycle and immutable SubmitNode geometry adapter. No vanilla smoke substitution. */
+/** Fabric 26.2 lifecycle and immutable SubmitNode geometry adapter. No vanilla smoke substitution. */
 public final class WorldEmitterManager {
     private static final WorldEmitterManager INSTANCE=new WorldEmitterManager();
     private static final int MAX_EMITTERS=128, MAX_TOTAL_PARTICLES=16384;

@@ -1,6 +1,8 @@
 package com.tacz.guns.test.mixin;
 
+import com.mojang.blaze3d.opengl.GlConst;
 import com.mojang.blaze3d.opengl.GlTexture;
+import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.render.scope.ScopeThermalCapture;
@@ -28,8 +30,9 @@ abstract class HeatDepthObserver {
             float[] z = new float[1];
             GL45C.glGetTextureSubImage(((GlTexture)scene.getDepthTexture()).glId(), 0, scene.width/2, scene.height/2, 0,
                     1, 1, 1, GL45C.GL_DEPTH_COMPONENT, GL45C.GL_FLOAT, z);
-            GunMod.LOGGER.info("PORT_HEAT_DEPTH: {} centre={}, camera projection z={},{}", sample, z[0],
-                    camera.projectionMatrix.m22(), camera.projectionMatrix.m32());
+            GunMod.LOGGER.info("PORT_HEAT_DEPTH: {} centre={}, camera projection z={},{}; native compare=0x{}", sample, z[0],
+                    camera.projectionMatrix.m22(), camera.projectionMatrix.m32(),
+                    Integer.toHexString(GlConst.toGl(DepthStencilState.DEFAULT.depthTest())));
         } finally { for (int i=0; i<keys.length; i++) GL45C.glPixelStorei(keys[i], old[i]); }
     }
 }

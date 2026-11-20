@@ -4,6 +4,12 @@ import cn.sh1rocu.tacz.compat.rei.REIClientPlugin;
 import cn.sh1rocu.tacz.compat.rei.display.GunSmithTableDisplay;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import com.tacz.guns.GunMod;
+import com.tacz.guns.api.item.builder.BlockItemBuilder;
+import com.tacz.guns.init.ModItems;
+import me.shedaniel.rei.api.common.entry.comparison.ComparisonContext;
+import me.shedaniel.rei.api.common.entry.comparison.ItemComparatorRegistry;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import com.tacz.guns.client.compat.RecipeViewerReloadBridge;
 import me.shedaniel.rei.api.client.registry.entry.EntryRegistry;
 import me.shedaniel.rei.api.common.display.Display;
@@ -47,6 +53,17 @@ final class ReiViewerSmoke implements ViewerSmoke {
         ctx.waitFor(mc -> !PluginManager.areAnyReloading() && !DisplayRegistry.getInstance().get(REIClientPlugin.GUN_AMMO_QUERY).contains(oldQuery)
                 && forward(EXISTING), 1200);
         ctx.runOnClient(mc -> {
+            // Query the installed registry (not REISubtype in isolation) before AND after reload.
+            var comparators = ItemComparatorRegistry.getInstance();
+            for (var item : List.of(ModItems.WORKBENCH_111, ModItems.WORKBENCH_211, ModItems.WORKBENCH_121)) {
+                var a = BlockItemBuilder.create(item).setId(Identifier.parse("port_test:a")).build();
+                var b = BlockItemBuilder.create(item).setId(Identifier.parse("port_test:b")).build();
+                var renamed = a.copy();
+                renamed.set(DataComponents.CUSTOM_NAME, Component.literal("same workstation"));
+                long hash = comparators.hashOf(ComparisonContext.FUZZY, a);
+                if (hash == comparators.hashOf(ComparisonContext.FUZZY, b) || hash != comparators.hashOf(ComparisonContext.FUZZY, renamed))
+                    throw new AssertionError("REI workstation subtype did not follow BlockId: " + item);
+            }
             for (int i = 0; i < ids.size(); i++) if (syncedCrafting(ids.get(i)) != before.get(i))
                 throw new AssertionError("Gun-pack refresh replaced server crafting display " + ids.get(i));
             if (reloaded && EntryRegistry.getInstance().getEntryStacks().noneMatch(e -> e.getType() == VanillaEntryTypes.ITEM

@@ -1,5 +1,6 @@
 package com.tacz.guns.entity;
 
+import com.mojang.authlib.GameProfile;
 import com.tacz.guns.advancement.TargetHitTrigger;
 import cn.sh1rocu.tacz.api.LogicalSide;
 import cn.sh1rocu.tacz.api.extension.IMinecart;
@@ -140,6 +141,12 @@ public class TargetMinecart extends AbstractMinecart implements ITargetEntity, I
             itemStack.set(DataComponents.CUSTOM_NAME, this.getCustomName());
         }
         return itemStack;
+    }
+
+    /** Partial identity for integrations. The native skin cache, not this getter, resolves textures. */
+    public @Nullable GameProfile getGameProfile() {
+        var profile = getOwnerProfile();
+        return profile == null ? null : profile.partialProfile();
     }
 
     /**

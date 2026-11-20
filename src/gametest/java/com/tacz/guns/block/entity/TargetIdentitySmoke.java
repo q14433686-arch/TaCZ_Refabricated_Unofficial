@@ -1,6 +1,7 @@
 package com.tacz.guns.block.entity;
 
 import com.mojang.authlib.GameProfile;
+import com.tacz.guns.entity.TargetMinecart;
 import com.tacz.guns.init.ModBlocks;
 import java.util.ArrayDeque;
 import java.util.Optional;
@@ -9,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.item.component.ResolvableProfile;
@@ -17,6 +19,21 @@ import net.minecraft.world.level.storage.TagValueInput;
 /** Controls only the external profile-service replies. Uses the real server executor, native
  * profile codec, removal lifecycle and client update tags; no Mojang account/network required. */
 public final class TargetIdentitySmoke {
+    @GameTest
+    public void minecartProfileFollowsName(GameTestHelper h) {
+        var cart = new TargetMinecart(TargetMinecart.TYPE, h.getLevel());
+        h.assertTrue(cart.getGameProfile() == null, "Unnamed minecart must not resolve a skin");
+        cart.setCustomName(Component.literal("Alex"));
+        var alex = cart.getOwnerProfile();
+        h.assertTrue(alex instanceof ResolvableProfile.Dynamic && alex == cart.getOwnerProfile()
+                && alex.partialProfile().equals(cart.getGameProfile()), "Name-only cart profile must be cached and readable");
+        cart.setCustomName(Component.literal("Steve"));
+        h.assertTrue(alex != cart.getOwnerProfile() && "Steve".equals(cart.getGameProfile().name()), "Stale minecart skin after renaming");
+        cart.setCustomName(null);
+        h.assertTrue(cart.getGameProfile() == null, "Clearing the name retained the last profile");
+        h.succeed();
+    }
+
     @GameTest
     public void lateProfileLookupCannotReplaceChangedOwner(GameTestHelper h) {
         var world = h.getLevel();
