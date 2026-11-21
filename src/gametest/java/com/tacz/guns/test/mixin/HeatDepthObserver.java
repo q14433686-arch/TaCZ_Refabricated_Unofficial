@@ -72,11 +72,11 @@ abstract class HeatDepthObserver {
             int h = Math.min(128, Math.min(scene.height, mask.height));
             int x0 = (scene.width - w) / 2;
             int y0 = (scene.height - h) / 2;
-            byte[] rgba = new byte[w * h * 4];
+            float[] rgba = new float[w * h * 4];
             float[] sz = new float[w * h];
             float[] mz = new float[w * h];
             GL45C.glGetTextureSubImage(((GlTexture) mask.getColorTexture()).glId(), 0, x0, y0, 0,
-                    w, h, 1, GL45C.GL_RGBA, GL45C.GL_UNSIGNED_BYTE, rgba);
+                    w, h, 1, GL45C.GL_RGBA, GL45C.GL_FLOAT, rgba);
             GL45C.glGetTextureSubImage(((GlTexture) scene.getDepthTexture()).glId(), 0, x0, y0, 0,
                     w, h, 1, GL45C.GL_DEPTH_COMPONENT, GL45C.GL_FLOAT, sz);
             GL45C.glGetTextureSubImage(((GlTexture) mask.getDepthTexture()).glId(), 0, x0, y0, 0,
@@ -84,7 +84,7 @@ abstract class HeatDepthObserver {
             int hot = 0, diffZ = 0;
             float maxAbsDiff = 0f;
             for (int i = 0; i < w * h; i++) {
-                if ((rgba[i * 4] & 0xFF) > 128) hot++;
+                if (rgba[i * 4] > 0.5f) hot++;
                 float dz = Math.abs(mz[i] - sz[i]);
                 if (dz > 0f) {
                     diffZ++;
@@ -98,7 +98,7 @@ abstract class HeatDepthObserver {
             GunMod.LOGGER.info(
                     "PORT_HEAT_DIAG: recorded={} ready={} failed={} size={}x{} hot128={} diffZ={} maxDz={} centreR={} centreSceneZ={} centreMaskZ={} fmt={} proj=({},{},{},{})",
                     hasRecorded, ready, failed, scene.width, scene.height, hot, diffZ, maxAbsDiff,
-                    rgba[ciIdx * 4] & 0xFF, sz[ciIdx], mz[ciIdx],
+                    rgba[ciIdx * 4], sz[ciIdx], mz[ciIdx],
                     scene.getDepthTexture().getFormat(),
                     camera.projectionMatrix.m00(), camera.projectionMatrix.m11(),
                     camera.projectionMatrix.m22(), camera.projectionMatrix.m32());
