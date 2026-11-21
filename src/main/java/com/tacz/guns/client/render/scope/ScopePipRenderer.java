@@ -1287,16 +1287,18 @@ public final class ScopePipRenderer {
         if (!ScopeMaskRenderer.isInHandPass()) {
             return;
         }
+        // 注意：isEnabledForHeldGun 里那道掩码判据，在这个调用点读到的是【本帧】的值
+        //（掩码刚在上一句 renderAtPhaseBoundary 里画完），而在
+        // suppressesWorldFovZoom / captureScene 那两个调用点读到的是上一帧的 ——
+        // 同一个字段、不同时刻，这正是设计里说的那一帧延迟。
+        // 26.1.2 GameRenderer#renderItemInHand 会在 submitHandsWithItems 之前先跑一次空的
+        // featureRenderDispatcher.renderAllFeatures() 预冲刷；必须先确认本帧掩码已画完，再消费每帧唯一槽位。
+        if (!ScopeMaskRenderer.hasMaskThisFrame()) return;
         // 每帧只合成一次。Iris 的 HandRenderer 一帧跑两次手部 pass，
         // 第二次再合成会把 solid 阶段已经画进孔径的东西（蚀刻准星等）整片盖掉。
         if (!ScopeMaskRenderer.claimCompositeSlot()) {
             return;
         }
-        // 注意：isEnabledForHeldGun 里那道掩码判据，在这个调用点读到的是【本帧】的值
-        //（掩码刚在上一句 renderAtPhaseBoundary 里画完），而在
-        // suppressesWorldFovZoom / captureScene 那两个调用点读到的是上一帧的 ——
-        // 同一个字段、不同时刻，这正是设计里说的那一帧延迟。
-        if (!ScopeMaskRenderer.hasMaskThisFrame()) return;
         boolean pip = isEnabledForHeldGun() && currentAimingProgress() > minAimingProgress();
         if (pip && RenderConfig.SCOPE_PIP_DEBUG_NO_COMPOSITE.get()) return;
         ScopeLensConfig lens = ScopeLensFrame.current();

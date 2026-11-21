@@ -13,6 +13,10 @@ public final class IrisCompatMixinPlugin implements IMixinConfigPlugin {
     @Override public void onLoad(String mixinPackage) { }
     @Override public String getRefMapperConfig() { return null; }
     @Override public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        if (mixinClassName.endsWith("IrisSodiumWorldRendererMixin")) {
+            return FabricLoader.getInstance().isModLoaded("iris")
+                    && FabricLoader.getInstance().isModLoaded("sodium");
+        }
         return FabricLoader.getInstance().isModLoaded("iris");
     }
     @Override public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) { }

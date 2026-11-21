@@ -12,7 +12,8 @@
     "IrisGlCommandEncoderMixin",
     "IrisExtendedShaderMixin",
     "IrisScopeDimensionMixin",
-    "IrisShadowResolutionMixin"
+    "IrisShadowResolutionMixin",
+    "IrisSodiumWorldRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 0

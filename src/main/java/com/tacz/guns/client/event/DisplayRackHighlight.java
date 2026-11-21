@@ -30,6 +30,7 @@ import java.util.List;
 public final class DisplayRackHighlight {
     private record Cell(AABB box, int color) {}
     private static final RenderStateDataKey<List<Cell>> CELLS = RenderStateDataKey.create(() -> "tacz display cells");
+    private static final RenderStateDataKey<Boolean> DRAW_CELLS = RenderStateDataKey.create(() -> "tacz draw display cells");
 
     private static class Material {
         static final RenderType LINES = create();
@@ -67,23 +68,32 @@ public final class DisplayRackHighlight {
         LevelRenderEvents.BEFORE_BLOCK_OUTLINE.register((context, outline) -> {
             List<Cell> cells = outline.getData(CELLS);
             if (cells != null && !cells.isEmpty()) {
-                var pose = context.poseStack();
-                var camera = context.levelState().cameraRenderState.pos;
-                var pos = outline.pos();
-                pose.pushPose();
-                pose.translate(pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z);
-                // The picked rack is already visibility/range checked by vanilla's block pick.
-                // Do not let a stored item's depth hide the edges of its own selected cell.
-                var out = context.submitNodeCollector().order(1);
-                for (var cell : cells) {
-                    var shape = Shapes.create(cell.box);
-                    int color = cell.color;
-                    out.submitCustomGeometry(pose, Material.LINES, (entryPose, consumer) ->
-                            shape.forAllEdges((x1, y1, z1, x2, y2, z2) -> emitLine(entryPose, consumer, x1, y1, z1, x2, y2, z2, color, 1.0f)));
-                }
-                pose.popPose();
+                outline.setData(DRAW_CELLS, Boolean.TRUE);
             }
             return true;
+        });
+        LevelRenderEvents.END_MAIN.register(context -> {
+            var outline = context.levelState().blockOutlineRenderState;
+            if (outline == null || !Boolean.TRUE.equals(outline.getData(DRAW_CELLS))) return;
+            List<Cell> cells = outline.getData(CELLS);
+            if (cells == null || cells.isEmpty()) return;
+            var pose = context.poseStack();
+            var camera = context.levelState().cameraRenderState.pos;
+            var pos = outline.pos();
+            pose.pushPose();
+            pose.translate(pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z);
+            // The picked rack is already visibility/range checked by vanilla's block pick.
+            // Do not let a stored item's depth hide the edges of its own selected cell.
+            // Drawn in END_MAIN after vanilla's black block outline flushes RenderTypes.lines().
+            PoseStack.Pose entryPose = pose.last();
+            VertexConsumer consumer = context.bufferSource().getBuffer(Material.LINES);
+            for (var cell : cells) {
+                int color = cell.color;
+                Shapes.create(cell.box).forAllEdges((x1, y1, z1, x2, y2, z2) ->
+                        emitLine(entryPose, consumer, x1, y1, z1, x2, y2, z2, color, 1.0f));
+            }
+            pose.popPose();
+            context.bufferSource().endBatch(Material.LINES);
         });
     }
 
