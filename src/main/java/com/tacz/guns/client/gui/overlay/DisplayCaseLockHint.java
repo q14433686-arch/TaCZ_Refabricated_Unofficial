@@ -46,8 +46,8 @@ public final class DisplayCaseLockHint {
     public static void render(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
         if (remaining == 0) return;
         var mc = Minecraft.getInstance();
-        if (mc.level != level || mc.gui.hud.isHidden()) return;
+        if (mc.level != level || mc.options.hideGui) return;
         graphics.text(mc.font, message, (graphics.guiWidth() - mc.font.width(message)) / 2,
-                graphics.guiHeight() / 2 + 32, 0xff000000 | TextColor.YELLOW.getValue(), false);
+                graphics.guiHeight() / 2 + 32, 0xff000000 | net.minecraft.ChatFormatting.YELLOW.getColor(), false);
     }
 }

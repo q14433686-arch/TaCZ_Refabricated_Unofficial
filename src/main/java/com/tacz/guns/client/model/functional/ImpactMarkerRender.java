@@ -36,7 +36,7 @@ public record ImpactMarkerRender(List<BedrockPart> path, Rangefinder settings) {
         double slope = RangefinderReadout.impactSlope(stack, settings);
         if (!Double.isFinite(slope)) return;
         var mc = Minecraft.getInstance();
-        var camera = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
+        var camera = mc.gameRenderer.getGameRenderState().levelRenderState.cameraRenderState;
         if (!camera.initialized) return;
         double projected = -slope * camera.projectionMatrix.m11();
         if (ScopePipRenderState.suppressesWorldFovZoom(mc.getDeltaTracker().getGameTimeDeltaPartialTick(false))) projected *= ScopePipRenderState.currentZoom() / ScopePipRenderState.worldZoomTarget();

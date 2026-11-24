@@ -260,7 +260,18 @@ dependencies {
 // win for metadata and future hand-edited files.
 def bundledSourcesAndResources = file("resources/tacz-26.1.2-source-and-resource-bundle.jar")
 
-tasks.withType(JavaCompile).configureEach { options.compilerArgs += ['-Xmaxerrs', '500'] }
+// External game-test pack, never a production classpath resource.
+['gameTest', 'clientGameTest'].each { run ->
+    if (run == 'clientGameTest' && !project.hasProperty('taczClientSmoke')) return
+    def zip = tasks.register("zip${run.capitalize()}Pack", Zip) {
+        from 'src/gametest/fixtures/overlay'
+        from('tools/player-acceptance-pack') { exclude 'gunpack.meta.json', 'README.md' }
+        archiveFileName = 'tacz-port-smoke.zip'
+        destinationDirectory = layout.buildDirectory.dir("run/${run}/tacz")
+        if (run == 'clientGameTest') dependsOn tasks.named('deleteGameTestRunDir')
+    }
+    tasks.named("run${run.capitalize()}") { dependsOn zip }
+}
 
 test { useJUnitPlatform() }
 

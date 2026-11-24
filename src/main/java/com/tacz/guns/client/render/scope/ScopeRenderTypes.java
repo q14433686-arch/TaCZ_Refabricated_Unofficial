@@ -775,7 +775,7 @@ public final class ScopeRenderTypes {
         return pipeline;
     }
 
-    private static RenderPipeline.Builder clonePipeline(RenderPipeline source, Identifier location) {
+    public static RenderPipeline.Builder clonePipeline(RenderPipeline source, Identifier location) {
         RenderPipeline.Builder builder = RenderPipeline.builder()
                 .withLocation(location)
                 .withVertexShader(source.getVertexShader())

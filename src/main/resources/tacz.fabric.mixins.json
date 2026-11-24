@@ -37,7 +37,6 @@
     "client.MinecraftUseRestartMixin",
     "client.MouseHandlerMixin",
     "client.TextureAtlasMixin",
-    "compat.controllable.BindingContextMixin",
     "compat.punchy.PunchyArmRendererMixin",
     "compat.punchy.PunchyHandEquipStateMachineMixin",
     "compat.punchy.PunchyHandRenderBobContextMixin",

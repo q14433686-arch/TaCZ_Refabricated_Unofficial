@@ -306,14 +306,8 @@ public class LocalPlayerShoot {
             data.clientShootTimestamp = GunTime.nowMillis();
             ClientPlayNetworking.send(new ClientMessagePlayerShoot(data.clientShootTimestamp - data.clientBaseTimestamp, chargeProgress));
         }
-
-        // The burst scheduler runs off-thread. Sound managers, animation state and Fabric event
-        // listeners are client-thread state, so hand them back to Minecraft's event loop to avoid CME.
-        // 播放声音和状态机触发需要从异步线程上传到主线程执行，否则会引起cme
-        ((BlockableEventLoopAccessor) Minecraft.getInstance()).tacz$submitAsync(
-                () -> applyClientFireEffects(display, mainHandItem, gunData));
-
-        count.getAndIncrement();
+        applyClientFireEffects(display, mainHandItem, gunData);
+        count.incrementAndGet();
     }
 
     /**

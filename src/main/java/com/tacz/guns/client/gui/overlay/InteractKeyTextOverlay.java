@@ -168,7 +168,7 @@ public class InteractKeyTextOverlay {
         // （26.1.2 用上游同款 ChatFormatting；TextColor.YELLOW/GRAY 具名常量是 26.2 才有的。）
         graphics.text(font, title,
                 (int) ((width - font.width(title)) / 2.0f), (int) (height / 2.0f - 25),
-                0xFF000000 | TextColor.YELLOW.getValue(), false);
+                0xFF000000 | net.minecraft.ChatFormatting.YELLOW.getColor(), false);
         if (filter != null) {
             graphics.text(font, filter,
                     (int) ((width - font.width(filter)) / 2.0f), (int) (height / 2.0f - 14),

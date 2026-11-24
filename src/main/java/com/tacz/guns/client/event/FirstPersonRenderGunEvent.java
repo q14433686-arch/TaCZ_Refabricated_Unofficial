@@ -499,4 +499,13 @@ public class FirstPersonRenderGunEvent {
         poseMatrix.m31(poseMatrix.m31() + constraintTranslation.y() * weight);
         poseMatrix.m32(poseMatrix.m32() + constraintTranslation.z() * weight);
     }
+    public static void resetTimestamps() {
+        shootTimeStamp = -1;
+        jumpingTimeStamp = -1;
+        jumpingSwayProgress = 0;
+        lastOnGround = false;
+        currentViewIndex = -1;
+        if (SWITCH_VIEW_DYNAMICS != null) SWITCH_VIEW_DYNAMICS.stop();
+        SWITCH_VIEW_DYNAMICS = null;
+    }
 }

@@ -1,5 +1,6 @@
 package com.tacz.guns.entity;
 
+import com.mojang.authlib.GameProfile;
 import com.tacz.guns.advancement.TargetHitTrigger;
 import cn.sh1rocu.tacz.api.LogicalSide;
 import cn.sh1rocu.tacz.api.extension.IMinecart;

@@ -157,8 +157,28 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.BooleanValue SCOPE_PIP_DEBUG_PAINT_LENS;
 
+    public static ForgeConfigSpec.BooleanValue RENDER_MUZZLE_SMOKE;
+    public static ForgeConfigSpec.BooleanValue MUZZLE_SURFACE_LIGHT, LEGACY_MUZZLE_LIGHT, EXPLOSION_SURFACE_LIGHT;
+    public static ForgeConfigSpec.BooleanValue DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER;
+    public static ForgeConfigSpec.DoubleValue GUN_HURT_BOB_MULTIPLIER;
+    public static ForgeConfigSpec.BooleanValue ILLUMINATED_REAL_SKY;
+    public static ForgeConfigSpec.BooleanValue EXPERIMENTAL_SCOPE_LENS;
+    public static ForgeConfigSpec.BooleanValue SCOPE_THERMAL_ENABLE;
+    public static ForgeConfigSpec.BooleanValue ENABLE_OCULAR_INFLATE;
+    public static ForgeConfigSpec.DoubleValue OCULAR_INFLATE;
+
     public static void init(ForgeConfigSpec.Builder builder) {
         builder.push("render");
+        ILLUMINATED_REAL_SKY = builder.define("IlluminatedRealSky", false);
+        EXPERIMENTAL_SCOPE_LENS = builder.comment("Apply the active display's lens to its masked aperture (native renderer).")
+                .define("EnableExperimentalScopeLens", true);
+        SCOPE_THERMAL_ENABLE = builder.comment("Capture visible heat sources for thermal lenses; otherwise use their optics.")
+                .define("EnableScopeThermal", true);
+        ENABLE_OCULAR_INFLATE = builder.comment("Expand only attachment ocular cubes when baking. Reload resources to apply.")
+                .define("EnableOcularInflate", true);
+        OCULAR_INFLATE = builder.comment("Additional inflate in Bedrock model units (not screen-space mask padding).")
+                .defineInRange("OcularInflate", 0.0005, 0.0, (double) Float.MAX_VALUE);
+
         DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER = builder.comment("Hide third-person offhand and unselected hotbar guns; keep main hand visible").define("DisableThirdPersonOffhandAndHotbarGunRender", false);
         GUN_HURT_BOB_MULTIPLIER = builder.comment("First-person ordinary hurt tilt while holding a gun; front/back hits are additionally halved").defineInRange("GunHurtBobMultiplier", 0.1, 0, 1);
         MUZZLE_SURFACE_LIGHT = builder.comment("Briefly light nearby terrain, world entities and displayed objects on a successful shot (client visual only).").define("MuzzleSurfaceLight", false);

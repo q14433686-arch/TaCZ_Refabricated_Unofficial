@@ -1,0 +1,6 @@
+{
+  "name": "Frame trace",
+  "type": "rifle",
+  "display": "tacz:ak47_display",
+  "data": "port_test:frame_trace"
+}

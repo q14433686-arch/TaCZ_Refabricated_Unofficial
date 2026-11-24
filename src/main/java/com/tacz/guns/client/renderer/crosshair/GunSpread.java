@@ -33,7 +33,7 @@ final class GunSpread {
         }
         var heat = data.getHeatData();
         if (heat != null) spread = withHeat(spread, heat, gun.getHeatAmount(stack));
-        var camera = mc.gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
+        var camera = mc.gameRenderer.getGameRenderState().levelRenderState.cameraRenderState;
         if (!camera.initialized) return 0;
         return pixels(spread, camera.projectionMatrix.m11(), (float) mc.getWindow().getHeight() / mc.getWindow().getGuiScale(), scalePercent);
     }

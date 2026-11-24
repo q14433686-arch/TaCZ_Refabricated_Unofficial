@@ -78,7 +78,7 @@ public final class ViewTuningScreen extends Screen {
 
     public static void open(@Nullable Screen parent) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null) mc.gui.setScreen(new ViewTuningScreen(parent));
+        if (mc.player != null) mc.setScreen(new ViewTuningScreen(parent));
     }
 
     private ViewTuningScreen(@Nullable Screen parent) {
@@ -430,7 +430,7 @@ public final class ViewTuningScreen extends Screen {
         }
     }
 
-    @Override public void onClose() { minecraft.gui.setScreen(parent); }
+    @Override public void onClose() { minecraft.setScreen(parent); }
 
     private static final class Slider extends AbstractSliderButton {
         private final Component name;

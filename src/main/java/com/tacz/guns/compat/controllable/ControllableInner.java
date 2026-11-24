@@ -2,109 +2,73 @@ package com.tacz.guns.compat.controllable;
 
 import com.mrcrayfish.controllable.Controllable;
 import com.mrcrayfish.controllable.client.binding.ButtonBinding;
-import com.mrcrayfish.controllable.client.binding.context.BindingContext;
 import com.mrcrayfish.controllable.client.binding.context.InGameContext;
 import com.mrcrayfish.controllable.client.binding.handlers.OnPressAndReleaseHandler;
 import com.mrcrayfish.controllable.client.input.Buttons;
 import com.mrcrayfish.controllable.client.input.Controller;
-import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.gun.FireMode;
-import com.tacz.guns.client.input.AimKey;
-import com.tacz.guns.client.input.CrawlKey;
-import com.tacz.guns.client.input.FireSelectKey;
-import com.tacz.guns.client.input.InspectKey;
-import com.tacz.guns.client.input.InteractKey;
-import com.tacz.guns.client.input.MeleeKey;
-import com.tacz.guns.client.input.ReloadKey;
-import com.tacz.guns.client.input.ShootKey;
-import com.tacz.guns.client.input.ZoomKey;
+import com.tacz.guns.client.input.*;
 import com.tacz.guns.client.resource.pojo.display.gun.ControllableData;
+import com.tacz.guns.config.sync.SyncConfig;
+import com.tacz.guns.util.InputExtraCheck;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
-
 import java.util.EnumMap;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 
-/** Controllable 0.26.x bindings and gun-fire rumble integration. */
+/** Loaded only on clients that actually have the optional 26.3 Fabric mod installed. */
 public final class ControllableInner {
-    public static final BindingContext GUN_KEY_CONFLICT =
-            new GunKeyConflict(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "gun_key"));
-    public static final ButtonBinding AIM = new ButtonBinding(
-            Buttons.LEFT_TRIGGER, "key.tacz.aim.desc", "key.category.tacz", GUN_KEY_CONFLICT,
-            OnPressAndReleaseHandler.create(
-                    context -> Optional.of(() -> AimKey.onAimControllerPress(true)),
-                    context -> AimKey.onAimControllerPress(false)));
-    public static final ButtonBinding SHOOT = new ButtonBinding(
-            Buttons.RIGHT_TRIGGER, "key.tacz.shoot.desc", "key.category.tacz", GUN_KEY_CONFLICT,
-            OnPressAndReleaseHandler.create(context -> Optional.of(() -> {
-            }), context -> true));
-    public static final ButtonBinding RELOAD = new ButtonBinding(
-            Buttons.B, "key.tacz.reload.desc", "key.category.tacz", GUN_KEY_CONFLICT,
-            OnPressAndReleaseHandler.create(
-                    context -> Optional.of(() -> ReloadKey.onReloadControllerPress(true)),
-                    context -> ReloadKey.onReloadControllerPress(false)));
-    public static final ButtonBinding MELEE = new ButtonBinding(
-            Buttons.X, "key.tacz.melee.desc", "key.category.tacz", GUN_KEY_CONFLICT,
-            OnPressAndReleaseHandler.create(
-                    context -> Optional.of(() -> MeleeKey.onMeleeControllerPress(true)),
-                    context -> MeleeKey.onMeleeControllerPress(false)));
-    public static final ButtonBinding ZOOM = new ButtonBinding(
-            Buttons.X, "key.tacz.zoom.desc", "key.category.tacz", GUN_KEY_CONFLICT,
-            OnPressAndReleaseHandler.create(
-                    context -> Optional.of(() -> ZoomKey.onZoomControllerPress(true)),
-                    context -> ZoomKey.onZoomControllerPress(false)));
-    public static final ButtonBinding CRAWL = new ButtonBinding(
-            Buttons.LEFT_THUMB_STICK, "key.tacz.crawl.desc", "key.category.tacz", GUN_KEY_CONFLICT,
-            OnPressAndReleaseHandler.create(
-                    context -> Optional.of(() -> CrawlKey.onCrawlControllerPress(true)),
-                    context -> CrawlKey.onCrawlControllerPress(false)));
-    public static final ButtonBinding FIRE_SELECT = new ButtonBinding(
-            Buttons.DPAD_LEFT, "key.tacz.fire_select.desc", "key.category.tacz", GUN_KEY_CONFLICT,
-            OnPressAndReleaseHandler.create(
-                    context -> Optional.of(() -> FireSelectKey.onFireSelectControllerPress(true)),
-                    context -> FireSelectKey.onFireSelectControllerPress(false)));
-    public static final ButtonBinding INTERACT = new ButtonBinding(
-            -1, "key.tacz.interact.desc", "key.category.tacz", GUN_KEY_CONFLICT,
-            OnPressAndReleaseHandler.create(
-                    context -> Optional.of(() -> InteractKey.onInteractControllerPress(true)),
-                    context -> InteractKey.onInteractControllerPress(false)));
-    public static final ButtonBinding INSPECT = new ButtonBinding(
-            -1, "key.tacz.inspect.desc", "key.category.tacz", GUN_KEY_CONFLICT,
-            OnPressAndReleaseHandler.create(
-                    context -> Optional.of(() -> InspectKey.onInspectControllerPress(true)),
-                    context -> InspectKey.onInspectControllerPress(false)));
+    private static final InGameContext CONTEXT = new InGameContext(Identifier.parse("tacz:gun_input")) {
+        @Override public int priority() { return 1; }
+    };
 
-    private ControllableInner() {
+    private static boolean gunActive() {
+        var player = Minecraft.getInstance().player;
+        return InputExtraCheck.isInGame() && player != null && !player.isSpectator() && IGun.mainHandHoldGun(player);
+    }
+
+    private static boolean crawlActive() {
+        var player = Minecraft.getInstance().player;
+        return InputExtraCheck.isInGame() && player != null && !player.isSpectator() && !player.isPassenger()
+                && SyncConfig.ENABLE_CRAWL.get() && (IGun.mainHandHoldGun(player) || SyncConfig.ENABLE_CRAWL_WITHOUT_GUN.get());
+    }
+
+    private static ButtonBinding bind(int button, String name, BooleanSupplier active, Runnable press) {
+        var binding = new ButtonBinding(button, "key.tacz." + name + ".desc", "key.category.tacz", CONTEXT,
+                OnPressAndReleaseHandler.create(ctx -> active.getAsBoolean() ? Optional.of(press) : Optional.empty(),
+                        ctx -> active.getAsBoolean()));
+        Controllable.getBindingRegistry().register(binding);
+        return binding;
     }
 
     public static void init() {
-        Controllable.getBindingRegistry().register(AIM);
-        Controllable.getBindingRegistry().register(SHOOT);
-        Controllable.getBindingRegistry().register(RELOAD);
-        Controllable.getBindingRegistry().register(MELEE);
-        Controllable.getBindingRegistry().register(CRAWL);
-        Controllable.getBindingRegistry().register(ZOOM);
-        Controllable.getBindingRegistry().register(FIRE_SELECT);
-        Controllable.getBindingRegistry().register(INTERACT);
-        Controllable.getBindingRegistry().register(INSPECT);
-
-        // Controllable 0.26 moved its own hooks to FrameworkClientTickEvents. TACZ does not need
-        // Framework directly: Fabric's end-client-tick event provides the same polling boundary.
-        ClientTickEvents.END_CLIENT_TICK.register(client -> onClientTickEnd());
+        var aim = bind(Buttons.LEFT_TRIGGER, "aim", ControllableInner::gunActive, () -> AimKey.onAimControllerPress(true));
+        var shoot = bind(Buttons.RIGHT_TRIGGER, "shoot", ControllableInner::gunActive, () -> {});
+        var crawl = bind(Buttons.LEFT_THUMB_STICK, "crawl", ControllableInner::crawlActive, () -> CrawlKey.onCrawlControllerPress(true));
+        bind(Buttons.B, "reload", ControllableInner::gunActive, () -> ReloadKey.onReloadControllerPress(true));
+        bind(Buttons.X, "melee", () -> gunActive() && !aiming(), () -> MeleeKey.onMeleeControllerPress(true));
+        bind(Buttons.X, "zoom", () -> gunActive() && aiming(), () -> ZoomKey.onZoomControllerPress(true));
+        bind(Buttons.DPAD_LEFT, "fire_select", ControllableInner::gunActive, () -> FireSelectKey.onFireSelectControllerPress(true));
+        bind(-1, "interact", ControllableInner::gunActive, () -> InteractKey.onInteractControllerPress(true));
+        bind(-1, "inspect", ControllableInner::gunActive, () -> InspectKey.onInspectControllerPress(true));
+        // Refresh even without a controller: disconnects, GUI transitions and rebinds must clear stale holds.
+        ClientTickEvents.START_CLIENT_TICK.register(mc -> {
+            Controller pad = Controllable.getController();
+            boolean active = pad != null && gunActive();
+            AimKey.setControllerAimDown(active && !aim.isUnbound() && pad.isButtonPressed(aim.getButton()));
+            ShootKey.shootControllerTick(active && !shoot.isUnbound() && pad.isButtonPressed(shoot.getButton()));
+            CrawlKey.setControllerDown(pad != null && crawlActive() && !crawl.isUnbound() && pad.isButtonPressed(crawl.getButton()));
+        });
     }
 
-    private static void onClientTickEnd() {
-        if (!GUN_KEY_CONFLICT.isActive()) {
-            return;
-        }
-        Controller controller = Controllable.getController();
-        if (controller == null) {
-            return;
-        }
-        ShootKey.shootControllerTick(controller.isButtonPressed(SHOOT.getButton()));
+    private static boolean aiming() {
+        return IClientPlayerGunOperator.fromLocalPlayer(Minecraft.getInstance().player).isAim();
     }
 
     public static void rumbleShoot(ItemStack mainHandItem, FireMode fireMode) {
@@ -121,24 +85,15 @@ public final class ControllableInner {
             EnumMap<FireMode, ControllableData> data = index.getControllableData();
             if (data.containsKey(fireMode)) {
                 ControllableData controllableData = data.get(fireMode);
-                controller.rumble(controllableData.getLowFrequency(), controllableData.getHighFrequency(),
-                        controllableData.getTimeInMs());
-            } else if (fireMode == FireMode.AUTO) {
-                controller.rumble(0.15F, 0.25F, 80);
+                controller.rumble(controllableData.getLowFrequency(), controllableData.getHighFrequency(), controllableData.getTimeInMs());
             } else {
-                controller.rumble(0.25F, 0.5F, 100);
+                if (fireMode == FireMode.AUTO) {
+                    controller.rumble(0.15f, 0.25f, 80);
+                } else {
+                    controller.rumble(0.25f, 0.5f, 100);
+                }
             }
         });
     }
 
-    public static final class GunKeyConflict extends InGameContext {
-        private GunKeyConflict(Identifier id) {
-            super(id);
-        }
-
-        @Override
-        public int priority() {
-            return 1;
-        }
-    }
 }

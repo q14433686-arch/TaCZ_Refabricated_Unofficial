@@ -1,0 +1,5 @@
+{
+  "model": "tacz:gun/ak47_geo",
+  "texture": "tacz:gun/uv/ak47",
+  "slot": "port_test:gun/rack_mesh"
+}

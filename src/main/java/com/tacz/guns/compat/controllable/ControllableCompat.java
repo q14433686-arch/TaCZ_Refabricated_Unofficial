@@ -8,14 +8,10 @@ public class ControllableCompat {
     private static final String MOD_ID = "controllable";
 
     public static void init() {
-        if (FabricLoader.getInstance().isModLoaded(MOD_ID)) {
-            ControllableInner.init();
-        }
+        if (FabricLoader.getInstance().isModLoaded(MOD_ID)) ControllableInner.init();
     }
 
     public static void onGunShoot(ItemStack gunItem, FireMode fireMode) {
-        if (FabricLoader.getInstance().isModLoaded(MOD_ID)) {
-            ControllableInner.rumbleShoot(gunItem, fireMode);
-        }
+        if (FabricLoader.getInstance().isModLoaded(MOD_ID)) ControllableInner.rumbleShoot(gunItem, fireMode);
     }
 }

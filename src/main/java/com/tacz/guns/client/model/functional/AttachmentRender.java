@@ -101,7 +101,7 @@ public class AttachmentRender implements IFunctionalSubmitter {
         var model = option.getModel();
         var texture = option.getModelTexture();
         if (model == null || texture == null) return;
-        var body = com.tacz.guns.client.render.scope.ScopeBodyRenderTypes.clipForViewmodel(
+        var body = com.tacz.guns.client.render.scope.ScopeRenderTypes.clipForViewmodel(
                 RenderTypes.entityCutout(texture), texture, context.firstPerson());
         pose.pushPose();
         model.submit(part, gun, pose, context, collector, body, texture, light, overlay);

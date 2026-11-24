@@ -1,0 +1,5 @@
+{
+  "namespace": "port_test",
+  "dependencies": { "minecraft": "[1.21.1],[26.1.2]", "tacz": ">=1.1.8" },
+  "overlays": { "entries": [{ "directory": "compat_26_1_2", "minecraft": "[26.1.2]" }] }
+}

@@ -4,9 +4,9 @@ import com.tacz.guns.GunMod;
 import com.tacz.guns.init.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -16,6 +16,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 import java.util.Set;
 
@@ -51,7 +53,7 @@ public class StatueBlockEntity extends BlockEntity {
 
     public void setGun(ItemStack stack) {
         this.dropItem();
-        this.gunItem = stack.copy();
+        this.gunItem = stack.copyWithCount(1); // placement debits one item, even for a custom stackable gun
         if (level != null) {
             BlockState state = level.getBlockState(worldPosition);
             level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_ALL);
@@ -83,33 +85,28 @@ public class StatueBlockEntity extends BlockEntity {
     }
 
     @Override
-    public void loadAdditional(net.minecraft.world.level.storage.ValueInput input) {
-        // 26.2 data migration: ItemStack.OPTIONAL_CODEC may fail on legacy NBT data
-        // where Item was stored as COMPOUND instead of the new string-based format.
-        // Gracefully handle both formats.
+    public void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
         try {
             this.gunItem = input.read(ITEM_TAG, ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY);
-        } catch (Exception e) {
-            GunMod.LOGGER.warn("Failed to load statue gun item (legacy format?), resetting to empty", e);
+        } catch (RuntimeException ex) {
+            GunMod.LOGGER.warn("Cannot decode the stored statue item; leaving the display empty", ex);
             this.gunItem = ItemStack.EMPTY;
         }
     }
 
     @Override
-    protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput output) {
-                output.store(ITEM_TAG, ItemStack.OPTIONAL_CODEC, gunItem);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        output.store(ITEM_TAG, ItemStack.OPTIONAL_CODEC, gunItem);
     }
 
     @Override
-    public CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.Provider provider) {
-        CompoundTag tag = super.getUpdateTag(provider);
-        ItemStack.OPTIONAL_CODEC.encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, gunItem)
-                .result().ifPresent(t -> tag.put(ITEM_TAG, t));
-        return tag;
+    public CompoundTag getUpdateTag(HolderLookup.Provider provider) {
+        // As on disk: use this world's registries for components with holder references.
+        // Bare NbtOps can silently omit the entire displayed stack on the client.
+        return saveWithoutMetadata(provider);
     }
-
-    // In Minecraft 26.2+, getRenderBoundingBox() is handled differently
-    // Rendering bounds are now typically managed through BlockEntityRenderers
 
     @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {

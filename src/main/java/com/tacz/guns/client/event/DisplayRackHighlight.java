@@ -5,7 +5,6 @@ import com.tacz.guns.block.GunDisplayCaseSlotHelper;
 import com.tacz.guns.block.GunPegboardSlotHelper;
 import com.tacz.guns.block.entity.DisplayRackBlockEntity;
 import net.fabricmc.fabric.api.client.rendering.v1.RenderStateDataKey;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
@@ -33,7 +32,7 @@ public final class DisplayRackHighlight {
     private static class Material {
         static final RenderType LINES = create();
         private static RenderType create() {
-            var pipeline = RenderPipeline.builder(RenderPipelines.LINES_SNIPPET)
+            var pipeline = com.tacz.guns.client.render.scope.ScopeRenderTypes.clonePipeline(RenderPipelines.LINES, Identifier.parse("tacz:pipeline/rack_cell_outline"))
                     .withLocation(Identifier.parse("tacz:pipeline/rack_cell_outline"))
                     .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
                     .withColorTargetState(ColorTargetState.DEFAULT).build();
@@ -42,7 +41,7 @@ public final class DisplayRackHighlight {
     }
 
     public static void register() {
-        LevelExtractionEvents.AFTER_BLOCK_OUTLINE_EXTRACTION.register((context, target) -> {
+        LevelRenderEvents.AFTER_BLOCK_OUTLINE_EXTRACTION.register((context, target) -> {
             var outline = context.levelState().blockOutlineRenderState;
             if (outline == null || !(target instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK) return;
             var pos = hit.getBlockPos();
