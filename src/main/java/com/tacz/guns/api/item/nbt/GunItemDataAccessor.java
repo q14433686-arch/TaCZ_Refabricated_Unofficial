@@ -9,6 +9,7 @@ import com.tacz.guns.api.item.builder.AttachmentItemBuilder;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
+import com.tacz.guns.client.resource.index.ClientAttachmentVariantIndex;
 import com.tacz.guns.resource.index.CommonGunIndex;
 import com.tacz.guns.util.ItemNbtUtils;
 import net.minecraft.nbt.CompoundTag;
@@ -191,7 +192,7 @@ public interface GunItemDataAccessor extends IGun {
     default FireMode getFireMode(ItemStack gun) {
         CompoundTag nbt = ItemNbtUtils.getTag(gun);
         if (nbt.contains(GUN_FIRE_MODE_TAG)) {
-            return FireMode.valueOf(nbt.getStringOr(GUN_FIRE_MODE_TAG, "UNKNOWN"));
+            return FireMode.fromName(nbt.getStringOr(GUN_FIRE_MODE_TAG, "UNKNOWN"));
         }
         return FireMode.UNKNOWN;
     }
@@ -309,18 +310,8 @@ public interface GunItemDataAccessor extends IGun {
     @Override
     @NotNull
     default ItemStack getBuiltinAttachment(ItemStack gun, AttachmentType type) {
-        IGun iGun = IGun.getIGunOrNull(gun);
-        if (iGun == null) {
-            return ItemStack.EMPTY;
-        }
-        CommonGunIndex index = TimelessAPI.getCommonGunIndex(iGun.getGunId(gun)).orElse(null);
-        if (index != null) {
-            var builtin = index.getGunData().getBuiltInAttachments();
-            if (builtin.containsKey(type)) {
-                return AttachmentItemBuilder.create().setId(builtin.get(type)).build();
-            }
-        }
-        return ItemStack.EMPTY;
+        Identifier id = getBuiltInAttachmentId(gun, type);
+        return DefaultAssets.isEmptyAttachmentId(id) ? ItemStack.EMPTY : AttachmentItemBuilder.create().setId(id).build();
     }
 
     @Override
@@ -346,9 +337,9 @@ public interface GunItemDataAccessor extends IGun {
         }
         CommonGunIndex index = TimelessAPI.getCommonGunIndex(iGun.getGunId(gun)).orElse(null);
         if (index != null) {
-            var builtin = index.getGunData().getBuiltInAttachments();
-            if (builtin.containsKey(type)) {
-                return builtin.get(type);
+            var option = index.getGunData().getBuiltInAttachmentOptions().get(type);
+            if (option != null && option.getDisplayAttachment() != null) {
+                return option.getDisplayAttachment();
             }
         }
         return DefaultAssets.EMPTY_ATTACHMENT_ID;
@@ -400,9 +391,11 @@ public interface GunItemDataAccessor extends IGun {
         if (!DefaultAssets.isEmptyAttachmentId(scopeId)) {
             CompoundTag attachmentTag = this.getAttachmentTag(gunItem, AttachmentType.SCOPE);
             int zoomNumber = builtin ? 0 : AttachmentItemDataAccessor.getZoomNumberFromTag(attachmentTag);
-            float[] zooms = TimelessAPI.getClientAttachmentIndex(scopeId).map(ClientAttachmentIndex::getZoom).orElse(null);
-            if (zooms != null) {
-                zoom = zooms[zoomNumber % zooms.length];
+            Identifier resolved = scopeId;
+            float[] zooms = TimelessAPI.getClientAttachmentVariantIndex(resolved, attachmentTag).map(ClientAttachmentVariantIndex::getZoom)
+                    .orElseGet(() -> TimelessAPI.getClientAttachmentIndex(resolved).map(ClientAttachmentIndex::getZoom).orElse(null));
+            if (zooms != null && zooms.length > 0) {
+                zoom = zooms[Math.floorMod(zoomNumber, zooms.length)];
             }
         } else {
             zoom = TimelessAPI.getGunDisplay(gunItem).map(GunDisplayInstance::getIronZoom).orElse(1f);

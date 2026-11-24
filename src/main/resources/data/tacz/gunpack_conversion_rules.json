@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "source_minecraft": "1.20.1",
-  "target_minecraft": "26.1.2",
+  "target_minecraft": "26.2",
   "reference": "https://github.com/MinecraftForge/MinecraftForge/pull/9955",
   "reference_head": "1d973b03358e7da0988c384d225c8c3098f48c56",
   "legacy_catalog": "MinecraftForge 1.20.1-47.4.13 item tags",
-  "target_catalog": "26.1.2 Fabric convention tags (unavailable mappings require manual review)",
+  "target_catalog": "26.2 Fabric convention tags (unavailable mappings require manual review)",
   "item_tags": {
     "forge:armors": {
       "tag": "c:armors"

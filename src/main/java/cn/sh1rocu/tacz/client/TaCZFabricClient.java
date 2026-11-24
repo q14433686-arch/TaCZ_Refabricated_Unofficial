@@ -105,12 +105,12 @@ public class TaCZFabricClient implements ClientModInitializer {
                 BuiltinItemRendererRegistry.INSTANCE.register(clientEx, renderer);
             }
         });
-        // 枪械工作台左侧「旋转预览模型」的 PIP 渲染器（回移植自 26.1.2）。
+        // 枪械工作台左侧「旋转预览模型」的 PIP 渲染器（回移植自 26.2）。
         // GUI 是 extract→绘制两段式，1.21.1 那套直接改 RenderSystem 模型视图矩阵
         // 再 renderStatic 的做法已不存在；带自定义变换的 GUI 3D 绘制只能走 PictureInPictureRenderer。
         // 不注册的话，GunSmithTableScreen 提交的 GunPreviewRenderState 找不到渲染器 -> 预览框空白。
         // 26.1.2 的 PictureInPictureRenderer 基类构造器要求 MultiBufferSource.BufferSource，
-        // 由 Fabric 的 Context 提供（这一点与 26.1.2 的无参构造不同，是本回移植的适配点）。
+        // 由 Fabric 的 Context 提供（这一点与 26.2 的无参构造不同，是本回移植的适配点）。
         PictureInPictureRendererRegistry.register(
                 ctx -> new com.tacz.guns.client.gui.preview.GunPreviewRenderer(ctx.bufferSource()));
         subscribeEvents();
@@ -125,7 +125,7 @@ public class TaCZFabricClient implements ClientModInitializer {
         BeforeRenderHandEvent.CALLBACK.register(CameraSetupEvent::applyItemInHandCameraAnimation);
         ViewportEvent.FOV.register(CameraSetupEvent::applyScopeMagnification);
         ViewportEvent.FOV.register(CameraSetupEvent::applyGunModelFovModifying);
-        GunFireEvent.CALLBACK.register(CameraSetupEvent::initialCameraRecoil);
+        com.tacz.guns.api.event.common.GunFirePostEvent.EVENT.register(CameraSetupEvent::initialCameraRecoilPost);
         ViewportEvent.CAMERA.register(CameraSetupEvent::applyCameraRecoil);
         ComputeFovModifierEvent.CALLBACK.register(CameraSetupEvent::onComputeMovementFov);
 
@@ -135,17 +135,22 @@ public class TaCZFabricClient implements ClientModInitializer {
         InputEvent.InteractionKeyMappingTriggered.EVENT.register(ClientPreventGunClick::onClickInput);
 
         ClientPlayConnectionEvents.DISCONNECT.register(CommonNetworkCacheEvent::onDisconnect);
-        ClientPlayerNetworkEvent.LOGGING_OUT.register(event -> CommonNetworkCacheEvent.onLocalLogout(event.getConnection()));
         PackCompatibilityNotice.register();
+        com.tacz.guns.client.gui.ViewTuningScreen.registerPauseButton();
+        GunInputHandler.registerEvents();
+        com.tacz.guns.api.event.common.GunFirePostEvent.EVENT.register(com.tacz.guns.client.renderer.crosshair.GunCrosshair::onLocalFire);
+        ClientTickEvents.START_CLIENT_TICK.register(com.tacz.guns.client.event.ClientGunTimeLifecycle::tick);
+        ClientPlayerNetworkEvent.LOGGING_OUT.register(com.tacz.guns.client.event.ClientGunTimeLifecycle::onPlayerLoggedOut);
+        ClientTickEvents.END_CLIENT_TICK.register(com.tacz.guns.client.gui.overlay.DisplayCaseLockHint::tick);
 
-        // 26.1.2: 第一人称入口不再走 SimpleBedrockModel 的 RenderHandEvent。
+        // 26.2: 第一人称入口不再走 SimpleBedrockModel 的 RenderHandEvent。
         // 现在统一由客户端 ItemModel（tacz:dynamic_item）-> AnimateGeoItemRenderer#render 的
         // mode.firstPerson() 分支进入，与其它 display context 完全一致。
         // 原先被注释掉的 FirstPersonRenderEvent 注册与其 RenderHandEvent stub 均已删除，
         // 以免再有人把它误当作第一人称链路来排查。
 
         RenderItemInHandBobEvent.VIEW.register(FirstPersonRenderGunEvent::cancelItemInHandViewBobbing);
-        GunFireEvent.CALLBACK.register(FirstPersonRenderGunEvent::onGunFire);
+        com.tacz.guns.api.event.common.GunFirePostEvent.EVENT.register(FirstPersonRenderGunEvent::onGunFirePost);
 
         ClientTickEvents.START_CLIENT_TICK.register(client -> InventoryEvent.onPlayerChangeSelect(client, false));
         ClientTickEvents.END_CLIENT_TICK.register(client -> InventoryEvent.onPlayerChangeSelect(client, true));
@@ -157,13 +162,13 @@ public class TaCZFabricClient implements ClientModInitializer {
         EntityHurtByGunEvent.POST.register(PlayerHurtByGunEvent::onPlayerHurtByGun);
 
         // 【r42】原来这里还注册了 ClientPlayerNetworkEvent.CLONE ->
-        // RefreshClonePlayerDataEvent::onClientPlayerClone，但该事件在 26.1.2 永远发不出来
+        // RefreshClonePlayerDataEvent::onClientPlayerClone，但该事件在 26.2 永远发不出来
         // （唯一发射点 ClientHooks#firePlayerRespawn 依赖的 ClientPacketListenerMixin
         //   注入点 ClientLevel#addPlayer 已不存在）。
         // 重生/换维度后的配件缓存刷新改由下面这个 tick 回调内部检测玩家实例变化来触发。
         ClientTickEvents.START_CLIENT_TICK.register(RefreshClonePlayerDataEvent::onClientTick);
         // 附属模块 LRTactical：客户端重生/换维度后丢弃陈旧的近战与冷却状态。
-        // 客户端没有可用的重生事件（CLONE 在 26.1.2 永不触发，见 RefreshClonePlayerDataEvent），
+        // 客户端没有可用的重生事件（CLONE 在 26.2 永不触发，见 RefreshClonePlayerDataEvent），
         // 故照抄其「每 tick 比对 Minecraft#player 引用」的手法。
         ClientTickEvents.START_CLIENT_TICK.register(
                 client -> me.xjqsh.lrtactical.init.ModCapabilities.onClientPlayerTick(client.player));
@@ -204,35 +209,21 @@ public class TaCZFabricClient implements ClientModInitializer {
 
         ItemTooltipCallback.EVENT.register((stack, tooltipContext, flag, lines) -> TooltipEvent.onTooltip(stack, flag, lines));
 
-        InputEvent.MouseButton.Post.EVENT.register(AimKey::onAimPress);
         ClientTickEvents.END_CLIENT_TICK.register(AimKey::cancelAim);
         ClientTickEvents.START_CLIENT_TICK.register(AimKey::onAimHoldingPreInput);
         ClientTickEvents.END_CLIENT_TICK.register(AimKey::onAimHoldingPreInput);
 
-        InputEvent.Key.EVENT.register(ConfigKey::onOpenConfig);
-        InputEvent.Key.EVENT.register(CrawlKey::onCrawlPress);
 
-        InputEvent.Key.EVENT.register(FireSelectKey::onFireSelectKeyPress);
-        InputEvent.MouseButton.Post.EVENT.register(FireSelectKey::onFireSelectMousePress);
 
-        InputEvent.Key.EVENT.register(InspectKey::onInspectPress);
 
-        InputEvent.Key.EVENT.register(InteractKey::onInteractKeyPress);
-        InputEvent.MouseButton.Post.EVENT.register(InteractKey::onInteractMousePress);
 
-        InputEvent.Key.EVENT.register(MeleeKey::onMeleeKeyPress);
-        InputEvent.MouseButton.Post.EVENT.register(MeleeKey::onMeleeMousePress);
 
-        InputEvent.Key.EVENT.register(RefitKey::onRefitPress);
 
-        InputEvent.Key.EVENT.register(ReloadKey::onReloadPress);
         PlayerTickEvent.START.register(ReloadKey::autoReload);
 
         ClientTickEvents.START_CLIENT_TICK.register(mc -> ShootKey.autoShoot(mc, false));
         ClientTickEvents.END_CLIENT_TICK.register(mc -> ShootKey.autoShoot(mc, true));
 
-        InputEvent.Key.EVENT.register(ZoomKey::onZoomKeyPress);
-        InputEvent.MouseButton.Post.EVENT.register(ZoomKey::onZoomMousePress);
 
         ClientTickEvents.END_CLIENT_TICK.register(SoundPlayManager::onClientTick);
         ClientTickEvents.END_CLIENT_TICK.register(RecipeViewerReloadBridge::tick);

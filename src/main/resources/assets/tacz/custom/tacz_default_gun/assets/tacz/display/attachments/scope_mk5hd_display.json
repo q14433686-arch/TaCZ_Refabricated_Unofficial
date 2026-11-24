@@ -1,0 +1,78 @@
+{
+  "slot": "tacz:attachment/slot/scope_mk5hd_slot",
+  "model": "tacz:attachment/scope_mk5hd_geo",
+  "texture": "tacz:attachment/uv/scope_mk5hd",
+  "lod": {
+    "model": "tacz:attachment/lod/scope_mk5hd",
+    "texture": "tacz:attachment/lod/scope_mk5hd"
+  },
+  "zoom": [
+    5,
+    25,
+    1.25
+  ],
+  "views": [
+    2,
+    2,
+    1
+  ],
+  "views_fov": [
+    27.0,
+    10.0,
+    60.0
+  ],
+  "text_show": {
+    // 作用的组名，该组的旋转点决定文本的位置和朝向
+    "ammo_count_text": {
+      // 文本缩放，默认大小对于 BlockBench 里的 1
+      "scale": 0.09375,
+      // 对齐方式：right，center，left
+      "align": "left",
+      // 阴影
+      "shadow": false,
+      // 文本颜色
+      "color": "#00ffff",
+      // 亮度：1-15
+      "light": 15,
+      // 本地化，且支持PlaceholderAPI 风格的占位符
+      // 目前仅支持两个：%player_name% %ammo_count%
+      "text": "%ammo_count%"
+    },
+    "custom_text_ammo":{
+      "scale": 0.0625,
+      "align": "center",
+      "shadow": false,
+      "color": "#ffffff",
+      "light": 15,
+      "text": "AMMO"
+    }
+    // "rangefinder_text_show_pos": {
+      // 测距仪示例：在 text 中使用 %rangefinder% 后，rangefinder 配置才会参与刷新。
+    //   "scale": 0.09375,
+    //   "align": "left",
+    //   "shadow": false,
+    //   "color": "#00ffff",
+    //   "light": 15,
+    //   "text": "%rangefinder% m",
+    //   "rangefinder": {
+        // 最大测距距离，单位为 Minecraft 原生距离单位。小于 0 会回退到 512，允许 0。
+    //     "max_distance": 512,
+        // 每 N tick 刷新一次。小于等于 0 会回退到 2。
+    //     "refresh_tick": 2,
+        // 仅在测距命中实体时，在 HUD 中绘制基于 ammo_speed/gravity/friction 的 Y 轴落点预测空心点。
+    //     "show_impact_prediction": true,
+        // 落点预测空心点颜色，默认 #ffffff；支持 "#00ffff" 或 "00ffff"。
+    //     "impact_prediction_color": "#00ffff",
+        // 落点预测框大小倍率，默认 1；小于等于 0 会回退到 1。
+    //     "impact_prediction_scale": 1.0
+    //   }
+    // }
+  },
+  "idle_scope_height_adjust": 1.25,
+  "scope": true,
+  "sight": true,
+  "sounds": {
+    "install": "tacz:attachments/scope_general_c",
+    "uninstall": "tacz:attachments/scope_general_c"
+  }
+}

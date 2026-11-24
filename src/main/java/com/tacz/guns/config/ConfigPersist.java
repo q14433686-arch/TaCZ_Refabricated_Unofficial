@@ -144,6 +144,11 @@ public final class ConfigPersist {
         }
     }
 
+    /** A live view-tuning edit must not persist unrelated common or preload settings. */
+    public static void saveClient() {
+        for (Target target : TARGETS) if (fileName(ModConfig.Type.CLIENT).equals(target.label())) save(target);
+    }
+
     private static void save(Target target) {
         try {
             if (saveViaFcap(target)) {

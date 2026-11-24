@@ -245,8 +245,7 @@ dependencies {
 
     // REI — 26.1.2
     compileOnly "dev.architectury:architectury-fabric:${architectury_version}"
-    compileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:$rei_version"
-    compileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei_version"
+    compileOnly("me.shedaniel:RoughlyEnoughItems-fabric:$rei_version") { transitive = false }
 
     // Spark
     // runtimeOnly "curse.maven:spark-361579:4738953"
@@ -261,6 +260,8 @@ dependencies {
 // win for metadata and future hand-edited files.
 def bundledSourcesAndResources = file("resources/tacz-26.1.2-source-and-resource-bundle.jar")
 
+tasks.withType(JavaCompile).configureEach { options.compilerArgs += ['-Xmaxerrs', '500'] }
+
 test { useJUnitPlatform() }
 
 processResources {
@@ -268,7 +269,14 @@ processResources {
     inputs.file bundledSourcesAndResources
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
+    // A source override always wins, independently of CopySpec iteration order. A deleted
+    // override alone would resurrect an obsolete OEM recipe from the immutable fallback.
+    def sourceRoot = file('src/main/resources')
+    def retiredPaths = file('resources/retired-default-pack-paths.txt')
+    inputs.file retiredPaths
+    def retired = retiredPaths.readLines('UTF-8').collect { "assets/tacz/custom/tacz_default_gun/$it".toString() }.toSet()
     from(zipTree(bundledSourcesAndResources)) {
+        exclude { e -> !e.directory && (retired.contains(e.path) || new File(sourceRoot, e.path).isFile()) }
         exclude "META-INF/**"
         exclude "**/*.java"
         exclude "fabric.mod.json"

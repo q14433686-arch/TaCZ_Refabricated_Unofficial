@@ -1,5 +1,11 @@
 package com.tacz.guns.resource;
 
+import com.tacz.guns.resource.index.CommonSlotAdapterIndex;
+import com.tacz.guns.resource.pojo.data.attachment.SlotAdapterData;
+import com.tacz.guns.resource.pojo.SlotAdapterIndexPOJO;
+import com.tacz.guns.resource.index.CommonAttachmentVariantIndex;
+import com.tacz.guns.resource.pojo.data.attachment.VariantData;
+import com.tacz.guns.resource.pojo.AttachmentVariantIndexPOJO;
 import cn.sh1rocu.tacz.TaCZFabric;
 import cn.sh1rocu.tacz.api.event.AddReloadListenerEvent;
 import com.google.common.collect.ImmutableMap;
@@ -25,6 +31,7 @@ import com.tacz.guns.resource.pojo.data.attachment.AttachmentData;
 import com.tacz.guns.resource.pojo.data.block.BlockData;
 import com.tacz.guns.resource.pojo.data.block.TabConfig;
 import com.tacz.guns.resource.pojo.data.gun.ExtraDamage;
+import com.tacz.guns.resource.pojo.data.gun.BuiltInAttachment;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.resource.pojo.data.gun.Ignite;
 import com.tacz.guns.resource.pojo.data.loot.LootTableInjection;
@@ -56,6 +63,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
             .registerTypeAdapter(GunSmithTableIngredient.class, new GunSmithTableIngredientSerializer())
             .registerTypeAdapter(GunSmithTableResult.class, new GunSmithTableResultSerializer())
             .registerTypeAdapter(ExtraDamage.DistanceDamagePair.class, new DistanceDamagePairSerializer())
+            .registerTypeAdapter(BuiltInAttachment.class, new BuiltInAttachmentSerializer())
             .registerTypeAdapter(Vec3.class, new Vec3Serializer())
             .registerTypeAdapter(Ignite.class, new IgniteSerializer())
             .registerTypeAdapter(RecipeFilter.class, new RecipeFilter.Deserializer())
@@ -70,6 +78,10 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     private final List<INetworkCacheReloadListener> listeners = new ArrayList<>();
     private CommonDataManager<GunData> gunData;
     private CommonDataManager<AttachmentData> attachmentData;
+    private CommonDataManager<VariantData> attachmentVariantData;
+    private CommonDataManager<CommonAttachmentVariantIndex> attachmentVariantIndex;
+    private CommonDataManager<SlotAdapterData> slotAdapterData;
+    private CommonDataManager<CommonSlotAdapterIndex> slotAdapterIndex;
     private CommonDataManager<BlockData> blockData;
     private CommonDataManager<CommonAmmoIndex> ammoIndex;
     private CommonDataManager<CommonGunIndex> gunIndex;
@@ -86,8 +98,10 @@ public class CommonAssetsManager implements ICommonResourceProvider {
 
     public void reloadAndRegister(Consumer<PreparableReloadListener> register) {
         // 这里会顺序重载，所以需要把index这种依赖data的放在后面
-        gunData = register(new CommonDataManager<>(DataType.GUN_DATA, GunData.class, GSON, "data/guns", "GunDataLoader"));
+        gunData = register(new GunDataManager());
         attachmentData = register(new AttachmentDataManager());
+        attachmentVariantData = register(new CommonDataManager<>(DataType.ATTACHMENT_VARIANT_DATA, VariantData.class, GSON, "data/attachment_variants", "AttachmentVariantDataLoader"));
+        slotAdapterData = register(new CommonDataManager<>(DataType.SLOT_ADAPTER_DATA, SlotAdapterData.class, GSON, "data/slot_adapters", "SlotAdapterDataLoader"));
         attachmentsTagManager = register(new AttachmentsTagManager());
         recipeFilterManager = register(new RecipeFilterManager());
         lootInjectionManager = new LootInjectionManager();
@@ -96,11 +110,21 @@ public class CommonAssetsManager implements ICommonResourceProvider {
         register.accept(scriptManager);
 
         ammoIndex = register(new CommonDataManager<>(DataType.AMMO_INDEX, CommonAmmoIndex.class, GSON, "index/ammo", "AmmoIndexLoader"));
-        gunIndex = register(new CommonDataManager<>(DataType.GUN_INDEX, CommonGunIndex.class, GSON, "index/guns", "GunIndexLoader"));
+        gunIndex = register(new GunIndexManager());
         attachmentIndex = register(new CommonDataManager<>(DataType.ATTACHMENT_INDEX, CommonAttachmentIndex.class, GSON, "index/attachments", "AttachmentIndexLoader"));
+        attachmentVariantIndex = register(new CommonDataManager<>(DataType.ATTACHMENT_VARIANT_INDEX, CommonAttachmentVariantIndex.class, GSON, "index/attachment_variants", "AttachmentVariantIndexLoader") {
+            @Override protected CommonAttachmentVariantIndex parseJson(com.google.gson.JsonElement element) {
+                return CommonAttachmentVariantIndex.getInstance(GSON.fromJson(element, AttachmentVariantIndexPOJO.class), CommonAssetsManager.this);
+            }
+        });
+        slotAdapterIndex = register(new CommonDataManager<>(DataType.SLOT_ADAPTER_INDEX, CommonSlotAdapterIndex.class, GSON, "index/slot_adapters", "SlotAdapterIndexLoader") {
+            @Override protected CommonSlotAdapterIndex parseJson(com.google.gson.JsonElement element) {
+                return CommonSlotAdapterIndex.getInstance(GSON.fromJson(element, SlotAdapterIndexPOJO.class), CommonAssetsManager.this);
+            }
+        });
         blockIndex = register(new CommonDataManager<>(DataType.BLOCK_INDEX, CommonBlockIndex.class, GSON, "index/blocks", "BlockIndexLoader"));
         // 第 12 轮：把工作台配方也纳入同步。目录与 vanilla 数据包配方一致（data/<ns>/recipe），
-        // 这样客户端无需 RecipeManager 也能列出配方（26.1.2 客户端已无完整配方表）。
+        // 这样客户端无需 RecipeManager 也能列出配方（26.2 客户端已无完整配方表）。
         //
         // 必须用 TableRecipeManager 而非裸的 CommonDataManager：该目录里混着原版
         // 与其他模组的配方（实测原版 1585 条），不按 "type" 过滤会全部灌进
@@ -123,6 +147,14 @@ public class CommonAssetsManager implements ICommonResourceProvider {
         listeners.add(listener);
         return listener;
     }
+
+    @Override public @Nullable VariantData getAttachmentVariantData(Identifier id) { return attachmentVariantData.getData(id); }
+    @Override public @Nullable CommonAttachmentVariantIndex getAttachmentVariantIndex(Identifier id) { return attachmentVariantIndex.getData(id); }
+    @Override public Set<Map.Entry<Identifier, CommonAttachmentVariantIndex>> getAllAttachmentVariants() { return attachmentVariantIndex.getAllData().entrySet(); }
+
+    @Override public @Nullable SlotAdapterData getSlotAdapterData(Identifier id) { return slotAdapterData.getData(id); }
+    @Override public @Nullable CommonSlotAdapterIndex getSlotAdapterIndex(Identifier id) { return slotAdapterIndex.getData(id); }
+    @Override public Set<Map.Entry<Identifier, CommonSlotAdapterIndex>> getAllSlotAdapters() { return slotAdapterIndex.getAllData().entrySet(); }
 
     public Map<DataType, Map<Identifier, String>> getNetworkCache() {
         ImmutableMap.Builder<DataType, Map<Identifier, String>> builder = ImmutableMap.builder();
@@ -159,7 +191,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     /**
      * 枪包声明过要注入的<b>目标战利品表 ID 集合</b>。
      *
-     * <p>供 {@code LootTableInjectorModifier} 做「正查」用：26.1.2 无法由 LootTable 实例
+     * <p>供 {@code LootTableInjectorModifier} 做「正查」用：26.2 无法由 LootTable 实例
      * 反查其注册 ID（RELOADABLE 层只给 HolderLookup，没有反查接口），
      * 因此改为拿这个候选集去逐个正查比对实例。默认枪包只有 1 个目标表。</p>
      */
@@ -305,6 +337,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     }
 
     public static void onServerStopped(MinecraftServer server) {
+        com.tacz.guns.util.CycleTaskHelper.clear();
         clearInstance();
     }
 

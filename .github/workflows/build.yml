@@ -107,6 +107,12 @@ jobs:
       - if: failure()
         run: python3 scripts/report_ci_failures.py "$RUNNER_TEMP/build.log" "$RUNNER_TEMP/client.log" build/run/{gameTest,clientGameTest}/logs/latest.log
 
+      - name: Audit effective built-in resources in the production JAR
+        run: |
+          jar=$(find build/libs -name '*.jar' ! -name '*-sources.jar' -print -quit)
+          python3 scripts/verify_2612_pack.py --jar "$jar"
+          python3 scripts/check_visible_bug_resources.py --jar "$jar"
+
       - name: Upload jars
         uses: actions/upload-artifact@v4
         with:

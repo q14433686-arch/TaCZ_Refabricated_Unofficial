@@ -1,5 +1,6 @@
 package com.tacz.guns.client.event;
 
+import com.tacz.guns.util.time.GunTime;
 import cn.sh1rocu.simplebedrockmodel.api.event.ViewportEvent;
 import cn.sh1rocu.tacz.api.event.ComputeFovModifierEvent;
 import com.tacz.guns.api.DefaultAssets;
@@ -9,6 +10,7 @@ import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.client.other.KeepingItemRenderer;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.event.common.GunFireEvent;
+import com.tacz.guns.api.event.common.GunFirePostEvent;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
@@ -17,6 +19,8 @@ import com.tacz.guns.api.modifier.ParameterizedCachePair;
 import com.tacz.guns.client.render.scope.ScopePipRenderState;
 import com.tacz.guns.client.renderer.item.AnimateGeoItemRenderer;
 import com.tacz.guns.client.resource.GunDisplayInstance;
+import com.tacz.guns.client.resource.pojo.display.gun.AdsFov;
+import com.tacz.guns.util.math.Easing;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
@@ -153,31 +157,33 @@ public class CameraSetupEvent {
             }
             CompoundTag scopeTag = iGun.getAttachmentTag(stack, AttachmentType.SCOPE);
             int zoomNumber = AttachmentItemDataAccessor.getZoomNumberFromTag(scopeTag);
-            // 尝试使用配件fov修改，若无则尝试使用枪械本身fov修改，否则维持不变
-            float modifiedFov = TimelessAPI.getClientAttachmentIndex(scopeItemId)
-                    .map(index -> {
-                        float[] viewsFov = index.getViewsFov();
-                        return viewsFov[zoomNumber % viewsFov.length];
-                    })
-                    .orElse(
-                            TimelessAPI.getGunDisplay(stack)
-                                    .map(GunDisplayInstance::getZoomModelFov)
-                                    .orElse((float) event.getFOV())
-                    );
-            if (livingEntity instanceof LocalPlayer localPlayer) {
-                IClientPlayerGunOperator gunOperator = IClientPlayerGunOperator.fromLocalPlayer(localPlayer);
-                float aimingProgress = gunOperator.getClientAimingProgress((float) event.getPartialTick());
-                float fov = ITEM_MODEL_FOV_DYNAMICS.update(Mth.lerp(aimingProgress, (float) event.getFOV(), modifiedFov));
-                event.setFOV(fov);
-            } else {
-                IGunOperator gunOperator = IGunOperator.fromLivingEntity(livingEntity);
-                float aimingProgress = gunOperator.getSynAimingProgress();
-                float fov = ITEM_MODEL_FOV_DYNAMICS.update(Mth.lerp(aimingProgress, (float) event.getFOV(), modifiedFov));
-                event.setFOV(fov);
-            }
+            var display = TimelessAPI.getGunDisplay(stack);
+            float base = display.map(GunDisplayInstance::getModelFov).orElse((float) event.getFOV());
+            Identifier resolved = scopeItemId;
+            var fovs = TimelessAPI.getClientAttachmentVariantIndex(resolved, scopeTag).map(index -> index.getViewsFov())
+                    .or(() -> TimelessAPI.getClientAttachmentIndex(resolved).map(index -> index.getViewsFov()));
+            float modified = fovs.map(fov -> fov[Math.floorMod(zoomNumber, fov.length)])
+                    .orElseGet(() -> display.map(GunDisplayInstance::getZoomModelFov).orElse(base));
+            AdsFov.Channel curve = display.map(GunDisplayInstance::getAdsFov).map(AdsFov::getModel).orElse(null);
+            float progress = fovProgress(livingEntity, (float) event.getPartialTick(), curve);
+            event.setFOV(applyFovCurve(ITEM_MODEL_FOV_DYNAMICS, Mth.lerp(progress, base, modified), curve));
         }
     }
 
+    private static float fovProgress(LivingEntity entity, float partialTick, AdsFov.Channel curve) {
+        float progress = entity instanceof LocalPlayer player
+                ? IClientPlayerGunOperator.fromLocalPlayer(player).getClientAimingProgress(partialTick)
+                : IGunOperator.fromLivingEntity(entity).getSynAimingProgress();
+        return curve == null ? (float) Easing.easeInExpo(progress) : curve.evaluate(progress);
+    }
+
+    private static float applyFovCurve(SecondOrderDynamics smoother, float target, AdsFov.Channel curve) {
+        // Even in direct mode advance the smoother so switching guns doesn't restore a stale FOV.
+        float smoothed = smoother.update(target);
+        return curve == null || curve.isSmooth() ? smoothed : target;
+    }
+
+    // Kept callable for 26.3 integrations. Our own listener only runs after all pre callbacks voted.
     public static void initialCameraRecoil(GunFireEvent event) {
         if (event.getLogicalSide().isClient()) {
             LivingEntity shooter = event.getShooter();
@@ -250,5 +256,13 @@ public class CameraSetupEvent {
             }
             event.setNewFovModifier(player.isSprinting() ? 1.15f * f : f);
         }
+    }
+
+    public static void resetTimestamp() {
+        shootTimeStamp = -1;
+        pitchSplineFunction = null;
+        yawSplineFunction = null;
+        xRotO = 0;
+        yRotO = 0;
     }
 }

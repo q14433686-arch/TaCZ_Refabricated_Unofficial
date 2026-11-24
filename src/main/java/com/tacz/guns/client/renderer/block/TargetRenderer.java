@@ -73,14 +73,10 @@ public class TargetRenderer implements BlockEntityRenderer<TargetBlockEntity, Ta
         getModel().ifPresent(model -> {
             int combinedLightIn = state.lightCoords;
             int combinedOverlayIn = OverlayTexture.NO_OVERLAY;
-            // partialTick is not available in submit; use 1.0f (latest tick state)
-            float deg = -state.rot;
-
-            BedrockPart headModel = model.getNode(HEAD_NAME);
-            BedrockPart upperModel = model.getNode(UPPER_NAME);
-            upperModel.xRot = (float) Math.toRadians(deg);
-            headModel.visible = false;
-
+            BedrockPart head = model.getNode(HEAD_NAME);
+            BedrockPart upper = model.getNode(UPPER_NAME);
+            float oldRotation = upper.xRot;
+            boolean oldHeadVisible = head.visible;
             poseStack.pushPose();
             poseStack.translate(0.5, 0.225, 0.5);
             poseStack.mulPose(Axis.YN.rotationDegrees(state.facing.get2DDataValue() * 90));
@@ -102,7 +98,6 @@ public class TargetRenderer implements BlockEntityRenderer<TargetBlockEntity, Ta
                     headModel.render(working, ItemDisplayContext.NONE, consumer, combinedLightIn, combinedOverlayIn);
                 });
             }
-            poseStack.popPose();
         });
     }
 

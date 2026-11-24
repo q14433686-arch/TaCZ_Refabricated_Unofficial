@@ -42,7 +42,7 @@ public class TextShowRender implements IFunctionalSubmitter {
         if (!context.displayContext().firstPerson()) {
             return;
         }
-        String text = PapiManager.getTextShow(textShow.getTextKey(), gunStack);
+        String text = PapiManager.getTextShow(textShow.getTextKey(), gunStack, textShow.getRangefinder());
         if (StringUtils.isBlank(text)) {
             return;
         }

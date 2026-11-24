@@ -31,13 +31,15 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
 
     private final BedrockGunModel bedrockGunModel;
 
+    public static void resetTimestamps() { shootTimeStamp = -1L; }
+
     public MuzzleFlashRender(BedrockGunModel bedrockGunModel) {
         this.bedrockGunModel = bedrockGunModel;
     }
 
     public static void onShoot() {
         // 记录开火时间戳
-        shootTimeStamp = System.currentTimeMillis();
+        shootTimeStamp = com.tacz.guns.util.time.GunTime.nowMillis();
         // 记录枪口火焰启动标记
         muzzleFlashStartMark = true;
         // 随机给予枪口火焰的旋转

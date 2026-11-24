@@ -1,6 +1,7 @@
 package com.tacz.guns.client.gameplay;
 
 import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.client.animation.statemachine.AnimationStateMachine;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.IGun;
@@ -57,6 +58,7 @@ public class LocalPlayerBolt {
         data.isBolting = true;
         // 发包通知服务器
         ClientPlayNetworking.send(new ClientMessagePlayerBoltGun());
+        if (gunData.isForceAimExitOnBolt()) IClientPlayerGunOperator.fromLocalPlayer(player).aim(false);
         // 播放动画和音效
         AnimationStateMachine<?> animationStateMachine = display.getAnimationStateMachine();
         if (animationStateMachine != null) {

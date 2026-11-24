@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "modifier": {
+            "type": "minecraft:copy_custom_data",
+            "source": "block_entity",
+            "ops": [
+              {
+                "op": "replace",
+                "source": "Entries",
+                "target": "Entries"
+              }
+            ]
+          },
+          "name": "tacz:ammo_storage"
+        }
+      ],
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ],
+  "random_sequence": "tacz:blocks/ammo_storage"
+}

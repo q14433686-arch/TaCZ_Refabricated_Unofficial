@@ -6,6 +6,7 @@ This is a static resource check, not an in-game compatibility test.
 """
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import zipfile
@@ -44,11 +45,10 @@ def check_resources(read):
     animation = read(ANIMATION)
     assert b"golf17" not in animation, "Missing sound reference reintroduced"
     fixed = json.loads(animation)
-    with zipfile.ZipFile(BUNDLE) as bundle:
-        original = json.loads(bundle.read(ANIMATION))
-    removed = original["animations"]["draw"].pop("sound_effects")
-    assert removed == {"0.0": {"effect": "p24_pi_golf17_stockskel_raise"}}, removed
-    assert fixed == original, "Animation differs beyond removal of the missing draw sound"
+    assert "sound_effects" not in fixed["animations"]["draw"]
+    # The 1.2 animation changed beyond its draw sound. Verify every byte against the
+    # audited native-draw-sound variant, not the superseded 1.1.8 bundle animation.
+    assert hashlib.sha256(animation).hexdigest() == "246a05cc0ef304c51a52742fbaa1f9cc4e9846bc513eb152cf42706cd88e3af1"
 
 
 def main():
@@ -57,7 +57,7 @@ def main():
     args = parser.parse_args()
     source = ROOT / "src/main/resources"
     check_resources(lambda path: (source / path).read_bytes())
-    print("PASS: source whitelist and Glock 17 override (only draw.sound_effects removed)")
+    print("PASS: source whitelist and Glock 17 1.2 override (draw sound absent)")
     if args.jar:
         with zipfile.ZipFile(args.jar) as jar:
             for path in (WHITELIST, ANIMATION):

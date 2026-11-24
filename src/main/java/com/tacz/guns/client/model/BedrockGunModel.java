@@ -32,6 +32,7 @@ import static com.tacz.guns.client.model.GunModelConstant.*;
 public class BedrockGunModel extends BedrockAnimatedModel {
     protected final EnumMap<AttachmentType, List<BedrockPart>> refitAttachmentViewPath = Maps.newEnumMap(AttachmentType.class);
     private final EnumMap<AttachmentType, ItemStack> currentAttachmentItem = Maps.newEnumMap(AttachmentType.class);
+    private @Nullable ImpactMarkerRender impactMarker;
     private final Set<String> adapterToRender = Sets.newHashSet();
     private final ArrayList<ShellRender> shellRenderList = new ArrayList<>();
 
@@ -253,6 +254,7 @@ public class BedrockGunModel extends BedrockAnimatedModel {
         }
         currentGunItem = gunItem;
         currentExtendMagLevel = 0;
+        renderMount = false;
         adapterToRender.clear();
         // 更新配件物品的缓存，以供渲染使用
         for (AttachmentType type : AttachmentType.values()) {

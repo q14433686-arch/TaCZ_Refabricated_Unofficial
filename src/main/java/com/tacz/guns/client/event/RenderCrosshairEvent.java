@@ -1,5 +1,6 @@
 package com.tacz.guns.client.event;
 
+import com.tacz.guns.util.time.GunTime;
 import cn.sh1rocu.simplebedrockmodel.api.event.RenderTickEvent;
 import com.mojang.blaze3d.platform.Window;
 import com.tacz.guns.GunMod;
@@ -11,7 +12,9 @@ import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ReloadState;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.gui.GunRefitScreen;
-import com.tacz.guns.client.renderer.crosshair.CrosshairType;
+import com.tacz.guns.client.gui.ViewTuningScreen;
+import com.tacz.guns.client.renderer.crosshair.GunCrosshair;
+import com.tacz.guns.client.tuning.TuningProfiles;
 import com.tacz.guns.compat.shouldersurfing.ShoulderSurfingCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import net.fabricmc.api.EnvType;
@@ -40,6 +43,11 @@ public class RenderCrosshairEvent {
      * 当玩家手上拿着枪时，播放特定动画、或瞄准时需要隐藏准心
      */
     public static void onRenderOverlay(GuiGraphicsExtractor guiGraphics, Window window) {
+        onRenderOverlay(guiGraphics, window, Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true));
+    }
+
+    /** Use the HUD extraction's own frame time, which need not equal the client's advancing timer. */
+    public static void onRenderOverlay(GuiGraphicsExtractor guiGraphics, Window window, float partialTick) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
             return;
@@ -68,7 +76,7 @@ public class RenderCrosshairEvent {
         IClientPlayerGunOperator playerGunOperator = IClientPlayerGunOperator.fromLocalPlayer(player);
         TimelessAPI.getGunDisplay(stack).ifPresent(gunIndex -> {
             // 瞄准快要完成时，取消准心渲染
-            if (playerGunOperator.getClientAimingProgress(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true)) > 0.9) {
+            if (playerGunOperator.getClientAimingProgress(partialTick) > 0.9) {
                 // 枪包可以强制显示准星
                 boolean forceShow = gunIndex.isShowCrosshair();
                 // 越肩视角可以强制显示准星
@@ -111,21 +119,17 @@ public class RenderCrosshairEvent {
         if (gameMode.getPlayerMode() == GameType.SPECTATOR) {
             return;
         }
-        int width = window.getGuiScaledWidth();
-        int height = window.getGuiScaledHeight();
-
-        Identifier location = CrosshairType.getTextureLocation(RenderConfig.CROSSHAIR_TYPE.get());
-
-        float x = width / 2f - 8;
-        float y = height / 2f - 8;
-        // 26.2: Blending now handled by RenderPipeline; color via last int param (ARGB)
-        graphics.blit(RenderPipelines.GUI_TEXTURED, location, (int) x, (int) y, 0, 0, 16, 16, 16, 16, 0xE6FFFFFF);
+        // The editor has its own preview. Never draw it twice (especially with partial opacity).
+        if (Minecraft.getInstance().screen instanceof ViewTuningScreen editor && editor.isCrosshairTab()) return;
+        // The GUI ortho projection uses framebuffer dimensions / scale, *not* ceil(gui dimensions).
+        float divisor = 2f * window.getGuiScale();
+        GunCrosshair.draw(graphics, window.getWidth() / divisor, window.getHeight() / divisor, TuningProfiles.forStack(Minecraft.getInstance().player.getMainHandItem()));
     }
 
     private static void renderHitMarker(GuiGraphicsExtractor graphics, Window window) {
-        long remainHitTime = System.currentTimeMillis() - hitTimestamp;
-        long remainKillTime = System.currentTimeMillis() - killTimestamp;
-        long remainHeadShotTime = System.currentTimeMillis() - headShotTimestamp;
+        long remainHitTime = GunTime.nowMillis() - hitTimestamp;
+        long remainKillTime = GunTime.nowMillis() - killTimestamp;
+        long remainHeadShotTime = GunTime.nowMillis() - headShotTimestamp;
         float offset = RenderConfig.HIT_MARKET_START_POSITION.get().floatValue();
         float fadeTime;
 
@@ -161,14 +165,20 @@ public class RenderCrosshairEvent {
     }
 
     public static void markHitTimestamp() {
-        RenderCrosshairEvent.hitTimestamp = System.currentTimeMillis();
+        RenderCrosshairEvent.hitTimestamp = GunTime.nowMillis();
     }
 
     public static void markKillTimestamp() {
-        RenderCrosshairEvent.killTimestamp = System.currentTimeMillis();
+        RenderCrosshairEvent.killTimestamp = GunTime.nowMillis();
     }
 
     public static void markHeadShotTimestamp() {
-        RenderCrosshairEvent.headShotTimestamp = System.currentTimeMillis();
+        RenderCrosshairEvent.headShotTimestamp = GunTime.nowMillis();
+    }
+
+    public static void resetTimestamps() {
+        hitTimestamp = -1L;
+        killTimestamp = -1L;
+        headShotTimestamp = -1L;
     }
 }

@@ -1,0 +1,21 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 9
+    },
+    {
+      "item": "#minecraft:planks",
+      "count": 4
+    },
+    {
+      "item": "#c:rods/wooden",
+      "count": 3
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:taurus943"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

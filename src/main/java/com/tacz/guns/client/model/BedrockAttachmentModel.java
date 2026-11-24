@@ -414,6 +414,10 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         return scopeViewPaths.get(viewSwitchCount);
     }
 
+    private com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig scopeLens;
+
+    public void setScopeLens(com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig lens) { this.scopeLens = lens; }
+
     public void setIsScope(boolean isScope) {
         this.isScope = isScope;
     }

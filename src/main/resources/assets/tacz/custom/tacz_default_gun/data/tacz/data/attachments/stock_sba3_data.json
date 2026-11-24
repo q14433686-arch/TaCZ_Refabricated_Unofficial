@@ -1,0 +1,9 @@
+{
+  "weight": 0.1,
+  "inaccuracy": {
+    "multiplier": 0.75
+  },
+  "sneak_inaccuracy": {
+    "multiplier": 0.75
+  }
+}

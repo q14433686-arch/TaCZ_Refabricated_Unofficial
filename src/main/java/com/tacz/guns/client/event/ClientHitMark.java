@@ -1,5 +1,6 @@
 package com.tacz.guns.client.event;
 
+import com.tacz.guns.util.time.GunTime;
 import cn.sh1rocu.tacz.api.LogicalSide;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.event.common.EntityHurtByGunEvent;
@@ -42,7 +43,7 @@ public class ClientHitMark {
             }
 
             if (hurtEntity instanceof TargetMinecart) {
-                if (System.currentTimeMillis() - lastHitTimestamp < RenderConfig.DAMAGE_COUNTER_RESET_TIME.get()) {
+                if (GunTime.nowMillis() - lastHitTimestamp < RenderConfig.DAMAGE_COUNTER_RESET_TIME.get()) {
                     damageAmount += event.getAmount();
                 } else {
                     damageAmount = event.getAmount();
@@ -50,7 +51,7 @@ public class ClientHitMark {
                 float distance = player.distanceTo(event.getHurtEntity());
                 player.sendOverlayMessage(Component.translatable("message.tacz.target_minecart.hit", String.format("%.1f", damageAmount), String.format("%.2f", distance)));
 
-                lastHitTimestamp = System.currentTimeMillis();
+                lastHitTimestamp = GunTime.nowMillis();
             }
         }
     }
@@ -70,5 +71,10 @@ public class ClientHitMark {
                 RenderCrosshairEvent.markHeadShotTimestamp();
             }
         }
+    }
+
+    public static void resetTimestamp() {
+        lastHitTimestamp = -1;
+        damageAmount = 0;
     }
 }

@@ -1,0 +1,25 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 48
+    },
+    {
+      "item": "#c:ingots/gold",
+      "count": 8
+    },
+    {
+      "item": "#c:gems/quartz",
+      "count": 6
+    },
+    {
+      "item": "#c:gems/diamond",
+      "count": 2
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:mcx_spear_lt"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}
