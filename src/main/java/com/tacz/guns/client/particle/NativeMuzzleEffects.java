@@ -14,6 +14,7 @@ import com.tacz.guns.client.model.IFunctionalSubmitter;
 import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.render.FlashMaterials;
 import com.tacz.guns.client.render.light.SurfaceLights;
+import com.tacz.guns.client.render.light.WorldFlashFrame;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.util.time.GunTime;
@@ -81,7 +82,7 @@ public final class NativeMuzzleEffects {
             synchronizeSession();
             var camera = context.levelState().cameraRenderState;
             submitSmoke(context.submitNodeCollector(), camera.pos);
-            SurfaceLights.submit(context.submitNodeCollector(), camera.pos);
+            SurfaceLights.submit(context.submitNodeCollector(), camera.pos, WorldFlashFrame.mainPass(context.levelState()));
         });
     }
     public static void extracted(Entity entity, EntityRenderState state) {
@@ -107,7 +108,7 @@ public final class NativeMuzzleEffects {
     }
     public static void clear() {
         com.tacz.guns.client.particle.AnimationParticleDispatcher.clear();
-        legacyExposure = null; SurfaceLights.clear();
+        legacyExposure = null; SurfaceLights.clear(); WorldFlashFrame.clear();
         SHOTS.clear(); PUFFS.clear(); WARNED.clear(); currentOwner = -1; level = null; epoch = -1;
     }
 

@@ -148,6 +148,11 @@ public abstract class GameRendererMixin {
         }
     }
 
+    @Inject(method = "extract", at = @At("HEAD"))
+    private void tacz$beginLensExtraction(DeltaTracker deltaTracker, boolean renderLevel, CallbackInfo ci) {
+        com.tacz.guns.client.render.scope.ScopeLensFrame.beginFrame(minecraft);
+    }
+
     @Inject(method = "render", at = @At("HEAD"))
     private void tacz$renderTickStart(DeltaTracker deltaTracker, boolean renderLevel, CallbackInfo ci) {
         // scope pip 光影二次渲染（26.2 同名语义）：帧首安全位预热瞄具专用 Iris 管线，

@@ -24,5 +24,11 @@
   },
   "depends": {
     "tacz": "*"
-  }
+  },
+  "mixins": [
+    {
+      "config": "tacz-port-test.mixins.json",
+      "environment": "client"
+    }
+  ]
 }

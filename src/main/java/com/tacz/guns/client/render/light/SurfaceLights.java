@@ -240,8 +240,7 @@ public final class SurfaceLights {
         return sources.isEmpty() ? null : new WorldFlashFrame(level, sources, draws);
     }
 
-    public static void submit(SubmitNodeCollector out, Vec3 camera) {
-        var frame = WorldFlashFrame.current();
+    public static void submit(SubmitNodeCollector out, Vec3 camera, @Nullable WorldFlashFrame frame) {
         if (frame == null || frame.draws.isEmpty()) return;
         var draws = frame.draws;
         out.submitCustomGeometry(new PoseStack(),FlashMaterials.surface(),(pose,vertices) -> {

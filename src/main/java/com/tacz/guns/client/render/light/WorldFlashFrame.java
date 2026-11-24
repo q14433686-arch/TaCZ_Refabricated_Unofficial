@@ -30,8 +30,19 @@ public final class WorldFlashFrame {
     }
     public static @Nullable WorldFlashFrame current() { return ACTIVE.isBound() ? ACTIVE.get() : null; }
 
-    public static void submitWorld(LevelRenderState state, Runnable original) {
-        var frame = SurfaceLights.prepare(state.cameraRenderState.pos);
+    private static WorldFlashFrame cached;
+    private static int preparedAt = -1;
+    public static void clear() { cached = null; preparedAt = -1; }
+    public static WorldFlashFrame mainPass(LevelRenderState state) {
+        if (com.tacz.guns.client.render.scope.ScopePipRerender.isInsideScopeLevelRender()
+                || com.tacz.guns.compat.iris.IrisCompat.isRenderShadow()) return null;
+        int number = com.tacz.guns.client.render.scope.ScopeDepthCopyState.frameNumber();
+        if (preparedAt != number) { cached = SurfaceLights.prepare(state.cameraRenderState.pos); preparedAt = number; }
+        return cached;
+    }
+
+    public static void submitWorld(LevelRenderState state, boolean entities, Runnable original) {
+        var frame = mainPass(state);
         if (frame == null && !ACTIVE.isBound()) { original.run(); return; }
         ScopedValue.where(ACTIVE, frame).run(() -> {
             if (frame == null) { original.run(); return; }
@@ -39,19 +50,19 @@ public final class WorldFlashFrame {
             // receivers; deferred draw nodes capture the light passed to submit, not a clock.
             var restore = new ArrayList<Runnable>();
             try {
-                frame.applyLights(state, restore);
+                frame.applyLights(state, entities, restore);
                 original.run();
             } finally { for (var undo : restore) undo.run(); }
         });
     }
 
-    private void applyLights(LevelRenderState state, List<Runnable> restore) {
-        for (EntityRenderState e : state.entityRenderStates) {
+    private void applyLights(LevelRenderState state, boolean entities, List<Runnable> restore) {
+        if (entities) for (EntityRenderState e : state.entityRenderStates) {
             int old = e.lightCoords;
             int lit = light(old, e.x, e.y + .55 * e.boundingBoxHeight, e.z, null, null);
             if (lit != old) { restore.add(() -> e.lightCoords = old); e.lightCoords = lit; }
         }
-        for (BlockEntityRenderState b : state.blockEntityRenderStates) {
+        else for (BlockEntityRenderState b : state.blockEntityRenderStates) {
             if (b instanceof DisplayRackRenderer.State) continue; // each rack face has its own probe
             var pos = b.blockPos;
             int old = b.lightCoords;

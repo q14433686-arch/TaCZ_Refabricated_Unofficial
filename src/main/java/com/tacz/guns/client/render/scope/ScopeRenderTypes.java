@@ -284,6 +284,11 @@ public final class ScopeRenderTypes {
         if (!applies || !viewmodelFxClipApplies()) {
             return original;
         }
+        return clipHousing(original, texture);
+    }
+
+    /** The active optic's housing, unlike other viewmodel parts, never occludes its aperture. */
+    public static RenderType clipHousing(RenderType original, Identifier texture) {
         // Gun displays may opt into entityTranslucent; retain that blend/sort recipe rather than
         // silently forcing every body through cutout. AttachmentRender supplies cutout here.
         if (original.hasBlending()) {

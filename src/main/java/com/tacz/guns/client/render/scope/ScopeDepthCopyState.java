@@ -119,7 +119,6 @@ public final class ScopeDepthCopyState {
     public static void onClientFrameStart() {
         RenderSystem.assertOnRenderThread();
         frameCounter++;
-        ScopeLensFrame.beginFrame(net.minecraft.client.Minecraft.getInstance());
     }
 
     /**
@@ -213,6 +212,15 @@ public final class ScopeDepthCopyState {
         CURRENT.set(operation);
     }
 
+    /** The aperture is a single ordered draw. Take its depth immediately after the native
+     * writer, before any of the (possibly differently lit) housing materials can touch it. */
+    public static void afterDraw() {
+        if (CURRENT.get() == Operation.BACKUP) {
+            maskValid = maskWorldValid && copyApertureDepth();
+            if (maskValid) maskCycleFrame = frameCounter;
+        }
+    }
+
     /** @return whether GlCommandEncoder should execute the pending draw. */
     public static boolean beforeDraw() {
         RenderSystem.assertOnRenderThread();
@@ -244,7 +252,7 @@ public final class ScopeDepthCopyState {
                     // so a bare-rim frame (or any frame where the reticle was not queued) must still
                     // force the private copy or the composite has no world depth to mask against.
                     if (ScopeFinalOverlayState.hasPendingReticles()
-                            || ScopePipRenderState.needsIrisWorldDepthCopy()) {
+                            || ScopeLensFrame.expected != null || ScopePipRenderState.needsIrisWorldDepthCopy()) {
                         boolean copied = copyCurrentDepth(WORLD_TARGET, "final-overlay world depth");
                         worldDepthIdentity = copied ? captureDepthIdentity() : null;
                         if (!copied) {

@@ -16,6 +16,9 @@ public final class ScopeLensFrame {
     private static ScopeLensConfig observed;
     private static final float[] bounds = new float[4];
     static boolean disabled;
+    private static boolean measured;
+    /** Diagnostic bounds only; only the native depth copy can authorize a fragment. */
+    public static float[] currentBounds() { return measured && ScopeDepthCopyState.hasMaskCycleThisFrame() ? bounds.clone() : null; }
 
     public static void clear() {
         observed = expected = null;
@@ -25,19 +28,20 @@ public final class ScopeLensFrame {
 
     public static void ocular(@Nullable ScopeLensConfig lens, java.util.List<com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot> geometry) {
         observed = lens;
-        if (lens == null || lens != expected) return;
+        measured = false;
         var projection = ScopeProjection.current();
         if (projection == null) { observed = null; return; }
         var clip = new Matrix4f(projection).mul(com.mojang.blaze3d.systems.RenderSystem.getModelViewMatrix());
         bounds[0] = bounds[1] = Float.POSITIVE_INFINITY; bounds[2] = bounds[3] = Float.NEGATIVE_INFINITY;
         for (var part : geometry) part.extendOcularBounds(clip, bounds);
-        if (!(bounds[0] < bounds[2] && bounds[1] < bounds[3])) observed = null;
+        measured = bounds[0] < bounds[2] && bounds[1] < bounds[3];
+        if (!measured) observed = null;
     }
 
     private ScopeLensFrame() {}
 
-    static void beginFrame(Minecraft mc) {
-        expected = observed; observed = null;
+    public static void beginFrame(Minecraft mc) {
+        expected = observed; observed = null; measured = false;
         if (expected != null && (disabled || !RenderConfig.EXPERIMENTAL_SCOPE_LENS.get()
                 || !RenderConfig.SCOPE_MASK_ENABLE.get() || mc.player == null || mc.level == null
                 || mc.getCameraEntity() != mc.player || !mc.options.getCameraType().isFirstPerson()

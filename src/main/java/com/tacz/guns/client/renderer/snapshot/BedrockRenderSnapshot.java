@@ -150,32 +150,36 @@ public final class BedrockRenderSnapshot {
      * same material, and never look up mutable bone state in a deferred draw. */
     public void submitGeometry(SubmitNodeCollector collector, RenderType body, boolean hand) {
         if (drawCommands.isEmpty()) return;
+        submitMaterials(collector, body, hand);
+        float gain = hand ? ViewmodelFlash.gain() : 0;
+        if (gain > 0) {
+            var texture = IlluminatedMaterials.bodyTexture(body);
+            if (texture != null) collector.order(1).submitCustomGeometry(new PoseStack(), FlashMaterials.reflection(texture),
+                    (entry, out) -> write(out, 0, drawCommands.size(), gain, true));
+        }
+    }
+
+    public void submitMaterials(net.minecraft.client.renderer.OrderedSubmitNodeCollector layer, RenderType body, boolean hand) {
         PoseStack identity = new PoseStack(); // command poses already contain the root transform
         RenderType illuminated = firstUnshaded < 0 ? body : IlluminatedMaterials.forBody(body, hand);
         if (illuminated == body) {
-            submitRange(collector, identity, body, 0, drawCommands.size());
+            submitRange(layer, identity, body, 0, drawCommands.size());
         } else {
             RenderType current = body;
             int start = 0;
             for (int i = firstUnshaded; i < drawCommands.size(); i++) {
                 RenderType next = drawCommands.get(i).unshaded() ? illuminated : body;
                 if (next != current) {
-                    if (i > start) submitRange(collector, identity, current, start, i);
+                    if (i > start) submitRange(layer, identity, current, start, i);
                     current = next;
                     start = i;
                 }
             }
-            submitRange(collector, identity, current, start, drawCommands.size());
-        }
-        float gain = hand ? ViewmodelFlash.gain() : 0;
-        if (gain > 0) {
-            var texture = IlluminatedMaterials.bodyTexture(body);
-            if (texture != null) collector.order(1).submitCustomGeometry(identity, FlashMaterials.reflection(texture),
-                    (entry, out) -> write(out, 0, drawCommands.size(), gain, true));
+            submitRange(layer, identity, current, start, drawCommands.size());
         }
     }
 
-    private void submitRange(SubmitNodeCollector collector, PoseStack identity, RenderType type, int start, int end) {
+    private void submitRange(net.minecraft.client.renderer.OrderedSubmitNodeCollector collector, PoseStack identity, RenderType type, int start, int end) {
         collector.submitCustomGeometry(identity, type, (entry, out) -> write(out, start, end));
     }
 

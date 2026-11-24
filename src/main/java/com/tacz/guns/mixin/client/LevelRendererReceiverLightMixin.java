@@ -12,10 +12,10 @@ import org.spongepowered.asm.mixin.Mixin;
 abstract class LevelRendererReceiverLightMixin {
     @WrapMethod(method = "submitEntities")
     private void tacz$entities(com.mojang.blaze3d.vertex.PoseStack pose, LevelRenderState state, SubmitNodeCollector out, Operation<Void> original) {
-        WorldFlashFrame.submitWorld(state, () -> original.call(pose, state, out));
+        WorldFlashFrame.submitWorld(state, true, () -> original.call(pose, state, out));
     }
     @WrapMethod(method = "submitBlockEntities")
     private void tacz$blocks(com.mojang.blaze3d.vertex.PoseStack pose, LevelRenderState state, net.minecraft.client.renderer.SubmitNodeStorage out, Operation<Void> original) {
-        WorldFlashFrame.submitWorld(state, () -> original.call(pose, state, out));
+        WorldFlashFrame.submitWorld(state, false, () -> original.call(pose, state, out));
     }
 }

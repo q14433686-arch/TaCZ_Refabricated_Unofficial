@@ -260,6 +260,16 @@ dependencies {
 // win for metadata and future hand-edited files.
 def bundledSourcesAndResources = file("resources/tacz-26.1.2-source-and-resource-bundle.jar")
 
+if (project.hasProperty('taczOpticSuite')) {
+    loom.runs.clientGameTest.property 'tacz.test.optics', project.property('taczOpticSuite')
+    def shader = tasks.register('prepareTargetShader', Copy) {
+        from layout.buildDirectory.dir('iris-smoke/complementary')
+        into layout.buildDirectory.dir('run/clientGameTest')
+        dependsOn tasks.named('deleteGameTestRunDir')
+    }
+    tasks.named('runClientGameTest') { dependsOn shader }
+}
+
 // External game-test pack, never a production classpath resource.
 ['gameTest', 'clientGameTest'].each { run ->
     if (run == 'clientGameTest' && !project.hasProperty('taczClientSmoke')) return

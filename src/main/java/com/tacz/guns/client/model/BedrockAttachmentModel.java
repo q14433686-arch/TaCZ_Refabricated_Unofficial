@@ -707,14 +707,9 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 }
             });
 
-            // Step 3 of the ocular screen-space mask happens at this draw boundary: the wrapped
-            // body type first copies the aperture depth (world depth plus only the ocular
-            // differences) into the mask texture, and only then does the ordinary scope body draw.
-            // Body fragments behind the invisible ocular still fail their normal depth test, so
-            // neither stencil nor framebuffer attachment changes are involved.
-            RenderType bodyWithApertureCopy = ScopeRenderTypes.apertureCopy(renderType);
-            collector.order(SCOPE_BODY_ORDER).submitCustomGeometry(identity, bodyWithApertureCopy,
-                    (entryPose, consumer) -> bodySnapshot.write(consumer));
+            // drawFromBuffers RETURN froze the writer above. Body materials now have a live
+            // outside mask even for a 1x sight, without making its coating part of the reticle.
+            bodySnapshot.submitMaterials(collector.order(SCOPE_BODY_ORDER), ScopeRenderTypes.clipHousing(renderType, texture), true);
 
             // Restore the aperture pixels from the exact pre-ocular world-depth backup. Iris renders water,
             // fog, particles and volumetric clouds after its solid-hand pass and needs the original depth.
@@ -769,9 +764,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                         (entryPose, consumer) -> ocularRingSnapshot.write(consumer));
             }
         } else if (!bodySnapshot.isEmpty()) {
-            PoseStack identity = new PoseStack();
-            collector.submitCustomGeometry(identity, renderType,
-                    (entryPose, consumer) -> bodySnapshot.write(consumer));
+            bodySnapshot.submitGeometry(collector, renderType, transformType != null && transformType.firstPerson());
             // 非镜内序列（腰射 / 非第一人称 / 无孔径贴图）：同样不能丢任务。文字工厂在
             // 未开镜时返回 null，所以这里通常为空；带文字但无 ocular 骨骼的第三方瞄具靠它兜底。
             bodySnapshot.submitFunctionalTasks(collector);

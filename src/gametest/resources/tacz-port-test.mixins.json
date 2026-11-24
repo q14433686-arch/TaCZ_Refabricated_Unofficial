@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "package": "com.tacz.guns.test.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ReticleControl",
+    "LensCoatingControl",
+    "MechanicalSightControl",
+    "HeatDepthObserver",
+    "CurrentHeatTarget",
+    "SensorLayerObserver"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

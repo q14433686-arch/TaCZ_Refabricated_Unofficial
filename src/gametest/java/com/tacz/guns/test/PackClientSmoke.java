@@ -13,6 +13,8 @@ public final class PackClientSmoke implements FabricClientGameTest {
         var id = Identifier.parse("tacz:ak47");
         try (var world = context.worldBuilder().create()) {
             context.waitFor(mc -> CommonNetworkCache.INSTANCE.getGunIndex(id) != null && TimelessAPI.getClientGunIndex(id).isPresent());
+            var optics = System.getProperty("tacz.test.optics");
+            if (optics != null) { ShaderOpticSmoke.run(context, world, optics); return; }
             context.runOnClient(mc -> DefaultClientCatalogSmoke.client());
             ConversionReloadSmoke.run(context, world);
             context.runOnClient(mc -> DefaultClientCatalogSmoke.client());

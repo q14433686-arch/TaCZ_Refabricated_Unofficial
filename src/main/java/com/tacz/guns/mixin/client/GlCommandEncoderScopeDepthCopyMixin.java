@@ -27,4 +27,7 @@ public abstract class GlCommandEncoderScopeDepthCopyMixin {
             ci.cancel();
         }
     }
+
+    @Inject(method = "drawFromBuffers", at = @At("RETURN"))
+    private void tacz$freezeAperture(CallbackInfo ci) { ScopeDepthCopyState.afterDraw(); }
 }
