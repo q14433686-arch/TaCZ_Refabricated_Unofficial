@@ -135,6 +135,13 @@ public class TargetMinecart extends AbstractMinecart implements ITargetEntity, I
         return itemStack;
     }
 
+    public @Nullable GameProfile getGameProfile() {
+        var profile = getOwnerProfile();
+        return profile == null ? null : profile.partialProfile();
+    }
+
+    public @Nullable ResolvableProfile getOwnerProfile() { return getResolvableProfile(); }
+
     @Nullable
     public ResolvableProfile getResolvableProfile() {
         Component customName = this.getCustomName();

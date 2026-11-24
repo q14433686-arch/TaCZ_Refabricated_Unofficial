@@ -13,7 +13,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import java.util.List;
@@ -23,7 +23,7 @@ public class BulletRulesSmoke extends EntityUtil {
     public void configuredBlockAndEntityRules(GameTestHelper h) {
         var level = h.getLevel();
         var bullet = new EntityKineticBullet(ModEntities.BULLET, level);
-        var mob = h.spawn(EntityTypes.ZOMBIE, BlockPos.ZERO);
+        var mob = h.spawn(EntityType.ZOMBIE, BlockPos.ZERO);
         boolean enabled = AmmoConfig.ENABLE_BULLET_DAMAGE_IGNORE_LIST.get();
         boolean destroy = AmmoConfig.DESTROY_GLASS.get();
         var ignored = AmmoConfig.BULLET_DAMAGE_IGNORE_LIST.get();

@@ -20,7 +20,7 @@ import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 
 import java.util.function.Consumer;
 
@@ -31,7 +31,7 @@ public class GunActionSmoke {
 
     @GameTest
     public void reloadTransitionAndAimGate(GameTestHelper helper) {
-        var entity = helper.spawn(EntityTypes.ZOMBIE, BlockPos.ZERO);
+        var entity = helper.spawn(EntityType.ZOMBIE, BlockPos.ZERO);
         var data = new ShooterDataHolder();
         var gun = GunItemBuilder.create().setId(Identifier.parse("port_test:oem")).build();
         entity.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, gun);

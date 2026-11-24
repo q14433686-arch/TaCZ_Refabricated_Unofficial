@@ -13,7 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
@@ -65,7 +65,7 @@ public final class ScriptGuardSmoke {
 
     @GameTest
     public void badReloadAndNestedFailureDoNotAnnounceSuccess(GameTestHelper helper) {
-        var mob = helper.spawn(EntityTypes.COW, BlockPos.ZERO);
+        var mob = helper.spawn(EntityType.COW, BlockPos.ZERO);
         mob.setNoAi(true);
         mob.setItemInHand(InteractionHand.MAIN_HAND, stack(PROBE));
         var operator = IGunOperator.fromLivingEntity(mob);
@@ -106,7 +106,7 @@ public final class ScriptGuardSmoke {
 
     @GameTest
     public void queuedCallbacksBelongToADrawAndAStack(GameTestHelper helper) {
-        var mob = helper.spawn(EntityTypes.COW, BlockPos.ZERO);
+        var mob = helper.spawn(EntityType.COW, BlockPos.ZERO);
         mob.setNoAi(true);
         var original = stack(PROBE);
         mob.setItemInHand(InteractionHand.MAIN_HAND, original);
