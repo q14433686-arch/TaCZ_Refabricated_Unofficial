@@ -11,9 +11,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
- * 兼容旧版枪包的原版合成配方（minecraft:crafting_*）到 26.2 新格式。
+ * 兼容旧版枪包的原版合成配方（minecraft:crafting_*）到 26.1.2 新格式。
  *
- * <p>26.2 变更（已字节码确认）：
+ * <p>26.1.2 变更（已字节码确认）：
  * <ul>
  *   <li>目录：data/&lt;ns&gt;/recipes/ -&gt; data/&lt;ns&gt;/recipe/（单数，常量，不可扩展）</li>
  *   <li>result.item -&gt; result.id</li>
@@ -34,7 +34,7 @@ import java.util.Map;
 public final class RecipeCompat {
     private static final Gson GSON = new GsonBuilder().setLenient().setPrettyPrinting().create();
 
-    // 26.2 单数化映射：旧 -> 新
+    // 26.1.2 单数化映射：旧 -> 新
     private static final java.util.Map<String, String> LEGACY_TO_CURRENT = java.util.Map.of(
             "recipes/", "recipe/",
             "loot_tables/", "loot_table/",
@@ -199,7 +199,7 @@ public final class RecipeCompat {
                 } else {
                     components = new JsonObject();
                 }
-                // 26.2 要求 components.minecraft:custom_data
+                // 26.1.2 要求 components.minecraft:custom_data
                 components.add("minecraft:custom_data", nbt);
                 res.add("components", components);
                 res.remove("nbt");
@@ -252,6 +252,9 @@ public final class RecipeCompat {
         }
         if (el.isJsonObject()) {
             JsonObject obj = el.getAsJsonObject();
+            // Never flatten a native custom ingredient (its item/tag is configuration, not a
+            // vanilla shorthand). The converter's overlay passes through this live loader too.
+            if (obj.has("fabric:type")) return obj;
             if (obj.has("tag")) {
                 String tag = obj.get("tag").getAsString();
                 // 保留原命名空间（forge: 或 c: 或 minecraft:），仅补 # 前缀

@@ -4,6 +4,9 @@ import cn.sh1rocu.tacz.util.forge.CraftingHelper;
 import com.google.gson.JsonObject;
 import com.tacz.guns.GunMod;
 import net.minecraft.resources.Identifier;
+import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +32,7 @@ public class GunSmithTableResult {
     }
 
     public GunSmithTableResult(@NotNull JsonObject rawCustomItem, @Nullable Identifier group) {
-        // CUSTOM result must be parsed lazily. During resource reload, 26.2 item components may not be
+        // CUSTOM result must be parsed lazily. During resource reload, 26.1.2 item components may not be
         // bound yet; constructing ItemStack immediately can throw "Components not bound yet".
         this.rawCustomItem = rawCustomItem;
         this.group = group == null ? EMPTY_GROUP : group;
@@ -43,6 +46,28 @@ public class GunSmithTableResult {
         this.raw = raw;
         this.group = group == null ? EMPTY_GROUP : group;
     }
+
+    @Nullable
+    private JsonObject extraComponents;
+    @Nullable private JsonObject sourceJson;
+
+    public void setSourceJson(JsonObject spec) { sourceJson = spec.deepCopy(); }
+
+    public Identifier fallbackRecipeId() {
+        if (sourceJson != null && sourceJson.has("id")) return Identifier.parse(sourceJson.get("id").getAsString());
+        return Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "empty");
+    }
+
+    public com.google.gson.JsonElement encodeSpec() {
+        if (sourceJson != null) return sourceJson.deepCopy();
+        JsonObject obj = new JsonObject();
+        obj.addProperty("type", CUSTOM);
+        obj.add("item", CraftingHelper.encodeItemStack(result));
+        if (group != null) obj.addProperty("group", group.toString());
+        return obj;
+    }
+
+    public void setComponents(JsonObject components) { this.extraComponents = components.deepCopy(); }
 
     public void init() {
         if (raw != null) {
@@ -70,6 +95,25 @@ public class GunSmithTableResult {
             }
             this.rawCustomItem = null;
         }
+        if (extraComponents != null) {
+            try {
+                if (!result.isEmpty()) applyComponents(result, CraftingHelper.parseComponents(extraComponents));
+            } catch (RuntimeException e) {
+                GunMod.LOGGER.error("Invalid component patch on workbench result {}", extraComponents, e);
+                result = ItemStack.EMPTY;
+                group = EMPTY_GROUP;
+            }
+            extraComponents = null;
+        }
+    }
+
+    private static void applyComponents(ItemStack stack, DataComponentPatch patch) {
+        var original = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        stack.applyComponents(patch);
+        // A patch that explicitly removes custom data must stay removed. Otherwise merge into the
+        // builder-generated id/attachments, rather than replacing them with only a user-supplied flag.
+        var data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data != null && !original.isEmpty()) stack.set(DataComponents.CUSTOM_DATA, CustomData.of(original.merge(data.copyTag())));
     }
 
     public ItemStack getResult() {

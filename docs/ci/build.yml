@@ -83,7 +83,7 @@ jobs:
           EOF
 
       - name: Version consistency (与 consistency.yml 同一脚本，arena 分支也守门)
-        run: bash scripts/check_release_consistency.sh
+        run: bash scripts/check_release_consistency.sh --strict
 
       - uses: actions/setup-java@v4
         with:
@@ -93,7 +93,19 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Full build
-        run: ./gradlew build --console=plain --stacktrace --no-daemon
+        run: |
+          set -o pipefail
+          ./gradlew --init-script scripts/ci-central.init.gradle build runGameTest --console=plain --no-daemon 2>&1 | tee "$RUNNER_TEMP/build.log"
+
+      - name: Exercise pack conversion and reload on a real client
+        env: {LIBGL_ALWAYS_SOFTWARE: 'true', ALSOFT_DRIVERS: 'null'}
+        run: |
+          set -o pipefail
+          xvfb-run -a ./gradlew --init-script scripts/ci-central.init.gradle -PtaczClientSmoke runClientGameTest --console=plain 2>&1 | tee "$RUNNER_TEMP/client.log"
+          grep -F 'exported ZIP loaded through /reload path' build/run/clientGameTest/logs/latest.log
+
+      - if: failure()
+        run: python3 scripts/report_ci_failures.py "$RUNNER_TEMP/build.log" "$RUNNER_TEMP/client.log" build/run/{gameTest,clientGameTest}/logs/latest.log
 
       - name: Upload jars
         uses: actions/upload-artifact@v4

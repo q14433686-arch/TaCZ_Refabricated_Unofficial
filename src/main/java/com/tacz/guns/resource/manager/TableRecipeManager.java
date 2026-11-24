@@ -26,7 +26,7 @@ import java.util.Map;
  * 这是上游的既定布局（上游靠原版 {@code RecipeManager} 按 {@code "type"} 分发，
  * 天然只会拿到自己那一份），我们不能改目录，否则所有现存枪包都会失效。
  *
- * <p>但 26.2 客户端已经<b>没有</b>完整配方表（{@code ClientLevel#recipeAccess}
+ * <p>但 26.1.2 客户端已经<b>没有</b>完整配方表（{@code ClientLevel#recipeAccess}
  * 只剩 {@code propertySet} 与 {@code stonecutterRecipes}），所以工作台配方改由
  * mod 自己走 {@code DataType.RECIPES} 通道同步。这条自建通道没有原版的类型分发，
  * 于是 {@code FileToIdConverter.json("recipe")} 会把<b>所有</b>命名空间下的
@@ -60,7 +60,7 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
     /**
      * 旧版枪包（1.20 及以前）使用的<b>复数</b>配方目录。
      *
-     * <p>26.2 把原版数据包目录统一改成了单数 {@code recipe/}，但<b>工作台配方并不走
+     * <p>26.1.2 把原版数据包目录统一改成了单数 {@code recipe/}，但<b>工作台配方并不走
      * 原版数据包加载器</b> —— 它走的是本 mod 自建的 {@link DataType#RECIPES} 通道
      * （见类注释）。既然解析与同步全由我们自己负责，就<b>没有</b>必须单数的约束，
      * 完全可以同时接纳两种历史布局。</p>
@@ -75,10 +75,13 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
     /** 旧目录的扫描器。与父类那个 {@code recipe} 扫描器<b>并列</b>使用，不是替代。 */
     private static final FileToIdConverter LEGACY_CONVERTER = FileToIdConverter.json(LEGACY_RECIPE_DIRECTORY);
 
-    public TableRecipeManager() {
+    private final java.util.function.Predicate<Identifier> registryAllows;
+
+    public TableRecipeManager(java.util.function.Predicate<Identifier> registryAllows) {
         // 目录与原版数据包配方一致（data/<ns>/recipe），这是上游的既定布局，不能改。
         // 旧枪包的 data/<ns>/recipes（复数）由下面的 prepare() 覆写额外扫描。
         super(DataType.RECIPES, TableRecipe.class, CommonAssetsManager.GSON, "recipe", "TableRecipeLoader");
+        this.registryAllows = registryAllows;
     }
 
     /**
@@ -93,7 +96,7 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
      * 两个目录的文件会映射到<b>相同格式</b>的 Identifier（命名空间 + 相对路径），
      * 因此同一个包若两处都放了同名配方，会发生键冲突。
      * 这里让<b>新目录优先</b>：先放旧的，再用新的覆盖。
-     * 理由是若枪包作者已经做了 26.2 适配（写进 {@code recipe/}），
+     * 理由是若枪包作者已经做了 26.1.2 适配（写进 {@code recipe/}），
      * 那份显然比遗留的旧文件更可信。
      */
     @NotNull
@@ -124,7 +127,10 @@ public class TableRecipeManager extends CommonDataManager<TableRecipe> {
         // LinkedHashMap 保序，便于复现问题时对照日志顺序。
         Map<Identifier, JsonElement> ours = new LinkedHashMap<>();
         for (Map.Entry<Identifier, JsonElement> entry : pObject.entrySet()) {
-            if (isGunSmithTableRecipe(entry.getValue())) {
+            // The 26.1.2 vanilla RecipeManager already evaluated Fabric's conditions against this
+            // reload's registries/tags. Never resurrect a disabled recipe in our menu/network cache.
+            if (isGunSmithTableRecipe(entry.getValue()) && (!entry.getValue().getAsJsonObject().has("fabric:load_conditions")
+                    || registryAllows.test(entry.getKey()))) {
                 ours.put(entry.getKey(), entry.getValue());
             }
         }

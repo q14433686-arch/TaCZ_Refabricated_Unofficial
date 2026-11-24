@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * <h2>第 14 轮：为什么这里要「延迟解析」</h2>
  *
  * 原先 {@code GunSmithTableIngredientSerializer} 在 Gson 反序列化的当场就调用
- * {@code Ingredient.CODEC.parse(...)}。这在 26.2 上是<b>错误时机</b>，原因经反编译逐级确认：
+ * {@code Ingredient.CODEC.parse(...)}。这在 26.1.2 上是<b>错误时机</b>，原因经反编译逐级确认：
  *
  * <ol>
  *   <li>{@code Ingredient.CODEC = ExtraCodecs.nonEmptyHolderSet(NON_AIR_HOLDER_SET_CODEC)}，
@@ -94,7 +94,7 @@ public class GunSmithTableIngredient {
                     this.loggedFailure = true;
                     // ERROR + 原文 + 规范化形态 + 完整异常：跨包合成排查的第一现场。
                     // 材料格空白/配方点不动时，先在 latest.log 搜这一行。
-                    // （同步自 26.2 线 7227ff9：LinkageError 也要接 —— 自定义材料
+                    // （同步自 26.1.2 线 7227ff9：LinkageError 也要接 —— 自定义材料
                     //  serializer 缺失在部分 Fabric 版本上以 NoClassDefFoundError
                     //  形态抛出，只接 RuntimeException 会让它消失得无声无息。）
                     GunMod.LOGGER.error("Failed to resolve gun smith table ingredient {} "
@@ -106,7 +106,7 @@ public class GunSmithTableIngredient {
     }
 
     /**
-     * 把 1.20 及以前的<b>对象式</b> Ingredient 写法规范化为 26.2 的字符串写法。
+     * 把 1.20 及以前的<b>对象式</b> Ingredient 写法规范化为 26.1.2 的字符串写法。
      *
      * <pre>
      * {"tag":  "forge:ingots/iron"}  ->  "#forge:ingots/iron"
@@ -114,7 +114,7 @@ public class GunSmithTableIngredient {
      * </pre>
      *
      * <h2>为什么必须转换</h2>
-     * 26.2 的 {@code Ingredient.CODEC} 是
+     * 26.1.2 的 {@code Ingredient.CODEC} 是
      * {@code ExtraCodecs.nonEmptyHolderSet(HolderSetCodec.create(Registries.ITEM, ...))}
      * （字节码确认），{@code HolderSetCodec} <b>只接受字符串或字符串数组</b> ——
      * {@code "#tag"} 表示 tag、裸 id 表示单个物品。
@@ -190,7 +190,7 @@ public class GunSmithTableIngredient {
                 // 带 nbt 的对象改写成 partial_nbt 语义（宽松子集匹配 ——
                 // 枪械物品必然带着弹药数/开火模式等额外字段，strict 永远不可能
                 // 命中一把用过的枪，partial 是唯一可用语义，与 wiki 建议一致）。
-                // （同步自 26.2 线 7227ff9。）
+                // （同步自 26.1.2 线 7227ff9。）
                 if (obj.has("nbt") && obj.get("nbt").isJsonObject()) {
                     JsonObject out = new JsonObject();
                     out.add("fabric:type", new JsonPrimitive("forge:partial_nbt"));
@@ -209,11 +209,41 @@ public class GunSmithTableIngredient {
         if (raw.isJsonArray()) {
             JsonArray src = raw.getAsJsonArray();
             JsonArray out = new JsonArray(src.size());
+            JsonArray resolvedItems = new JsonArray();
             boolean changed = false;
+            boolean hasTagOrMissingItem = false;
             for (JsonElement e : src) {
                 JsonElement n = normalizeLegacy(e);
                 changed |= n != e;
                 out.add(n);
+                if (n.isJsonPrimitive() && n.getAsJsonPrimitive().isString()) {
+                    String str = n.getAsString();
+                    if (str.startsWith("#")) {
+                        // HolderSetCodec 仅允许单个字符串写 "#tag"，不允许在数组内写 "#tag"
+                        // （数组分支走 Holder.CODEC.listOf()，遇到 "#" 会抛 IdentifierException）。
+                        // 因此将数组内的标签展开为已绑定物品 ID 列表。
+                        hasTagOrMissingItem = true;
+                        net.minecraft.resources.Identifier tagId = net.minecraft.resources.Identifier.tryParse(str.substring(1));
+                        if (tagId != null) {
+                            net.minecraft.tags.TagKey<net.minecraft.world.item.Item> tagKey =
+                                    net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, tagId);
+                            for (net.minecraft.core.Holder<net.minecraft.world.item.Item> holder : BuiltInRegistries.ITEM.getTagOrEmpty(tagKey)) {
+                                holder.unwrapKey().ifPresent(key -> resolvedItems.add(new JsonPrimitive(key.identifier().toString())));
+                            }
+                        }
+                    } else {
+                        net.minecraft.resources.Identifier itemId = net.minecraft.resources.Identifier.tryParse(str);
+                        if (itemId != null && BuiltInRegistries.ITEM.containsKey(itemId)
+                                && BuiltInRegistries.ITEM.getValue(itemId) != net.minecraft.world.item.Items.AIR) {
+                            resolvedItems.add(new JsonPrimitive(itemId.toString()));
+                        } else {
+                            hasTagOrMissingItem = true;
+                        }
+                    }
+                }
+            }
+            if (hasTagOrMissingItem && !resolvedItems.isEmpty()) {
+                return resolvedItems;
             }
             return changed ? out : raw;
         }
@@ -265,7 +295,7 @@ public class GunSmithTableIngredient {
             // （Upgrader.kt upgradeIngredient：obj.add("items", item) —— item 是
             // JsonPrimitive）。我们的 codec 是 listOf().fieldOf("items")，只认数组，
             // 这里把字符串包成单元素数组（实机日志的 "Not a json array" 正是这一步缺失）。
-            // （同步自 26.2 线 61345c5。）
+            // （同步自 26.1.2 线 61345c5。）
             if ("items".equals(key) && entry.getValue().isJsonPrimitive()) {
                 JsonArray items = new JsonArray(1);
                 items.add(entry.getValue());
@@ -275,6 +305,12 @@ public class GunSmithTableIngredient {
             out.add(key, entry.getValue());
         }
         return out;
+    }
+
+    /** 尚未解析成功时的原始 {@code item} JSON；已解析则为 {@code null}。 */
+    @Nullable
+    public JsonElement getRawItem() {
+        return this.rawItem;
     }
 
     /** 供必须拿到非空值的场合（如网络编码）使用。 */

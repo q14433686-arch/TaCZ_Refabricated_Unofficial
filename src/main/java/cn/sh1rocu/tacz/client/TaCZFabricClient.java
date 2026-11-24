@@ -105,12 +105,12 @@ public class TaCZFabricClient implements ClientModInitializer {
                 BuiltinItemRendererRegistry.INSTANCE.register(clientEx, renderer);
             }
         });
-        // 枪械工作台左侧「旋转预览模型」的 PIP 渲染器（回移植自 26.2）。
+        // 枪械工作台左侧「旋转预览模型」的 PIP 渲染器（回移植自 26.1.2）。
         // GUI 是 extract→绘制两段式，1.21.1 那套直接改 RenderSystem 模型视图矩阵
         // 再 renderStatic 的做法已不存在；带自定义变换的 GUI 3D 绘制只能走 PictureInPictureRenderer。
         // 不注册的话，GunSmithTableScreen 提交的 GunPreviewRenderState 找不到渲染器 -> 预览框空白。
         // 26.1.2 的 PictureInPictureRenderer 基类构造器要求 MultiBufferSource.BufferSource，
-        // 由 Fabric 的 Context 提供（这一点与 26.2 的无参构造不同，是本回移植的适配点）。
+        // 由 Fabric 的 Context 提供（这一点与 26.1.2 的无参构造不同，是本回移植的适配点）。
         PictureInPictureRendererRegistry.register(
                 ctx -> new com.tacz.guns.client.gui.preview.GunPreviewRenderer(ctx.bufferSource()));
         subscribeEvents();
@@ -134,9 +134,11 @@ public class TaCZFabricClient implements ClientModInitializer {
 
         InputEvent.InteractionKeyMappingTriggered.EVENT.register(ClientPreventGunClick::onClickInput);
 
-        ClientPlayConnectionEvents.DISCONNECT.register(CommonNetworkCacheEvent::onClientPlayerLoggingIn);
+        ClientPlayConnectionEvents.DISCONNECT.register(CommonNetworkCacheEvent::onDisconnect);
+        ClientPlayerNetworkEvent.LOGGING_OUT.register(event -> CommonNetworkCacheEvent.onLocalLogout(event.getConnection()));
+        PackCompatibilityNotice.register();
 
-        // 26.2: 第一人称入口不再走 SimpleBedrockModel 的 RenderHandEvent。
+        // 26.1.2: 第一人称入口不再走 SimpleBedrockModel 的 RenderHandEvent。
         // 现在统一由客户端 ItemModel（tacz:dynamic_item）-> AnimateGeoItemRenderer#render 的
         // mode.firstPerson() 分支进入，与其它 display context 完全一致。
         // 原先被注释掉的 FirstPersonRenderEvent 注册与其 RenderHandEvent stub 均已删除，
@@ -155,13 +157,13 @@ public class TaCZFabricClient implements ClientModInitializer {
         EntityHurtByGunEvent.POST.register(PlayerHurtByGunEvent::onPlayerHurtByGun);
 
         // 【r42】原来这里还注册了 ClientPlayerNetworkEvent.CLONE ->
-        // RefreshClonePlayerDataEvent::onClientPlayerClone，但该事件在 26.2 永远发不出来
+        // RefreshClonePlayerDataEvent::onClientPlayerClone，但该事件在 26.1.2 永远发不出来
         // （唯一发射点 ClientHooks#firePlayerRespawn 依赖的 ClientPacketListenerMixin
         //   注入点 ClientLevel#addPlayer 已不存在）。
         // 重生/换维度后的配件缓存刷新改由下面这个 tick 回调内部检测玩家实例变化来触发。
         ClientTickEvents.START_CLIENT_TICK.register(RefreshClonePlayerDataEvent::onClientTick);
         // 附属模块 LRTactical：客户端重生/换维度后丢弃陈旧的近战与冷却状态。
-        // 客户端没有可用的重生事件（CLONE 在 26.2 永不触发，见 RefreshClonePlayerDataEvent），
+        // 客户端没有可用的重生事件（CLONE 在 26.1.2 永不触发，见 RefreshClonePlayerDataEvent），
         // 故照抄其「每 tick 比对 Minecraft#player 引用」的手法。
         ClientTickEvents.START_CLIENT_TICK.register(
                 client -> me.xjqsh.lrtactical.init.ModCapabilities.onClientPlayerTick(client.player));

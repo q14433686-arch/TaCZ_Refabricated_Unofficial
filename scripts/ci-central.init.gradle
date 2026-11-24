@@ -1,0 +1,39 @@
+// Only used by GitHub Actions. Keep the project's normal repository order and content filters;
+// redirect an actual Maven Central entry, not Fabric, plugin portal, Minecraft or mod repositories.
+// A single Central 429 (including for a transitive parent or annotation) otherwise disables that
+// repository for the rest of the Gradle invocation. No coordinate or metadata substitutions.
+import org.gradle.api.artifacts.repositories.MavenArtifactRepository
+
+def centralMirror = URI.create('https://maven-central.storage-download.googleapis.com/maven2/')
+def configureRepositories = { repos ->
+    repos.withType(MavenArtifactRepository).configureEach { repo ->
+        def url = repo.url
+        if (url?.scheme == 'https' && url.host in ['repo.maven.apache.org', 'repo1.maven.org'] &&
+                url.path in ['/maven2', '/maven2/']) {
+            repo.setUrl(centralMirror)
+        }
+    }
+}
+
+// ASM also exists on Fabric Maven; choose its Central POM and parent together before either
+// is claimed by another repository. Nothing else is promoted ahead of the project's repos.
+def preferAsm = { repos ->
+    repos.maven {
+        name = 'CiAsmMetadata'
+        url = centralMirror
+        content {
+            includeGroup 'org.ow2.asm'
+            includeModule 'org.ow2', 'ow2'
+        }
+    }
+}
+
+gradle.beforeSettings { settings ->
+    configureRepositories(settings.pluginManagement.repositories)
+    preferAsm(settings.pluginManagement.repositories)
+}
+gradle.beforeProject { project ->
+    configureRepositories(project.buildscript.repositories)
+    configureRepositories(project.repositories)
+    preferAsm(project.repositories)
+}

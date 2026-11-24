@@ -1,5 +1,7 @@
 package cn.sh1rocu.tacz.util.forge;
 
+import cn.sh1rocu.tacz.util.GunPackLangCompat;
+import com.tacz.guns.resource.filter.RecipeFilter;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.network.chat.Component;
 import com.google.common.collect.ImmutableMap;
@@ -20,14 +22,21 @@ import java.util.*;
 
 public class DelegatingPackResources extends AbstractPackResources {
     private final PackMetadataSection packMeta;
+    private final List<List<PackResources>> gunPacks;
     private final List<PackResources> delegates;
     private final Map<String, List<PackResources>> namespacesAssets;
     private final Map<String, List<PackResources>> namespacesData;
 
     public DelegatingPackResources(String packId, boolean isBuiltin, PackMetadataSection packMeta, List<? extends PackResources> packs) {
+        this(packId, packMeta, packs.stream().map(p -> List.<PackResources>of(p)).toList());
+    }
+
+    /** Each gun pack contributes its highest matching overlay, then its base if no overlay supplies the file. */
+    public DelegatingPackResources(String packId, PackMetadataSection packMeta, List<List<PackResources>> gunPacks) {
         super(new PackLocationInfo(packId, Component.literal(packId), PackSource.DEFAULT, Optional.empty()));
         this.packMeta = packMeta;
-        this.delegates = ImmutableList.copyOf(packs);
+        this.gunPacks = gunPacks.stream().map(List::copyOf).toList();
+        this.delegates = this.gunPacks.stream().flatMap(List::stream).toList();
         this.namespacesAssets = this.buildNamespaceMap(PackType.CLIENT_RESOURCES, delegates);
         this.namespacesData = this.buildNamespaceMap(PackType.SERVER_DATA, delegates);
     }
@@ -51,76 +60,18 @@ public class DelegatingPackResources extends AbstractPackResources {
     }
 
     @Override
-    public void listResources(PackType type, String resourceNamespace, String paths, ResourceOutput resourceOutput) {
-        boolean isRecipe = type == PackType.SERVER_DATA && "recipe".equals(paths);
-        String legacyPath = type == PackType.SERVER_DATA ? cn.sh1rocu.tacz.util.RecipeCompat.getLegacyForCurrent(paths) : null;
-
-        if (isRecipe) {
-            ResourceOutput transformingOutput = (location, supplier) -> {
-                var wrapped = cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, supplier);
-                resourceOutput.accept(location, wrapped);
-            };
-            for (PackResources delegate : this.delegates) {
-                try {
-                    delegate.listResources(type, resourceNamespace, paths, transformingOutput);
-                } catch (Exception ignored) {}
-            }
-            if (legacyPath != null) {
-                ResourceOutput legacyOutput = (location, supplier) -> {
-                    var remapped = cn.sh1rocu.tacz.util.RecipeCompat.remapLegacyToCurrent(location);
-                    try {
-                        try (var in = supplier.get()) {
-                            byte[] bytes = in.readAllBytes();
-                            String txt = new String(bytes, java.nio.charset.StandardCharsets.UTF_8).trim();
-                            if (!txt.isEmpty()) {
-                                try {
-                                    var je = com.google.gson.JsonParser.parseString(txt);
-                                    if (je.isJsonObject()) {
-                                        var obj = je.getAsJsonObject();
-                                        if (!cn.sh1rocu.tacz.util.RecipeCompat.isVanillaRecipeType(obj)) {
-                                            return;
-                                        }
-                                    }
-                                } catch (Exception ignoreParse) {}
-                            }
-                            IoSupplier<InputStream> fixedSupplier = () -> {
-                                try (var in2 = supplier.get()) {
-                                    return cn.sh1rocu.tacz.util.RecipeCompat.transformStreamIfNeeded(in2);
-                                }
-                            };
-                            resourceOutput.accept(remapped, fixedSupplier);
-                        }
-                    } catch (Exception e) {
-                        var wrapped = cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(remapped, supplier);
-                        resourceOutput.accept(remapped, wrapped);
-                    }
-                };
-                for (PackResources delegate : this.delegates) {
-                    try {
-                        delegate.listResources(type, resourceNamespace, legacyPath, legacyOutput);
-                    } catch (Exception ignored) {}
-                }
-            }
-        } else if (legacyPath != null && type == PackType.SERVER_DATA) {
-            // 非 recipe 的兼容路径（如 loot_table, tags/block）
-            for (PackResources delegate : this.delegates) {
-                try {
-                    delegate.listResources(type, resourceNamespace, paths, resourceOutput);
-                } catch (Exception ignored) {}
-            }
-            ResourceOutput legacyOutput = (location, supplier) -> {
-                var remapped = cn.sh1rocu.tacz.util.RecipeCompat.remapLegacyToCurrent(location);
-                resourceOutput.accept(remapped, supplier);
-            };
-            for (PackResources delegate : this.delegates) {
-                try {
-                    delegate.listResources(type, resourceNamespace, legacyPath, legacyOutput);
-                } catch (Exception ignored) {}
-            }
-        } else {
-            for (PackResources delegate : this.delegates) {
-                delegate.listResources(type, resourceNamespace, paths, resourceOutput);
-            }
+    public void listResources(PackType type, String resourceNamespace, String paths, PackResources.ResourceOutput resourceOutput) {
+        // Same winner for list and direct lookup, including current vs legacy recipe aliases.
+        // All disk/zip layers now go through PathPackResources, which already normalizes recipes.
+        Set<Identifier> seen = new HashSet<>();
+        ResourceOutput emitOnce = (id, supplier) -> {
+            if (seen.add(id)) resourceOutput.accept(id, (isAttachmentTag(type, id) || isRecipeFilter(type, id))
+                    ? getResource(type, id) : supplier);
+        };
+        for (PackResources pack : getCandidatePacks(type, resourceNamespace)) {
+            ResourceOutput output = GunPackLangCompat.mayListLangFiles(paths)
+                    ? GunPackLangCompat.wrapOutput(GunPackLangCompat.describe(pack), emitOnce) : emitOnce;
+            pack.listResources(type, resourceNamespace, paths, output);
         }
     }
 
@@ -145,41 +96,50 @@ public class DelegatingPackResources extends AbstractPackResources {
     @Nullable
     @Override
     public IoSupplier<InputStream> getResource(PackType type, Identifier location) {
-        for (PackResources pack : getCandidatePacks(type, location)) {
-            IoSupplier<InputStream> ioSupplier = pack.getResource(type, location);
-            if (ioSupplier != null) {
-                if (type == PackType.SERVER_DATA && cn.sh1rocu.tacz.util.RecipeCompat.isRecipePath(location)) {
-                    return cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, ioSupplier);
-                }
-                return ioSupplier;
-            }
-        }
-
-        if (type == PackType.SERVER_DATA) {
-            Identifier legacy = cn.sh1rocu.tacz.util.RecipeCompat.remapCurrentToLegacy(location);
-            if (!legacy.equals(location)) {
-                for (PackResources pack : getCandidatePacks(type, legacy)) {
-                    IoSupplier<InputStream> ioSupplier = pack.getResource(type, legacy);
-                    if (ioSupplier != null) {
-                        if (cn.sh1rocu.tacz.util.RecipeCompat.isRecipePath(location)) {
-                            return cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, ioSupplier);
-                        }
-                        return ioSupplier;
-                    }
-                }
-                for (PackResources pack : this.delegates) {
-                    IoSupplier<InputStream> ioSupplier = pack.getResource(type, legacy);
-                    if (ioSupplier != null) {
-                        if (cn.sh1rocu.tacz.util.RecipeCompat.isRecipePath(location)) {
-                            return cn.sh1rocu.tacz.util.RecipeCompat.wrapSupplierForRecipe(location, ioSupplier);
-                        }
-                        return ioSupplier;
+        if (isRecipeFilter(type, location)) {
+            // RecipeFilterManager normally merges a resource stack. The repository exposes all
+            // gun packs as ONE pack, so return one effective filter per contributing gun pack.
+            List<IoSupplier<InputStream>> parts = new ArrayList<>();
+            for (var pack : gunPacks) {
+                for (var layer : pack) {
+                    var part = layer.getResource(type, location);
+                    if (part != null) {
+                        parts.add(part);
+                        break;
                     }
                 }
             }
+            if (parts.isEmpty()) return null;
+            return parts.size() == 1 ? parts.getFirst() : () -> RecipeFilter.mergeLayers(location, parts);
         }
-
+        if (isAttachmentTag(type, location)) {
+            List<IoSupplier<InputStream>> parts = new ArrayList<>();
+            for (PackResources pack : getCandidatePacks(type, location.getNamespace())) {
+                var part = pack.getResource(type, location);
+                if (part != null) parts.add(part);
+            }
+            if (parts.isEmpty()) return null;
+            // A composite pack hides its children from listMatchingResourceStacks. These tags
+            // are additive arrays, not winner-takes-all indexes; preserve all child values.
+            return () -> com.tacz.guns.util.AttachmentTagLayers.merge(location.toString(), parts);
+        }
+        for (PackResources pack : getCandidatePacks(type, location.getNamespace())) {
+            var supplier = pack.getResource(type, location);
+            if (supplier != null) {
+                return GunPackLangCompat.isLangFile(location)
+                        ? GunPackLangCompat.wrap(GunPackLangCompat.describe(pack), location, supplier) : supplier;
+            }
+        }
         return null;
+    }
+
+    private static boolean isRecipeFilter(PackType type, Identifier id) {
+        return type == PackType.SERVER_DATA && id.getPath().startsWith("recipe_filters/") && id.getPath().endsWith(".json");
+    }
+
+    private static boolean isAttachmentTag(PackType type, Identifier id) {
+        return type == PackType.SERVER_DATA && id.getPath().startsWith("tacz_tags/attachments/")
+                && id.getPath().endsWith(".json");
     }
 
     @Nullable
@@ -187,9 +147,9 @@ public class DelegatingPackResources extends AbstractPackResources {
         return delegates;
     }
 
-    private List<PackResources> getCandidatePacks(PackType type, Identifier location) {
+    private List<PackResources> getCandidatePacks(PackType type, String namespace) {
         Map<String, List<PackResources>> map = type == PackType.CLIENT_RESOURCES ? namespacesAssets : namespacesData;
-        List<PackResources> packsWithNamespace = map.get(location.getNamespace());
+        List<PackResources> packsWithNamespace = map.get(namespace);
         return packsWithNamespace == null ? Collections.emptyList() : packsWithNamespace;
     }
 }
