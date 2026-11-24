@@ -51,11 +51,10 @@ public class BedrockAnimatedModel extends BedrockModel implements AnimationListe
         if (constraintPath != null) {
             constraintObject = new ConstraintObject();
             BedrockPart constraintNode = constraintPath.get(constraintPath.size() - 1);
-            if (shouldRender.contains(constraintNode)) {
-                constraintObject.bonesItem = indexBones.get(CONSTRAINT_NODE);
-            } else {
-                constraintObject.node = constraintNode;
-            }
+            // Rotation always uses the converted part angles. Only the root translation
+            // needs the original pack pivot (without Bedrock's 24-pixel root offset).
+            constraintObject.node = constraintNode;
+            if (shouldRender.contains(constraintNode)) constraintObject.bonesItem = indexBones.get(CONSTRAINT_NODE);
         }
         root = Optional.ofNullable(modelMap.get(ROOT_NODE)).map(ModelRendererWrapper::getModelRenderer).orElse(null);
         idleSightPath = getPath(modelMap.get("idle_view"));

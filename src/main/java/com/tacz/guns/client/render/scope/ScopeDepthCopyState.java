@@ -119,6 +119,7 @@ public final class ScopeDepthCopyState {
     public static void onClientFrameStart() {
         RenderSystem.assertOnRenderThread();
         frameCounter++;
+        ScopeLensFrame.beginFrame(net.minecraft.client.Minecraft.getInstance());
     }
 
     /**
@@ -183,6 +184,7 @@ public final class ScopeDepthCopyState {
      * 初值 MIN_VALUE：任何「本帧/上一帧」查询在第一个周期完成前都为假（fail-closed）。
      */
     private static int frameCounter;
+    public static int frameNumber() { return frameCounter; }
     private static int maskCycleFrame = Integer.MIN_VALUE;
     /** Whether a usable world-depth source exists for the mask (Iris depthtex2 or the vanilla copy). */
     private static boolean maskWorldValid;

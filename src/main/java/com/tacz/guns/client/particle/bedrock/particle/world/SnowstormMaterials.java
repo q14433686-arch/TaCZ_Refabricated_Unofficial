@@ -1,0 +1,59 @@
+package com.tacz.guns.client.particle.bedrock.particle.world;
+
+import com.mojang.blaze3d.pipeline.*;
+import com.tacz.guns.client.particle.bedrock.particle.data.ParticleDescription;
+import com.tacz.guns.client.render.FlashMaterials;
+import com.tacz.guns.client.render.scope.*;
+import com.tacz.guns.compat.iris.IrisCompat;
+
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.rendertype.*;
+import net.minecraft.resources.Identifier;
+import java.util.HashMap;
+import java.util.Map;
+
+/** SBM's add is lit and color-write-only; emissive is unlit with depth writes. Both are additive,
+ * but neither uses the energy-swirl texture transform. Preserve those distinctions under the lens. */
+public final class SnowstormMaterials {
+    private record Pass(boolean emissive, boolean clipped, boolean hand) {}
+    private record Key(Pass pass, Identifier texture) {}
+    private static final Map<Pass, RenderPipeline> PIPELINES = new HashMap<>();
+    private static final Map<Key, RenderType> TYPES = new HashMap<>();
+
+    public static RenderType type(ParticleDescription desc, boolean clipped, boolean hand) {
+        Identifier texture = desc.getTexture();
+        return switch (desc.getMaterial()) {
+            case PARTICLES_OPAQUE -> clipped ? ScopeRenderTypes.clipForViewmodel(RenderTypes.entityCutout(texture),texture,true) : RenderTypes.entityCutout(texture);
+            case PARTICLES_ALPHA, PARTICLES_BLEND -> clipped ? ScopeRenderTypes.flashTranslucentClipped(texture) : RenderTypes.entityTranslucent(texture);
+            case ENERGY_SWIRL -> FlashMaterials.swirl(texture, clipped, 1);
+            case PARTICLES_ADD, PARTICLES_EMISSIVE -> TYPES.computeIfAbsent(
+                    new Key(new Pass(desc.getMaterial() == ParticleDescription.Material.PARTICLES_EMISSIVE, clipped, hand || clipped), texture), key -> {
+                var setup = RenderSetup.builder(PIPELINES.computeIfAbsent(key.pass, SnowstormMaterials::pipeline))
+                        .withTexture("Sampler0", texture).useLightmap().useOverlay().sortOnUpload();
+                return ScopeRenderTypes.material("tacz_snowstorm", setup, texture, clipped);
+            });
+        };
+    }
+
+    private static RenderPipeline pipeline(Pass pass) {
+        String name = "snowstorm_" + (pass.emissive ? "emissive" : "add") + (pass.clipped ? "_clipped" : pass.hand ? "_hand" : "_world");
+        var shader = Identifier.parse("minecraft:core/entity");
+        var builder = RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
+                .withLocation(Identifier.parse("tacz:pipeline/" + name))
+                .withVertexShader(shader).withFragmentShader(shader)
+                .withSampler("Sampler1").withCull(false)
+                .withShaderDefine("ALPHA_CUTOUT", 0.1f)
+                .withColorTargetState(new ColorTargetState(BlendFunction.ADDITIVE));
+        if (pass.emissive) builder.withShaderDefine("EMISSIVE").withShaderDefine("NO_CARDINAL_LIGHTING")
+                .withDepthStencilState(DepthStencilState.DEFAULT);
+        else builder.withShaderDefine("PER_FACE_LIGHTING").withDepthStencilState(new DepthStencilState(DepthStencilState.DEFAULT.depthTest(), false));
+        if (pass.clipped) ScopeRenderTypes.maskOutsidePipeline(builder);
+        var pipeline = builder.build();
+        if (pass.emissive) IrisCompat.assignEmissivePipeline(pipeline);
+        else IrisCompat.assignEntityPipeline(pipeline, pass.hand, false);
+
+        return pipeline;
+    }
+    public static void clearTextures() { TYPES.clear(); }
+    private SnowstormMaterials() {}
+}

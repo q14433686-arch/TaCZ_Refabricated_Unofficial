@@ -10,6 +10,10 @@ public class REIPlugin implements me.shedaniel.rei.api.common.plugins.REICommonP
         registry.register(REISubtype.getAmmoSubtype(), ModItems.AMMO);
         registry.register(REISubtype.getAttachmentSubtype(), ModItems.ATTACHMENT);
         registry.register(REISubtype.getAmmoBoxSubtype(), ModItems.AMMO_BOX);
+        // REI's fuzzy fallback compares only the base item. Multiple pack tables can
+        // share a workbench item; their BlockId is the workstation identity, not its name.
+        registry.register(REISubtype.getTableSubType(), ModItems.GUN_SMITH_TABLE,
+                ModItems.WORKBENCH_111, ModItems.WORKBENCH_211, ModItems.WORKBENCH_121);
         GunItemManager.getAllGunItems().forEach(item ->
                 registry.register(REISubtype.getGunSubtype(), item));
     }

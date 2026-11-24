@@ -38,7 +38,7 @@ import java.util.List;
  * {@code BlockRenderer}），并多出末尾的 {@code GameRenderState}；
  * {@code RenderBuffers} 在 {@code net.minecraft.client.renderer}（两版相同）；
  * {@code RenderSystem.getModelViewMatrix()} 在 26.1.2 仍是这个名字（26.2 才改名为
- * {@code getModelViewMatrixCopy()}）。</p>
+ * {@code getModelViewMatrix()}）。</p>
  */
 public final class ScopeFinalOverlayState {
     private static final int FINAL_RETICLE_ORDER = 20_000;
@@ -194,9 +194,12 @@ public final class ScopeFinalOverlayState {
             }
 
             OrderedSubmitNodeCollector reticleCollector = submitNodes.order(FINAL_RETICLE_ORDER);
+            var projection = ScopeProjection.current();
+            var clip = projection == null ? null : new Matrix4f(projection).mul(transform.modelView());
+            int width = minecraft.getMainRenderTarget().width, height = minecraft.getMainRenderTarget().height;
             for (ReticleDraw draw : reticles) {
                 reticleCollector.submitCustomGeometry(new PoseStack(), draw.renderType(),
-                        (entryPose, consumer) -> draw.snapshot().writeFiltered(consumer, ReticleMarkFilter::isThinMark));
+                        (entryPose, consumer) -> draw.snapshot().writeFilteredReticle(consumer, clip, width, height));
             }
 
             OrderedSubmitNodeCollector ringCollector = submitNodes.order(FINAL_OCULAR_RING_ORDER);

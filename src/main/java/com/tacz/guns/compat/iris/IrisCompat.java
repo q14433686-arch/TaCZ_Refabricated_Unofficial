@@ -44,6 +44,13 @@ public final class IrisCompat {
         });
     }
 
+    public static boolean hasActiveIrisPack() { return isUsingRenderPack(); }
+    public static void assignEmissivePipeline(RenderPipeline pipeline) { assignPipelineToIris(pipeline, "EMISSIVE_ENTITIES", "tacz_emissive"); }
+    public static void assignEntityPipeline(RenderPipeline pipeline, boolean hand, boolean emissive) {
+        assignPipelineToIris(pipeline, hand ? "HAND" : emissive ? "EMISSIVE_ENTITIES" : "ENTITIES", "tacz_material");
+    }
+    public static void assignRackOutlinePipeline(RenderPipeline pipeline) { assignPipelineToIris(pipeline, "LINES", "tacz_rack_outline"); }
+
     public static boolean isRenderShadow() {
         if (!FabricLoader.getInstance().isModLoaded(CompatRegistry.IRIS)) {
             return false;

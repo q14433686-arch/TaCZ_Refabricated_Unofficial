@@ -278,7 +278,7 @@ public final class ScopePipRerender {
         // 会重建离屏画布（sceneTargetGeneration++），新画布里是未定义内容，绝不能当
         // 「上一帧」端出去 —— 比较「上次真渲时的代数」与「当前代数」即可拦下。
         scopeFrameCounter++;
-        int interval = rerenderInterval();
+        int interval = ScopeLensFrame.needsHeat() ? 1 : rerenderInterval();
         if (interval > 1 && sceneCaptured
                 && lastRenderGeneration == ScopePipRenderState.sceneTargetGeneration()
                 && scopeFrameCounter - lastRenderFrame < interval) {
@@ -349,6 +349,7 @@ public final class ScopePipRerender {
             levelRenderer.renderLevel(allocator, deltaTracker, false, cameraState,
                     viewMatrix, fogBuffer, fogColor, renderSky, chunkSectionsToRender);
             // 立刻拷走：紧随其后的 vanilla 那遍会整屏重画主目标。
+            ScopeThermalCapture.finish(mc.getMainRenderTarget(), cameraState);
             sceneCaptured = ScopePipRenderState.captureSceneFromMain(mc);
             if (sceneCaptured) {
                 // 记录「上次真渲」的帧号与画布代数，供隔帧复用闸门判断（见方法中段）。

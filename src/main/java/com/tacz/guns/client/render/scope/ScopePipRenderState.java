@@ -230,6 +230,7 @@ public final class ScopePipRenderState {
      * hand pass, so deferring under it cannot leave the reticle/rim stranded in the wrong layer.</p>
      */
     public static boolean shouldDeferReticleOverlay() {
+        if (ScopeLensFrame.expected != null) return true;
         float partialTicks = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
         return isEnabled() && irisCompatible()
                 && currentZoom() >= minMagnification() && isAimingStarted(partialTicks);
@@ -476,6 +477,10 @@ public final class ScopePipRenderState {
      * gun has not been rasterized into it yet, so this copy is exactly the clean lens source.</p>
      */
     public static void captureScene(Minecraft mc) {
+        if (ScopeLensFrame.expected != null && !IrisCompat.isUsingRenderPack()
+                && !(ScopePipRerender.rerenderMode() && ScopePipRerender.hasScene())) {
+            copyMainColor(mc); return;
+        }
         if (ScopePipRerender.rerenderMode()) {
             // 二次渲染模式：镜内画面由 ScopePipRerender.renderScopeView 在 renderLevel 的
             // 镜内那遍之后拷好。这里再拷一次会用宽视场的手前画面覆盖窄视场成品。
@@ -519,6 +524,11 @@ public final class ScopePipRenderState {
      * for its own Iris pipeline; this port uses the same finished-frame property on 26.1.2).
      */
     public static void captureSceneAfterIrisFinal(Minecraft mc) {
+        if (ScopeLensFrame.expected != null && IrisCompat.supportsFinalScopeOverlay()
+                && !(ScopePipRerender.rerenderMode() && ScopePipRerender.hasScene())) {
+            ScopeThermalCapture.finish(mc.getMainRenderTarget(), mc.gameRenderer.getGameRenderState().levelRenderState.cameraRenderState);
+            copyMainColor(mc); return;
+        }
         if (!isEnabled() || failed || mc == null) {
             sceneCaptured = false;
             return;
@@ -615,6 +625,7 @@ public final class ScopePipRenderState {
 
     /** Composites the captured scene into the lens after the hand pass has finished. */
     public static void compositeAfterHand(Minecraft mc) {
+        if (!IrisCompat.isUsingRenderPack() && classicLens(mc)) return;
         if (!isEnabled() || failed || mc == null) {
             return;
         }
@@ -674,6 +685,7 @@ public final class ScopePipRenderState {
      * private GL textures, so they remain sampleable after Iris has finished binding depthtex2.</p>
      */
     public static void compositeAfterIrisFinal(Minecraft mc) {
+        if (IrisCompat.supportsFinalScopeOverlay() && classicLens(mc)) return;
         if (!isEnabled() || failed || mc == null) {
             return;
         }
@@ -734,6 +746,14 @@ public final class ScopePipRenderState {
     }
 
     /** Composite body with an explicit lens zoom (the Iris path reuses the same stable zoom value). */
+    private static boolean classicLens(Minecraft mc) {
+        if (ScopeLensFrame.current() == null || !sceneCaptured || failed) return false;
+        if (suppressesWorldFovZoom(mc.getDeltaTracker().getGameTimeDeltaPartialTick(false))
+                && (!ScopePipRerender.rerenderMode() || ScopePipRerender.hasScene())) return false;
+        compositeScene(mc, 1f);
+        return true;
+    }
+
     private static void compositeScene(Minecraft mc, float compositeZoom) {
         ScopeDepthCopyState.DepthHandle world = ScopeDepthCopyState.worldDepthTarget();
         ScopeDepthCopyState.DepthHandle aperture = ScopeDepthCopyState.apertureDepthTarget();
@@ -769,7 +789,15 @@ public final class ScopePipRenderState {
                     () -> "tacz_scope_pip_composite",
                     main.getColorTextureView(),
                     OptionalInt.empty())) {
-                pass.setPipeline(pipeline(compositeZoom));
+                var lens = ScopeLensFrame.current();
+                pass.setPipeline(pipeline(compositeZoom, lens != null));
+                if (lens != null) {
+                    var heat = ScopeThermalCapture.current();
+                    pass.bindTexture("HeatSampler", heat == null ? scene.view() : heat.getColorTextureView(),
+                            RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
+                    pass.setUniform("DynamicTransforms", RenderSystem.getDynamicUniforms().writeTransform(
+                            ScopeLensFrame.uniforms(lens, heat != null), new org.joml.Vector4f(1), new org.joml.Vector3f(), new org.joml.Matrix4f()));
+                }
                 pass.bindTexture(SCENE_SAMPLER_UNIFORM,
                         scene.view(),
                         RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
@@ -807,14 +835,14 @@ public final class ScopePipRenderState {
         }
     }
 
-    private static RenderPipeline pipeline(float lensZoomValue) {
+    private static RenderPipeline pipeline(float lensZoomValue, boolean lens) {
         float clampedZoom = Math.max(1.0f, lensZoomValue);
         int lensZoom1k = (int) Math.round(clampedZoom * 1000.0f);
         int sharpness1k = (int) Math.round(sharpness() * 1000.0f);
         boolean paintLens = debugPaintLens();
         long cacheKey = (lensZoom1k & 0xFFFFFL)
                 | ((sharpness1k & 0x3FFL) << 20)
-                | (paintLens ? 1L << 30 : 0L);
+                | (paintLens ? 1L << 30 : 0L) | (lens ? 1L << 31 : 0L);
         RenderPipeline cachedPipeline = PIPELINES.get(cacheKey);
         if (cachedPipeline != null) {
             return cachedPipeline;
@@ -822,8 +850,7 @@ public final class ScopePipRenderState {
         RenderPipeline pipeline;
         {
             RenderPipeline source = RenderPipelines.ENTITY_OUTLINE_BLIT;
-            pipeline = RenderPipelines.register(
-                    RenderPipeline.builder()
+            var builder = RenderPipeline.builder()
                             .withLocation(Identifier.fromNamespaceAndPath(
                                     GunMod.MOD_ID, "pipeline/scope_pip_composite"))
                             .withVertexShader(Identifier.fromNamespaceAndPath(
@@ -841,8 +868,10 @@ public final class ScopePipRenderState {
                             // 26.1.2 没有 withoutBlend()/withColorWrite(bool)：等价形式是
                             // 「无混合 + 全色写」的 ColorTargetState（无深度进出，纯屏幕空间覆写）。
                             .withColorTargetState(new ColorTargetState(
-                                    Optional.empty(), ColorTargetState.WRITE_COLOR))
-                            .build());
+                                    Optional.empty(), ColorTargetState.WRITE_COLOR));
+            if (lens) builder.withShaderDefine("TACZ_SCOPE_LENS").withSampler("HeatSampler")
+                    .withUniform("DynamicTransforms", com.mojang.blaze3d.shaders.UniformType.UNIFORM_BUFFER);
+            pipeline = RenderPipelines.register(builder.build());
             PIPELINES.put(cacheKey, pipeline);
         }
         return pipeline;

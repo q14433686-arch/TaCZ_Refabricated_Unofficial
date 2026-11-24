@@ -32,6 +32,11 @@ out vec4 fragColor;
 #define TACZ_PIP_PAINT_LENS 0.0
 #endif
 
+#ifdef TACZ_SCOPE_LENS
+#moj_import <minecraft:dynamictransforms.glsl>
+#moj_import <tacz:scope_lens.glsl>
+#endif
+
 const float TACZ_MASK_EPSILON = 1.0e-6;
 
 void main() {
@@ -49,6 +54,17 @@ void main() {
     }
 
     vec2 centered = (texCoord - 0.5) / zoom + 0.5;
+#ifdef TACZ_SCOPE_LENS
+    vec2 relative = (texCoord - Aperture.xy) / zoom;
+    float ramp = 0.0, edge = 0.0;
+    float reach = 0.465 * max(Optics.z, Sensor.x);
+    if (reach > 0.0) {
+        float distance = edgeDistance(texCoord, reach);
+        if (Optics.z > 0.0) ramp = 1.0 - smoothstep(0.0, min(0.465 * Optics.z, 1.0), distance);
+        if (Sensor.x > 0.0) { float f = distance / (0.155 * Sensor.x); edge = exp(-f*f) * Optics.w; }
+        centered -= relative * Optics.x * ramp;
+    }
+#endif
     vec3 color = texture(tacz_SceneColorSampler, centered).rgb;
 
     // 【锐化】钝化蒙版（unsharp mask），抽头取在源图的相邻像素上（先锐化再放大）。
@@ -65,5 +81,13 @@ void main() {
         color = max(color + (color - blur) * sharpenAmount, vec3(0.0));
     }
 
+#ifdef TACZ_SCOPE_LENS
+    if (TintMode.w == 0.0 && Optics.y * ramp > 0.0) {
+        vec2 split = relative * Optics.y * ramp;
+        color.r = texture(tacz_SceneColorSampler, centered - split).r;
+        color.b = texture(tacz_SceneColorSampler, centered + split).b;
+    }
+    color = lensColor(color, centered, edge);
+#endif
     fragColor = vec4(color, 1.0);
 }

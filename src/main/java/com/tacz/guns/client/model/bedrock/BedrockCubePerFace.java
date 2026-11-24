@@ -11,8 +11,6 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 public class BedrockCubePerFace implements BedrockCube {
-    private static final BedrockVertex EMPTY = new BedrockVertex(0, 0, 0, 0.0F, 0.0F);
-    private static final BedrockVertex[] EMPTY_VERTEX = new BedrockVertex[]{EMPTY, EMPTY, EMPTY, EMPTY};
     public final float minX;
     public final float minY;
     public final float minZ;
@@ -59,13 +57,13 @@ public class BedrockCubePerFace implements BedrockCube {
 
     private BedrockPolygon getTexturedQuad(BedrockVertex[] positionsIn, float texWidth, float texHeight, Direction direction, FaceUVsItem faces) {
         FaceItem face = faces.getFace(direction);
+        // Absent faces must not contribute a point at the bone pivot to the ocular hull.
+        // Keep all six directional slots; a real face with zero UV extent is still geometry.
+        if (face == FaceItem.EMPTY) return new BedrockPolygon(direction);
         float u1 = face.getUv()[0];
         float v1 = face.getUv()[1];
         float u2 = u1 + face.getUvSize()[0];
         float v2 = v1 + face.getUvSize()[1];
-        if (face == FaceItem.EMPTY) {
-            return new BedrockPolygon(EMPTY_VERTEX, u1, v1, u2, v2, texWidth, texHeight, false, direction);
-        }
         return new BedrockPolygon(positionsIn, u1, v1, u2, v2, texWidth, texHeight, false, direction);
     }
 
@@ -87,6 +85,7 @@ public class BedrockCubePerFace implements BedrockCube {
         Matrix3f matrix3f = pose.normal();
 
         for (BedrockPolygon polygon : this.polygons) {
+            if (!polygon.isPresent()) continue;
             Vector3f vector3f = new Vector3f(polygon.normal);
             vector3f.mul(matrix3f);
             float nx = vector3f.x();

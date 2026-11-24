@@ -30,6 +30,10 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nullable;
+import com.tacz.guns.client.resource.pojo.model.BonesItem;
+import com.tacz.guns.client.model.functional.ImpactMarkerRender;
+import com.tacz.guns.config.ClientConfig;
+import org.joml.Matrix4f;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -162,6 +166,24 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     private boolean isScope = false;
     private boolean isSight = false;
 
+    private static final Pattern OCULAR_PATTERN = Pattern.compile(
+                "^(" + OCULAR_NODE + "|" + OCULAR_SIGHT_NODE + "|" + OCULAR_SCOPE_NODE + ")(_(\\d+))?$");
+
+    @Override
+    protected float getExtraCubeInflate(BonesItem bone) {
+        if (!ClientConfig.isLoaded() || !RenderConfig.ENABLE_OCULAR_INFLATE.get()) return 0;
+        return ocularInflate(bone, indexBones, RenderConfig.OCULAR_INFLATE.get().floatValue());
+    }
+
+    static float ocularInflate(BonesItem bone, Map<String, BonesItem> index, float amount) {
+        if (!Float.isFinite(amount) || amount <= 0) return 0;
+        for (int i = 0; bone != null && i < index.size(); i++) {
+            if (bone.getName() != null && OCULAR_PATTERN.matcher(bone.getName()).matches()) return amount;
+            bone = bone.getParent() == null ? null : index.get(bone.getParent());
+        }
+        return 0;
+    }
+
     public BedrockAttachmentModel(BedrockModelPOJO pojo, BedrockVersion version) {
         super(pojo, version);
         scopeViewPaths = new ArrayList<>();
@@ -179,11 +201,9 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         // 活动目镜会从 body 快照中移除并单独进入 invisible depth-aperture 批次。不能在这里永久
         // visible=false，因为 BedrockPart 是跨帧、跨显示上下文共享的。
         // 三种命名都要收：ocular / ocular_sight / ocular_scope（组合镜两组各一个）。
-        Pattern ocularPattern = Pattern.compile(
-                "^(" + OCULAR_NODE + "|" + OCULAR_SIGHT_NODE + "|" + OCULAR_SCOPE_NODE + ")(_(\\d+))?$");
         for (Map.Entry<String, ModelRendererWrapper> entry : modelMap.entrySet()) {
             String name = entry.getKey();
-            java.util.regex.Matcher ocularMatcher = name == null ? null : ocularPattern.matcher(name);
+            java.util.regex.Matcher ocularMatcher = name == null ? null : OCULAR_PATTERN.matcher(name);
             if (ocularMatcher != null && ocularMatcher.matches()) {
                 BedrockPart part = entry.getValue().getModelRenderer();
                 if (part != null) {
@@ -236,6 +256,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             path = getPath(divisionModel);
         }
         // 第 22 轮：解析准星（分划）节点集合，供 IReticleRenderer 策略使用。
+        indexViewOculars();
         this.reticleNodes = resolveReticleNodes();
     }
 
@@ -262,7 +283,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      */
     private ScopeNodeSet resolveReticleNodes() {
         List<BedrockPart> illuminated = new ArrayList<>();
-        List<BedrockPart> etched = new ArrayList<>();
+        List<BedrockPart> etched = new ArrayList<>(divisionByIndex.values());
+        var housing = modelMap.get("scope_body");
         for (Map.Entry<String, ModelRendererWrapper> entry : modelMap.entrySet()) {
             String name = entry.getKey();
             if (name == null) {
@@ -272,9 +294,13 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             if (part == null) {
                 continue;
             }
-            if (RETICLE_ILLUMINATED_PATTERN.matcher(name).matches()) {
+            if (RETICLE_ILLUMINATED_PATTERN.matcher(name).matches()
+                    && (divisionByIndex.isEmpty() || housing == null || !hasAncestor(part, housing.getModelRenderer())
+                    || divisionByIndex.values().stream().anyMatch(root -> hasAncestor(part, root)))) {
+                // E.g. TA31 also has red_illuminated on the *housing*. Replaying it here
+                // would punch it straight back through the aperture as a fake reticle.
                 illuminated.add(part);
-            } else if (RETICLE_ETCHED_PATTERN.matcher(name).matches()) {
+            } else if (divisionByIndex.isEmpty() && RETICLE_ETCHED_PATTERN.matcher(name).matches()) {
                 etched.add(part);
             }
         }
@@ -357,13 +383,35 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      */
     @Nullable
     private Integer activeOcularIndex() {
-        boolean wantScope = activeViewGroup == 2;
-        for (Map.Entry<Integer, Boolean> entry : ocularIsScopeByIndex.entrySet()) {
-            if (entry.getValue() == wantScope) {
-                return entry.getKey();
+        return ocularForView.get(activeViewGroup);
+    }
+
+    /** views[] selects scope_view[_N], not a universal sight/scope role. AMG10 and
+     * standard_8x use view 1 for their scope; HAMR uses view 2. Pair each rest-pose
+     * view axis with the ocular on that axis, retaining ocular suffixes for divisions. */
+    private final Map<Integer, Integer> ocularForView = new java.util.HashMap<>();
+
+    private void indexViewOculars() {
+        for (int view = 0; view < scopeViewPaths.size(); view++) {
+            Matrix4f inverseView = restPose(scopeViewPaths.get(view)).invert();
+            double best = Double.POSITIVE_INFINITY;
+            Integer selected = null;
+            for (var entry : ocularByIndex.entrySet()) {
+                var chain = new java.util.ArrayDeque<BedrockPart>();
+                for (var part = entry.getValue(); part != null; part = part.getParent()) chain.push(part);
+                var centre = restPose(new ArrayList<>(chain)).getTranslation(new org.joml.Vector3f());
+                inverseView.transformPosition(centre);
+                double error = centre.x * centre.x + centre.y * centre.y;
+                if (error < best) { best = error; selected = entry.getKey(); }
             }
+            if (selected != null) ocularForView.put(view + 1, selected);
         }
-        return null;
+    }
+
+    private static Matrix4f restPose(List<BedrockPart> path) {
+        PoseStack pose = new PoseStack();
+        for (var part : path) part.translateAndRotateAndScale(pose);
+        return new Matrix4f(pose.last().pose());
     }
 
     /** {@code part} 自身或其任一祖先是否为 {@code ancestor}。 */
@@ -470,7 +518,11 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      * <p>注意只对<b>瞄具</b>生效：{@code BedrockGunModel} 里同名方法不加此门禁，
      * 枪身上的文字（如弹匣计数）本就该常显。
      */
+    private @Nullable ImpactMarkerRender impactMarker;
+    private Map<String, TextShow> scopeTextShows = Map.of();
     public void setTextShowList(Map<String, TextShow> textShowList) {
+        scopeTextShows = Map.copyOf(textShowList);
+        impactMarker = ImpactMarkerRender.of(getPath(modelMap.get(ImpactMarkerRender.NODE)), textShowList);
         textShowList.forEach((name, textShow) -> this.setFunctionalRenderer(name,
                 bedrockPart -> {
                     // 未开镜（或刚开始开镜）时不提交，避免文字溢出到镜孔之外。
@@ -632,6 +684,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         // lens picture overwrites both. When the PIP composite is active this frame we therefore run
         // the reticle/rim through the post-composite overlay even without Iris; normal vanilla stays
         // in its established immediate solid-pass order.
+        if (orderedScopeSequence) com.tacz.guns.client.render.scope.ScopeLensFrame.ocular(
+                isScope && activeGroupIsScope() ? scopeLens : null, ocularSnapshots);
         boolean pipDefersReticle = ScopePipRenderState.shouldDeferReticleOverlay();
         boolean deferReticleToIrisFinalOverlay = orderedScopeSequence
                 && ((IrisCompat.isRenderingSolidHandPass()
@@ -732,9 +786,9 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             ScopeNodeSet active = filterReticleByActiveView(reticleNodes);
             IReticleRenderer reticle = ReticleRendererRegistry.select(active);
             if (reticle != null && !active.isEmpty()) {
-                boolean etchedOnly = active.hasEtched() && !active.hasIlluminated() && texture != null;
+                boolean maskedReticle = orderedScopeSequence;
                 RenderType baseReticleType;
-                if (etchedOnly) {
+                if (maskedReticle) {
                     if (deferReticleToIrisFinalOverlay) {
                         baseReticleType = ScopeRenderTypes.finalEtchedReticle(texture);
                     } else if (deferReticleToIrisTranslucent) {
@@ -761,7 +815,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 reticle.submitReticle(new IReticleRenderer.Context(
                         poseStack, collector.order(SCOPE_RETICLE_ORDER),
                         transformType, baseReticleType, baseIlluminatedType,
-                        light, overlay, currentAimingProgress(), etchedOnly,
+                        light, overlay, currentAimingProgress(), maskedReticle,
                         deferReticleToIrisTranslucent, deferReticleToIrisFinalOverlay), active);
             }
         }
@@ -793,12 +847,60 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             }
         }
 
+        // Division roots are intentionally hidden from the main snapshot. A text locator
+        // under such a root is a functional node, not reticle triangles, and needs its own
+        // extraction (the illuminated reticle strategy only visits the luminous subtree).
+        if (transformType != null && transformType.firstPerson() && currentAimingProgress() > TEXT_SHOW_AIM_START) {
+            for (var entry : scopeTextShows.entrySet()) {
+                var path = getPath(modelMap.get(entry.getKey()));
+                if (path == null || path.stream().noneMatch(p -> !p.visible)) continue;
+                Integer view = isScope && isSight && activeViewGroup != 0 ? activeOcularIndex() : null;
+                if (view != null && divisionByIndex.containsKey(view)
+                        && divisionByIndex.values().stream().anyMatch(path::contains)
+                        && !path.contains(divisionByIndex.get(view))) continue;
+                poseStack.pushPose();
+                try {
+                    for (var part : path) part.translateAndRotateAndScale(poseStack);
+                    new TextShowRender(this, entry.getValue(), currentGunItem, true).extract(
+                            new com.tacz.guns.client.model.IFunctionalSubmitter.ExtractionContext(
+                                    poseStack, transformType, light, overlay, task -> { if (deferReticleToIrisFinalOverlay) ScopeFinalOverlayState.queueFunctionalTask(task); else task.submit(collector); }));
+                } finally { poseStack.popPose(); }
+            }
+        }
+
+        if (impactMarker != null && transformType != null && transformType.firstPerson()) {
+            Integer active = isScope && isSight && activeViewGroup != 0 ? activeOcularIndex() : null;
+            // Named division roots are hidden from the main pass; respect the active one, but a
+            // root-level locator is common to all groups. Do not draw a marker from the other view.
+            if (active == null || !divisionByIndex.containsKey(active) || divisionByIndex.values().stream().noneMatch(impactMarker.path()::contains)
+                    || impactMarker.path().contains(divisionByIndex.get(active))) {
+                impactMarker.submit(currentGunItem, poseStack, collector, orderedScopeSequence, overlay);
+            }
+        }
+
         if (laserBeamPaths != null) {
             for (var entry : laserBeamPaths) {
                 BeamRenderer.renderLaserBeam(attachmentItem, poseStack, transformType, entry, collector);
             }
         }
     }
+
+    private boolean activeGroupIsScope() {
+        if (isSight && !isScope) {
+            return false; // 纯红点/全息：上游 renderSight 从不裁镜身
+        }
+        if (isScope && !isSight) {
+            return true;  // 纯筒镜：目镜无论叫什么名都是物理高倍通道
+        }
+        // 组合镜（hamr/vudu/mk5hd）：views[zoom] 选出当前通道；通道组内没有
+        // 「名符其实」的筒镜目镜（如纯 plain-ocular 命名）时回退 true = 恒裁旧行为。
+        Integer activeIndex = activeViewGroup == 0 ? null : activeOcularIndex();
+        if (activeIndex == null) {
+            return true;
+        }
+        return Boolean.TRUE.equals(ocularIsScopeByIndex.get(activeIndex));
+    }
+
 
     private boolean isOcularInActiveGroup(BedrockPart ocular) {
         if (activeViewGroup == 0 || !(isScope && isSight)) {

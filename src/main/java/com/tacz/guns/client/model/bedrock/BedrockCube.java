@@ -7,7 +7,7 @@ public interface BedrockCube {
     void compile(PoseStack.Pose pose, VertexConsumer consumer, int light, int overlay, float red, float green, float blue, float alpha);
 
     /**
-     * 只读访问构成本立方体的六个面。
+     * 只读访问六个方向槽位；没有声明 face_uv 的面保持退化占位，isPresent() 为 false，不属于几何。
      *
      * <p><b>为什么放在接口上而不是某个实现类上：</b>
      * 两个实现 {@code BedrockCubeBox} 与 {@code BedrockCubePerFace} 都持有

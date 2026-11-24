@@ -679,6 +679,8 @@ public final class ScopeRenderTypes {
                 Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_final_etched_reticle"));
         builder.withFragmentShader(Identifier.fromNamespaceAndPath(
                 GunMod.MOD_ID, "core/scope_reticle_final"));
+        builder.withVertexShader(Identifier.parse("tacz:core/scope_reticle_coverage")).withShaderDefine("RETICLE_COVERAGE")
+                .withColorTargetState(new ColorTargetState(com.mojang.blaze3d.pipeline.BlendFunction.TRANSLUCENT));
         builder.withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM);
         builder.withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
         builder.withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false));
@@ -692,6 +694,8 @@ public final class ScopeRenderTypes {
                 Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_final_visible_reticle"));
         builder.withFragmentShader(Identifier.fromNamespaceAndPath(
                 GunMod.MOD_ID, "core/scope_reticle_final"));
+        builder.withVertexShader(Identifier.parse("tacz:core/scope_reticle_coverage")).withShaderDefine("RETICLE_COVERAGE")
+                .withColorTargetState(new ColorTargetState(com.mojang.blaze3d.pipeline.BlendFunction.TRANSLUCENT));
         builder.withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM);
         builder.withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
         builder.withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false));
@@ -815,6 +819,22 @@ public final class ScopeRenderTypes {
             builder.withShaderDefine(name);
         }
     }
+
+    /** Native primitive for particle/illuminated materials that supply their own blend and depth state. */
+    public static void maskOutsidePipeline(RenderPipeline.Builder builder) {
+        builder.withFragmentShader(Identifier.parse("tacz:core/scope_flash_clip"))
+                .withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM).withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
+    }
+    public static RenderType material(String name, RenderSetup.RenderSetupBuilder setup, Identifier texture, boolean clipped) {
+        if (!clipped) return RenderType.create(name, setup.createRenderSetup());
+        setup.withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, texture)
+                .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, texture);
+        return new DepthCopyRenderType(name, RenderType.create(name + "_base", setup.createRenderSetup()), ScopeDepthCopyState.Operation.MASK_OUTSIDE);
+    }
+    public static boolean isClippedBody(RenderType type) {
+        return type instanceof DepthCopyRenderType wrapped && wrapped.operation == ScopeDepthCopyState.Operation.MASK_OUTSIDE;
+    }
+    public static RenderType underlying(RenderType type) { return type instanceof DepthCopyRenderType wrapped ? wrapped.wrapped : type; }
 
     /** Marks the synchronous delegated draw so GlCommandEncoder can back up or restore the active depth FBO. */
     private static final class DepthCopyRenderType extends RenderType {

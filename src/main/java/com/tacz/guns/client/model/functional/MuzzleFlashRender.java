@@ -1,10 +1,12 @@
 package com.tacz.guns.client.model.functional;
 
+import com.tacz.guns.util.time.GunTime;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.tacz.guns.api.TimelessAPI;
-import com.tacz.guns.api.item.IAttachment;
-import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.client.particle.MuzzleAttachment;
+import com.tacz.guns.client.particle.NativeMuzzleEffects;
+import com.tacz.guns.client.render.FlashMaterials;
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.IFunctionalSubmitter;
 import com.tacz.guns.client.model.SlotModel;
@@ -12,8 +14,7 @@ import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.pojo.display.gun.MuzzleFlash;
 import com.tacz.guns.compat.iris.IrisCompat;
-import com.tacz.guns.resource.modifier.custom.SilenceModifier;
-import it.unimi.dsi.fastutil.Pair;
+import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.world.item.ItemStack;
@@ -31,15 +32,13 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
 
     private final BedrockGunModel bedrockGunModel;
 
-    public static void resetTimestamps() { shootTimeStamp = -1L; }
-
     public MuzzleFlashRender(BedrockGunModel bedrockGunModel) {
         this.bedrockGunModel = bedrockGunModel;
     }
 
     public static void onShoot() {
         // 记录开火时间戳
-        shootTimeStamp = com.tacz.guns.util.time.GunTime.nowMillis();
+        shootTimeStamp = GunTime.nowMillis();
         // 记录枪口火焰启动标记
         muzzleFlashStartMark = true;
         // 随机给予枪口火焰的旋转
@@ -47,7 +46,6 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void extract(ExtractionContext context) {
         if (IrisCompat.isRenderShadow() || !isSelf) {
             return;
@@ -57,25 +55,13 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
             return;
         }
 
-        ItemStack currentGunItem = bedrockGunModel.getCurrentGunItem();
         GunDisplayInstance display = TimelessAPI.getGunDisplay(currentGunItem).orElse(null);
         if (display == null || display.getMuzzleFlash() == null) {
             return;
         }
 
-        ItemStack muzzleAttachment = bedrockGunModel.getCurrentAttachmentItem().get(AttachmentType.MUZZLE);
-        IAttachment iAttachment = IAttachment.getIAttachmentOrNull(muzzleAttachment);
-        if (iAttachment != null) {
-            var index = TimelessAPI.getCommonAttachmentIndex(iAttachment.getAttachmentId(muzzleAttachment)).orElse(null);
-            if (index != null) {
-                var modifier = index.getData().getModifier();
-                if (modifier.containsKey(SilenceModifier.ID)
-                        && modifier.get(SilenceModifier.ID).getValue() instanceof Pair<?, ?> pair
-                        && ((Pair<Integer, Boolean>) pair).right()) {
-                    return;
-                }
-            }
-        }
+        // Legacy uses the silence flag, not renew's fractional flash_hider.
+        if (MuzzleAttachment.of(currentGunItem).silenced()) return;
 
         MuzzleFlash muzzleFlash = display.getMuzzleFlash();
         float scale = 0.5f * muzzleFlash.getScale();

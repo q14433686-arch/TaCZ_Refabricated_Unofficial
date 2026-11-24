@@ -89,5 +89,8 @@ public interface IReticleRenderer {
                    boolean maskActive,
                    boolean deferToIrisTranslucent,
                    boolean deferToIrisFinalOverlay) {
+        public void submit(com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot snapshot, boolean emissive) {
+            ScopeLateReticleState.submitReticle(this, snapshot, emissive ? illuminatedRenderType : baseRenderType);
+        }
     }
 }

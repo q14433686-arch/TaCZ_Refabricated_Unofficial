@@ -10,13 +10,19 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import com.tacz.guns.client.model.bedrock.BedrockCube;
 import com.tacz.guns.client.model.bedrock.BedrockModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
+import com.tacz.guns.client.model.bedrock.IlluminatedMaterials;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import com.tacz.guns.util.IlluminatedLights;
+import com.tacz.guns.client.render.ViewmodelFlash;
+import com.tacz.guns.client.render.FlashMaterials;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 
 /**
  * Immutable per-submit snapshot of a mutable BedrockModel.
@@ -32,12 +38,36 @@ public final class BedrockRenderSnapshot {
     private final List<IFunctionalSubmitter.SubmitTask> functionalTasks;
     private final int skippedFunctionalNodeCount;
 
-    private BedrockRenderSnapshot(List<DrawCommand> drawCommands,
-                                  List<IFunctionalSubmitter.SubmitTask> functionalTasks,
-                                  int skippedFunctionalNodeCount) {
-        this.drawCommands = List.copyOf(drawCommands);
-        this.functionalTasks = List.copyOf(functionalTasks);
-        this.skippedFunctionalNodeCount = skippedFunctionalNodeCount;
+    private final int firstUnshaded;
+
+    private BedrockRenderSnapshot(Builder builder) {
+        this.drawCommands = List.copyOf(builder.commands);
+        this.functionalTasks = List.copyOf(builder.functionalTasks);
+        this.skippedFunctionalNodeCount = builder.skippedFunctionalNodes;
+        this.firstUnshaded = builder.firstUnshaded;
+    }
+
+    private BedrockRenderSnapshot(List<DrawCommand> draws, boolean unshaded) {
+        this.drawCommands = List.copyOf(draws);
+        this.firstUnshaded = unshaded ? 0 : -1;
+        this.functionalTasks = List.of();
+        this.skippedFunctionalNodeCount = 0;
+    }
+
+    /** Split a frozen division into ink and luminous markings. A dot inside a division
+     * does not make its etched scale disappear or turn the entire scale into an emitter. */
+    public void submitLayers(java.util.function.BiConsumer<BedrockRenderSnapshot, Boolean> submit) {
+        if (drawCommands.isEmpty()) return;
+        if (firstUnshaded < 0) { submit.accept(this, false); return; }
+        if (firstUnshaded == 0 && drawCommands.stream().allMatch(DrawCommand::unshaded)) {
+            submit.accept(this, true);
+            return;
+        }
+        var ink = new ArrayList<DrawCommand>();
+        var luminous = new ArrayList<DrawCommand>();
+        for (var draw : drawCommands) (draw.unshaded() ? luminous : ink).add(draw);
+        submit.accept(new BedrockRenderSnapshot(ink, false), false);
+        submit.accept(new BedrockRenderSnapshot(luminous, true), true);
     }
 
     public static BedrockRenderSnapshot capture(BedrockModel model,
@@ -52,9 +82,9 @@ public final class BedrockRenderSnapshot {
         PoseStack working = copyOf(rootPose);
         Builder builder = new Builder(displayContext, overlay, red, green, blue, alpha);
         for (BedrockPart part : model.getShouldRender()) {
-            builder.capturePart(part, working, light);
+            builder.capturePart(part, working, light, false);
         }
-        return new BedrockRenderSnapshot(builder.commands, builder.functionalTasks, builder.skippedFunctionalNodes);
+        return new BedrockRenderSnapshot(builder);
     }
 
     /**
@@ -77,8 +107,10 @@ public final class BedrockRenderSnapshot {
                                                        float alpha) {
         PoseStack working = copyOf(rootPose);
         Builder builder = new Builder(displayContext, overlay, red, green, blue, alpha);
-        builder.captureGeometry(root, working, light);
-        return new BedrockRenderSnapshot(builder.commands, builder.functionalTasks, builder.skippedFunctionalNodes);
+        boolean glowing = false;
+        for (BedrockPart p = root; p != null; p = p.getParent()) glowing |= p.illuminated;
+        builder.captureGeometry(root, working, glowing ? IlluminatedLights.resolve(light) : light, glowing);
+        return new BedrockRenderSnapshot(builder);
     }
 
     public boolean isEmpty() {
@@ -90,37 +122,92 @@ public final class BedrockRenderSnapshot {
         return this.skippedFunctionalNodeCount;
     }
 
+    public List<IFunctionalSubmitter.SubmitTask> functionalTasks() { return functionalTasks; }
+
+    /** Screen-space bounds for the lens optics only. Coverage is still tested from the two
+     * actual depth copies; a bounding rectangle never authorizes a lens pixel. */
+    public void extendOcularBounds(Matrix4fc clip, float[] bounds) {
+        var v = new org.joml.Vector4f();
+        for (var draw : drawCommands) for (var cube : draw.cubes()) for (var face : cube.getPolygons()) {
+            if (face == null || !face.isPresent()) continue;
+            for (var corner : face.vertices) {
+                v.set(corner.pos, 16).mul(draw.pose()).mul(clip);
+                if (v.w <= 1.0e-5f) continue;
+                float x = v.x / v.w, y = v.y / v.w;
+                bounds[0] = Math.min(bounds[0], x); bounds[1] = Math.min(bounds[1], y);
+                bounds[2] = Math.max(bounds[2], x); bounds[3] = Math.max(bounds[3], y);
+            }
+        }
+    }
+
     public void submitFunctionalTasks(SubmitNodeCollector collector) {
         for (IFunctionalSubmitter.SubmitTask task : this.functionalTasks) {
             task.submit(collector);
         }
     }
 
-    /**
-     * Immutable view of the collector tasks captured with this snapshot (scope-model text show
-     * etc.). Read-only: submit via {@link #submitFunctionalTasks(SubmitNodeCollector)} or forward
-     * to a deferred overlay; the list itself is already a defensive copy from the constructor.
-     */
-    public List<IFunctionalSubmitter.SubmitTask> functionalTasks() {
-        return this.functionalTasks;
+    /** Capture the material decision now. Use one submission for consecutive commands with the
+     * same material, and never look up mutable bone state in a deferred draw. */
+    public void submitGeometry(SubmitNodeCollector collector, RenderType body, boolean hand) {
+        if (drawCommands.isEmpty()) return;
+        PoseStack identity = new PoseStack(); // command poses already contain the root transform
+        RenderType illuminated = firstUnshaded < 0 ? body : IlluminatedMaterials.forBody(body, hand);
+        if (illuminated == body) {
+            submitRange(collector, identity, body, 0, drawCommands.size());
+        } else {
+            RenderType current = body;
+            int start = 0;
+            for (int i = firstUnshaded; i < drawCommands.size(); i++) {
+                RenderType next = drawCommands.get(i).unshaded() ? illuminated : body;
+                if (next != current) {
+                    if (i > start) submitRange(collector, identity, current, start, i);
+                    current = next;
+                    start = i;
+                }
+            }
+            submitRange(collector, identity, current, start, drawCommands.size());
+        }
+        float gain = hand ? ViewmodelFlash.gain() : 0;
+        if (gain > 0) {
+            var texture = IlluminatedMaterials.bodyTexture(body);
+            if (texture != null) collector.order(1).submitCustomGeometry(identity, FlashMaterials.reflection(texture),
+                    (entry, out) -> write(out, 0, drawCommands.size(), gain, true));
+        }
     }
 
-    public void write(VertexConsumer consumer) {
-        writeFiltered(consumer, cube -> true);
+    private void submitRange(SubmitNodeCollector collector, PoseStack identity, RenderType type, int start, int end) {
+        collector.submitCustomGeometry(identity, type, (entry, out) -> write(out, start, end));
     }
 
-    /** Writes only geometry accepted by {@code cubeFilter}; used to remove large division blackout panels. */
-    public void writeFiltered(VertexConsumer consumer, Predicate<BedrockCube> cubeFilter) {
+    /** Explicit single-material replay (e.g. the final reticle pass). */
+    public BedrockRenderSnapshot filterCubes(java.util.function.Predicate<BedrockCube> keep) {
+        var filtered = new java.util.ArrayList<DrawCommand>();
+        for (var d : drawCommands) {
+            var cubes = d.cubes.stream().filter(keep).toList();
+            if (!cubes.isEmpty()) filtered.add(new DrawCommand(d.pose, d.normal, cubes, d.light, d.overlay, d.red, d.green, d.blue, d.alpha, d.unshaded));
+        }
+        return new BedrockRenderSnapshot(filtered, firstUnshaded >= 0);
+    }
+
+    public void write(VertexConsumer consumer) { write(consumer, 0, drawCommands.size()); }
+
+    public void writeFilteredReticle(VertexConsumer consumer, @Nullable Matrix4fc clip, int width, int height) {
+        ReticleCoverage.write(drawCommands, consumer, clip, width, height);
+    }
+
+    private void write(VertexConsumer consumer, int start, int end) { write(consumer, start, end, 1, false); }
+
+    private void write(VertexConsumer consumer, int start, int end, float gain, boolean reflected) {
         PoseStack poseStack = new PoseStack();
-        for (DrawCommand command : this.drawCommands) {
+        for (int i = start; i < end; i++) {
+            DrawCommand command = drawCommands.get(i);
+            if (reflected && command.unshaded()) continue; // already self-lit, not a second lamp
             PoseStack.Pose pose = poseStack.last();
             pose.pose().set(command.pose());
             pose.normal().set(command.normal());
             for (BedrockCube cube : command.cubes()) {
-                if (cubeFilter.test(cube)) {
-                    cube.compile(pose, consumer, command.light(), command.overlay(),
-                            command.red(), command.green(), command.blue(), command.alpha());
-                }
+                cube.compile(pose, consumer, command.light(), command.overlay(),
+                        command.red() * gain, command.green() * gain, command.blue() * gain, command.alpha());
             }
         }
     }
@@ -140,7 +227,12 @@ public final class BedrockRenderSnapshot {
                               float red,
                               float green,
                               float blue,
-                              float alpha) {
+                              float alpha,
+                              boolean unshaded) {
+        public DrawCommand(Matrix4f pose, Matrix3f normal, List<BedrockCube> cubes, int light, int overlay,
+                           float red, float green, float blue, float alpha) {
+            this(pose, normal, cubes, light, overlay, red, green, blue, alpha, false);
+        }
         public DrawCommand {
             pose = new Matrix4f(pose);
             normal = new Matrix3f(normal);
@@ -158,6 +250,7 @@ public final class BedrockRenderSnapshot {
         private final List<DrawCommand> commands = new ArrayList<>();
         private final List<IFunctionalSubmitter.SubmitTask> functionalTasks = new ArrayList<>();
         private int skippedFunctionalNodes;
+        private int firstUnshaded = -1;
 
         private Builder(ItemDisplayContext displayContext,
                         int overlay,
@@ -178,24 +271,25 @@ public final class BedrockRenderSnapshot {
          * 与 capturePart 的区别：不对 part 自身再套一次 translateAndRotateAndScale
          * （调用点已经套过），仅对子节点递归时套用。
          */
-        private void captureGeometry(BedrockPart part, PoseStack poseStack, int inheritedLight) {
+        private void captureGeometry(BedrockPart part, PoseStack poseStack, int partLight, boolean unshaded) {
             if (!part.visible) {
                 return;
             }
-            int partLight = part.illuminated ? 15728880 : inheritedLight;
             if (!part.cubes.isEmpty()) {
+                if (unshaded && firstUnshaded < 0) firstUnshaded = commands.size();
                 PoseStack.Pose current = poseStack.last();
                 this.commands.add(new DrawCommand(
                         current.pose(), current.normal(), part.cubes,
-                        partLight, this.overlay, this.red, this.green, this.blue, this.alpha));
+                        partLight, this.overlay, this.red, this.green, this.blue, this.alpha, unshaded));
             }
             for (BedrockPart child : part.children) {
-                capturePart(child, poseStack, partLight);
+                capturePart(child, poseStack, partLight, unshaded);
             }
         }
 
-        private void capturePart(BedrockPart part, PoseStack poseStack, int inheritedLight) {
-            int partLight = part.illuminated ? 15728880 : inheritedLight;
+        private void capturePart(BedrockPart part, PoseStack poseStack, int inheritedLight, boolean inheritedUnshaded) {
+            boolean unshaded = inheritedUnshaded || part.illuminated;
+            int partLight = part.illuminated ? IlluminatedLights.resolve(inheritedLight) : inheritedLight;
 
             // FunctionalBedrockPart always evaluates its provider, even if visible is false. Providers
             // returning null are visibility/state hooks and can be snapshotted normally. Providers
@@ -224,10 +318,12 @@ public final class BedrockRenderSnapshot {
                     // 用于 additional_magazine：枪身上那一个弹匣与跟手的那一个共用同一份网格。
                     // 走这条路径可与枪身共用 RenderType / DrawCommand 批次，保证材质与顺序正确。
                     if (part.visible) {
-                        captureGeometry(part, poseStack, partLight);
+                        captureGeometry(part, poseStack, partLight, unshaded);
                         BedrockPart mirrored = mirror.getMirroredPart();
                         if (mirrored != null && mirrored.visible) {
-                            captureGeometry(mirrored, poseStack, partLight);
+                            captureGeometry(mirrored, poseStack,
+                                    mirrored.illuminated ? IlluminatedLights.resolve(partLight) : partLight,
+                                    unshaded || mirrored.illuminated);
                         }
                     }
                     poseStack.popPose();
@@ -239,26 +335,7 @@ public final class BedrockRenderSnapshot {
                 }
             }
 
-            if (part.visible) {
-                if (!part.cubes.isEmpty()) {
-                    PoseStack.Pose current = poseStack.last();
-                    this.commands.add(new DrawCommand(
-                            current.pose(),
-                            current.normal(),
-                            part.cubes,
-                            partLight,
-                            this.overlay,
-                            this.red,
-                            this.green,
-                            this.blue,
-                            this.alpha
-                    ));
-                }
-                for (BedrockPart child : part.children) {
-                    capturePart(child, poseStack, partLight);
-                }
-            }
-
+            captureGeometry(part, poseStack, partLight, unshaded);
             poseStack.popPose();
         }
     }
