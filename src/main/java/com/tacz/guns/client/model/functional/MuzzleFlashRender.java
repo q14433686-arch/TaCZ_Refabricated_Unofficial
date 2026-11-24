@@ -7,7 +7,6 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.client.particle.MuzzleAttachment;
 import com.tacz.guns.client.particle.NativeMuzzleEffects;
 import com.tacz.guns.client.render.FlashMaterials;
-import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.client.particle.NativeMuzzleEffects;
 import com.tacz.guns.client.render.FlashMaterials;
 import com.tacz.guns.client.model.BedrockGunModel;

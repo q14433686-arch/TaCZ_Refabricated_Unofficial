@@ -150,6 +150,7 @@ public class TargetMinecart extends AbstractMinecart implements ITargetEntity, I
             return null;
         }
         String name = customName.getString();
+        if (name.isEmpty()) { this.resolvableProfile = null; return null; }
         if (this.resolvableProfile == null || this.resolvableProfile.name().filter(name::equals).isEmpty()) {
             this.resolvableProfile = ResolvableProfile.createUnresolved(name);
         }

@@ -125,17 +125,10 @@ public class CameraSetupEvent {
                 event.setFOV(fov);
                 return;
             }
-            if (livingEntity instanceof LocalPlayer localPlayer) {
-                IClientPlayerGunOperator gunOperator = IClientPlayerGunOperator.fromLocalPlayer(localPlayer);
-                float aimingProgress = gunOperator.getClientAimingProgress((float) event.getPartialTick());
-                float fov = WORLD_FOV_DYNAMICS.update((float) MathUtil.magnificationToFov(1 + (zoom - 1) * aimingProgress, event.getFOV()));
-                event.setFOV(fov);
-            } else {
-                IGunOperator gunOperator = IGunOperator.fromLivingEntity(livingEntity);
-                float aimingProgress = gunOperator.getSynAimingProgress();
-                float fov = WORLD_FOV_DYNAMICS.update((float) MathUtil.magnificationToFov(1 + (zoom - 1) * aimingProgress, event.getFOV()));
-                event.setFOV(fov);
-            }
+            AdsFov.Channel curve = TimelessAPI.getGunDisplay(stack).map(GunDisplayInstance::getAdsFov).map(AdsFov::getWorld).orElse(null);
+            float progress = fovProgress(livingEntity, (float) event.getPartialTick(), curve);
+            float target = (float) MathUtil.magnificationToFov(1 + (zoom - 1) * progress, event.getFOV());
+            event.setFOV(applyFovCurve(WORLD_FOV_DYNAMICS, target, curve));
         }
     }
 

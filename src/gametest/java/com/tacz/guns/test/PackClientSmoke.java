@@ -13,7 +13,9 @@ public final class PackClientSmoke implements FabricClientGameTest {
         var id = Identifier.parse("tacz:ak47");
         try (var world = context.worldBuilder().create()) {
             context.waitFor(mc -> CommonNetworkCache.INSTANCE.getGunIndex(id) != null && TimelessAPI.getClientGunIndex(id).isPresent());
+            context.runOnClient(mc -> DefaultClientCatalogSmoke.client());
             ConversionReloadSmoke.run(context, world);
+            context.runOnClient(mc -> DefaultClientCatalogSmoke.client());
         } catch (IOException ex) { throw new UncheckedIOException(ex); }
     }
 }
