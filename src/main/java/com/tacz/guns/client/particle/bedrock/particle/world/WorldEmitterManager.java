@@ -60,8 +60,8 @@ public final class WorldEmitterManager {
             while(!chain.isEmpty())chain.pop().translateAndRotateAndScale(pose);
             if(a.locatorOffsetZ!=0)pose.translate(0,0,a.locatorOffsetZ);
             Matrix4f world=first?com.tacz.guns.client.renderer.item.GunItemRendererWrapper.muzzleWorldPose(pose.last().pose())
-                :new Matrix4f(pose.last().pose()).translateLocal((float)Minecraft.getInstance().gameRenderer.mainCamera().position().x,
-                    (float)Minecraft.getInstance().gameRenderer.mainCamera().position().y,(float)Minecraft.getInstance().gameRenderer.mainCamera().position().z);
+                :new Matrix4f(pose.last().pose()).translateLocal((float)Minecraft.getInstance().gameRenderer.getMainCamera().position().x,
+                    (float)Minecraft.getInstance().gameRenderer.getMainCamera().position().y,(float)Minecraft.getInstance().gameRenderer.getMainCamera().position().z);
             a.emitter.setEmitterTransform(first?new Matrix4f(pose.last().pose()):world,world);
             if(first)submitEmitter(collector,a,Vec3.ZERO,true,light);
         }
@@ -151,7 +151,7 @@ public final class WorldEmitterManager {
             boolean clipped=a.first && com.tacz.guns.client.render.scope.ScopeParticleClipping.ready(hand);
             RenderType type=SnowstormMaterials.type(desc,clipped,hand);
             // Rotate the actual camera's world Y into view space; includes pitch and roll in all passes.
-            var viewRotation = new Matrix4f().rotation(new org.joml.Quaternionf(Minecraft.getInstance().gameRenderer.mainCamera().rotation()).conjugate());
+            var viewRotation = new Matrix4f().rotation(new org.joml.Quaternionf(Minecraft.getInstance().gameRenderer.getMainCamera().rotation()).conjugate());
             var billboard=definition.findComponent(ParticleAppearanceBillboard.class);
             var mode=billboard==null?ParticleAppearanceBillboard.FaceCameraMode.ROTATE_XYZ:billboard.faceCameraMode();
             Matrix4f transform=new Matrix4f(hand?emitter.getEmitterTransform():emitter.getWorldTransform());

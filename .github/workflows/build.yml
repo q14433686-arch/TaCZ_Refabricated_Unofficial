@@ -110,6 +110,7 @@ jobs:
       - name: Audit effective built-in resources in the production JAR
         run: |
           jar=$(find build/libs -name '*.jar' ! -name '*-sources.jar' -print -quit)
+          python3 scripts/audit_2612_jar.py "$jar"
           python3 scripts/verify_2612_pack.py --jar "$jar"
           python3 scripts/check_visible_bug_resources.py --jar "$jar"
 

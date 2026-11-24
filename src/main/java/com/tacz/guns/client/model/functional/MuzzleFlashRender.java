@@ -7,6 +7,9 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.client.particle.MuzzleAttachment;
 import com.tacz.guns.client.particle.NativeMuzzleEffects;
 import com.tacz.guns.client.render.FlashMaterials;
+import com.tacz.guns.config.client.RenderConfig;
+import com.tacz.guns.client.particle.NativeMuzzleEffects;
+import com.tacz.guns.client.render.FlashMaterials;
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.IFunctionalSubmitter;
 import com.tacz.guns.client.model.SlotModel;
@@ -47,10 +50,17 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
 
     @Override
     public void extract(ExtractionContext context) {
-        if (IrisCompat.isRenderShadow() || !isSelf) {
-            return;
-        }
-        long time = System.currentTimeMillis() - shootTimeStamp;
+        if (IrisCompat.isRenderShadow()) return;
+        ItemStack currentGunItem = bedrockGunModel.getCurrentGunItem();
+        if (RenderConfig.MUZZLE_SURFACE_LIGHT.get()) com.tacz.guns.client.render.light.SurfaceLights.muzzleLocator(
+                currentGunItem, context.displayContext(), context.poseStack().last().pose());
+        // Renew owns two independent layers. Disabling the flash must not suppress the smoke.
+        if (NativeMuzzleEffects.extract(currentGunItem, context)) return;
+        if (!isSelf || RenderConfig.DEBUG_DISABLE_MUZZLE_FLASH.get()) return;
+        // 曾在此调 IrisCompat.assignCommonEntityPipelinesToHandIfNeeded()（vanilla 管线归 HAND）。
+        // 在 Iris 26.2 上那是 no-op（管线已预注册、assignPipeline 抛 already assigned），
+        // 只留下日志噪音；已移除，见 IrisCompat#assignCommonEntityPipelinesToHandIfNeeded。
+        long time = GunTime.nowMillis() - shootTimeStamp;
         if (time < 0 || time > TIME_RANGE) {
             return;
         }
@@ -86,12 +96,8 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
         boolean clipToScopeExterior = context.displayContext() != null
                 && context.displayContext().firstPerson()
                 && ScopeRenderTypes.viewmodelFxClipApplies();
-        RenderType backgroundType = clipToScopeExterior
-                ? ScopeRenderTypes.flashTranslucentClipped(muzzleFlash.getTexture())
-                : RenderTypes.entityTranslucent(muzzleFlash.getTexture());
-        RenderType glowType = clipToScopeExterior
-                ? ScopeRenderTypes.flashSwirlClipped(muzzleFlash.getTexture())
-                : RenderTypes.energySwirl(muzzleFlash.getTexture(), 1, 1);
+        RenderType backgroundType = FlashMaterials.legacyStrip(muzzleFlash.getTexture(), clipToScopeExterior);
+        RenderType glowType = FlashMaterials.swirl(muzzleFlash.getTexture(), clipToScopeExterior, clipToScopeExterior ? 0 : 1);
 
         context.add(collector -> {
             PoseStack backgroundPose = new PoseStack();
@@ -116,4 +122,9 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
         });
     }
 
+    public static void resetTimestamps() {
+        shootTimeStamp = -1;
+        muzzleFlashStartMark = false;
+        isSelf = false;
+    }
 }

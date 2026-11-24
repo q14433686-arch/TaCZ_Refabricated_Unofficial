@@ -167,8 +167,16 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue ENABLE_OCULAR_INFLATE;
     public static ForgeConfigSpec.DoubleValue OCULAR_INFLATE;
 
+    public static ForgeConfigSpec.BooleanValue YSM_COMPAT;
+    public static ForgeConfigSpec.BooleanValue DEBUG_DISABLE_MUZZLE_FLASH;
     public static void init(ForgeConfigSpec.Builder builder) {
         builder.push("render");
+        DEBUG_DISABLE_MUZZLE_FLASH = builder
+                .define("DebugDisableMuzzleFlash", false);
+
+        YSM_COMPAT = builder.comment("Yield the first-person gun render only if the installed Yes Steve Model requests it this tick.")
+                .define("YsmCompat", true);
+
         ILLUMINATED_REAL_SKY = builder.define("IlluminatedRealSky", false);
         EXPERIMENTAL_SCOPE_LENS = builder.comment("Apply the active display's lens to its masked aperture (native renderer).")
                 .define("EnableExperimentalScopeLens", true);

@@ -12,8 +12,7 @@
 > **非官方社区移植，不是 TaCZ 官方发布，也未获 TACZ Dev Team 审核或背书。**
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
-的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.1.2 Fabric**。直接上游的版本号为
-`0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.1.2.R3-hotfix4`**。
+ 的 1.2 内容基线，经已验收的 26.2 实现回移到 **Minecraft 26.1.2 Fabric**；本分支当前源码版本为 **`1.2.0+fabric.26.1.2.R1`**。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [问题反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)
@@ -21,7 +20,7 @@
 · [直接上游](https://github.com/Sh1roCu/TACZ-Refabricated/tree/1.21.1)
 · [原始 TaCZ 项目](https://github.com/MCModderAnchor/TACZ)
 
-> 仓库源码已使用 R3-hotfix4 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
+> 仓库源码已使用 R1 版本号；实际可下载版本及其发布日期以 Releases 页面为准。
 
 ### 选择你的 Minecraft 版本 / Pick your Minecraft version
 
@@ -31,7 +30,7 @@
 | **26.1.2** | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) |
 | **1.21.11** | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) |
 
-本页面对应 **26.1.2** 分支。
+本页面对应 **26.1.2** 源码。源码版本不是 Release 公告。
 
 ---
 
@@ -42,9 +41,9 @@
 | Minecraft | **26.1.2** |
 | 加载器 | **Fabric Loader 0.19.3+** |
 | Java | **25+** |
-| Fabric API | **0.155.2+**；R3-hotfix4 构建使用 **0.155.2+26.1.2** |
+| Fabric API | **0.155.2+**；R1 构建使用 **0.155.2+26.1.2** |
 | Forge Config API Port | **26.1.5+，硬依赖** |
-| 本 mod | **`1.1.8+fabric.26.1.2.R3-hotfix4`** |
+| 本 mod | **`1.2.0+fabric.26.1.2.R1`** |
 
 这里只提供 Fabric 构建，不能与 Forge / NeoForge 版 TaCZ 或 LRTactical 混装。
 
@@ -87,7 +86,7 @@ melee、consumable、detonator，以及 explode / sticky / smoke / stun / effect
 
 ---
 
-## 3. 瞄具渲染：不是 PIP
+## 3. 上游瞄具与本端口的可选 PIP
 
 **TaCZ 直接上游的瞄具不是 Picture-in-Picture，也不会为镜片再渲染一次世界。**
 
@@ -121,7 +120,7 @@ Iris 有专门的 HAND/depth 接线；其他 shader pack 没有因此自动获�
 4. 把三个 mod 的 `.jar` 放入 `.minecraft/mods/`；
 5. 启动游戏。第三方枪包按下一节安装。
 
-不要只看文件名中的 `1.1.8`：还必须核对 Minecraft 版本与加载器。
+不要只看文件名中的 `1.2.0`：还必须核对 Minecraft 版本与加载器。
 
 ---
 
@@ -175,8 +174,8 @@ gunpack.meta.json
 
 ### 版本约束
 
-枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.1.8`
-作为 SemVer 核心，`+fabric.26.1.2.R3-hotfix4` 是构建元数据，不参与 Fabric 的版本先后比较。
+枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.2.0`
+作为 SemVer 核心，`+fabric.26.1.2.R1` 是构建元数据，不参与 Fabric 的版本先后比较。
 一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
 
 ### 依赖 TacZ:Arcana 的内容

@@ -38,7 +38,7 @@ enum DroppedGunSprite implements SpecialModelRenderer<Identifier> {
             // Match the existing world-mesh detail gates: an 8x scope makes the same drop
             // look much closer. PIP reuses the extracted item; deciding at draw time is too late.
             double radius = (double) distance * ScopePipRenderState.currentDetailZoom();
-            if (Minecraft.getInstance().gameRenderer.mainCamera().position().distanceToSqr(drop.position()) < radius * radius) return null;
+            if (Minecraft.getInstance().gameRenderer.getMainCamera().position().distanceToSqr(drop.position()) < radius * radius) return null;
         }
         return TimelessAPI.getGunDisplay(stack).map(GunDisplayInstance::getMissingLodDropTexture).orElse(null);
     }
@@ -54,7 +54,7 @@ enum DroppedGunSprite implements SpecialModelRenderer<Identifier> {
         var scale = matrix.getScale(new Vector3f());
         var card = new PoseStack();
         card.translate(center.x, center.y, center.z);
-        card.mulPose(Minecraft.getInstance().gameRenderer.mainCamera().rotation());
+        card.mulPose(Minecraft.getInstance().gameRenderer.getMainCamera().rotation());
         float w = .375f * scale.x, h = .375f * scale.y;
         collector.submitCustomGeometry(card, RenderTypes.entityCutout(texture), (pose, vertices) -> {
             vertex(pose, vertices, -w, -h, 0, 1, light, overlay);

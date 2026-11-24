@@ -2,6 +2,8 @@ package com.tacz.guns.util;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.tacz.guns.client.render.ViewmodelFlash;
+import com.tacz.guns.client.render.FlashMaterials;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.render.scope.ScopeRenderTypes;
 import com.tacz.guns.compat.ar.ARCompat;

@@ -85,7 +85,7 @@ public final class SurfaceLights {
         if (current != level) { clear(); level=current; }
         return level != null;
     }
-    private static Vec3 camera() { return Minecraft.getInstance().gameRenderer.mainCamera().position(); }
+    private static Vec3 camera() { return Minecraft.getInstance().gameRenderer.getMainCamera().position(); }
 
     private static @Nullable LivingEntity holder(ItemDisplayContext ctx) {
         var mc = Minecraft.getInstance();

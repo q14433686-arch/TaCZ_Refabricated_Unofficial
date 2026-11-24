@@ -97,6 +97,32 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
 
     public static final Supplier<GunItemRendererWrapper> INSTANCE = Suppliers.memoize(GunItemRendererWrapper::new);
 
+    /** Convert an extracted hand locator to a detached world emitter, normalizing the hand
+     * pass base once. Do not use global ModelView, whose contract differs under Iris. */
+    public static Matrix4f muzzleWorldPose(Matrix4f locator) {
+        var mc = Minecraft.getInstance();
+        var camera = mc.gameRenderer.getMainCamera();
+        Matrix4f local = new Matrix4f(handBasePose).invert().mul(locator);
+        double ratio = Math.tan(Math.toRadians(CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get()) / 2)
+                / Math.tan(Math.toRadians(CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2);
+        if (Double.isFinite(ratio) && ratio > 0) local.m32((float)(local.m32()*ratio));
+        var pos = camera.position();
+        return new Matrix4f().translation((float)pos.x,(float)pos.y,(float)pos.z).rotate(camera.rotation()).mul(local);
+    }
+
+    /** Camera-relative muzzle transform. Include the attachment offset in the same hand/world basis. */
+    public static Matrix4f surfaceLocator(Matrix4f locator, boolean first) {
+        if (!first) return new Matrix4f(locator);
+        return new Matrix4f().rotation(Minecraft.getInstance().gameRenderer.getMainCamera().rotation())
+                .scale(1, 1, 1 / muzzleWorldScale()).mul(new Matrix4f(handBasePose).invert()).mul(locator);
+    }
+
+    public static float muzzleWorldScale() {
+        double ratio = Math.tan(Math.toRadians(CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2)
+                / Math.tan(Math.toRadians(CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get()) / 2);
+        return Double.isFinite(ratio) && ratio > 0 ? (float)ratio : 1f;
+    }
+
     public GunItemRendererWrapper() {
         super();
     }
