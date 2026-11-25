@@ -22,11 +22,11 @@ final class ApertureReadback {
         try {
             for (int i=0; i<keys.length; i++) GL45C.glPixelStorei(keys[i], i==3 ? 4 : 0);
             var a = depth(aperture.textureId(), x, height-y-h, w, h);
-            var w = depth(world.textureId(), x, height-y-h, w, h);
+            var background = depth(world.textureId(), x, height-y-h, w, h);
             boolean[] mask = new boolean[a.length];
             for (int row=0;row<h;row++) for (int col=0;col<w;col++) {
                 int src=(h-row-1)*w+col;
-                mask[row*w+col] = a[src] < w[src] - 1e-6f;
+                mask[row*w+col] = a[src] < background[src] - 1e-6f;
             }
             return mask;
         } finally { for (int i=0; i<keys.length; i++) GL45C.glPixelStorei(keys[i], old[i]); }
