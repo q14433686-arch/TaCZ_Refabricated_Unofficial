@@ -306,6 +306,11 @@ if (project.hasProperty('taczPlayerSuite')) {
     loom.runs.clientGameTest.property 'tacz.test.player', suite
 }
 
+if (project.hasProperty('taczRenderSuite')) {
+    if (!project.hasProperty('taczClientSmoke')) throw new GradleException('Render suites require -PtaczClientSmoke')
+    loom.runs.clientGameTest.property 'tacz.test.render', property('taczRenderSuite')
+}
+
 if (project.hasProperty('taczOpticSuite')) {
     loom.runs.clientGameTest.property 'tacz.test.optics', project.property('taczOpticSuite')
     def shader = tasks.register('prepareTargetShader', Copy) {

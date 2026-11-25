@@ -22,6 +22,21 @@ public final class PackClientSmoke implements FabricClientGameTest {
             context.waitFor(mc -> CommonNetworkCache.INSTANCE.getGunIndex(id) != null && TimelessAPI.getClientGunIndex(id).isPresent());
             var optics = System.getProperty("tacz.test.optics");
             if (optics != null) { ShaderOpticSmoke.run(context, world, optics); return; }
+            var render = System.getProperty("tacz.test.render");
+            if (render != null) {
+                if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("iris"))
+                    throw new AssertionError("These baselines must exercise the native unshaded backend");
+                world.getClientLevel().waitForChunksRender(); context.waitTicks(25);
+                switch (render) {
+                    case "muzzle" -> MuzzleEffectsSmoke.run(context, world);
+                    case "particles" -> { SnowstormSmoke.run(context, world); RemoteParticleSmoke.run(context, world); }
+                    case "readouts" -> { RangefinderSmoke.run(context, world); ImpactMarkerSmoke.run(context, world); }
+                    case "receivers" -> { SurfaceLightSmoke.run(context, world, true); RackLoadSmoke.run(context, world); }
+                    default -> throw new IllegalArgumentException("Unknown render suite " + render);
+                }
+                com.tacz.guns.GunMod.LOGGER.info("PORT_RENDER: {} complete", render);
+                return;
+            }
             context.runOnClient(mc -> DefaultClientCatalogSmoke.client());
             ConversionReloadSmoke.run(context, world);
             context.runOnClient(mc -> DefaultClientCatalogSmoke.client());

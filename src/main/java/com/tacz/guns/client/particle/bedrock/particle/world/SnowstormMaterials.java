@@ -23,7 +23,7 @@ public final class SnowstormMaterials {
     public static RenderType type(ParticleDescription desc, boolean clipped, boolean hand) {
         Identifier texture = desc.getTexture();
         return switch (desc.getMaterial()) {
-            case PARTICLES_OPAQUE -> clipped ? ScopeRenderTypes.clipForViewmodel(RenderTypes.entityCutout(texture),texture,true) : RenderTypes.entityCutout(texture);
+            case PARTICLES_OPAQUE -> clipped ? ScopeRenderTypes.clipHousing(RenderTypes.entityCutout(texture), texture) : RenderTypes.entityCutout(texture);
             case PARTICLES_ALPHA, PARTICLES_BLEND -> clipped ? ScopeRenderTypes.flashTranslucentClipped(texture) : RenderTypes.entityTranslucent(texture);
             case ENERGY_SWIRL -> FlashMaterials.swirl(texture, clipped, 1);
             case PARTICLES_ADD, PARTICLES_EMISSIVE -> TYPES.computeIfAbsent(

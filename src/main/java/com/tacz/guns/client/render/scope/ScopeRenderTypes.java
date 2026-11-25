@@ -32,7 +32,8 @@ public final class ScopeRenderTypes {
     private static final Map<Identifier, RenderType> VISIBLE_RETICLES = new HashMap<>();
     private static final Map<Identifier, RenderType> VIEWMODEL_CUTOUT_TYPES = new HashMap<>();
     private static final Map<Identifier, RenderType> FLASH_TRANSLUCENT_TYPES = new HashMap<>();
-    private static final Map<Identifier, RenderType> FLASH_SWIRL_TYPES = new HashMap<>();
+    private record Swirl(Identifier texture, int offset) {}
+    private static final Map<Swirl, RenderType> FLASH_SWIRL_TYPES = new HashMap<>();
     /** Iris late-pass reticles: write near depth only after all world translucency has completed. */
     private static final Map<Identifier, RenderType> LATE_ETCHED_RETICLES = new HashMap<>();
     private static final Map<Identifier, RenderType> LATE_VISIBLE_RETICLES = new HashMap<>();
@@ -156,10 +157,12 @@ public final class ScopeRenderTypes {
      * {@link ScopePipRenderState#currentZoom()}（{@code IGun#getAimingZoom}），
      * 与 PIP 判定同一个值 ⇒ 组合镜切到低倍档自动不裁、切回高倍档自动裁。
      *
+     * <p>1.2 的例外是本次提交确有包定义的镜片效果：即使在 PIP 阈值以下也有镜内场景要合成。
+     * 没有该镜片的低倍档仍保留本线原先的行为。
      * <p>失败哲学照旧：任一条件不满足即不裁，回到「手臂/火光正常画」的行为。</p>
      */
     public static boolean viewmodelFxClipApplies() {
-        return apertureScheduledForViewmodel && magnificationSupportsLensClip();
+        return apertureScheduledForViewmodel && (ScopeLensFrame.usesAuthoredLens() || magnificationSupportsLensClip());
     }
 
     /**
@@ -304,7 +307,11 @@ public final class ScopeRenderTypes {
 
     /** Muzzle-flash additive glow: retain vanilla energy-swirl appearance outside the ocular. */
     public static RenderType flashSwirlClipped(Identifier texture) {
-        return FLASH_SWIRL_TYPES.computeIfAbsent(texture, ScopeRenderTypes::createFlashSwirlType);
+        return flashSwirlClipped(texture, 0);
+    }
+
+    public static RenderType flashSwirlClipped(Identifier texture, int offset) {
+        return FLASH_SWIRL_TYPES.computeIfAbsent(new Swirl(texture, offset), ScopeRenderTypes::createFlashSwirlType);
     }
 
     private static RenderType createApertureCopyType(RenderType base) {
@@ -521,14 +528,15 @@ public final class ScopeRenderTypes {
         );
     }
 
-    private static RenderType createFlashSwirlType(Identifier texture) {
+    private static RenderType createFlashSwirlType(Swirl swirl) {
+        Identifier texture = swirl.texture();
         // Exact RenderTypes.energySwirl setup: animated UV transform, lightmap/overlay bindings and
         // upload sorting are preserved; only the depth-mask samplers are additional.
         RenderSetup setup = RenderSetup.builder(FLASH_SWIRL_PIPELINE)
                 .withTexture("Sampler0", texture)
                 .withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, texture)
                 .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, texture)
-                .setTextureTransform(new TextureTransform.OffsetTextureTransform(1.0F, 1.0F))
+                .setTextureTransform(new TextureTransform.OffsetTextureTransform(swirl.offset(), swirl.offset()))
                 .useLightmap()
                 .useOverlay()
                 .sortOnUpload()

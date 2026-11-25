@@ -303,8 +303,9 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             RenderType renderType = display.enablesTransparency()
                     ? RenderTypes.entityTranslucent(display.getModelTexture())
                     : RenderTypes.entityCutout(display.getModelTexture());
-            gunModel.submit(poseStack, stack, ctx, collector, renderType,
-                    display.getModelTexture(), light, OverlayTexture.NO_OVERLAY);
+            ViewmodelFlash.submit(stack, light, baseLight ->
+                    gunModel.submit(poseStack, stack, ctx, collector, renderType,
+                            display.getModelTexture(), baseLight, OverlayTexture.NO_OVERLAY));
             // 缓存枪口位置，为第一人称曳光弹渲染作准备
             cacheMuzzlePosition(poseStack, gunModel);
             // 恢复手臂渲染

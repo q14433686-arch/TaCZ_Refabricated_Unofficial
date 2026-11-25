@@ -9,7 +9,19 @@
     "HeatDepthObserver",
     "CurrentHeatTarget",
     "SensorLayerObserver",
-    "AvatarModelObserver"
+    "AvatarModelObserver",
+    "MuzzleSnapshotInvoker",
+    "MuzzleSnapshotObserver",
+    "MuzzleVertexObserver",
+    "MaterialTransformObserver",
+    "LegacyFlashObserver",
+    "ConstraintPoseObserver",
+    "RangeTextObserver",
+    "ImpactDrawObserver",
+    "ReceiverStateObserver",
+    "SurfaceLightObserver",
+    "ReimaginedShotControl",
+    "RackExtractionTimer"
   ],
   "injectors": {
     "defaultRequire": 1

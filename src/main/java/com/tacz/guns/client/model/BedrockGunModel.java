@@ -9,6 +9,7 @@ import com.tacz.guns.api.client.animation.ObjectAnimationChannel;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.client.particle.AnimationParticleDispatcher;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.bedrock.ModelRendererWrapper;
 import com.tacz.guns.client.model.functional.*;
@@ -242,6 +243,7 @@ public class BedrockGunModel extends BedrockAnimatedModel {
      * 添加枪械自定义的文本显示
      */
     public void setTextShowList(Map<String, TextShow> textShowList) {
+        impactMarker = ImpactMarkerRender.of(getPath(modelMap.get(ImpactMarkerRender.NODE)), textShowList);
         // 枪身文字（非瞄具 ocular 子树）不走目镜掩码：vanilla 管线按场景内容正常处理。
         textShowList.forEach((name, textShow) -> this.setFunctionalRenderer(name, bedrockPart -> new TextShowRender(this, textShow, currentGunItem, false)));
     }
@@ -338,6 +340,11 @@ public class BedrockGunModel extends BedrockAnimatedModel {
                 : ScopeRenderTypes.clipForViewmodel(renderType, gunTexture,
                         transformType != null && transformType.firstPerson());
         super.submit(poseStack, transformType, collector, bodyType, light, overlay);
+        // Consume animation keyframes at the posed rig, not on the next game tick. The same
+        // dispatch also updates attached particle locators when there are no new keyframes.
+        AnimationParticleDispatcher.submit(gunItem, this, poseStack, transformType, collector, light);
+        if (impactMarker != null && transformType != null && transformType.firstPerson())
+            impactMarker.submit(gunItem, poseStack, collector, false, overlay);
     }
 
 

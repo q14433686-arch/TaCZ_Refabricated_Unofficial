@@ -259,7 +259,20 @@ public final class ShaderOpticSmoke {
                 if (Math.max(r(a),Math.max(g(a),b(a)))<90) material++;
             }
             int red=solidRed(img,cx,cy,rad), without=solidRed(no,cx,cy,rad);
-            if (red>Math.max(5,rad*.15)) failure="red-plate";
+            if (red>Math.max(5,rad*.15)) {
+                failure="red-plate";
+                if (bounds != null) {
+                    final int x0=cx-rad, y0=cy-rad, width=rad*2;
+                    var mask=ctx.computeOnClient(mc -> ApertureReadback.region(x0,y0,width,h,w));
+                    int inside=0, redInside=0, redOutside=0;
+                    for (int y=0;y<width;y++) for (int x=0;x<width;x++) {
+                        boolean through=mask[y*width+x]; if (through) inside++;
+                        if (plate(img.getRGB(x0+x,y0+y))) { if (through) redInside++; else redOutside++; }
+                    }
+                    GunMod.LOGGER.info("OPTIC_TRACE: {} measured ocular={}/{} red inside/outside={}/{}; no division or coating red square={}",
+                            key,inside,mask.length,redInside,redOutside,solidRed(bare,cx,cy,rad));
+                }
+            }
             if (iron) {
                 if (ironScene<Math.max(25,rad*rad/6)) failure+=" no-scene-through-sightline";
                 if (ironPost<15) failure+=" missing-physical-sight";

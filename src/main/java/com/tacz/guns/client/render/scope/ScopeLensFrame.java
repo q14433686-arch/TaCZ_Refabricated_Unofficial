@@ -51,6 +51,12 @@ public final class ScopeLensFrame {
         ScopeThermalCapture.beginFrame(needsHeat());
     }
 
+    /** A pack-authored classic lens also composites scene colour, below the PIP cutover.
+     * On Iris that source is the finished frame, so it must not already contain the gun. */
+    static boolean usesAuthoredLens() {
+        return observed != null && observed == expected && !disabled && RenderConfig.EXPERIMENTAL_SCOPE_LENS.get();
+    }
+
     static boolean needsHeat() {
         return expected != null && expected.getVisionMode().isThermal() && RenderConfig.SCOPE_THERMAL_ENABLE.get();
     }

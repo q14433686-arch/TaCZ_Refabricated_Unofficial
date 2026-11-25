@@ -202,11 +202,24 @@ def main():
             print(f'::notice::PORT_DISTRIBUTION: {jar.name} SHA-256 {digest}; separate TCP server and client passed')
         finally:
             for side, run in [('server', dedicated), ('client', work/'client/build/run/clientGameTest')]:
-                for name in ('logs/latest.log', 'crash-reports', 'screenshots'):
+                for name in ('logs/latest.log', 'logs/rei.log', 'crash-reports', 'screenshots'):
                     source = run/name
                     if source.is_dir(): shutil.copytree(source, evidence/side/name, dirs_exist_ok=True)
                     elif source.is_file():
                         dest = evidence/side/name; dest.parent.mkdir(parents=True, exist_ok=True); shutil.copy(source, dest)
+                # Distinguish missing dedicated-side recipe filling/sync from a late client
+                # pack refresh. REI keeps its detailed registration diagnostics in rei.log.
+                if args.viewer == 'rei':
+                    markers = ('Skipping recipe fill', 'displays from recipe manager', 'REI Server Display Sync',
+                               'TACZ Recipe Viewer', 'Failed to fill display for recipe:', 'Failed to encode display:')
+                    for name in ('logs/rei.log', 'logs/latest.log'):
+                        path = run/name
+                        if path.is_file():
+                            rows = path.read_text(errors='replace').splitlines()
+                            for marker in markers:
+                                hits = [line[:360] for line in rows if marker in line]
+                                if hits: print(f'::notice title=REI {side}::{len(hits)}: ' + ' | '.join(hits[-3:]).replace('%', '%25'))
+
 
 
 if __name__ == '__main__':

@@ -26,7 +26,7 @@ public final class FlashMaterials {
     private static final Map<Key, RenderType> TYPES = new HashMap<>();
 
     public static RenderType swirl(Identifier texture, boolean clipped, int uvOffset) {
-        if (!IrisCompat.hasActiveIrisPack()) return clipped ? ScopeRenderTypes.flashSwirlClipped(texture)
+        if (!IrisCompat.hasActiveIrisPack()) return clipped ? ScopeRenderTypes.flashSwirlClipped(texture, uvOffset)
                 : RenderTypes.energySwirl(texture, uvOffset, uvOffset);
         return type(Layer.SWIRL, texture, clipped, uvOffset);
     }
