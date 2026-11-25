@@ -2,7 +2,6 @@ package com.tacz.guns.client.render.scope;
 
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig;
-import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Util;
@@ -22,6 +21,7 @@ public final class ScopeLensFrame {
 
     public static void clear() {
         observed = expected = null;
+        measured = false;
         disabled = false;
         ScopeThermalCapture.close();
     }
@@ -67,8 +67,14 @@ public final class ScopeLensFrame {
 
     // core/screenquad doesn't transform vertices. Its otherwise unused ModelViewMat supplies
     // four vec4 columns in the existing DynamicTransforms layout, not a second projection.
-    static Matrix4f uniforms(ScopeLensConfig lens, boolean heatReady) {
-        float[] b = bounds;
+    static Matrix4f uniforms(@Nullable ScopeLensConfig lens, boolean heatReady) {
+        // Plain PIP uses the same measured ocular as a pack lens. With no projection mirror,
+        // preserve camera-axis sampling; bounds never grant permission to draw a pixel.
+        float u = measured ? .5f + .25f*(bounds[0]+bounds[2]) : .5f;
+        float v = measured ? .5f + .25f*(bounds[1]+bounds[3]) : .5f;
+        float rx = measured ? .25f*(bounds[2]-bounds[0]) : 0;
+        float ry = measured ? .25f*(bounds[3]-bounds[1]) : 0;
+        if (lens == null) return new Matrix4f().m30(u).m31(v).m32(rx).m33(ry);
         int tint = lens.getTint();
         float t = lens.getTintStrength();
         var mode = lens.getVisionMode();
@@ -77,6 +83,6 @@ public final class ScopeLensFrame {
                 lens.getDistortion(), lens.getAberration(), lens.getEdgeWidth(), lens.getVignetteStrength(),
                 lens.getVignetteWidth(), lens.getVisionGain(), lens.getVisionNoise(), (Util.getMillis() % 60000L) / 1000f,
                 1-t+t*((tint>>16)&255)/255f, 1-t+t*((tint>>8)&255)/255f, 1-t+t*(tint&255)/255f, mode.ordinal(),
-                .5f+.25f*(b[0]+b[2]), .5f+.25f*(b[1]+b[3]), .25f*(b[2]-b[0]), .25f*(b[3]-b[1]));
+                u, v, rx, ry);
     }
 }

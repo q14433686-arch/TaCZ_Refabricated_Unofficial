@@ -259,7 +259,8 @@ public final class ScopePipRerender {
             sceneCaptured = false;
             return false;
         }
-        float magnification = ScopePipRenderState.currentZoom();
+        // This source is already magnified: ramp its actual FOV, not the later 1x blit.
+        float magnification = ScopePipRenderState.currentDetailZoom();
         if (magnification <= 1.0f) {
             sceneCaptured = false;
             return false;

@@ -4,6 +4,7 @@ import com.mojang.blaze3d.opengl.GlTexture;
 import com.mojang.blaze3d.opengl.GlTextureView;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -23,6 +24,9 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.opengl.GL30;
@@ -31,38 +35,11 @@ import java.util.Optional;
 import java.util.OptionalInt;
 
 /**
- * Step 3 of the depth-based scope PIP: the first real lens picture.
- *
- * <p>Step 2 only painted the aperture solid magenta; this class replaces that with the actual
- * pre-hand world. The three building blocks are the ones Step 2 already proved on a real
- * machine:</p>
- *
- * <ol>
- *   <li>Capture the main target color <b>before</b> {@code renderItemInHand} draws the gun/hand,
- *       into a private off-screen color copy ({@link SceneColorTarget}).</li>
- *   <li>At the hand-pass RETURN, run a full-screen {@code RenderPass} that samples the captured
- *       scene inside the ocular aperture only (the exact {@code ad < wd - eps} criterion).</li>
- *   <li>Sample the scene at {@code center + (uv - center) / Z}, i.e. the screen-space
- *       re-projection that is mathematically identical to narrowing the FOV by {@code Z}.</li>
- * </ol>
- *
- * <h2>What this step does NOT do yet</h2>
- * <ul>
- *   <li><b>No aim-progress ramp yet.</b> The magnification is the steady-state scope zoom
- *       ({@code IGun#getAimingZoom}); it is correct only at full ADS. The
- *       {@code 1 + (Z - 1) * progress} ramping is a later step.</li>
- *   <li><b>Vanilla / no shader pack by default.</b> Iris is skipped unless
- *       {@code ScopePipAllowShaderPacks} is on, because the pre-hand capture point is not valid
- *       under a shader pack. When allowed, the capture moves to the end of Iris'
- *       {@code finalizeLevelRendering()} ({@link #captureSceneAfterIrisFinal}) where the
- *       main target already contains iris' finished frame; the aperture is already clean world
- *       because the scope body is clipped, so the same screen-space reprojection works there.</li>
- *   <li><b>Configurable.</b> {@code RenderConfig.SCOPE_PIP_*} exposes enable / minimum progress /
- *       minimum magnification / world-zoom share / sharpness / allow shader packs / debug-paint in
- *       the ModMenu config screen; the legacy dev JVM property
- *       {@code -Dtacz.scope.pip.enable=true} still works as an override.</li>
- *   <li><b>No Catmull-Rom.</b> Hardware bilinear + a configurable 5-tap unsharp mask only.</li>
- * </ul>
+ * Depth-aperture PIP. The native pre-hand capture, Iris finished-frame capture and optional
+ * narrow world pass share one colour target. Only a completed world/ocular depth cycle from
+ * this frame can put that colour on screen; projected bounds steer sampling, never coverage.
+ * Reprojection magnifies about the moving ocular and returns to the camera axis on alignment.
+ * A narrow pass supplies already magnified colour and must be sampled at 1x.
  *
  * <h2>Whole-screen FOV zoom replacement</h2>
  * {@link #suppressesWorldFovZoom(float)} is consulted by {@code CameraSetupEvent#applyScopeMagnification}
@@ -88,54 +65,8 @@ public final class ScopePipRenderState {
     public static final String ENABLE_PROPERTY = "tacz.scope.pip.enable";
     private static final String SCENE_SAMPLER_UNIFORM = "tacz_SceneColorSampler";
     private static final float DEFAULT_MIN_AIMING_PROGRESS = 0.05f;
-    /**
-     * PIP 合成（二次渲染与重投影同一条）在开镜滑入中开始显示的进度阈。引擎层接管
-     * （窄遍/捕获/预热/世界 FOV 让位）在开镜瞬间（进度 &gt; 0）启动；本阈只决定贴片
-     * 何时上屏：避开开/退镜边界「镜孔骑在髋部枪身上」的那一段——那时把镜内画面
-     * 贴进镜孔，读起来就是「枪身上闪现的截图」（实机 2026-09-01）。滑入过 1/3 即显示
-     * （用户裁定：重投影也做开镜即接管，过渡期镜内无画面像 bug；2026-09-01）。
-     *
-     * <p>滑入中段的「放大镜环残影」（实机 2026-09-01 复现：重投影采样的成品帧中心区
-     * 含滑入中的镜环）由 {@link #revealRampedReprojectionZoom} 的倍率渐变处理：
-     * 显示阈之上倍率从 1（恒等贴回 = 镜孔区域的干净 1x 世界）步进到稳态。</p>
-     */
-    private static final float PIP_REVEAL_THRESHOLD = 0.35f;
-    /**
-     * 重投影倍率渐变的步数。每次步进一次管线构建（常驻注册有界 ≤ 步数+1 次/每稳态
-     * 倍率），步间复用同一管线 —— 不是逐帧重建（26.2 母版的 ColorModulator 逐帧
-     * uniform 在 26.1.2 的 RenderPass API 上未经验证，见旧注释存档）。
-     */
-    private static final int REVEAL_RAMP_STEPS = 10;
-
-    /**
-     * 重投影滑入渐变：显示阈之上从 1（恒等贴回 = 镜孔自身区域的原画面，即透过物理镜
-     * 看到的 1x 世界——干净无残影）线性步进到稳态倍率。实机确认的「放大镜环残影」
-     * 病根是固定全倍率采样：滑入中段成品帧的中心区含正在滑入的镜环，放大后贴进镜孔。
-     * 倍率从 1 起步时采样区=整个屏幕、且贴回位置=镜孔自身，内容就是孔里原有的画面；
-     * 随滑入推进倍率爬升、采样区收缩向中心，镜环同时归位——到稳态时采样区恰在
-     * 镜孔内（稳态无残影已被实机证明）。26.2 母版实机观感的来源即此渐变。
-     */
-    private static float revealRampedReprojectionZoom(float steadyZoom, float progress) {
-        float steady = Math.max(1.0f, steadyZoom);
-        float t = (progress - PIP_REVEAL_THRESHOLD) / (1.0f - PIP_REVEAL_THRESHOLD);
-        if (t >= 1.0f) {
-            return steady;
-        }
-        if (t <= 0.0f) {
-            return 1.0f;
-        }
-        int k = Math.round(t * REVEAL_RAMP_STEPS);
-        if (k >= REVEAL_RAMP_STEPS) {
-            return steady;
-        }
-        return 1.0f + (steady - 1.0f) * (k / (float) REVEAL_RAMP_STEPS);
-    }
-
-    /**
-     * 按参数缓存的合成管线（键 = 倍率/锐度/贴镜开关）。倍率渐变会在会话内产生
-     * ≤ 步数+1 个倍率档 × 每把枪的稳态倍率，注册数有界；查表命中则零构建。
-     */
-    private static final java.util.Map<Long, RenderPipeline> PIPELINES = new java.util.HashMap<>();
+    // Zoom, sharpness and debug paint are draw uniforms; no pipeline variants per ADS frame.
+    private static RenderPipeline plainPipeline, lensPipeline;
     private static boolean failed;
     private static boolean sceneCaptured;
     private static boolean loggedCapture;
@@ -231,9 +162,7 @@ public final class ScopePipRenderState {
      */
     public static boolean shouldDeferReticleOverlay() {
         if (ScopeLensFrame.expected != null) return true;
-        float partialTicks = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
-        return isEnabled() && irisCompatible()
-                && currentZoom() >= minMagnification() && isAimingStarted(partialTicks);
+        return suppressesWorldFovZoom(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
     }
 
     /** The steady-state scope zoom for the local player, or 1 when there is no scope. */
@@ -365,22 +294,8 @@ public final class ScopePipRenderState {
      * its final passes) and silently skip the lens while the world stayed at 1x.</p>
      */
     public static boolean needsIrisWorldDepthCopy() {
-        if (!isEnabled() || failed || !IrisCompat.isUsingRenderPack()
-                || !allowShaderPacks() || !IrisCompat.supportsFinalScopeOverlay()) {
-            return false;
-        }
-        if (currentZoom() < minMagnification()) {
-            return false;
-        }
         Minecraft mc = Minecraft.getInstance();
-        if (mc == null) {
-            return false;
-        }
-        float progress = currentAimingProgress(mc,
-                Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
-        // 与合成显示阈同一条（PIP_REVEAL_THRESHOLD）：低于阈值的帧合成不上屏，
-        // 但强制拷贝必须提前就绪——合成显示的第一帧就要有 world 深度可用。
-        return progress >= PIP_REVEAL_THRESHOLD;
+        return IrisCompat.isUsingRenderPack() && shaderRerenderAllowed() && wantsPipPicture(mc);
     }
 
     /**
@@ -429,24 +344,22 @@ public final class ScopePipRenderState {
      * 1x no-op.</p>
      */
     private static boolean isAimingStarted(float partialTicks) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) {
-            return false;
-        }
-        ItemStack stack = KeepingItemRenderer.getRenderer().getCurrentItem();
-        if (!(stack.getItem() instanceof IGun)) {
-            return false;
-        }
-        IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(mc.player);
-        if (operator == null) {
-            IGunOperator entityOperator = IGunOperator.fromLivingEntity(mc.player);
-            return entityOperator != null && entityOperator.getSynAimingProgress() > 0.0f;
-        }
-        return operator.getClientAimingProgress(partialTicks) > 0.0f;
+        return currentAimingProgress(Minecraft.getInstance(), partialTicks) > 0.0f;
     }
 
-    private static boolean isAiming(Minecraft mc) {
-        return currentAimingProgress(mc, 0.0f) > minAimingProgress();
+    private static float frameProgress(Minecraft mc) {
+        return currentAimingProgress(mc, mc.getDeltaTracker().getGameTimeDeltaPartialTick(false));
+    }
+
+    /** Same interpolated clock as the ocular. Keep the user's reveal floor distinct from FOV
+     * ownership (> 0) and depth validity (only known after the hand). A floor of 1 allows full ADS. */
+    private static boolean wantsPipPicture(Minecraft mc) {
+        if (mc == null || !isEnabled() || currentZoom() < minMagnification()) return false;
+        return pictureProgress(frameProgress(mc));
+    }
+
+    private static boolean pictureProgress(float progress) {
+        return progress > 0.0f && progress >= minAimingProgress();
     }
 
     /**
@@ -477,41 +390,7 @@ public final class ScopePipRenderState {
      * gun has not been rasterized into it yet, so this copy is exactly the clean lens source.</p>
      */
     public static void captureScene(Minecraft mc) {
-        if (ScopeLensFrame.expected != null && !IrisCompat.isUsingRenderPack()
-                && !(ScopePipRerender.rerenderMode() && ScopePipRerender.hasScene())) {
-            copyMainColor(mc); return;
-        }
-        if (ScopePipRerender.rerenderMode()) {
-            // 二次渲染模式：镜内画面由 ScopePipRerender.renderScopeView 在 renderLevel 的
-            // 镜内那遍之后拷好。这里再拷一次会用宽视场的手前画面覆盖窄视场成品。
-            return;
-        }
-        if (!isEnabled() || failed || mc == null) {
-            sceneCaptured = false;
-            return;
-        }
-        if (IrisCompat.isUsingRenderPack()) {
-            sceneCaptured = false;
-            return;
-        }
-        if (currentZoom() < minMagnification()) {
-            // Low-power scopes keep the classic whole-screen zoom; see ScopePipMinMagnification.
-            sceneCaptured = false;
-            return;
-        }
-        if (!isAiming(mc)) {
-            sceneCaptured = false;
-            return;
-        }
-        if (!copyMainColor(mc)) {
-            return;
-        }
-        if (!loggedCapture) {
-            loggedCapture = true;
-            GunMod.LOGGER.info(
-                    "[TACZ Scope] Step3 captured a {}x{} clean pre-hand world for {}x PIP.",
-                    sceneTarget().width(), sceneTarget().height(), (int) currentZoom());
-        }
+        if (!IrisCompat.isUsingRenderPack()) captureWideScene(mc, false);
     }
 
     /**
@@ -524,46 +403,22 @@ public final class ScopePipRenderState {
      * for its own Iris pipeline; this port uses the same finished-frame property on 26.1.2).
      */
     public static void captureSceneAfterIrisFinal(Minecraft mc) {
-        if (ScopeLensFrame.expected != null && IrisCompat.supportsFinalScopeOverlay()
-                && !(ScopePipRerender.rerenderMode() && ScopePipRerender.hasScene())) {
-            copyMainColor(mc); return;
-        }
-        if (!isEnabled() || failed || mc == null) {
+        if (IrisCompat.supportsFinalScopeOverlay()) captureWideScene(mc, true);
+    }
+
+    private static void captureWideScene(Minecraft mc, boolean irisFinal) {
+        boolean rerender = ScopePipRerender.rerenderMode();
+        if (rerender && ScopePipRerender.hasScene()) return; // don't overwrite the narrow pass
+        // A predicted pack-authored classic lens needs colour too, independent of the PIP switch.
+        if (mc == null || failed || (ScopeLensFrame.expected == null &&
+                (rerender || (irisFinal && !allowShaderPacks()) || !wantsPipPicture(mc)))) {
             sceneCaptured = false;
             return;
         }
-        if (ScopePipRerender.rerenderMode()) {
-            // 二次渲染模式（无光影/光影同理）：镜内画面由 ScopePipRerender 在窄遍返回后拷好。
-            // 这里再拷会用宽视场的成品帧覆盖窄视场成品 —— 与 captureScene 的守卫同款语义；
-            // 刻意不清 sceneCaptured：紧随其后的 compositeAfterIrisFinal 还要拿它合成镜内画面。
-            return;
-        }
-        if (!IrisCompat.isUsingRenderPack() || !allowShaderPacks()
-                || !IrisCompat.supportsFinalScopeOverlay()) {
-            sceneCaptured = false;
-            return;
-        }
-        if (currentZoom() < minMagnification()) {
-            sceneCaptured = false;
-            return;
-        }
-        // 捕获与合成必须同阈（PIP_REVEAL_THRESHOLD）：合成已按用户裁定提前接管
-        // （2026-09-01：重投影也做开镜即接管，过渡期镜内无画面像 bug），捕获若仍压在
-        // 全 ADS，显示的第一帧就没有成品帧可贴。捕获本身无害（只是拷贝），
-        // 何时上屏由合成的同一条阈决定。
-        float progress = currentAimingProgress(mc,
-                Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
-        if (progress < PIP_REVEAL_THRESHOLD) {
-            sceneCaptured = false;
-            return;
-        }
-        if (copyMainColor(mc)) {
-            if (!loggedCapture) {
-                loggedCapture = true;
-                GunMod.LOGGER.info(
-                        "[TACZ Scope] Step3 captured a {}x{} Iris finished frame for {}x PIP.",
-                        sceneTarget().width(), sceneTarget().height(), (int) currentZoom());
-            }
+        if (copyMainColor(mc) && !loggedCapture) {
+            loggedCapture = true;
+            GunMod.LOGGER.info("[TACZ Scope] Captured {}x{} {} for the lens.", sceneTarget().width(),
+                    sceneTarget().height(), irisFinal ? "Iris finished frame" : "pre-hand world");
         }
     }
 
@@ -624,136 +479,32 @@ public final class ScopePipRenderState {
 
     /** Composites the captured scene into the lens after the hand pass has finished. */
     public static void compositeAfterHand(Minecraft mc) {
-        if (!IrisCompat.isUsingRenderPack() && classicLens(mc)) return;
-        if (!isEnabled() || failed || mc == null) {
-            return;
-        }
-        if (IrisCompat.isUsingRenderPack()) {
-            // Iris owns the output path here; compositeAfterIrisFinal does the work after the final
-            // composite. The vanilla hand-pass RETURN never sees a shader-pack frame.
-            return;
-        }
-        // 二次渲染模式镜内画面已按窄 FOV 画好（倍率 1），重投影模式才需要 lensZoom()。
-        // 二次渲染的 sceneCaptured（本类字段）由 renderLevel 里的窄 FOV 那遍写入，退出开镜后
-        // 无人把它清回 false —— 若继续用它做闸门，会拿上一帧残留的镜内贴片逐帧合成到屏幕上
-        // （退出后屏幕空间残留一块贴片）。必须改看每帧在 renderScopeView 顶部重置的
-        // ScopePipRerender.hasScene()。
-        if (ScopePipRerender.rerenderMode()) {
-            if (!ScopePipRerender.hasScene()) {
-                return;
-            }
-            // 开/退镜边界闪一下（实机 2026-09-01）：见 PIP_REVEAL_THRESHOLD。
-            // （历史备注：被打断的会话轮曾把全 ADS 门扩大到二次渲染（b9f9db7），把
-            // 「一帧截图」与「过渡期贴片」混为一谈——前者已被掩码周期帧戳闸根治，
-            // 后者按用户现行裁定（开镜即接管、母版实机行为优先）只避开髋部段。）
-            if (currentAimingProgress(mc, mc.getDeltaTracker()
-                    .getGameTimeDeltaPartialTick(false)) < PIP_REVEAL_THRESHOLD) {
-                return;
-            }
-        } else if (!sceneCaptured) {
-            return;
-        }
-        // 掩码周期时效：本合成点在手部阶段之后，深度拷贝应是本帧的。周期不落在当前帧
-        // （瞄具本帧没提交过目镜序列）时，手头的拷贝就是上一段开镜的遗留——贴片位置由
-        // 遗留镜孔决定，正是「一帧截图」的病根，宁可整帧不画镜内画面（fail-closed）。
-        if (!ScopeDepthCopyState.hasMaskCycleThisFrame()) {
-            return;
-        }
-        compositeScene(mc, revealZoom(compositeZoom(), mc));
+        if (!IrisCompat.isUsingRenderPack()) compositeCurrentFrame(mc, false);
     }
 
-    /** 合成上屏倍率：二次渲染恒 1（窄 FOV 真画，无残影问题）；重投影按滑入进度渐变
-     * （{@link #revealRampedReprojectionZoom}）。 */
-    private static float revealZoom(float steady, Minecraft mc) {
-        if (ScopePipRerender.rerenderMode()) {
-            return steady;
-        }
-        float progress = currentAimingProgress(mc,
-                mc.getDeltaTracker().getGameTimeDeltaPartialTick(false));
-        return revealRampedReprojectionZoom(steady, progress);
-    }
-
-    /**
-     * Composites the captured finished frame into the lens after Iris' final composite.
-     *
-     * <p>Called by {@code IrisFinalScopeOverlayMixin} right after
-     * {@link #captureSceneAfterIrisFinal(Minecraft)} and before
-     * {@link ScopeFinalOverlayState#renderAfterFinalComposite()}, restoring the physical order under
-     * a shader pack: finished shader frame -> magnified lens picture -> reticle/crosshair -> ocular
-     * shade. The aperture/world depth copies used by the mask were made during the hand pass and are
-     * private GL textures, so they remain sampleable after Iris has finished binding depthtex2.</p>
-     */
+    /** The finished shader frame precedes the queued reticle/rim. Never enter from the narrow pass. */
     public static void compositeAfterIrisFinal(Minecraft mc) {
-        if (IrisCompat.supportsFinalScopeOverlay() && classicLens(mc)) return;
-        if (!isEnabled() || failed || mc == null) {
-            return;
-        }
-        if (ScopePipRerender.rerenderMode() && !ScopePipRerender.hasScene()) {
-            // 二次渲染模式：改看每帧在 renderScopeView 顶部重置的 hasScene()。本类的
-            // sceneCaptured 在窄遍停跑后无人清回 false（与 compositeAfterHand 同一滞留问题）
-            // —— 若用它做闸门，退出开镜后会把 scene target 里上一帧的旧画面作为最上层
-            // 贴片逐帧合成（实机：开关镜触发、静止不动的「截图」贴屏，2026-09-01）。
-            // 上一轮的「开镜即接管」拆掉了全 ADS 门这道意外的护栏，此病遂显形。
-            return;
-        }
-        if (!sceneCaptured) {
-            return;
-        }
-        // 一帧「截图」贴屏（实机 2026-09-01）：掩码周期失败的帧里，深度拷贝纹理仍是
-        // 上一段开镜的遗留（handle 依旧 available），合成若照跑就把镜内画面按遗留镜孔
-        // 的位置贴出去——随机位置闪现一帧、下一帧周期恢复即自愈。只允许「本帧确有完整
-        // 周期」时合成：Iris 26.1 把手部搬进了 LevelRenderer#renderLevel 内部（本仓
-        // 世界钩子 javadoc 的字节码结论），finalizeLevelRendering 与本合成因此跑在
-        // 同一 Level 遍的手部阶段之后，拷贝是本帧的；周期失败的帧 fail-closed ——
-        // 宁可一帧不画镜内画面，不贴陈旧截图。（曾误判「终局钩子在手部之前」而用
-        // 上一帧闸 hadMaskCycleLastFrame，导致光影下合成永不放行——二次渲染整体失效。）
-        if (!ScopeDepthCopyState.hasMaskCycleThisFrame()) {
-            return;
-        }
-        if (!IrisCompat.isUsingRenderPack() || !allowShaderPacks()
-                || !IrisCompat.supportsFinalScopeOverlay()) {
-            return;
-        }
-        // Under a shader pack the FINISHED frame includes the gun/hands; the screen-space
-        // reprojection therefore reveals via PIP_REVEAL_THRESHOLD and ramps its zoom through
-        // revealRampedReprojectionZoom (identity paste first, full zoom at steady state). The
-        // ramp is quantized to REVEAL_RAMP_STEPS pipeline builds, not per-frame rebuilds: the
-        // 26.2 reference used a per-frame ColorModulator uniform, which our 26.1.2 RenderPass
-        // API has never verified; quantized #define pipelines are the verified equivalent.
-        float progress = currentAimingProgress(mc,
-                Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
-        // 显示阈两种模式同一条（PIP_REVEAL_THRESHOLD）。用户裁定（2026-09-01）：
-        // 重投影也做开镜即接管——过渡期镜内没有画面、到全 ADS 才突然出现，读起来
-        // 就像 bug。已知折衷见字段注释（滑入中段成品帧中心含枪身，镜缘可能有放大
-        // 镜环残影）。引擎层接管（窄遍/捕获/预热/FOV 让位）自始就在开镜瞬间。
-        if (progress < PIP_REVEAL_THRESHOLD) {
-            return;
-        }
-        // 倍率分流：重投影=整屏重投影的 lensZoom() 按滑入渐变（残影修复，见
-        // revealRampedReprojectionZoom）；二次渲染（含光影）=窄 FOV 真画恒 1。
-        float steady = compositeZoom();
-        float reveal = ScopePipRerender.rerenderMode()
-                ? steady
-                : revealRampedReprojectionZoom(steady, progress);
-        compositeScene(mc, reveal);
+        if (IrisCompat.supportsFinalScopeOverlay()) compositeCurrentFrame(mc, true);
     }
 
-    /** 合成倍率：二次渲染模式下镜内画面已是窄 FOV 真画（屏幕坐标一一对应），倍率恒 1；
-     * 重投影模式则是 {@link #lensZoom()}（世界放大后镜内只需再补的那一份）。 */
-    private static float compositeZoom() {
-        return ScopePipRerender.rerenderMode() ? ScopePipRerender.compositeZoom() : lensZoom();
+    private static void compositeCurrentFrame(Minecraft mc, boolean irisFinal) {
+        if (mc == null || failed || !sceneCaptured || !ScopeDepthCopyState.hasMaskCycleThisFrame()) return;
+        boolean rerender = ScopePipRerender.rerenderMode();
+        boolean narrow = rerender && ScopePipRerender.hasScene(); // not last ADS's colour target
+        boolean pip = isEnabled() && (!irisFinal || allowShaderPacks()) && currentZoom() >= minMagnification();
+        if (pip && (!rerender || narrow)) {
+            float progress = frameProgress(mc);
+            if (!pictureProgress(progress)) return;
+            float zoom = narrow ? ScopePipRerender.compositeZoom() : Mth.lerp(progress, 1.0f, lensZoom());
+            compositeScene(mc, zoom, irisFinal && !narrow && progress < 1.0f);
+        } else if (ScopeLensFrame.current() != null) {
+            // Below the PIP cutover (or no narrow pass): only a predicted AND observed pack lens
+            // may use the wide capture at 1x. Do not turn ordinary classic sights into PIP.
+            compositeScene(mc, 1.0f, false);
+        }
     }
 
-    /** Composite body with an explicit lens zoom (the Iris path reuses the same stable zoom value). */
-    private static boolean classicLens(Minecraft mc) {
-        if (ScopeLensFrame.current() == null || !sceneCaptured || failed) return false;
-        if (suppressesWorldFovZoom(mc.getDeltaTracker().getGameTimeDeltaPartialTick(false))
-                && (!ScopePipRerender.rerenderMode() || ScopePipRerender.hasScene())) return false;
-        compositeScene(mc, 1f);
-        return true;
-    }
-
-    private static void compositeScene(Minecraft mc, float compositeZoom) {
+    private static void compositeScene(Minecraft mc, float compositeZoom, boolean guardFinishedSource) {
         ScopeDepthCopyState.DepthHandle world = ScopeDepthCopyState.worldDepthTarget();
         ScopeDepthCopyState.DepthHandle aperture = ScopeDepthCopyState.apertureDepthTarget();
         if (!world.available() || !aperture.available()
@@ -786,18 +537,19 @@ public final class ScopePipRenderState {
             // DynamicUniformStorage maps a GPU buffer. 26.1 forbids this while a pass is open.
             var lens = ScopeLensFrame.current();
             var heat = lens == null ? null : ScopeThermalCapture.current();
-            var uniforms = lens == null ? null : RenderSystem.getDynamicUniforms().writeTransform(
-                    ScopeLensFrame.uniforms(lens, heat != null), new org.joml.Vector4f(1), new org.joml.Vector3f(), new org.joml.Matrix4f());
+            var uniforms = RenderSystem.getDynamicUniforms().writeTransform(ScopeLensFrame.uniforms(lens, heat != null),
+                    new Vector4f(compositeZoom, sharpness(), debugPaintLens() ? 1 : 0, guardFinishedSource ? 1 : 0),
+                    new Vector3f(), new Matrix4f());
             CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
             try (RenderPass pass = encoder.createRenderPass(
                     () -> "tacz_scope_pip_composite",
                     main.getColorTextureView(),
                     OptionalInt.empty())) {
-                pass.setPipeline(pipeline(compositeZoom, lens != null));
+                pass.setPipeline(pipeline(lens != null));
+                pass.setUniform("DynamicTransforms", uniforms);
                 if (lens != null) {
                     pass.bindTexture("HeatSampler", heat == null ? scene.view() : heat.getColorTextureView(),
                             RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
-                    pass.setUniform("DynamicTransforms", uniforms);
                 }
                 pass.bindTexture(SCENE_SAMPLER_UNIFORM,
                         scene.view(),
@@ -836,45 +588,25 @@ public final class ScopePipRenderState {
         }
     }
 
-    private static RenderPipeline pipeline(float lensZoomValue, boolean lens) {
-        float clampedZoom = Math.max(1.0f, lensZoomValue);
-        int lensZoom1k = (int) Math.round(clampedZoom * 1000.0f);
-        int sharpness1k = (int) Math.round(sharpness() * 1000.0f);
-        boolean paintLens = debugPaintLens();
-        long cacheKey = (lensZoom1k & 0xFFFFFL)
-                | ((sharpness1k & 0x3FFL) << 20)
-                | (paintLens ? 1L << 30 : 0L) | (lens ? 1L << 31 : 0L);
-        RenderPipeline cachedPipeline = PIPELINES.get(cacheKey);
-        if (cachedPipeline != null) {
-            return cachedPipeline;
-        }
-        RenderPipeline pipeline;
-        {
-            RenderPipeline source = RenderPipelines.ENTITY_OUTLINE_BLIT;
-            var builder = RenderPipeline.builder()
-                            .withLocation(Identifier.fromNamespaceAndPath(
-                                    GunMod.MOD_ID, "pipeline/scope_pip_composite"))
-                            .withVertexShader(Identifier.fromNamespaceAndPath(
-                                    "minecraft", "core/screenquad"))
-                            .withFragmentShader(Identifier.fromNamespaceAndPath(
-                                    GunMod.MOD_ID, "core/scope_pip"))
-                            .withShaderDefine("TACZ_PIP_ZOOM", clampedZoom)
-                            .withShaderDefine("TACZ_PIP_SHARPNESS", sharpness())
-                            .withShaderDefine("TACZ_PIP_PAINT_LENS", paintLens ? 1.0f : 0.0f)
-                            .withVertexFormat(source.getVertexFormat(), source.getVertexFormatMode())
-                            .withSampler(SCENE_SAMPLER_UNIFORM)
-                            .withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM)
-                            .withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM)
-                            .withCull(false)
-                            // 26.1.2 没有 withoutBlend()/withColorWrite(bool)：等价形式是
-                            // 「无混合 + 全色写」的 ColorTargetState（无深度进出，纯屏幕空间覆写）。
-                            .withColorTargetState(new ColorTargetState(
-                                    Optional.empty(), ColorTargetState.WRITE_COLOR));
-            if (lens) builder.withShaderDefine("TACZ_SCOPE_LENS").withSampler("HeatSampler")
-                    .withUniform("DynamicTransforms", com.mojang.blaze3d.shaders.UniformType.UNIFORM_BUFFER);
-            pipeline = RenderPipelines.register(builder.build());
-            PIPELINES.put(cacheKey, pipeline);
-        }
+    private static RenderPipeline pipeline(boolean lens) {
+        RenderPipeline cached = lens ? lensPipeline : plainPipeline;
+        if (cached != null) return cached;
+        RenderPipeline source = RenderPipelines.ENTITY_OUTLINE_BLIT;
+        var builder = RenderPipeline.builder()
+                .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID,
+                        lens ? "pipeline/scope_pip_composite_lens" : "pipeline/scope_pip_composite"))
+                .withVertexShader(Identifier.fromNamespaceAndPath("minecraft", "core/screenquad"))
+                .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_pip"))
+                .withVertexFormat(source.getVertexFormat(), source.getVertexFormatMode())
+                .withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER)
+                .withSampler(SCENE_SAMPLER_UNIFORM)
+                .withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM)
+                .withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM)
+                .withCull(false)
+                .withColorTargetState(new ColorTargetState(Optional.empty(), ColorTargetState.WRITE_COLOR));
+        if (lens) builder.withShaderDefine("TACZ_SCOPE_LENS").withSampler("HeatSampler");
+        var pipeline = RenderPipelines.register(builder.build());
+        if (lens) lensPipeline = pipeline; else plainPipeline = pipeline;
         return pipeline;
     }
 

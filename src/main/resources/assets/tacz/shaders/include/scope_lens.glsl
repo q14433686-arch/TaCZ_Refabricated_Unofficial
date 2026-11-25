@@ -4,13 +4,9 @@ uniform sampler2D HeatSampler;
 #define Optics    ModelViewMat[0]  // distortion, aberration, edge width, vignette strength
 #define Sensor    ModelViewMat[1]  // vignette width, gain, noise, seconds
 #define TintMode  ModelViewMat[2]  // tint RGB, vision mode
-#define Aperture  ModelViewMat[3]  // UV centre and half extent
 
 // Bounded local estimate of distance to the actual cutout, not a full-screen radial
 // vignette. Never treat the window frame as a visible lens boundary.
-bool insideOcular(vec2 uv) {
-    return texture(tacz_ApertureDepthSampler, uv).r < texture(tacz_WorldDepthSampler, uv).r - 1e-6;
-}
 float edgeDistance(vec2 uv, float reach) {
     vec2 size = vec2(textureSize(tacz_WorldDepthSampler, 0));
     float radius = max(min(Aperture.z * size.x, Aperture.w * size.y), 1.0);

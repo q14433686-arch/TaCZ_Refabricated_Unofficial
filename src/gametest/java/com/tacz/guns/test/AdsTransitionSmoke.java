@@ -73,8 +73,9 @@ public final class AdsTransitionSmoke {
     }
 
     private record Center(double x, double y) {}
+    private enum Expect { REPROJECT, NARROW, CLASSIC, BELOW_FLOOR, NO_MASK }
 
-    private static Center sample(ClientGameTestContext ctx, String name, float lo, float hi, boolean plain, boolean positive, ArrayList<String> errors) {
+    private static Center sample(ClientGameTestContext ctx, String name, float lo, float hi, Expect expect, ArrayList<String> errors) {
         var s = new Shot(name, lo, hi);
         ctx.runOnClient(mc -> pending = s);
         ctx.waitFor(mc -> s.display != null && s.display.isDone() && s.lens.isDone() && s.before.isDone(), 80);
@@ -86,10 +87,12 @@ public final class AdsTransitionSmoke {
             ImageIO.write(finalFrame, "png", dir.resolve(name + ".png").toFile());
         } catch (IOException e) { throw new UncheckedIOException(e); }
         int w = pre.getWidth(), h = pre.getHeight();
-        int area=0, leak=0, swapped=0, visible=0, changed=0, matched=0, candidates=0;
+        int area=0, leak=0, swapped=0, visible=0, changed=0, matched=0, candidates=0, coated=0;
         double sx=0, sy=0;
         float cx=s.bounds == null ? 0 : (.5f+.25f*(s.bounds[0]+s.bounds[2]))*w;
         float cy=s.bounds == null ? 0 : (.5f-.25f*(s.bounds[1]+s.bounds[3]))*h;
+        // The centred, steady image retains the camera optical axis (including authored sight offsets).
+        if (s.progress == 1) { cx=w*.5f; cy=h*.5f; }
         float z=1+(s.zoom-1)*s.progress;
         for (int y=0; y<h; y++) for (int x=0; x<w; x++) {
             int a=pre.getRGB(x,y), b=post.getRGB(x,y), c=finalFrame.getRGB(x,y);
@@ -98,7 +101,9 @@ public final class AdsTransitionSmoke {
             if (a!=b) changed++;
             // Opposite wall tiles, not tint, depth, diagnostic paint, or a reticle draw.
             if (tile(a)*tile(b)<0) { swapped++; if (tile(c)==tile(b)) visible++; }
-            if (!plain || s.bounds==null) continue;
+            // Classic = no local zoom; real scene colours survive the authored tint and final ink.
+            if (tile(a)!=0 && tile(a)==tile(b) && tile(c)==tile(b) && Math.abs((a>>>16&255)-(b>>>16&255))>=4) coated++;
+            if (expect != Expect.REPROJECT || s.bounds==null) continue;
             // Compare unambiguous bilinear source footprints inside the live ocular. Demand agreement
             // on pixels where an identity paste would give the *wrong* world tile.
             int u=(int)Math.floor(cx+(x+.5-cx)/z-.5), v=(int)Math.floor(cy+(y+.5-cy)/z-.5);
@@ -111,10 +116,16 @@ public final class AdsTransitionSmoke {
             if (clean) { candidates++; if (tile(b)==t) matched++; }
         }
         var center=new Center(sx/Math.max(1,area), sy/Math.max(1,area));
-        GunMod.LOGGER.info("PORT_OPTIC: {} p={} depth={} center={}/{} changed={} switchedTiles={} stillVisible={} movingUV={}/{} outside={}",
-                name,s.progress,area,center.x,center.y,changed,swapped,visible,matched,candidates,leak);
-        if (leak!=0 || (positive ? area<30 || swapped<8 || visible<8 || (plain && (candidates<8 || matched<.90*candidates))
-                : s.mask!=null || changed!=0)) errors.add(name+" (see frame counts)");
+        GunMod.LOGGER.info("PORT_OPTIC: {} p={} depth={} center={}/{} changed={} switchedTiles={} stillVisible={} movingUV={}/{} coated={} outside={}",
+                name,s.progress,area,center.x,center.y,changed,swapped,visible,matched,candidates,coated,leak);
+        boolean ok = switch (expect) {
+            case NO_MASK -> s.mask==null && changed==0;
+            case BELOW_FLOOR -> area>=30 && changed==0;
+            case CLASSIC -> area>=30 && coated>=Math.max(8,area/20);
+            case NARROW, REPROJECT -> area>=30 && swapped>=8 && visible>=Math.max(8,swapped/10)
+                    && (expect!=Expect.REPROJECT || candidates>=8 && matched>=.90*candidates);
+        };
+        if (leak!=0 || !ok) errors.add(name+" (see frame counts)");
         return center;
     }
 
@@ -142,7 +153,8 @@ public final class AdsTransitionSmoke {
                 && optic.equals(gun.getAttachmentId(mc.player.getMainHandItem(),AttachmentType.SCOPE)));
         ctx.getInput().lookAt(180,0); world.getClientLevel().waitForChunksRender(); ctx.waitTicks(30);
         var old=ctx.computeOnClient(mc -> new boolean[]{RenderConfig.SCOPE_PIP_ENABLE.get(),RenderConfig.SCOPE_PIP_RERENDER.get(),
-                RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.get(),RenderConfig.EXPERIMENTAL_SCOPE_LENS.get(),mc.options.bobView().get()});
+                RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.get(),RenderConfig.EXPERIMENTAL_SCOPE_LENS.get(),mc.options.bobView().get(), RenderConfig.SCOPE_MASK_ENABLE.get()});
+        double floor=ctx.computeOnClient(mc -> RenderConfig.SCOPE_PIP_MIN_AIMING_PROGRESS.get());
         var errors=new ArrayList<String>();
         try {
             ctx.runOnClient(mc -> {
@@ -153,21 +165,38 @@ public final class AdsTransitionSmoke {
                 ctx.runOnClient(mc -> { RenderConfig.SCOPE_PIP_RERENDER.set(narrow); RenderConfig.EXPERIMENTAL_SCOPE_LENS.set(narrow); });
                 String mode=narrow ? "narrow_" : "reproject_";
                 ctx.getInput().holdKey(AimKey.AIM_KEY);
-                var up=sample(ctx,mode+"raise",.18f,.34f,!narrow,true,errors);
+                var expect=narrow ? Expect.NARROW : Expect.REPROJECT;
+                var up=sample(ctx,mode+"raise",.18f,.34f,expect,errors);
                 ctx.waitFor(mc -> IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(0)==1); ctx.waitTicks(6);
-                var full=sample(ctx,mode+"steady",1,1,!narrow,true,errors);
+                var full=sample(ctx,mode+"steady",1,1,expect,errors);
+                // Leave the colour target allocated at full ADS but withhold this frame's aperture.
+                ctx.runOnClient(mc -> RenderConfig.SCOPE_MASK_ENABLE.set(false)); ctx.waitTicks(2);
+                sample(ctx,mode+"missing_mask",1,1,Expect.NO_MASK,errors);
+                ctx.runOnClient(mc -> { RenderConfig.SCOPE_MASK_ENABLE.set(true); RenderConfig.SCOPE_PIP_MIN_AIMING_PROGRESS.set(.85); });
+                ctx.waitTicks(2);
                 ctx.getInput().releaseKey(AimKey.AIM_KEY);
-                var down=sample(ctx,mode+"lower",.18f,.34f,!narrow,true,errors);
-                sample(ctx,mode+"hip",0,0,false,false,errors);
+                sample(ctx,mode+"below_floor",.60f,.78f,Expect.BELOW_FLOOR,errors);
+                ctx.runOnClient(mc -> RenderConfig.SCOPE_PIP_MIN_AIMING_PROGRESS.set(floor));
+                var down=sample(ctx,mode+"lower",.15f,.25f,expect,errors);
+                sample(ctx,mode+"hip",0,0,Expect.NO_MASK,errors);
                 if (Math.hypot(up.x-full.x,up.y-full.y)<5 || Math.hypot(down.x-full.x,down.y-full.y)<5)
                     errors.add(mode+"ocular did not move");
             }
+            // With PIP disabled there is no second zoom: an authored classic lens must keep
+            // its separate prediction/identity gate, but needn't wait for completed ADS either.
+            ctx.runOnClient(mc -> { RenderConfig.SCOPE_PIP_ENABLE.set(false); RenderConfig.SCOPE_PIP_RERENDER.set(false); });
+            ctx.getInput().holdKey(AimKey.AIM_KEY);
+            sample(ctx,"classic_raise",.18f,.34f,Expect.CLASSIC,errors);
+            ctx.waitFor(mc -> IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(0)==1);
+            ctx.getInput().releaseKey(AimKey.AIM_KEY);
+            sample(ctx,"classic_lower",.18f,.34f,Expect.CLASSIC,errors);
         } finally {
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
             ctx.runOnClient(mc -> {
                 running=false; pending=null;
                 RenderConfig.SCOPE_PIP_ENABLE.set(old[0]); RenderConfig.SCOPE_PIP_RERENDER.set(old[1]);
                 RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.set(old[2]); RenderConfig.EXPERIMENTAL_SCOPE_LENS.set(old[3]); mc.options.bobView().set(old[4]);
+                RenderConfig.SCOPE_MASK_ENABLE.set(old[5]); RenderConfig.SCOPE_PIP_MIN_AIMING_PROGRESS.set(floor);
             });
         }
         if (!errors.isEmpty()) throw new AssertionError("Moving depth-aperture picture: "+errors);
