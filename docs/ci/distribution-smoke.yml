@@ -14,6 +14,9 @@ concurrency:
 jobs:
   distribution:
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix: {viewer: [none, jei, rei]}
     timeout-minutes: 38
     steps:
       - uses: actions/checkout@v4
@@ -28,9 +31,9 @@ jobs:
           python3 scripts/audit_2612_jar.py build/libs/*.jar
       - name: Connect a separate client to the disposable dedicated server
         env: {LIBGL_ALWAYS_SOFTWARE: 'true', ALSOFT_DRIVERS: 'null'}
-        run: xvfb-run -a python3 scripts/test_packaged_connection.py --accept-test-eula build/libs/*.jar
+        run: xvfb-run -a python3 scripts/test_packaged_connection.py --accept-test-eula --viewer "${{ matrix.viewer }}" build/libs/*.jar
       - if: failure()
         run: python3 scripts/report_ci_failures.py build/packaged-evidence/{server,client}.log build/packaged-evidence/{server,client}/logs/latest.log
       - uses: actions/upload-artifact@v4
         if: always()
-        with: {name: 'packaged-tcp-${{ github.sha }}', path: build/packaged-evidence, retention-days: 7}
+        with: {name: 'packaged-tcp-${{ matrix.viewer }}-${{ github.sha }}', path: build/packaged-evidence, retention-days: 7}

@@ -118,6 +118,7 @@ def main():
     parser.add_argument('jar', type=Path)
     parser.add_argument('--accept-test-eula', action='store_true', required=True,
                         help='accept the Minecraft EULA for this ephemeral, loopback-only server')
+    parser.add_argument('--viewer', choices=['none','jei','rei'], default='none')
     args = parser.parse_args()
     jar = args.jar.resolve(strict=True)
     with tempfile.TemporaryDirectory(prefix='tacz-product-') as tmp:
@@ -132,16 +133,20 @@ def main():
         indexes.mkdir(parents=True)
         (fixture/'gunpack.meta.json').write_text(json.dumps({'namespace': 'net_probe', 'dependencies': {'minecraft': '[26.1.2]', 'tacz': '>=1.2.0'}}))
         (indexes/'first.json').write_text(json.dumps({'name': 'remote', 'type': 'rifle', 'data': 'tacz:ak47_data', 'display': 'tacz:ak47_display'}))
+        recipes = fixture/'data/net_probe/recipe'
+        recipes.mkdir(parents=True)
+        (recipes/'first.json').write_text(json.dumps({'type': 'tacz:gun_smith_table_crafting',
+                'materials': [{'item': 'minecraft:stick'}], 'result': {'type': 'ammo', 'id': 'tacz:12g', 'count': 5}}))
         old_export, previous, old_fingerprint = seed_previous_default(dedicated/'tacz')
         with socket.socket() as sock:
             sock.bind(('127.0.0.1', 0))
             port = sock.getsockname()[1]
         (dedicated/'eula.txt').write_text('eula=true\n')
-        (dedicated/'server.properties').write_text(f'server-ip=127.0.0.1\nserver-port={port}\nonline-mode=false\nenforce-secure-profile=false\nview-distance=3\nsimulation-distance=3\nlevel-type=minecraft:flat\n')
+        (dedicated/'server.properties').write_text(f'server-ip=127.0.0.1\nserver-port={port}\nonline-mode=false\nenforce-secure-profile=false\nspawn-protection=0\nview-distance=3\nsimulation-distance=3\nlevel-type=minecraft:flat\n')
         ready = work/'first-index-installed'
         def gradle(side, *tasks):
             return [str(ROOT/'gradlew'), '-p', str(work/side), '--console=plain', '--no-daemon',
-                    '--init-script', str(ROOT/'scripts/ci-central.init.gradle'), f'-PtaczRoot={ROOT}', f'-PproductJar={jar}', *tasks]
+                    '--init-script', str(ROOT/'scripts/ci-central.init.gradle'), f'-PtaczRoot={ROOT}', f'-PproductJar={jar}', f'-Pviewer={args.viewer}', *tasks]
         try:
             with launch(gradle('server', 'runServer'), evidence/'server.log') as server:
                 # Look at the game log, not just a port that starts listening before registries are ready.
@@ -163,12 +168,24 @@ def main():
                 print(f'::notice::PORT_EXPORT: {RECEIVER[:7]} edited export: {len(previous)} exact files in backup; '
                       f'{len(shipped)} upgraded files match the JAR', flush=True)
                 with launch(gradle('client', '-PprobeClient', f'-PprobeReady={ready}', f'-PprobePort={port}', 'runClientGameTest'), evidence/'client.log') as client:
+                    await_state((work/'joined').is_file, [server, client], 600, 'client did not join')
+                    # Materials introduced only on the server: recipe book unlocked through its
+                    # normal advancement, client cannot fake a craft by editing local slots.
+                    server.stdin.write('forceload add 8 8\nexecute positioned 8 201 8 run fill ~-2 ~-1 ~-2 ~2 ~-1 ~2 minecraft:stone\n'
+                                       'setblock 9 201 8 minecraft:crafting_table\ngamemode survival @a\n'
+                                       'tp @a 8.5 201 8.5\ngive @a minecraft:oak_log 6\ngive @a minecraft:iron_ingot 8\ngive @a minecraft:iron_block 2\n')
+                    server.stdin.flush()
                     await_state(ready.is_file, [server, client], 600, 'client did not receive server-only index')
                     (indexes/'first.json').rename(indexes/'second.json')
+                    (recipes/'first.json').rename(recipes/'second.json')
                     server.stdin.write('reload\ngive @a minecraft:paper[minecraft:custom_name={text:"target receipt"}] 7\n')
                     server.stdin.flush()
                     if client.wait(timeout=400) != 0 or 'PORT_DISTRIBUTION:' not in (evidence/'client.log').read_text(errors='replace'):
                         raise RuntimeError('packaged client did not complete reload and reconnect')
+                    receipt = f'PORT_CRAFT: {args.viewer} dedicated survival 3x3 before and after reload; server confirmed inventory and recipe book on rejoin'
+                    if receipt not in (evidence/'client.log').read_text(errors='replace'):
+                        raise RuntimeError('Missing dedicated crafting receipt')
+                    print('::notice::' + receipt, flush=True)
                 server.stdin.write('stop\n'); server.stdin.flush()
                 if server.wait(timeout=60) != 0:
                     raise RuntimeError('dedicated shutdown failed')

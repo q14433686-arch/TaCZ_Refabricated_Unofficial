@@ -6,13 +6,19 @@ Properties pins = new Properties()
 file(property('taczRoot') + '/gradle.properties').withInputStream { pins.load(it) }
 File product = file(property('productJar'))
 boolean clientProbe = project.hasProperty('probeClient')
+String viewer = providers.gradleProperty('viewer').getOrElse('none')
+if (!(viewer in ['none', 'jei', 'rei'])) throw new GradleException("Unknown viewer: $viewer")
 if (clientProbe) fabricApi.configureTests {
     createSourceSet = true
     modId = 'tacz_packaged_probe'
     enableGameTests = false
     enableClientGameTests = true
 }
+if (clientProbe && viewer != 'none') sourceSets.gametest.java.srcDir "src/$viewer/java"
 repositories {
+    maven { url = uri('https://api.modrinth.com/maven'); content { includeGroup 'maven.modrinth' } }
+    maven { url = uri('https://maven.shedaniel.me'); content { includeGroup 'me.shedaniel'; includeGroup 'me.shedaniel.cloth' } }
+    maven { url = uri('https://maven.architectury.dev'); content { includeGroup 'dev.architectury' } }
     mavenCentral()
     maven { url = uri('https://raw.githubusercontent.com/Fuzss/modresources/main/maven/'); content { includeGroup 'fuzs.forgeconfigapiport' } }
 }
@@ -22,6 +28,12 @@ dependencies {
     implementation "net.fabricmc.fabric-api:fabric-api:${pins.fabric_version}"
     implementation 'fuzs.forgeconfigapiport:forgeconfigapiport-fabric:26.1.5'
     if (clientProbe) gametestCompileOnly files(product)
+    if (viewer == 'jei') implementation "maven.modrinth:jei:${pins.jei_version}"
+    if (viewer == 'rei') {
+        implementation("me.shedaniel:RoughlyEnoughItems-fabric:${pins.rei_version}") { transitive = false }
+        implementation("dev.architectury:architectury-fabric:${pins.architectury_version}") { transitive = false }
+        implementation("me.shedaniel.cloth:cloth-config-fabric:${pins.cloth_config_fabric}") { transitive = false }
+    }
 }
 loom.runs.server {
     runDir 'build/dedicated'
@@ -31,6 +43,7 @@ loom.runs.server {
 }
 if (clientProbe) loom.runs.clientGameTest {
     property 'fabric.addMods', product.absolutePath
+    property 'tacz.probe.viewer', viewer
     property 'tacz.probe.jar', product.absolutePath
     property 'tacz.probe.ready', project.property('probeReady')
     property 'tacz.probe.port', project.property('probePort')

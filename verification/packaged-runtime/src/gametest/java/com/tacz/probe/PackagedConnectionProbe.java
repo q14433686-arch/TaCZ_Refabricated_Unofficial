@@ -19,6 +19,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import com.tacz.guns.init.ModItems;
 
 /** The server JVM has its own game directory and no test mod. Only a real S2C install
  * can introduce these indexes in the consumer. Never read the dedicated server's files. */
@@ -33,25 +34,46 @@ public final class PackagedConnectionProbe implements FabricClientGameTest {
             Path jar = Path.of(System.getProperty("tacz.probe.jar"));
             if (loader.getModContainer("tacz").orElseThrow().getOrigin().getPaths().stream()
                     .noneMatch(p -> Files.isRegularFile(p) && sameFile(p, jar))) throw new AssertionError("TaCZ was not loaded from " + jar);
-            for (String id : List.of("jei", "roughlyenoughitems", "controllable", "player_animation_library", "iris", "sodium", "modmenu", "cloth-config")) {
+            String profile = System.getProperty("tacz.probe.viewer", "none");
+            if (loader.isModLoaded("jei") != profile.equals("jei") || loader.isModLoaded("roughlyenoughitems") != profile.equals("rei"))
+                throw new AssertionError("Wrong viewer combination: " + profile);
+            for (String id : List.of("controllable", "player_animation_library", "iris", "sodium", "modmenu")) {
                 if (loader.isModLoaded(id)) throw new AssertionError("Unexpected optional mod: " + id);
             }
+            if (profile.equals("none") && loader.isModLoaded("cloth-config")) throw new AssertionError("Not a minimal mod set");
+            var viewer = ViewerProbe.load(profile);
+            Path ready = Path.of(System.getProperty("tacz.probe.ready"));
             connect(ctx);
             ctx.waitFor(mc -> online(mc) && CACHE.getGunIndex(FIRST) != null && CACHE.getSlotAdapterIndex(ADAPTER) != null
                     && TimelessAPI.getClientGunIndex(FIRST).isPresent(), 1200);
             if (ctx.computeOnClient(mc -> CACHE.getGunIndex(SECOND) != null)) throw new AssertionError("Stale reload fixture");
-            Files.createFile(Path.of(System.getProperty("tacz.probe.ready")));
+            Files.createFile(ready.resolveSibling("joined"));
+            expectGeneration(ctx, viewer, FIRST, SECOND);
+            DedicatedCrafting.craft(ctx, 0);
+            Files.createFile(ready);
             ctx.waitFor(mc -> CACHE.getGunIndex(FIRST) == null && CACHE.getGunIndex(SECOND) != null && hasNamedStock(mc), 1200);
+            expectGeneration(ctx, viewer, SECOND, FIRST);
+            DedicatedCrafting.craft(ctx, 1);
             var before = ctx.computeOnClient(mc -> CACHE.getGunIndex(SECOND));
             disconnect(ctx);
             ctx.waitFor(mc -> CACHE.getGunIndex(SECOND) == null && CACHE.getSlotAdapterIndex(ADAPTER) == null);
             connect(ctx);
             ctx.waitFor(mc -> online(mc) && CACHE.getGunIndex(SECOND) != null && CACHE.getGunIndex(SECOND) != before
                     && CACHE.getGunIndex(FIRST) == null && CACHE.getSlotAdapterIndex(ADAPTER) != null && hasNamedStock(mc), 1200);
+            expectGeneration(ctx, viewer, SECOND, FIRST);
+            ctx.waitFor(mc -> DedicatedCrafting.recipeBookHasTable(mc) && DedicatedCrafting.inventory(mc, ModItems.GUN_SMITH_TABLE) == 2
+                    && DedicatedCrafting.inventory(mc, Items.OAK_LOG) == 0 && DedicatedCrafting.inventory(mc, Items.IRON_INGOT) == 0
+                    && DedicatedCrafting.inventory(mc, Items.IRON_BLOCK) == 0);
+            System.out.println("PORT_CRAFT: " + profile + " dedicated survival 3x3 before and after reload; server confirmed inventory and recipe book on rejoin");
             ctx.takeScreenshot("tacz_distribution_rejoined");
             disconnect(ctx);
             System.out.println("PORT_DISTRIBUTION: production JAR, dedicated TCP join, server-only index replacement, disconnect and fresh rejoin with 7 named items passed");
         } catch (IOException ex) { throw new UncheckedIOException(ex); }
+    }
+    private static void expectGeneration(ClientGameTestContext ctx, ViewerProbe viewer, Identifier live, Identifier retired) {
+        ctx.waitFor(mc -> CACHE.getTableRecipe(live) != null && CACHE.getTableRecipe(retired) == null
+                && (viewer == null || viewer.hasOrdinaryCrafting() && viewer.hasGun(live) && !viewer.hasGun(retired)
+                        && viewer.hasWorkbenchRecipe(live) && !viewer.hasWorkbenchRecipe(retired)), 1200);
     }
     private static boolean sameFile(Path p, Path jar) {
         try { return Files.isSameFile(p, jar); } catch (IOException ex) { throw new UncheckedIOException(ex); }
