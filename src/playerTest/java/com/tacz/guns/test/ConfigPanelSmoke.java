@@ -15,13 +15,15 @@ import java.util.*;
 final class ConfigPanelSmoke {
     static void run(ClientGameTestContext ctx) {
         ctx.runOnClient(mc -> {
+            if (!RenderConfig.MUZZLE_SURFACE_LIGHT.get() || !RenderConfig.LEGACY_MUZZLE_LIGHT.get() || !RenderConfig.EXPLOSION_SURFACE_LIGHT.get())
+                throw new AssertionError("Fresh client config should enable all three flash lighting controls");
             var root=MenuIntegration.getConfigBuilder();
             var category=root.getOrCreateCategory(Component.translatable("config.tacz.client.render"));
             Map<String,Object> expected=Map.of(
                 "disable_third_person_offhand_and_hotbar_gun_render",false,
                 "gun_hurt_bob_multiplier",.1D,"muzzle_smoke",true,
                 "dropped_gun_sprite_distance",RenderConfig.DEFAULT_DROPPED_GUN_SPRITE_DISTANCE,
-                "muzzle_surface_light",false,"legacy_muzzle_light",false,"explosion_surface_light",false);
+                "muzzle_surface_light",true,"legacy_muzzle_light",true,"explosion_surface_light",true);
             Set<String> checked=new HashSet<>();
             for(Object candidate:category.getEntries()) {
                 if(!(candidate instanceof AbstractConfigListEntry<?> entry))continue;
