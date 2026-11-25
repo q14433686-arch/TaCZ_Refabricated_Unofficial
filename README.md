@@ -30,7 +30,7 @@
 | **26.1.2** | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) |
 | **1.21.11** | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) |
 
-本页面对应 **26.1.2** 源码。源码版本不是 Release 公告。
+本页面对应 **26.1.2** 源码。源码版本不是 Release 公告。见[本线 1.2 回移与验收记录](docs/PORT_1_2_26_1_2.md)，不要用 26.2 的成品或画面代替本线回执。
 
 ---
 
@@ -99,13 +99,12 @@ melee、consumable、detonator，以及 explode / sticky / smoke / stun / effect
 26.1.2 端口无法沿用上游的即时 stencil 调用与绘制时序，因此使用 branch-specific 的
 **深度孔径**路径：
 
-1. 用不可见目镜几何写入孔径深度；
-2. 在镜身绘制前保存并复制所需的世界/孔径深度；
-3. 枪身、相关配件、枪口火光和准星按孔径关系过滤；
-4. 完成后恢复对应的世界深度。
+1. 先保存当前世界深度，再用不可见目镜几何写入孔径深度；
+2. 在镜身绘制前立即复制孔径深度；
+3. 镜身按孔径裁剪，随后恢复对应的世界深度；
+4. 用两份深度判断内外：分划留在真实镜孔内，需要让位的视模和特效留在孔外。
 
-这套流程仍只使用同一次世界渲染，**不是第二份世界画面**。代码中的
-`PictureInPictureRenderer` 仅用于枪械工作台的 GUI 模型预览，与瞄具实现无关。
+上述是默认的经典模式。选开 `ScopePipEnable` 后，达到倍率门槛的镜片可采样已完成的世界颜色（重投影），仍不必多画一遍世界。另开 `ScopePipRerender` 才是窄 FOV 的第二次世界渲染：26.1.2 在窄遍结束后必须重新提取主遍状态。光影下使用 PIP 还需显式允许 `ScopePipAllowShaderPacks`，这些开关不是所有 shader pack 的兼容保证。`PictureInPictureRenderer` 是工作台 GUI 预览，不是瞄具开关。
 
 Iris 有专门的 HAND/depth 接线；其他 shader pack 没有因此自动获得兼容保证。
 
@@ -172,11 +171,13 @@ gunpack.meta.json
 转换器会生成带 `gunpack.meta.json` 的输出；它不能保证自动修复所有旧资源、配方或脚本差异，
 请保留原包备份并检查游戏日志。
 
+已有 `gunpack.meta.json` 的 1.20.1 包还可用 `/tacz convert universal "Example Pack.zip" check` 生成报告，确认后再 `export` 到独立目录；不会在进服时改写或安装源包。见[26.1.2 转换与编辑备份](docs/GUNPACK_CONVERSION_26_1_2.md)。
+
 ### 版本约束
 
 枪包可以在 `gunpack.meta.json` 的 `dependencies` 中声明版本谓词。本分支用 `1.2.0`
 作为 SemVer 核心，`+fabric.26.1.2.R1` 是构建元数据，不参与 Fabric 的版本先后比较。
-一个枪包最终是否通过检查，仍取决于它写下的完整谓词，不能笼统理解为“所有旧包都兼容”。
+例如 `dependencies.tacz` 的 `>=1.2.0`、`[1.2.0]` 匹配，`[1.1.8,1.2.0)` 不匹配。`overlays.entries[].minecraft` 则匹配游戏版本（如 `[26.1.2]`）；匹配层从后向前优先于包根。内置包署名文件的版本不是模组依赖版本。
 
 ### 依赖 TacZ:Arcana 的内容
 
