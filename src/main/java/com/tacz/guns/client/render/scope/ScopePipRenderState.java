@@ -526,7 +526,6 @@ public final class ScopePipRenderState {
     public static void captureSceneAfterIrisFinal(Minecraft mc) {
         if (ScopeLensFrame.expected != null && IrisCompat.supportsFinalScopeOverlay()
                 && !(ScopePipRerender.rerenderMode() && ScopePipRerender.hasScene())) {
-            ScopeThermalCapture.finish(mc.getMainRenderTarget(), mc.gameRenderer.getGameRenderState().levelRenderState.cameraRenderState);
             copyMainColor(mc); return;
         }
         if (!isEnabled() || failed || mc == null) {

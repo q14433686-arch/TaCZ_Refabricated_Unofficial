@@ -47,13 +47,18 @@ public final class PackagedConnectionProbe implements FabricClientGameTest {
             ctx.waitFor(mc -> online(mc) && CACHE.getGunIndex(FIRST) != null && CACHE.getSlotAdapterIndex(ADAPTER) != null
                     && TimelessAPI.getClientGunIndex(FIRST).isPresent(), 1200);
             if (ctx.computeOnClient(mc -> CACHE.getGunIndex(SECOND) != null)) throw new AssertionError("Stale reload fixture");
+            // Native ServerGamePacketListener drops interaction packets until PlayerLoaded.
+            // Registry sync can complete while the receiving-level screen is still open.
+            ctx.waitFor(mc -> mc.getConnection().hasClientLoaded() && mc.screen == null, 1200);
             Files.createFile(ready.resolveSibling("joined"));
             expectGeneration(ctx, viewer, FIRST, SECOND);
             DedicatedCrafting.craft(ctx, 0);
+            DedicatedCrafting.table(ctx, FIRST, 0);
             Files.createFile(ready);
             ctx.waitFor(mc -> CACHE.getGunIndex(FIRST) == null && CACHE.getGunIndex(SECOND) != null && hasNamedStock(mc), 1200);
             expectGeneration(ctx, viewer, SECOND, FIRST);
             DedicatedCrafting.craft(ctx, 1);
+            DedicatedCrafting.table(ctx, SECOND, 1);
             var before = ctx.computeOnClient(mc -> CACHE.getGunIndex(SECOND));
             disconnect(ctx);
             ctx.waitFor(mc -> CACHE.getGunIndex(SECOND) == null && CACHE.getSlotAdapterIndex(ADAPTER) == null);
@@ -63,7 +68,8 @@ public final class PackagedConnectionProbe implements FabricClientGameTest {
             expectGeneration(ctx, viewer, SECOND, FIRST);
             ctx.waitFor(mc -> DedicatedCrafting.recipeBookHasTable(mc) && DedicatedCrafting.inventory(mc, ModItems.GUN_SMITH_TABLE) == 2
                     && DedicatedCrafting.inventory(mc, Items.OAK_LOG) == 0 && DedicatedCrafting.inventory(mc, Items.IRON_INGOT) == 0
-                    && DedicatedCrafting.inventory(mc, Items.IRON_BLOCK) == 0);
+                    && DedicatedCrafting.inventory(mc, Items.IRON_BLOCK) == 0 && DedicatedCrafting.shells(mc) == 10
+                    && DedicatedCrafting.inventory(mc, Items.STICK) == 0);
             System.out.println("PORT_CRAFT: " + profile + " dedicated survival 3x3 before and after reload; server confirmed inventory and recipe book on rejoin");
             ctx.takeScreenshot("tacz_distribution_rejoined");
             disconnect(ctx);

@@ -1,0 +1,49 @@
+name: 26.1.2 player and optional APIs
+on:
+  workflow_dispatch:
+  push:
+    branches: ['arena/**', '26.1.2']
+    paths: &paths
+      - 'src/main/**'
+      - 'src/gametest/**'
+      - 'src/playerTest/**'
+      - 'build.gradle'
+      - 'gradle.properties'
+      - '.github/workflows/player-suites.yml'
+  pull_request:
+    branches: ['26.1.2']
+    paths: *paths
+permissions: {contents: read}
+concurrency:
+  group: player-suites-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  player:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix: {suite: [actions, hud, pal, controller]}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '25'}
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Exercise the native player client
+        env: {SUITE: '${{ matrix.suite }}', LIBGL_ALWAYS_SOFTWARE: 'true', ALSOFT_DRIVERS: 'null'}
+        run: |
+          set -o pipefail
+          xvfb-run -a -s '-screen 0 2600x1500x24' ./gradlew --init-script scripts/ci-central.init.gradle -PtaczClientSmoke -PtaczPlayerSuite="$SUITE" runClientGameTest --console=plain 2>&1 | tee "$RUNNER_TEMP/player.log"
+          grep -F "PORT_PLAYER: $SUITE complete" build/run/clientGameTest/logs/latest.log
+      - if: always()
+        run: grep -E 'PORT_(PLAYER|ACCOUNT_HUD|HUD|CONTROLLER|PAL|SHOT|MOVEMENT|VIEW_TUNING|CLOCK|CONFIG|REFIT|CORE)' build/run/clientGameTest/logs/latest.log | sed 's/^/::notice::/' || true
+      - if: failure()
+        run: python3 scripts/report_ci_failures.py "$RUNNER_TEMP/player.log" build/run/clientGameTest/logs/latest.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: player-${{ matrix.suite }}-${{ github.sha }}
+          retention-days: 7
+          path: |
+            build/run/clientGameTest/logs/latest.log
+            build/run/clientGameTest/screenshots/**/*.png

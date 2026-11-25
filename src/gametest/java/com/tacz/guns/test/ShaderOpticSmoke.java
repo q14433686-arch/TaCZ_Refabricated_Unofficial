@@ -137,6 +137,7 @@ public final class ShaderOpticSmoke {
         ctx.waitFor(mc -> mc.player.blockPosition().equals(base)); ctx.getInput().lookAt(180,0);
         world.getClientLevel().waitForChunksRender();
         var all=mounts(world);
+        if (!suite.startsWith("thermal")) backdrop(ctx, world, base, "light_blue");
         var failures=new ArrayList<String>(); int slots=0, count=0;
         try {
             boolean pipGallery = suite.equals("pip"), large = suite.startsWith("report-");
@@ -153,7 +154,7 @@ public final class ShaderOpticSmoke {
                 boolean selected = switch (suite) {
                     case "thermal" -> thermal;
                     case "thermal-reap" -> id.equals("scope_reap_ir");
-                    case "thermal-xl50" -> id.equals("scope_xl50");
+                    case "thermal-xl50", "thermal-narrow" -> id.equals("scope_xl50");
                     case "scopes" -> id.startsWith("scope_");
                     case "sights" -> !id.startsWith("scope_");
                     case "pip" -> true;
@@ -165,14 +166,15 @@ public final class ShaderOpticSmoke {
                 for (var v:views) {
                     if (large && id.equals("scope_lpvo_1_6") && v.zoom>2f) continue; // also verify its smallest etched scale
                     if (pipGallery && v.zoom < 4f) continue; // default PIP cutover
+                    if (suite.equals("thermal-narrow") && v.slot != 0) continue;
                     count++; equip(ctx,world,m,v);
                     ctx.waitFor(mc -> Math.abs(ScopePipRenderState.currentZoom()-v.zoom)<.01);
                     if (pipGallery) ctx.waitFor(mc -> ScopePipRenderState.suppressesWorldFovZoom(mc.getDeltaTracker().getGameTimeDeltaPartialTick(false)));
-                    if (suite.startsWith("thermal")) heat(ctx,world,base,m,v,failures);
+                    if (suite.startsWith("thermal")) heat(ctx,world,base,m,v,failures,suite.equals("thermal-narrow"));
                     else gallery(ctx,world,base,m,v,thermal,large,failures);
                 }
             }
-            int expected = switch (suite) { case "scopes" -> 34; case "sights" -> 25; case "pip" -> 20; case "thermal", "report-size" -> 4; case "thermal-reap", "thermal-xl50" -> 2; case "report-marks" -> 5; default -> throw new AssertionError(suite); };
+            int expected = switch (suite) { case "scopes" -> 34; case "sights" -> 25; case "pip" -> 20; case "thermal", "report-size" -> 4; case "thermal-reap", "thermal-xl50" -> 2; case "report-marks" -> 5; case "thermal-narrow" -> 1; default -> throw new AssertionError(suite); };
             if (all.size()!=46 || slots!=59 || count!=expected) throw new AssertionError("Incomplete catalog "+all.size()+"/"+slots+"/"+count);
             if (!failures.isEmpty()) throw new AssertionError("ADS framebuffer failures: " + failures);
             GunMod.LOGGER.info("OPTIC_COMPLETE: {} {}/{} slots ({} indexed attachments)",suite,count,slots,all.size());
@@ -274,13 +276,15 @@ public final class ShaderOpticSmoke {
 
     private static void backdrop(ClientGameTestContext ctx, TestSingleplayerContext world, BlockPos base, String colour) {
         var block=net.minecraft.core.registries.BuiltInRegistries.BLOCK.getOptional(Identifier.parse("minecraft:"+colour+"_concrete")).orElseThrow();
-        var mid=base.north(45).above(1);
+        // Keep the colour-swap control inside the nearest two chunks, even on the minimal
+        // native client render distance. The thermal lane keeps its wall behind the 36-block target.
+        var mid=base.north(16).above(1);
         world.getServer().runOnServer(s->{var level=s.getPlayerList().getPlayers().getFirst().level();
             for(int y=-6;y<=6;y++) for(int x=-6;x<=6;x++) level.setBlock(mid.offset(x,y,0),block.defaultBlockState(),Block.UPDATE_ALL);});
         ctx.waitFor(mc->mc.level.getBlockState(mid).is(block)); world.getClientLevel().waitForChunksRender(); ctx.waitTicks(6);
     }
 
-    private static void heat(ClientGameTestContext ctx, TestSingleplayerContext world, BlockPos base, Mount m, View v, List<String> failures) {
+    private static void heat(ClientGameTestContext ctx, TestSingleplayerContext world, BlockPos base, Mount m, View v, List<String> failures, boolean narrow) {
         var id=world.getServer().computeOnServer(s->{
             var level=s.getPlayerList().getPlayers().getFirst().level(); var slime=EntityType.SLIME.create(level,EntitySpawnReason.COMMAND);
             slime.setSize(3,true); slime.setNoAi(true); slime.setNoGravity(true); slime.snapTo(Vec3.atBottomCenterOf(base.north(16).above()));
@@ -288,14 +292,17 @@ public final class ShaderOpticSmoke {
         });
         ctx.waitFor(mc->mc.level.getEntity(id)!=null);
         try {
-            for(boolean pip:new boolean[]{false,true}) {
-                ctx.runOnClient(mc -> { RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.set(true); RenderConfig.SCOPE_PIP_MIN_MAGNIFICATION.set(1d); RenderConfig.SCOPE_PIP_ENABLE.set(pip); });
+            for(boolean pip:narrow ? new boolean[]{true} : new boolean[]{false,true}) {
+                ctx.runOnClient(mc -> { RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.set(true); RenderConfig.SCOPE_PIP_MIN_MAGNIFICATION.set(1d); RenderConfig.SCOPE_PIP_ENABLE.set(pip); RenderConfig.SCOPE_PIP_RERENDER.set(narrow); });
                 ctx.waitFor(mc -> ScopePipRenderState.suppressesWorldFovZoom(mc.getDeltaTracker().getGameTimeDeltaPartialTick(false))==pip);
+                if (narrow) ctx.waitFor(mc -> com.tacz.guns.client.render.scope.ScopePipRerender.hasScene()
+                        && Math.abs(mc.gameRenderer.getGameRenderState().levelRenderState.cameraRenderState.projectionMatrix.m11()
+                                * Math.tan(Math.toRadians(mc.options.fov().get() * .5)) - 1) < .015, 600);
                 for(int range:new int[]{16,36}) {
                     var at=base.north(range).above();
                     world.getServer().runOnServer(s->s.getPlayerList().getPlayers().getFirst().level().getEntity(id).snapTo(Vec3.atBottomCenterOf(at)));
                     ctx.getInput().lookAt(at); ctx.waitTicks(12);
-                    var key=m.optic.getPath()+"_"+v.slot+(pip?"_pip_":"_classic_")+range;
+                    var key=m.optic.getPath()+"_"+v.slot+(narrow?"_narrow_":pip?"_pip_":"_classic_")+range;
                     var wall=at.south(2);
                     // Both empty references have the *same* wall/background, camera, optic and pack
                     // as their populated counterpart. Never infer the target footprint from heat.
@@ -309,6 +316,11 @@ public final class ShaderOpticSmoke {
                         var optical=frame(ctx,key+"_optical_"+angle);
                         thermal(ctx,true);
                         var image=frame(ctx,key+"_"+angle);
+                        if (angle == 0) {
+                            ctx.runOnClient(mc -> ScopeDepthProbe.next = key);
+                            ctx.waitFor(mc -> ScopeDepthProbe.next == null);
+                            GunMod.LOGGER.info("OPTIC_TRACE: {} exposed mask pixels={}", key, SensorLayers.sample(ctx).heatPixels());
+                        }
                         float drawn=ctx.computeOnClient(mc->renderedYaw);
                         if (Math.abs(net.minecraft.util.Mth.wrapDegrees(drawn-angle))>1 || !Float.isFinite(drawn))
                             throw new AssertionError("Render state changed angle: "+drawn+" vs "+angle);
@@ -350,7 +362,7 @@ public final class ShaderOpticSmoke {
                 }
             }
         } finally {
-            ctx.runOnClient(mc->{ poseTarget=null; RenderConfig.SCOPE_THERMAL_ENABLE.set(true); RenderConfig.SCOPE_PIP_ENABLE.set(false); });
+            ctx.runOnClient(mc->{ poseTarget=null; RenderConfig.SCOPE_THERMAL_ENABLE.set(true); RenderConfig.SCOPE_PIP_ENABLE.set(false); RenderConfig.SCOPE_PIP_RERENDER.set(false); });
             world.getServer().runOnServer(s->s.getPlayerList().getPlayers().getFirst().level().getEntity(id).discard());
         }
     }

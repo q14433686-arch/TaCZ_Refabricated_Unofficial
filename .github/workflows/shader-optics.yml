@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [scopes, sights, pip, thermal-reap, thermal-xl50, report-size, report-marks]
+        suite: [scopes, sights, pip, thermal-narrow, thermal-reap, thermal-xl50, report-size, report-marks]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
@@ -48,7 +48,7 @@ jobs:
           from pathlib import Path
           import sys
           rows=Path(sys.argv[1]).read_text(errors='replace').splitlines()
-          for tag in ('PACK','FRAME','HEAT','COMPLETE'):
+          for tag in ('PACK','FRAME','HEAT','TRACE','COMPLETE'):
               marker='OPTIC_'+tag+': '
               data=[s.split(marker,1)[1] for s in rows if marker in s]
               for i in range(0,len(data),10): print('::notice title='+tag+'::'+' | '.join(data[i:i+10]))

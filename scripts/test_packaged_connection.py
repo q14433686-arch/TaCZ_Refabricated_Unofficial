@@ -172,8 +172,8 @@ def main():
                     # Materials introduced only on the server: recipe book unlocked through its
                     # normal advancement, client cannot fake a craft by editing local slots.
                     server.stdin.write('forceload add 8 8\nexecute positioned 8 201 8 run fill ~-2 ~-1 ~-2 ~2 ~-1 ~2 minecraft:stone\n'
-                                       'setblock 9 201 8 minecraft:crafting_table\ngamemode survival @a\n'
-                                       'tp @a 8.5 201 8.5\ngive @a minecraft:oak_log 6\ngive @a minecraft:iron_ingot 8\ngive @a minecraft:iron_block 2\n')
+                                       'setblock 9 201 8 minecraft:crafting_table\nsetblock 7 201 8 tacz:workbench_a{BlockId:"tacz:ammo_workbench"}\ngamemode survival @a\n'
+                                       'tp @a 8.5 201 8.5\ngive @a minecraft:oak_log 6\ngive @a minecraft:iron_ingot 8\ngive @a minecraft:iron_block 2\ngive @a minecraft:stick 2\n')
                     server.stdin.flush()
                     await_state(ready.is_file, [server, client], 600, 'client did not receive server-only index')
                     (indexes/'first.json').rename(indexes/'second.json')

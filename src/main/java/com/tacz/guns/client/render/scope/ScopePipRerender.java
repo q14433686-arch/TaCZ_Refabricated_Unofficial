@@ -349,7 +349,7 @@ public final class ScopePipRerender {
             levelRenderer.renderLevel(allocator, deltaTracker, false, cameraState,
                     viewMatrix, fogBuffer, fogColor, renderSky, chunkSectionsToRender);
             // 立刻拷走：紧随其后的 vanilla 那遍会整屏重画主目标。
-            ScopeThermalCapture.finish(mc.getMainRenderTarget(), cameraState);
+            if (!iris) ScopeThermalCapture.finish(mc.getMainRenderTarget(), cameraState);
             sceneCaptured = ScopePipRenderState.captureSceneFromMain(mc);
             if (sceneCaptured) {
                 // 记录「上次真渲」的帧号与画布代数，供隔帧复用闸门判断（见方法中段）。

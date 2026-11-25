@@ -260,6 +260,52 @@ dependencies {
 // win for metadata and future hand-edited files.
 def bundledSourcesAndResources = file("resources/tacz-26.1.2-source-and-resource-bundle.jar")
 
+if (project.hasProperty('taczPlayerSuite')) {
+    String suite = property('taczPlayerSuite')
+    if (!project.hasProperty('taczClientSmoke') || !(suite in ['hud', 'actions', 'pal', 'controller'])) {
+        throw new GradleException("Expected -PtaczClientSmoke and a recognized taczPlayerSuite")
+    }
+    sourceSets.gametest.java.srcDir 'src/playerTest/java'
+    sourceSets.gametest.resources.srcDir 'src/playerTest/resources'
+    configurations.gametestCompileOnly.extendsFrom(configurations.compileOnly)
+    repositories {
+        // Official signed Fabric releases; neither the controller nor Framework is bundled into TaCZ.
+        ['Controllable', 'Framework'].each { mod ->
+            exclusiveContent {
+                forRepository {
+                    ivy {
+                        name = "MrCrayfish${mod}Releases"
+                        url = uri("https://github.com/MrCrayfish/${mod}/releases/download")
+                        patternLayout { artifact('v[revision]/[artifact]-[revision]-signed.[ext]') }
+                        metadataSources { artifact() }
+                    }
+                }
+                filter { includeModule('mrcrayfish.release', mod.toLowerCase(Locale.ROOT) + '-fabric') }
+            }
+        }
+        // Only for compiling the SDL2 virtual-device test. Controllable itself supplies it at runtime.
+        exclusiveContent {
+            forRepository {
+                ivy {
+                    url = uri('https://github.com/MrCrayfish/ControllableSDL/releases/download')
+                    patternLayout { artifact('v[revision]/[artifact]-[revision].[ext]') }
+                    metadataSources { artifact() }
+                }
+            }
+            filter { includeModule('mrcrayfish.test', 'controllable-sdl') }
+        }
+    }
+    dependencies {
+        gametestCompileOnly 'mrcrayfish.test:controllable-sdl:2.32.10-1.1.0'
+        if (suite == 'pal') gametestRuntimeOnly "maven.modrinth:player-animation-library:${player_animation_lib}"
+        if (suite == 'controller') {
+            gametestRuntimeOnly "curse.maven:controllable-317269:${controllable_curse_file}"
+            gametestRuntimeOnly 'mrcrayfish.release:framework-fabric:0.13.22+26.1.2'
+        }
+    }
+    loom.runs.clientGameTest.property 'tacz.test.player', suite
+}
+
 if (project.hasProperty('taczOpticSuite')) {
     loom.runs.clientGameTest.property 'tacz.test.optics', project.property('taczOpticSuite')
     def shader = tasks.register('prepareTargetShader', Copy) {

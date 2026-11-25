@@ -1,6 +1,5 @@
 package com.tacz.guns.client.render.scope;
 
-import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.CompareOp;
@@ -12,7 +11,6 @@ import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.compat.iris.IrisSensorProgram;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.ProjectionMatrixBuffer;
 import net.minecraft.client.renderer.SubmitNodeStorage.ModelSubmit;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -41,7 +39,6 @@ public final class ScopeThermalCapture {
     private static boolean active, recording, ready, failed, shaderPack;
     private static TextureTarget mask;
     private static ByteBufferBuilder bytes;
-    private static ProjectionMatrixBuffer projection;
     private record Body(ModelSubmit<?> model, RenderType type, boolean shifted) {}
     private ScopeThermalCapture() {}
 
@@ -89,17 +86,14 @@ public final class ScopeThermalCapture {
             if (!draws.isEmpty()) {
                 mask.copyDepthFrom(scene);
                 if (bytes == null) bytes = new ByteBufferBuilder(256 * 1024);
-                if (projection == null) projection = new ProjectionMatrixBuffer("tacz_heat");
                 var out = MultiBufferSource.immediate(bytes);
-                var oldProjection = RenderSystem.getProjectionMatrixBuffer();
-                var oldType = RenderSystem.getProjectionType();
                 var oldColor = RenderSystem.outputColorTextureOverride;
                 var oldDepth = RenderSystem.outputDepthTextureOverride;
                 var mv = RenderSystem.getModelViewStack();
                 mv.pushMatrix();
                 try (var borrowed = shaderPack ? ThermalSceneDepth.borrow(scene) : null) {
                     mv.set(camera.viewRotationMatrix);
-                    RenderSystem.setProjectionMatrix(projection.getBuffer(camera.projectionMatrix), ProjectionType.PERSPECTIVE);
+                    // Keep the bound world projection (including bob or the narrow pass), not HUD FOV.
                     RenderSystem.outputColorTextureOverride = mask.getColorTextureView();
                     RenderSystem.outputDepthTextureOverride = mask.getDepthTextureView();
                     for (var d : draws) if (d.shifted) replay(d.model, d.type, out);
@@ -109,7 +103,6 @@ public final class ScopeThermalCapture {
                 } finally {
                     RenderSystem.outputColorTextureOverride = oldColor;
                     RenderSystem.outputDepthTextureOverride = oldDepth;
-                    RenderSystem.setProjectionMatrix(oldProjection, oldType);
                     mv.popMatrix();
                 }
             }
@@ -130,7 +123,6 @@ public final class ScopeThermalCapture {
         beginFrame(false); failed = false;
         if (mask != null) { mask.destroyBuffers(); mask = null; }
         if (bytes != null) { bytes.close(); bytes = null; }
-        if (projection != null) { projection.close(); projection = null; }
         ScopeThermalMaterial.clear();
     }
 }

@@ -223,7 +223,7 @@ public abstract class GameRendererMixin {
                     cameraState, viewMatrix, fogBuffer, fogColor, renderSky, chunkSectionsToRender);
             levelRenderer.renderLevel(allocator, deltaTracker, blockOutline, cameraState,
                     viewMatrix, fogBuffer, fogColor, renderSky, chunkSectionsToRender);
-            com.tacz.guns.client.render.scope.ScopeThermalCapture.finish(minecraft.getMainRenderTarget(), cameraState);
+            if (!IrisCompat.isUsingRenderPack()) com.tacz.guns.client.render.scope.ScopeThermalCapture.finish(minecraft.getMainRenderTarget(), cameraState);
         } finally {
             PolyMeshGpuRenderer.setLevelRenderActive(false);
         }

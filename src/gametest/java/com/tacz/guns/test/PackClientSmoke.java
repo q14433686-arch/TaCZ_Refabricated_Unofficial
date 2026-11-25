@@ -10,6 +10,13 @@ import net.minecraft.resources.Identifier;
 
 public final class PackClientSmoke implements FabricClientGameTest {
     @Override public void runTest(ClientGameTestContext context) {
+        if (System.getProperty("tacz.test.player") != null) {
+            // This optional test source set (never the mod) may link PAL/SDL's test APIs.
+            try { Class.forName("com.tacz.guns.test.PlayerSuites").asSubclass(FabricClientGameTest.class)
+                    .getConstructor().newInstance().runTest(context); }
+            catch (ReflectiveOperationException e) { throw new AssertionError("Player suite not built", e); }
+            return;
+        }
         var id = Identifier.parse("tacz:ak47");
         try (var world = context.worldBuilder().create()) {
             context.waitFor(mc -> CommonNetworkCache.INSTANCE.getGunIndex(id) != null && TimelessAPI.getClientGunIndex(id).isPresent());
