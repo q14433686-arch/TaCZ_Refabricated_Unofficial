@@ -5,16 +5,16 @@ import com.tacz.guns.compat.iris.IrisCompat;
 import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.Minecraft;
 
-/** Local muzzle effects remain viewmodel effects even after detaching into world space.
- * Remote/world effects have no such policy. Sight-only masks must never clip either. */
+/** A local viewmodel effect can detach into world space before the next hand is drawn. */
 public final class ScopeParticleClipping {
     private ScopeParticleClipping() {}
+
     public static boolean ready(boolean hand) {
-        if(hand) return ScopeRenderTypes.viewmodelFxClipApplies();
-        var mc=Minecraft.getInstance();
-        return mc.player!=null && mc.options.getCameraType().isFirstPerson()
-                && RenderConfig.SCOPE_MASK_ENABLE.get()
-                && IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(1)>.35f
-                && ScopeDepthCopyState.isMaskCycleValid() && ScopePipRenderState.currentZoom() >= ScopePipRenderState.minMagnification();
+        if (hand) return ScopeRenderTypes.viewmodelFxClipApplies();
+        var mc = Minecraft.getInstance();
+        return mc.player != null && mc.getCameraEntity() == mc.player && mc.options.getCameraType().isFirstPerson()
+                && RenderConfig.SCOPE_MASK_ENABLE.get() && !IrisCompat.isRenderShadow()
+                && IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(1) > .35f
+                && ScopeDepthCopyState.hasParticleAperture();
     }
 }

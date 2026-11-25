@@ -42,6 +42,9 @@ jobs:
               marker=tag+': '
               data=[s.split(marker,1)[1] for s in rows if marker in s]
               for i in range(0,len(data),10): print('::notice title='+tag+'::'+' | '.join(data[i:i+10]).replace('%','%25'))
+          for row in rows:
+              if 'program match for tacz:pipeline/' in row and ('muzzle_' in row or 'snowstorm_' in row):
+                  print('::notice title=IRIS_KEY::'+row.split('program match for ',1)[1])
           PY
       - if: failure()
         run: python3 scripts/report_ci_failures.py "$RUNNER_TEMP/iris.log" build/run/clientGameTest/logs/latest.log

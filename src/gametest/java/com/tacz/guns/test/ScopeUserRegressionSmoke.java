@@ -19,7 +19,7 @@ final class ScopeUserRegressionSmoke {
     }
 
     /** The actual user pack also exercises the separately mapped emissive aperture path. */
-    static void run(ClientGameTestContext ctx, TestSingleplayerContext world, boolean emissive) {
+    static void run(ClientGameTestContext ctx, TestSingleplayerContext world, boolean realPack) {
         var scope=Identifier.parse("tacz:scope_amg_10");
         var saved=world.getServer().computeOnServer(s->s.getPlayerList().getPlayers().getFirst().getMainHandItem().copy());
         var prior=ctx.computeOnClient(mc->new boolean[]{mc.options.bobView().get(),RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.get()});
@@ -29,7 +29,7 @@ final class ScopeUserRegressionSmoke {
         // retain the original magenta energy_swirl/sky regression on the real shaderpack.
         var backdrop = world.getServer().computeOnServer(s->{
             var old=new java.util.HashMap<net.minecraft.core.BlockPos,net.minecraft.world.level.block.state.BlockState>();
-            if (!emissive) {
+            if (!realPack) {
                 var player=s.getPlayerList().getPlayers().getFirst(); var level=player.level();
                 var gray=net.minecraft.core.registries.BuiltInRegistries.BLOCK.getOptional(Identifier.parse("minecraft:gray_concrete")).orElseThrow().defaultBlockState();
                 var mid=net.minecraft.core.BlockPos.containing(player.getEyePosition().add(0,4.5,16));
@@ -70,7 +70,12 @@ final class ScopeUserRegressionSmoke {
                             ?"invalid aperture "+w+"x"+h+" at "+(b[1]+b[3])/2:"";
                 });
                 if(!failure.isEmpty())errors.append("zoom ").append(z).append(": ").append(failure).append("; ");
-                checkOwnedParticle(ctx,z,emissive);
+                String material = realPack ? "energy_swirl" : "particles_add";
+                checkParticle(ctx, z, realPack, material, true);
+                if (!realPack) checkParticle(ctx, z, false, "particles_emissive", true);
+                // Same eye key and sight picture: an unrelated world effect must remain visible,
+                // even in the closed scope slot right after the clipped draw used this program.
+                if (z == 0) checkParticle(ctx, z, realPack, realPack ? material : "particles_emissive", false);
             }
             if(!errors.isEmpty())throw new AssertionError("AMG10 optical-axis mismatch: "+errors);
             GunMod.LOGGER.info("PORT_AMG10: all three zooms produced bounded on-axis apertures");
@@ -86,9 +91,11 @@ final class ScopeUserRegressionSmoke {
         }
     }
 
-    private static void checkOwnedParticle(ClientGameTestContext ctx,int zoom,boolean emissive) {
+    private static void checkParticle(ClientGameTestContext ctx,int zoom,boolean realPack,String material,boolean local) {
         var runtime=com.tacz.guns.client.particle.bedrock.particle.world.WorldEmitterManager.getInstance();
-        var baseline=OpticalLayers.sample(ctx,"tacz_amg10_particle_baseline_"+zoom,emissive);
+        String tag = material + (local ? "_local_" : "_world_") + zoom;
+        ctx.waitTicks(8);
+        var baseline=OpticalLayers.sample(ctx,"tacz_amg10_particle_baseline_"+tag,realPack);
         ctx.runOnClient(mc->{
             var env=new com.tacz.guns.client.particle.bedrock.particle.runtime.ParticleMolangEnvironment();
             var def=new com.tacz.guns.client.particle.bedrock.particle.data.ParticleEffectDeserializer().parse(
@@ -100,22 +107,22 @@ final class ScopeUserRegressionSmoke {
                     "minecraft:emitter_shape_point":{"offset":[0,0,0]},"minecraft:particle_lifetime_expression":{"max_lifetime":1},
                     "minecraft:particle_appearance_billboard":{"size":[0.3,0.3],"facing_camera_mode":"rotate_xyz"},
                     "minecraft:particle_appearance_tinting":{"color":%s}}}}
-                    """.formatted(emissive?"energy_swirl":"particles_add",emissive?"[1,0,1,1]":"[0,1,0,1]")),env);
+                    """.formatted(material,realPack?"[1,0,1,1]":"[0,1,0,1]")),env);
             var p=mc.gameRenderer.getMainCamera().position().add(mc.player.getLookAngle().scale(2));
             var matrix=new org.joml.Matrix4f().translation((float)p.x,(float)p.y,(float)p.z);
             var emitter=runtime.addEmitter(mc.level,matrix,net.minecraft.world.phys.Vec3.ZERO,def,"",mc.player);
             if(emitter==null)throw new AssertionError("Cannot create scope particle probe");
             // A detached world-space local effect; deliberately no animated locator to move it off-axis.
-            runtime.bindAnimated(emitter,mc.player.getId(),Identifier.parse("tacz:m700"),"scope_probe_static",true,matrix,matrix);
+            runtime.bindAnimated(emitter,mc.player.getId(),Identifier.parse("tacz:m700"),null,local,matrix,matrix,0);
         });
         try {
             ctx.waitTicks(4);
-            var frame=OpticalLayers.sample(ctx,"tacz_amg10_particle_"+zoom,emissive);
+            var frame=OpticalLayers.sample(ctx,"tacz_amg10_particle_"+tag,realPack);
             var image=frame.display();
             int signal=0,displaySignal=0,displayOnly=0,baselineGreen=0,r=image.getHeight()/16;
             for(int y=image.getHeight()/2-r;y<image.getHeight()/2+r;y++)for(int x=image.getWidth()/2-r;x<image.getWidth()/2+r;x++) {
                 int c=image.getRGB(x,y),b=baseline.display().getRGB(x,y);
-                if (emissive) {
+                if (realPack) {
                     // Same material, same sky, same detector. Test the real composite BEFORE ink too:
                     // the authored red AMG10 mark over blue can make pink in the final frame.
                     int scene=frame.scene().getRGB(x,y),empty=baseline.scene().getRGB(x,y);
@@ -130,11 +137,11 @@ final class ScopeUserRegressionSmoke {
                     if ((c>>>8&255)>Math.max(c>>>16&255,c&255)+20 && dg>30 && dg-Math.max(dr,db)>20) signal++;
                 }
             }
-            boolean bad=zoom<2 ? signal!=0 || displaySignal!=displayOnly : signal<8 || (emissive && displaySignal<8);
-            if(baselineGreen!=0 || bad) throw new AssertionError("Owned particle aperture policy zoom="+zoom+" signal="+signal
+            boolean bad=local && zoom<2 ? signal!=0 || displaySignal!=displayOnly : signal<8 || (realPack && displaySignal<8);
+            if(baselineGreen!=0 || bad) throw new AssertionError("Particle aperture policy "+tag+" signal="+signal
                     +" display="+displaySignal+" foregroundOnly="+displayOnly+" ambientGreen="+baselineGreen);
-            GunMod.LOGGER.info("PORT_SCOPE_PARTICLE: AMG10 zoom={} central {}={} material={} display={} foregroundOnly={}",zoom,
-                    emissive?"magenta":"green",signal,emissive?"energy_swirl":"particles_add",emissive?displaySignal:signal,displayOnly);
+            GunMod.LOGGER.info("PORT_SCOPE_PARTICLE: AMG10 zoom={} central {}={} material={} local={} display={} foregroundOnly={}",zoom,
+                    realPack?"magenta":"green",signal,material,local,realPack?displaySignal:signal,displayOnly);
         }
         finally { ctx.runOnClient(mc->runtime.clear()); }
     }

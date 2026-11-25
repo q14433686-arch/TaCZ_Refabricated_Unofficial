@@ -178,6 +178,15 @@ public final class ScopeDepthCopyState {
     private static @javax.annotation.Nullable DepthIdentity apertureDepthIdentity;
     private static boolean backupValid;
     private static boolean maskValid;
+    // Draw-time policy of the ocular that actually populated the copy, not a global aim flag.
+    private static float viewmodelClipZoom = Float.NaN;
+
+    static boolean hasParticleAperture() {
+        // A detached effect is extracted in the world pass, normally before this frame's hand.
+        return maskValid && (maskCycleFrame == frameCounter || maskCycleFrame == frameCounter - 1)
+                && viewmodelClipZoom == ScopePipRenderState.currentZoom();
+    }
+
     /**
      * 帧计数（{@link #onClientFrameStart()} 递增）与最近一次成功掩码周期的帧戳。
      * 初值 MIN_VALUE：任何「本帧/上一帧」查询在第一个周期完成前都为假（fail-closed）。
@@ -230,6 +239,8 @@ public final class ScopeDepthCopyState {
                 disableScopeBranches(program);
                 maskValid = false;
                 maskWorldValid = false;
+                worldDepthIdentity = null; // an allocated texture alone is not a copy from this cycle
+                viewmodelClipZoom = ScopeRenderTypes.viewmodelFxClipApplies() ? ScopePipRenderState.currentZoom() : Float.NaN;
                 // Recorded on BOTH the Iris and vanilla paths: this is the surface the ocular draw
                 // is about to write near depth into, and step 3 must copy exactly this surface.
                 // Note the depth attachment identity is the durable key — Iris rebinds a different
@@ -251,11 +262,12 @@ public final class ScopeDepthCopyState {
                     // The PIP path also needs it: the lens composite runs after finalizeLevelRendering,
                     // so a bare-rim frame (or any frame where the reticle was not queued) must still
                     // force the private copy or the composite has no world depth to mask against.
-                    if (ScopeFinalOverlayState.hasPendingOverlay()
-                            || ScopeLensFrame.expected != null || ScopePipRenderState.needsIrisWorldDepthCopy()) {
+                    boolean needsOverlayCopy = ScopeFinalOverlayState.hasPendingOverlay()
+                            || ScopeLensFrame.expected != null || ScopePipRenderState.needsIrisWorldDepthCopy();
+                    if (needsOverlayCopy || !Float.isNaN(viewmodelClipZoom)) {
                         boolean copied = copyCurrentDepth(WORLD_TARGET, "final-overlay world depth");
                         worldDepthIdentity = copied ? captureDepthIdentity() : null;
-                        if (!copied) {
+                        if (!copied && needsOverlayCopy) {
                             maskWorldValid = false;
                         }
                     }
@@ -530,10 +542,12 @@ public final class ScopeDepthCopyState {
             logFailure("reticle shader has no ocular aperture sampler");
             return true;
         }
-        boolean irisWorld = !finalOverlay && useIrisPreHandDepth && irisWorldLocation >= 0;
+        // A pack may declare depthtex2 for its own purposes on the emissive key. Only the
+        // injected HAND branch consumes that sampler; never substitute it for a private pair.
+        boolean irisWorld = worldLocation < 0 && !finalOverlay && useIrisPreHandDepth && irisWorldLocation >= 0;
         // The vanilla branch and final overlay may only bind a world-depth sampler when this cycle
         // actually owns a private copy; otherwise texture 0 would discard every reticle pixel.
-        if (!irisWorld && (worldLocation < 0 || WORLD_TARGET.texture() == 0)) {
+        if (!irisWorld && (worldLocation < 0 || worldDepthIdentity == null || !worldDepthIdentity.equals(apertureDepthIdentity))) {
             GL20.glUniform1i(maskLocation, 0);
             logFailure("reticle shader has no usable world-depth source for the ocular mask");
             return true;

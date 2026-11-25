@@ -57,7 +57,19 @@ public final class ImpactMarkerSmoke {
     }
 
     public static void onSample(double slope) { lastSlope = slope; }
-    public static void atDraw() { draws++; }
+    public static void atDraw(PoseStack.Pose pose, float y, float half, float line) {
+        draws++;
+        var projection = com.tacz.guns.client.render.scope.ScopeProjection.current();
+        if (!trace || projection == null || draws != 1) return;
+        var clip = new Matrix4f(projection).mul(RenderSystem.getModelViewMatrix()).mul(pose.pose());
+        var target = Minecraft.getInstance().getMainRenderTarget();
+        var corners = new StringBuilder();
+        for (float dx : new float[]{-half, half}) for (float dy : new float[]{-half, half}) {
+            var p = clip.transformProject(new org.joml.Vector3f(dx, y + dy, 0));
+            corners.append(' ').append((p.x()+1)*.5f*target.width).append(',').append((1-p.y())*.5f*target.height);
+        }
+        GunMod.LOGGER.info("PORT_XM157: projected corners (framebuffer px){}; local half={} stroke={} exposed slope={}", corners, half, line, lastSlope);
+    }
 
     static void run(ClientGameTestContext ctx, TestSingleplayerContext world) {
         var sight = Identifier.parse("tacz:scope_xm157");
@@ -115,7 +127,10 @@ public final class ImpactMarkerSmoke {
             ctx.waitFor(mc -> mc.level.getBlockState(wall).is(Blocks.STONE));
             ctx.waitTicks(6); // beyond the actual XM157 refresh interval
             assertNoDraws(ctx, "behind a solid block");
-            int pixels = checkRing(on, off, again, ctx.takeScreenshot("tacz_xm157_occluded"));
+            Path blocked = ctx.takeScreenshot("tacz_xm157_occluded");
+            ctx.runOnClient(mc -> hide = true);
+            ctx.waitTicks(6);
+            int pixels = checkRing(on, off, again, blocked, ctx.takeScreenshot("tacz_xm157_occluded_control"));
             GunMod.LOGGER.info("PORT_OPTIC: XM157 showed {} restored yellow pixels on entity, zero draws behind wall", pixels);
         } finally {
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
@@ -139,15 +154,16 @@ public final class ImpactMarkerSmoke {
         return false;
     }
 
-    private static int checkRing(Path on, Path control, Path restored, Path occluded) {
+    private static int checkRing(Path on, Path control, Path restored, Path occluded, Path occludedControl) {
         try {
             var a = ImageIO.read(on.toFile());
             var b = ImageIO.read(control.toFile());
             var c = ImageIO.read(restored.toFile());
             var d = ImageIO.read(occluded.toFile());
+            var e = ImageIO.read(occludedControl.toFile());
             if (a == null) throw new AssertionError("Unreadable XM157 frame: " + on);
             int w = a.getWidth(), h = a.getHeight();
-            for (var frame : new BufferedImage[]{b, c, d}) {
+            for (var frame : new BufferedImage[]{b, c, d, e}) {
                 if (frame == null || frame.getWidth() != w || frame.getHeight() != h)
                     throw new AssertionError("Incomparable XM157 frames");
             }
@@ -158,10 +174,13 @@ public final class ImpactMarkerSmoke {
             // a pixelwise intersection of two hollow outlines is not a test for a hollow outline:
             // a ring shifted down by one pixel intersects only the former vertical edges.
             // Require the entire box in EACH visible frame, in the same place to sub-stroke tolerance.
-            Ring first = ring(a, b, d, radius), last = ring(c, b, d, radius);
-            if (!first.hollow() || !last.hollow() || Math.abs(first.cx()-last.cx())>1 || Math.abs(first.cy()-last.cy())>1) {
-                String maps = " on="+map(a)+" off="+map(b)+" restored="+map(c)+" occluded="+map(d);
-                throw new AssertionError("No restored hollow XM157 marker: " + first + " -> " + last + "; " + diagnostic + maps);
+            // Each change in geometry needs its own hidden-marker control. A different wall
+            // also changes the distance text and scene colour; it isn't a reference for the cow.
+            Ring first = ring(a, b, radius), last = ring(c, b, radius), blocked = ring(d, e, radius);
+            if (!first.hollow() || !last.hollow() || Math.abs(first.cx()-last.cx())>1 || Math.abs(first.cy()-last.cy())>1 || blocked.hollow()) {
+                GunMod.LOGGER.error("PORT_XM157: entity on/off/restored (centre yellow rows): {} {} {}", map(a),map(b),map(c));
+                GunMod.LOGGER.error("PORT_XM157: stone on/off: {} {}", map(d),map(e));
+                throw new AssertionError("No restored hollow XM157 marker: " + first + " -> " + last + "; occluded=" + blocked + "; " + diagnostic);
             }
             return Math.min(first.pixels, last.pixels);
         } catch (IOException ex) { throw new UncheckedIOException(ex); }
@@ -174,11 +193,11 @@ public final class ImpactMarkerSmoke {
 
     // Test the rendered ink, not the draw count or a guessed ballistic offset. Reticle/text in
     // the controls cannot supply an edge. A solid blob, pair of bars or stray glint is not a ring.
-    private static Ring ring(BufferedImage image, BufferedImage hidden, BufferedImage wall, int radius) {
+    private static Ring ring(BufferedImage image, BufferedImage hidden, int radius) {
         int w=image.getWidth(), h=image.getHeight(), x0=w, x1=-1, y0=h, y1=-1, n=0;
         var added = new java.util.BitSet(w*h);
         for (int y=h/2-radius; y<=h/2+radius; y++) for (int x=w/2-radius; x<=w/2+radius; x++) {
-            if (yellow(image.getRGB(x,y)) && !nearYellow(hidden,x,y) && !nearYellow(wall,x,y)) {
+            if (yellow(image.getRGB(x,y)) && !nearYellow(hidden,x,y)) {
                 added.set(y*w+x); n++; x0=Math.min(x0,x); x1=Math.max(x1,x); y0=Math.min(y0,y); y1=Math.max(y1,y);
             }
         }
@@ -200,8 +219,9 @@ public final class ImpactMarkerSmoke {
         StringBuilder out=new StringBuilder();
         int cx=image.getWidth()/2,cy=image.getHeight()/2;
         for (int y=cy-6;y<=cy+8;y++) {
-            for (int x=cx-7;x<=cx+7;x++) out.append(yellow(image.getRGB(x,y))?'#':'.');
-            out.append('/');
+            int mask=0;
+            for (int x=cx-7;x<=cx+7;x++) mask=(mask<<1)|(yellow(image.getRGB(x,y))?1:0);
+            out.append(Integer.toHexString(mask)).append('/');
         }
         return out.toString();
     }

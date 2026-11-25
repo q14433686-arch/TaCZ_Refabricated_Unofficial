@@ -52,6 +52,9 @@ jobs:
               marker='OPTIC_'+tag+': '
               data=[s.split(marker,1)[1] for s in rows if marker in s]
               for i in range(0,len(data),10): print('::notice title='+tag+'::'+' | '.join(data[i:i+10]))
+          for tag in ('PORT_XM157', 'PORT_OPTIC'):
+              for row in rows:
+                  if tag+': ' in row: print('::notice title='+tag+'::'+row.split(tag+': ',1)[1])
           PY
           fi
       - if: failure()

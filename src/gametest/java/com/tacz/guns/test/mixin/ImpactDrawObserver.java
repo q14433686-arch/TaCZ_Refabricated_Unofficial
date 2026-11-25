@@ -26,5 +26,8 @@ abstract class ImpactDrawObserver {
     }
 
     @Inject(method = "drawBox", at = @At("HEAD"))
-    private static void beforeDraw(CallbackInfo ci) { ImpactMarkerSmoke.atDraw(); }
+    private static void beforeDraw(PoseStack.Pose pose, com.mojang.blaze3d.vertex.VertexConsumer vertices,
+                                   float y, float half, float line, int color, int overlay, CallbackInfo ci) {
+        ImpactMarkerSmoke.atDraw(pose, y, half, line);
+    }
 }
