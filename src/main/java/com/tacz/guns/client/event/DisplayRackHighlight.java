@@ -11,6 +11,7 @@ import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.platform.CompareOp;
 import com.mojang.blaze3d.pipeline.DepthStencilState;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.ShapeRenderer;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
@@ -63,20 +64,16 @@ public final class DisplayRackHighlight {
         LevelRenderEvents.BEFORE_BLOCK_OUTLINE.register((context, outline) -> {
             List<Cell> cells = outline.getData(CELLS);
             if (cells != null && !cells.isEmpty()) {
-                var pose = context.poseStack();
                 var camera = context.levelState().cameraRenderState.pos;
                 var pos = outline.pos();
-                pose.pushPose();
-                pose.translate(pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z);
-                // The picked rack is already visibility/range checked by vanilla's block pick.
-                // Do not let a stored item's depth hide the edges of its own selected cell.
-                var out = context.submitNodeCollector().order(1);
-                for (var cell : cells) out.submitCustomGeometry(pose, Material.LINES, (frozen, vertices) -> {
-                    var stack = new com.mojang.blaze3d.vertex.PoseStack();
-                    stack.last().set(frozen);
-                    net.minecraft.client.renderer.ShapeRenderer.renderShape(stack, vertices, Shapes.create(cell.box), 0, 0, 0, cell.color, 1f);
-                });
-                pose.popPose();
+                // On 26.1.2 the block-outline pass runs *after* solid/translucent features.
+                // Submitting to their collector here strands the lines until a different pass.
+                // Write into vanilla's current outline pass; its caller owns the batch flush.
+                var vertices = context.bufferSource().getBuffer(Material.LINES);
+                for (var cell : cells) {
+                    ShapeRenderer.renderShape(context.poseStack(), vertices, Shapes.create(cell.box),
+                            pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z, cell.color, 1f);
+                }
             }
             return true;
         });
