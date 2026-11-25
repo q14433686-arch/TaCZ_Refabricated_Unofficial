@@ -150,15 +150,8 @@ public final class ScopePipRenderState {
      * to {@link ScopeFinalOverlayState} restores the physical lens order (crosshair and shade on top
      * of the picture) without moving the composite into the middle of the hand batch.
      *
-     * <p>This deliberately uses the <b>same stable per-frame gate</b> as {@link #suppressesWorldFovZoom}
-     * rather than {@link #sceneCaptured}. {@code sceneCaptured} is written at the hand-pass HEAD and
-     * is the input to the composite, so gating the reticle/rim on it is normally consistent. But the
-     * submit of the scope model can run before that flag is set on a frame where the capture fails or
-     * the model is submitted through a path that bypasses {@code captureScene}; in that case the
-     * reticle/rim stay in the ordinary solid pass and the composite at hand-pass RETURN covers them
-     * exactly as reported. The stable gate answers "is PIP taking over the FOV this frame", which is
-     * the same condition under which a lens picture is guaranteed to be composited at the end of the
-     * hand pass, so deferring under it cannot leave the reticle/rim stranded in the wrong layer.</p>
+     * <p>Defer as soon as this path owns the FOV, not just after the colour capture. A user
+     * reveal floor or missing depth can still skip the picture; the queued rim remains drawable.</p>
      */
     public static boolean shouldDeferReticleOverlay() {
         if (ScopeLensFrame.expected != null) return true;
@@ -260,9 +253,13 @@ public final class ScopePipRenderState {
      * 镜内相对已放大世界的再放大倍数：{@code Z / Z^share = Z^(1-share)}。
      */
     public static float lensZoom() {
-        float zoom = currentZoom();
-        float world = worldZoomTarget();
-        return world <= 0.0f ? Math.max(1.0f, zoom) : Math.max(1.0f, zoom / world);
+        return lensZoomAtProgress(1.0f);
+    }
+
+    /** Divide out the world share at THIS progress, not the steady-state share. Interpolating
+     * the two factors separately makes their product smaller than the requested total in transit. */
+    private static float lensZoomAtProgress(float progress) {
+        return Mth.lerp(progress, 1.0f, currentZoom()) / worldZoomAtProgress(progress);
     }
 
     /**
@@ -495,7 +492,7 @@ public final class ScopePipRenderState {
         if (pip && (!rerender || narrow)) {
             float progress = frameProgress(mc);
             if (!pictureProgress(progress)) return;
-            float zoom = narrow ? ScopePipRerender.compositeZoom() : Mth.lerp(progress, 1.0f, lensZoom());
+            float zoom = narrow ? ScopePipRerender.compositeZoom() : lensZoomAtProgress(progress);
             compositeScene(mc, zoom, irisFinal && !narrow && progress < 1.0f);
         } else if (ScopeLensFrame.current() != null) {
             // Below the PIP cutover (or no narrow pass): only a predicted AND observed pack lens
