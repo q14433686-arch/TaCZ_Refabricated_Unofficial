@@ -72,6 +72,7 @@ public final class ImpactMarkerSmoke {
     }
 
     static void run(ClientGameTestContext ctx, TestSingleplayerContext world) {
+        MarkerPixels.checkControls();
         var sight = Identifier.parse("tacz:scope_xm157");
         var target = world.getServer().computeOnServer(server -> {
             var player = server.getPlayerList().getPlayers().getFirst();
@@ -148,12 +149,6 @@ public final class ImpactMarkerSmoke {
         ctx.runOnClient(mc -> { if (draws != 0) throw new AssertionError("XM157 marker persisted " + condition); });
     }
 
-    private static boolean nearYellow(BufferedImage image,int x,int y){
-        for(int dy=-1;dy<=1;dy++)for(int dx=-1;dx<=1;dx++)
-            if(yellow(image.getRGB(Math.clamp(x+dx,0,image.getWidth()-1),Math.clamp(y+dy,0,image.getHeight()-1))))return true;
-        return false;
-    }
-
     private static int checkRing(Path on, Path control, Path restored, Path occluded, Path occludedControl) {
         try {
             var a = ImageIO.read(on.toFile());
@@ -176,43 +171,17 @@ public final class ImpactMarkerSmoke {
             // Require the entire box in EACH visible frame, in the same place to sub-stroke tolerance.
             // Each change in geometry needs its own hidden-marker control. A different wall
             // also changes the distance text and scene colour; it isn't a reference for the cow.
-            Ring first = ring(a, b, radius), last = ring(c, b, radius), blocked = ring(d, e, radius);
-            if (!first.hollow() || !last.hollow() || Math.abs(first.cx()-last.cx())>1 || Math.abs(first.cy()-last.cy())>1 || blocked.hollow()) {
+            var first = MarkerPixels.find(a, b, radius);
+            var last = MarkerPixels.find(c, b, radius);
+            var blocked = MarkerPixels.find(d, e, radius);
+            if (first == null || last == null || Math.abs(first.cx()-last.cx()) > 1 || Math.abs(first.cy()-last.cy()) > 1 || blocked != null) {
                 GunMod.LOGGER.error("PORT_XM157: entity on/off/restored (centre yellow rows): {} {} {}", map(a),map(b),map(c));
                 GunMod.LOGGER.error("PORT_XM157: stone on/off: {} {}", map(d),map(e));
                 throw new AssertionError("No restored hollow XM157 marker: " + first + " -> " + last + "; occluded=" + blocked + "; " + diagnostic);
             }
-            return Math.min(first.pixels, last.pixels);
+            GunMod.LOGGER.info("PORT_XM157: exposed {} restored {}; no enclosed marker behind stone", first, last);
+            return Math.min(first.rim(), last.rim());
         } catch (IOException ex) { throw new UncheckedIOException(ex); }
-    }
-
-    private record Ring(int x0, int y0, int x1, int y1, int pixels, boolean hollow) {
-        int cx() { return (x0+x1)/2; }
-        int cy() { return (y0+y1)/2; }
-    }
-
-    // Test the rendered ink, not the draw count or a guessed ballistic offset. Reticle/text in
-    // the controls cannot supply an edge. A solid blob, pair of bars or stray glint is not a ring.
-    private static Ring ring(BufferedImage image, BufferedImage hidden, int radius) {
-        int w=image.getWidth(), h=image.getHeight(), x0=w, x1=-1, y0=h, y1=-1, n=0;
-        var added = new java.util.BitSet(w*h);
-        for (int y=h/2-radius; y<=h/2+radius; y++) for (int x=w/2-radius; x<=w/2+radius; x++) {
-            if (yellow(image.getRGB(x,y)) && !nearYellow(hidden,x,y)) {
-                added.set(y*w+x); n++; x0=Math.min(x0,x); x1=Math.max(x1,x); y0=Math.min(y0,y); y1=Math.max(y1,y);
-            }
-        }
-        // A genuine hole is a non-marker pixel with restored marker ink on all four sides.
-        boolean hole=false;
-        for (int y=y0+1; y<y1 && !hole; y++) for (int x=x0+1; x<x1 && !hole; x++) {
-            if (added.get(y*w+x)) continue;
-            boolean left=false,right=false,top=false,bottom=false;
-            for (int i=x0;i<x;i++) left |= added.get(y*w+i);
-            for (int i=x+1;i<=x1;i++) right |= added.get(y*w+i);
-            for (int j=y0;j<y;j++) top |= added.get(j*w+x);
-            for (int j=y+1;j<=y1;j++) bottom |= added.get(j*w+x);
-            hole=left && right && top && bottom && !yellow(image.getRGB(x,y));
-        }
-        return new Ring(x0,y0,x1,y1,n,n>=6 && hole);
     }
 
     private static String map(BufferedImage image) {
@@ -220,14 +189,10 @@ public final class ImpactMarkerSmoke {
         int cx=image.getWidth()/2,cy=image.getHeight()/2;
         for (int y=cy-6;y<=cy+8;y++) {
             int mask=0;
-            for (int x=cx-7;x<=cx+7;x++) mask=(mask<<1)|(yellow(image.getRGB(x,y))?1:0);
+            for (int x=cx-7;x<=cx+7;x++) mask=(mask<<1)|(MarkerPixels.yellow(image.getRGB(x,y))?1:0);
             out.append(Integer.toHexString(mask)).append('/');
         }
         return out.toString();
     }
 
-    private static boolean yellow(int rgb) {
-        int r = rgb >>> 16 & 255, g = rgb >>> 8 & 255, b = rgb & 255;
-        return r > 110 && g > 110 && Math.min(r,g) > 2*b && Math.abs(r-g) < 48;
-    }
 }
