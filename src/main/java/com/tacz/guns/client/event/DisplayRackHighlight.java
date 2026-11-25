@@ -10,7 +10,6 @@ import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.platform.CompareOp;
 import com.mojang.blaze3d.pipeline.DepthStencilState;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -33,9 +32,9 @@ public final class DisplayRackHighlight {
         static final RenderType LINES = create();
         private static RenderType create() {
             var pipeline = com.tacz.guns.client.render.scope.ScopeRenderTypes.clonePipeline(RenderPipelines.LINES, Identifier.parse("tacz:pipeline/rack_cell_outline"))
-                    .withLocation(Identifier.parse("tacz:pipeline/rack_cell_outline"))
                     .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false))
                     .withColorTargetState(ColorTargetState.DEFAULT).build();
+            com.tacz.guns.compat.iris.IrisCompat.assignRackOutlinePipeline(pipeline);
             return new RenderType("tacz_rack_cell_outline", RenderSetup.builder(pipeline).createRenderSetup());
         }
     }

@@ -28,7 +28,10 @@
     "ReimaginedShadowControl",
     "SurfaceFragmentObserver",
     "TracerModelObserver",
-    "WorldTracerObserver"
+    "WorldTracerObserver",
+    "FeedbackObservers",
+    "HurtTiltObserver",
+    "ImpactPacketObserver"
   ],
   "injectors": {
     "defaultRequire": 1

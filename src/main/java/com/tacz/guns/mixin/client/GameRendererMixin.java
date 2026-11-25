@@ -7,6 +7,7 @@ import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.event.RenderLevelBobEvent;
+import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.client.render.scope.ScopeDepthCopyState;
 import com.tacz.guns.client.render.scope.ScopeFinalOverlayState;
 import com.tacz.guns.client.render.scope.ScopePipDepthDebug;
@@ -14,6 +15,7 @@ import com.tacz.guns.client.render.scope.ScopePipRenderState;
 import com.tacz.guns.client.render.scope.ScopePipRerender;
 import com.tacz.guns.client.renderer.other.GunHurtBobTweak;
 import com.tacz.guns.compat.iris.IrisCompat;
+import com.tacz.guns.config.client.RenderConfig;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -29,7 +31,9 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** 26.2 bob hooks using CameraRenderState signatures. */
@@ -129,6 +133,20 @@ public abstract class GameRendererMixin {
                 ci.cancel();
             }
         }
+    }
+
+    // 26.1.2 bobHurt uses four axis rotations. Start at vanilla's ordinary damage tilt
+    // strength, after the death roll and the first direction rotation; leave both Y rotations alone.
+    @ModifyArg(method = "bobHurt", slice = @Slice(from = @At(value = "FIELD",
+            target = "Lnet/minecraft/client/renderer/state/OptionsRenderState;damageTiltStrength:D")),
+            at = @At(value = "INVOKE", target = "Lcom/mojang/math/Axis;rotationDegrees(F)Lorg/joml/Quaternionf;", ordinal = 0), index = 0)
+    private float tacz$heldGunHurtTilt(float angle) {
+        LocalPlayer player = minecraft.player;
+        if (player != null && minecraft.getCameraEntity() == player && minecraft.options.getCameraType().isFirstPerson()
+                && !player.isDeadOrDying() && player.getMainHandItem().getItem() instanceof AbstractGunItem) {
+            return GunHurtBobTweak.heldGunTilt(angle, player.getHurtDir(), RenderConfig.GUN_HURT_BOB_MULTIPLIER.get());
+        }
+        return angle;
     }
 
     @Inject(method = "bobView", at = @At("HEAD"), cancellable = true)

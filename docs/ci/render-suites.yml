@@ -22,7 +22,7 @@ jobs:
     timeout-minutes: 40
     strategy:
       fail-fast: false
-      matrix: {suite: [muzzle, particles, readouts, receivers, tracers]}
+      matrix: {suite: [muzzle, particles, readouts, receivers, tracers, displays]}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -35,7 +35,7 @@ jobs:
           xvfb-run -a -s '-screen 0 2600x1500x24' ./gradlew --init-script scripts/ci-central.init.gradle -PtaczClientSmoke -PtaczRenderSuite="$SUITE" runClientGameTest --console=plain 2>&1 | tee "$RUNNER_TEMP/render.log"
           grep -F "PORT_RENDER: $SUITE complete" build/run/clientGameTest/logs/latest.log
       - if: always()
-        run: grep -E 'PORT_(RENDER|MUZZLE|MATERIALS|PARTICLE|HAND_|RECEIVER|RACK|SNOWSTORM|SURFACE|IMPACT|OPTIC|WORLD_TRACER|FRAGMENTS|SMOKE_CLIENT)' build/run/clientGameTest/logs/latest.log | sed 's/^/::notice::/' || true
+        run: grep -E 'PORT_(RENDER|MUZZLE|MATERIALS|PARTICLE|HAND_|RECEIVER|RACK|SNOWSTORM|SURFACE|IMPACT|OPTIC|WORLD_TRACER|FRAGMENTS|FEEDBACK|TARGET_POSE|CASE_HINT|OUTLINE|SMOKE_CLIENT)' build/run/clientGameTest/logs/latest.log | sed 's/^/::notice::/' || true
       - if: failure()
         run: python3 scripts/report_ci_failures.py "$RUNNER_TEMP/render.log" build/run/clientGameTest/logs/latest.log
       - uses: actions/upload-artifact@v4

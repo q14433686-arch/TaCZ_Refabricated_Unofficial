@@ -51,6 +51,12 @@ public final class PackClientSmoke implements FabricClientGameTest {
                         TracerFrameSmoke.run(context);
                         SurfaceFragmentSmoke.run(context, world);
                         WorldTracerSmoke.run(context, world);
+                        PlayerFeedbackSmoke.run(context, world);
+                    }
+                    case "displays" -> {
+                        context.waitFor(mc -> mc.player.onGround());
+                        context.runOnClient(TargetPoseSmoke::run);
+                        RackPreviewSmoke.run(context, world, id);
                     }
                     case "particles" -> { SnowstormSmoke.run(context, world); RemoteParticleSmoke.run(context, world); }
                     case "readouts" -> { RangefinderSmoke.run(context, world); ImpactMarkerSmoke.run(context, world); }

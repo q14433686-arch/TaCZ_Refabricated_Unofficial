@@ -162,7 +162,10 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             return;
         }
 
-        boolean gpu = PolyMeshGpuRenderer.shouldSubmitGpu() && ensureBaked(texture, light);
+        // Only the empty-cell ghost is tinted by this collector. A resident VBO would
+        // bypass its translucent material/vertex alpha; deposited items keep the fast path.
+        boolean preview = collector instanceof com.tacz.guns.client.renderer.block.RackPreviewCollector;
+        boolean gpu = !preview && PolyMeshGpuRenderer.shouldSubmitGpu() && ensureBaked(texture, light);
         // 世界语境（第三人称手持 / 掉落物 / 展示框 / 展示台）的 GPU 路径。两级闸门：
         // ① isWorldGpuContext —— 按 transformType 排除 GUI 系语境（热栏图标以 GUI 语境在
         //    HUD 里提取，<b>没有 Screen</b>，ScreenRenderTracker 拦不住，只能按语境挡；
@@ -170,7 +173,7 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
         // ② PolyMeshGpuRenderer.shouldSubmitGpuWorld —— 手部/Screen 提取/镜内/阴影/
         //    光影未放行 逐个拒收，并要求世界 flush 钩子的存活证明。
         Map<String, PolyMeshGpuRenderer.BakedBone> worldBaked = null;
-        if (!gpu && isWorldGpuContext(transformType)) {
+        if (!preview && !gpu && isWorldGpuContext(transformType)) {
             if (PolyMeshGpuRenderer.shouldSubmitGpuWorld()) {
                 worldBaked = ensureWorldBaked(light);
                 if (worldBaked == null && worldBakedByLight.isEmpty()) {

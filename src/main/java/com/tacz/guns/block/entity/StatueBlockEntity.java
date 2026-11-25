@@ -52,7 +52,7 @@ public class StatueBlockEntity extends BlockEntity {
     }
 
     public void setGun(ItemStack stack) {
-        this.dropItem();
+        dropItem(getBlockState(), false); // Publish the new contents once, not an intermediate empty stack.
         this.gunItem = stack.copyWithCount(1); // placement debits one item, even for a custom stackable gun
         if (level != null) {
             BlockState state = level.getBlockState(worldPosition);
@@ -62,26 +62,29 @@ public class StatueBlockEntity extends BlockEntity {
     }
 
     public void dropItem() {
-        dropItem(getBlockState());
+        dropItem(getBlockState(), true);
     }
 
-    private void dropItem(BlockState state) {
+    private void dropItem(BlockState state, boolean notify) {
         if (gunItem.isEmpty() || level == null || level.isClientSide()) {
             return;
         }
         Direction direction = state.hasProperty(FACING) ? state.getValue(FACING) : Direction.NORTH;
-        Block.popResource(level, worldPosition.relative(direction).above(), gunItem);
-        this.gunItem = ItemStack.EMPTY;
-        BlockState currentState = level.getBlockState(worldPosition);
-        level.sendBlockUpdated(worldPosition, currentState, currentState, Block.UPDATE_ALL);
-        this.setChanged();
+        ItemStack dropped = gunItem;
+        gunItem = ItemStack.EMPTY; // Even a callback during item spawn must see an empty display.
+        Block.popResource(level, worldPosition.relative(direction).above(), dropped);
+        if (notify) {
+            BlockState current = level.getBlockState(worldPosition);
+            level.sendBlockUpdated(worldPosition, current, current, Block.UPDATE_ALL);
+            setChanged();
+        }
     }
 
     /** Drop the stored gun whenever the statue block entity is removed (break, explosion, piston, etc.). */
     @Override
     public void preRemoveSideEffects(BlockPos pos, BlockState state) {
         super.preRemoveSideEffects(pos, state);
-        dropItem(state);
+        dropItem(state, false); // Do not broadcast a BE update for the block being removed.
     }
 
     @Override

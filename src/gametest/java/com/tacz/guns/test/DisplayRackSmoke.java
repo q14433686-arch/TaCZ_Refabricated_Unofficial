@@ -183,6 +183,15 @@ public class DisplayRackSmoke {
 
     @GameTest
     public void statueUpdateAndRemovalKeepOneRegistryBackedStack(GameTestHelper h) {
+        checkStatueRemoval(h, true);
+    }
+
+    @GameTest
+    public void lowerStatueRemovalKeepsOneRegistryBackedStack(GameTestHelper h) {
+        checkStatueRemoval(h, false);
+    }
+
+    private static void checkStatueRemoval(GameTestHelper h, boolean breakUpper) {
         var level = h.getLevel();
         var pos = h.absolutePos(BlockPos.ZERO);
         var block = ModBlocks.STATUE;
@@ -204,8 +213,8 @@ public class DisplayRackSmoke {
         var copy = new com.tacz.guns.block.entity.StatueBlockEntity(pos, state);
         copy.loadAdditional(TagValueInput.create(ProblemReporter.DISCARDING, level.registryAccess(), be.getUpdateTag(level.registryAccess())));
         h.assertTrue(ItemStack.matches(gun, copy.getGunItem()), "Statue update lost registry-backed components");
-        level.destroyBlock(pos.above(), true);
-        h.assertTrue(level.getBlockEntity(pos) == null && be.getGunItem().isEmpty(), "Companion removal did not release contents");
+        level.destroyBlock(breakUpper ? pos.above() : pos, true);
+        h.assertTrue(level.getBlockState(pos.above()).isAir() && level.getBlockEntity(pos) == null && be.getGunItem().isEmpty(), "Companion removal did not release contents");
         int dropped = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(2)).stream().map(ItemEntity::getItem)
                 .filter(s -> ItemStack.isSameItemSameComponents(s, gun)).mapToInt(ItemStack::getCount).sum();
         h.assertTrue(dropped == 1, "Removed statue dropped " + dropped + " copies of the stored item");
