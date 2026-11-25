@@ -7,6 +7,10 @@ import org.lwjgl.opengl.GL45C;
  * rim; colour alone does not tell whether a diagnostic pixel was covered by the ocular. */
 final class ApertureReadback {
     static boolean[] region(int x, int y, int side, int height, int width) {
+        return rectangle(x, y, side, side, height, width);
+    }
+
+    static boolean[] rectangle(int x, int y, int w, int h, int height, int width) {
         var aperture = ScopeDepthCopyState.apertureDepthTarget();
         var world = ScopeDepthCopyState.worldDepthTarget();
         if (!ScopeDepthCopyState.hasMaskCycleThisFrame() || !aperture.available() || !world.available()
@@ -17,19 +21,19 @@ final class ApertureReadback {
         int[] old = java.util.Arrays.stream(keys).map(GL45C::glGetInteger).toArray();
         try {
             for (int i=0; i<keys.length; i++) GL45C.glPixelStorei(keys[i], i==3 ? 4 : 0);
-            var a = depth(aperture.textureId(), x, height-y-side, side);
-            var w = depth(world.textureId(), x, height-y-side, side);
+            var a = depth(aperture.textureId(), x, height-y-h, w, h);
+            var w = depth(world.textureId(), x, height-y-h, w, h);
             boolean[] mask = new boolean[a.length];
-            for (int row=0;row<side;row++) for (int col=0;col<side;col++) {
-                int src=(side-row-1)*side+col;
-                mask[row*side+col] = a[src] < w[src] - 1e-6f;
+            for (int row=0;row<h;row++) for (int col=0;col<w;col++) {
+                int src=(h-row-1)*w+col;
+                mask[row*w+col] = a[src] < w[src] - 1e-6f;
             }
             return mask;
         } finally { for (int i=0; i<keys.length; i++) GL45C.glPixelStorei(keys[i], old[i]); }
     }
-    private static float[] depth(int texture, int x, int y, int side) {
-        float[] buffer = new float[side*side];
-        GL45C.glGetTextureSubImage(texture,0,x,y,0,side,side,1,GL45C.GL_DEPTH_COMPONENT,GL45C.GL_FLOAT,buffer);
+    private static float[] depth(int texture, int x, int y, int w, int h) {
+        float[] buffer = new float[w*h];
+        GL45C.glGetTextureSubImage(texture,0,x,y,0,w,h,1,GL45C.GL_DEPTH_COMPONENT,GL45C.GL_FLOAT,buffer);
         return buffer;
     }
     private ApertureReadback() {}

@@ -9,6 +9,8 @@
     "HeatDepthObserver",
     "CurrentHeatTarget",
     "SensorLayerObserver",
+    "AdsStepControl",
+    "AdsCompositeObserver",
     "AvatarModelObserver",
     "MuzzleSnapshotInvoker",
     "MuzzleSnapshotObserver",

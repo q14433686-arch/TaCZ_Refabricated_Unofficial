@@ -1,6 +1,7 @@
 package com.tacz.guns.test.mixin;
 
 import com.tacz.guns.client.render.scope.ScopeFinalOverlayState;
+import com.tacz.guns.test.AdsTransitionSmoke;
 import com.tacz.guns.test.SensorLayers;
 import com.tacz.guns.test.OpticalLayers;
 import net.minecraft.client.Minecraft;
@@ -13,9 +14,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 abstract class SensorLayerObserver {
     @Inject(method="renderAfterFinalComposite",at=@At("HEAD"))
     private static void beforeDisplayInk(CallbackInfo ci) {
+        AdsTransitionSmoke.afterLens();
         OpticalLayers.beforeForeground();
         if (SensorLayers.requested()) SensorLayers.observe(Minecraft.getInstance().getMainRenderTarget(),CurrentHeatTarget.get());
     }
     @Inject(method="renderAfterFinalComposite",at=@At("RETURN"))
-    private static void afterDisplayInk(CallbackInfo ci) { OpticalLayers.afterForeground(); }
+    private static void afterDisplayInk(CallbackInfo ci) {
+        OpticalLayers.afterForeground();
+        AdsTransitionSmoke.afterInk();
+    }
 }

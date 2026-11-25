@@ -59,7 +59,11 @@ public final class PackClientSmoke implements FabricClientGameTest {
                         RackPreviewSmoke.run(context, world, id);
                     }
                     case "particles" -> { SnowstormSmoke.run(context, world); RemoteParticleSmoke.run(context, world); }
-                    case "readouts" -> { RangefinderSmoke.run(context, world); ImpactMarkerSmoke.run(context, world); }
+                    case "readouts" -> {
+                        RangefinderSmoke.run(context, world);
+                        ImpactMarkerSmoke.run(context, world);
+                        AdsTransitionSmoke.run(context, world);
+                    }
                     case "receivers" -> { SurfaceLightSmoke.run(context, world, true); RackLoadSmoke.run(context, world); }
                     default -> throw new IllegalArgumentException("Unknown render suite " + render);
                 }

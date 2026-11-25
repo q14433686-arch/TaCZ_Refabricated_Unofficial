@@ -126,7 +126,8 @@ public final class ShaderOpticSmoke {
         if (suite.equals("readouts")) {
             world.getClientLevel().waitForChunksRender(); ctx.waitTicks(25);
             RangefinderSmoke.run(ctx, world); ImpactMarkerSmoke.run(ctx, world);
-            GunMod.LOGGER.info("OPTIC_COMPLETE: readouts UH-1 and XM157");
+            AdsTransitionSmoke.run(ctx, world);
+            GunMod.LOGGER.info("OPTIC_COMPLETE: readouts UH-1, XM157 and moving lens");
             return;
         }
         var server=world.getServer(); // disposable game world; uniform blue wall makes an opaque red plate distinguishable from the scene
