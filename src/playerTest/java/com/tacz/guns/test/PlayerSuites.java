@@ -25,6 +25,7 @@ public final class PlayerSuites implements FabricClientGameTest {
                 .filter(loader::isModLoaded).collect(Collectors.toSet());
         if (!actual.equals(switch (suite) { case "pal" -> Set.of("player_animation_library"); case "controller" -> Set.of("controllable"); default -> Set.of(); }))
             throw new AssertionError("Wrong combination for " + suite + ": " + actual);
+        WorldReturnSmoke.Saved saved = null;
         try (var world = ctx.worldBuilder().create()) {
             var ak = Identifier.parse("tacz:ak47");
             ctx.waitFor(mc -> CommonNetworkCache.INSTANCE.getGunIndex(ak) != null && TimelessAPI.getClientGunIndex(ak).isPresent());
@@ -39,12 +40,14 @@ public final class PlayerSuites implements FabricClientGameTest {
                     PortInputSmoke.run(ctx, world); MovementRulesSmoke.run(ctx, world); ShotConsequencesSmoke.run(ctx, world);
                     ConfigPanelSmoke.run(ctx); CoreCompletionSmoke.run(ctx, world); DefaultRefitSmoke.run(ctx, world);
                 }
+                case "storage" -> saved = WorldReturnSmoke.prepare(ctx, world);
                 case "pal" -> PalRuntimeSmoke.run(ctx);
                 case "controller" -> ControllerSmoke.run(ctx, world);
                 default -> throw new AssertionError("Unknown player suite " + suite);
             }
-            GunMod.LOGGER.info("PORT_PLAYER: {} complete, optional={}", suite, actual);
         }
+        if (saved != null) WorldReturnSmoke.reopen(ctx, saved);
+        GunMod.LOGGER.info("PORT_PLAYER: {} complete, optional={}", suite, actual);
     }
 
     static void frame(ClientGameTestContext ctx, String name) {

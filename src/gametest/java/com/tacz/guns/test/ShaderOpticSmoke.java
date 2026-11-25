@@ -123,6 +123,12 @@ public final class ShaderOpticSmoke {
 
     static void run(ClientGameTestContext ctx, TestSingleplayerContext world, String suite) {
         ctx.runOnClient(mc -> { pack(); mc.options.bobView().set(false); });
+        if (suite.equals("readouts")) {
+            world.getClientLevel().waitForChunksRender(); ctx.waitTicks(25);
+            RangefinderSmoke.run(ctx, world); ImpactMarkerSmoke.run(ctx, world);
+            GunMod.LOGGER.info("OPTIC_COMPLETE: readouts UH-1 and XM157");
+            return;
+        }
         var server=world.getServer(); // disposable game world; uniform blue wall makes an opaque red plate distinguishable from the scene
         server.runCommand("gamerule spawn_mobs false"); server.runCommand("kill @e[type=!minecraft:player]");
         server.runCommand("gamerule advance_time false"); server.runCommand("time set 6000"); server.runCommand("weather clear");
@@ -184,7 +190,7 @@ public final class ShaderOpticSmoke {
         }
     }
 
-    private static BufferedImage frame(ClientGameTestContext ctx, String name) {
+    static BufferedImage frame(ClientGameTestContext ctx, String name) {
         try { return ImageIO.read(ctx.takeScreenshot("ads_"+name).toFile()); }
         catch(IOException e) { throw new UncheckedIOException(e); }
     }
@@ -374,6 +380,7 @@ public final class ShaderOpticSmoke {
                     thermal(ctx,true);
                 }
             }
+            if (narrow) WideSceneSmoke.run(ctx, world, base, id);
         } finally {
             ctx.runOnClient(mc->{ poseTarget=null; RenderConfig.SCOPE_THERMAL_ENABLE.set(true); RenderConfig.SCOPE_PIP_ENABLE.set(false); RenderConfig.SCOPE_PIP_RERENDER.set(false); });
             world.getServer().runOnServer(s->s.getPlayerList().getPlayers().getFirst().level().getEntity(id).discard());
@@ -397,7 +404,7 @@ public final class ShaderOpticSmoke {
     private static void orient(LivingEntity e,int yaw) {
         e.setYRot(yaw); e.setYHeadRot(yaw); e.yHeadRotO=e.yHeadRot=e.yBodyRotO=e.yBodyRot=yaw;
     }
-    private static void move(ClientGameTestContext ctx,TestSingleplayerContext world,UUID id,BlockPos to) {
+    static void move(ClientGameTestContext ctx,TestSingleplayerContext world,UUID id,BlockPos to) {
         world.getServer().runOnServer(s->s.getPlayerList().getPlayers().getFirst().level().getEntity(id).snapTo(Vec3.atBottomCenterOf(to)));
         ctx.waitFor(mc->mc.level.getEntity(id).position().distanceToSqr(Vec3.atBottomCenterOf(to))<.01);
         ctx.waitTicks(4);

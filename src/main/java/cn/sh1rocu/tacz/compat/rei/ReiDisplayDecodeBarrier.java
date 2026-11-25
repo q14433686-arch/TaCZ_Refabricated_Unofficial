@@ -51,10 +51,8 @@ public final class ReiDisplayDecodeBarrier implements PacketTransformer {
             return;
         }
         if (connection != mc.getConnection()) clear();
-        if (pending.isEmpty() && ready()) {
-            sink.accept(side, id, buf);
-            return;
-        }
+        // Even a presently idle registry may belong to the previous recipe generation. Let the
+        // incoming packet batch (including vanilla recipe updates) finish before checking it.
         int length = buf.readableBytes();
         if (pending.size() >= MAX_PACKETS || length > MAX_BYTES - bytes) {
             // Outside the compatibility budget: preserve wire order and native behavior, not an

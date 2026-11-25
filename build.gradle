@@ -262,7 +262,7 @@ def bundledSourcesAndResources = file("resources/tacz-26.1.2-source-and-resource
 
 if (project.hasProperty('taczPlayerSuite')) {
     String suite = property('taczPlayerSuite')
-    if (!project.hasProperty('taczClientSmoke') || !(suite in ['hud', 'actions', 'pal', 'controller'])) {
+    if (!project.hasProperty('taczClientSmoke') || !(suite in ['hud', 'actions', 'storage', 'pal', 'controller'])) {
         throw new GradleException("Expected -PtaczClientSmoke and a recognized taczPlayerSuite")
     }
     sourceSets.gametest.java.srcDir 'src/playerTest/java'

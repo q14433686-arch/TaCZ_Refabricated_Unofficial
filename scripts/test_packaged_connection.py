@@ -193,6 +193,12 @@ def main():
                     if receipt not in (evidence/'client.log').read_text(errors='replace'):
                         raise RuntimeError('Missing dedicated crafting receipt')
                     print('::notice::' + receipt, flush=True)
+                    if args.viewer == 'rei':
+                        # Don't mistake a lucky SET on the native race for a passing compatibility
+                        # hook. Join and rejoin have distinct connections and must both drain bytes.
+                        log = (work/'client/build/run/clientGameTest/logs/latest.log').read_text(errors='replace')
+                        if log.count('[TACZ REI] Forwarding') < 2 or '[TACZ REI] Display registries still busy' in log:
+                            raise RuntimeError('REI dedicated display decoder did not cross the ready barrier on both connections')
                     if args.viewer != 'none':
                         for line in (evidence/'client.log').read_text(errors='replace').splitlines():
                             if 'PORT_VIEWER:' in line: print('::notice::PORT_VIEWER:' + line.split('PORT_VIEWER:', 1)[1])

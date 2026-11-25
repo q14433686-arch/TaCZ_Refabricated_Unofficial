@@ -41,6 +41,8 @@ public final class PackagedConnectionProbe implements FabricClientGameTest {
                 if (loader.isModLoaded(id)) throw new AssertionError("Unexpected optional mod: " + id);
             }
             if (profile.equals("none") && loader.isModLoaded("cloth-config")) throw new AssertionError("Not a minimal mod set");
+            if (profile.equals("rei")) System.out.println("PORT_VIEWER: REI runtime " + loader.getModContainer("roughlyenoughitems")
+                    .orElseThrow().getMetadata().getVersion().getFriendlyString());
             var viewer = ViewerProbe.load(profile);
             Path ready = Path.of(System.getProperty("tacz.probe.ready"));
             connect(ctx);
