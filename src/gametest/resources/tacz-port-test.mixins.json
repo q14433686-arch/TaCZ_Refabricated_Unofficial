@@ -25,7 +25,10 @@
     "ReimaginedCasterControl",
     "ReimaginedExposure",
     "ReimaginedLocatorControl",
-    "ReimaginedShadowControl"
+    "ReimaginedShadowControl",
+    "SurfaceFragmentObserver",
+    "TracerModelObserver",
+    "WorldTracerObserver"
   ],
   "injectors": {
     "defaultRequire": 1

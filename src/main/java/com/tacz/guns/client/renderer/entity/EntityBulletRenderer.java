@@ -10,7 +10,6 @@ import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.InternalAssetLoader;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.entity.EntityKineticBullet;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -121,20 +120,24 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
                 trailLength = Math.min(trailLength, disToEye * 0.8);
 
                 if (isFirstPerson) {
-                    // 实体提交栈只含 entityPos-cameraPos 的世界轴平移；相机旋转由后续
-                    // world->view 绘制链统一施加。枪口缓存则经 GunItemRendererWrapper
-                    // 归一化为纯视图空间，因此必须用 camera.rotation()（view->world）
-                    // 旋到世界轴后再平移。直接使用视图向量会产生随 yaw 呈正弦变化的侧偏。
-                    Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-                    Vector3f viewOffset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
-                    if (bullet.getFirstPersonRenderOffset() == null) {
-                        // 保留精确出生帧的诊断快照；定位实际使用当帧枪口，避免转头后
-                        // 长时间沿用旧相机朝向下的缓存。
-                        bullet.setFirstPersonRenderOffset(new Vector3f(viewOffset));
+                    // The receiver's hand cache is in view space. Freeze BOTH operands on the first
+                    // submission; moving the camera or animating the next shot must not move this trail.
+                    Vector3f offset = bullet.getFirstPersonRenderOffset();
+                    if (offset == null) {
+                        var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+                        offset = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
                         bullet.setCameraXRot(camera.xRot());
                         bullet.setCameraYRot(camera.yRot());
+                        bullet.setFirstPersonCameraRotation(camera.rotation()); // includes roll
+                        bullet.setFirstPersonRenderOffset(offset);
                     }
-                    Vector3f worldOffset = viewOffset.rotate(camera.rotation());
+                    var rotation = bullet.getFirstPersonCameraRotation();
+                    if (rotation == null) { // An add-on supplied the legacy Euler angles.
+                        rotation = new org.joml.Quaternionf().rotationYXZ(
+                                (float)Math.toRadians(180 - bullet.getCameraYRot()),
+                                (float)Math.toRadians(-bullet.getCameraXRot()), 0);
+                    }
+                    Vector3f worldOffset = new Vector3f(offset).rotate(rotation);
                     // 近端从枪口发出，随后平滑收敛到服务器的真实弹道。
                     double offsetReducer = Math.max(0, (50.0 - disToEye)) / 50.0;
                     poseStack.translate(worldOffset.x() * offsetReducer,

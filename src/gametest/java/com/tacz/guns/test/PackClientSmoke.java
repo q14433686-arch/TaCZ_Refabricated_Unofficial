@@ -42,6 +42,16 @@ public final class PackClientSmoke implements FabricClientGameTest {
                 world.getClientLevel().waitForChunksRender(); context.waitTicks(25);
                 switch (render) {
                     case "muzzle" -> MuzzleEffectsSmoke.run(context, world);
+                    case "tracers" -> {
+                        world.getServer().runOnServer(s -> s.getPlayerList().getPlayers().getFirst().setItemInHand(
+                                net.minecraft.world.InteractionHand.MAIN_HAND, com.tacz.guns.api.item.builder.GunItemBuilder.create().setId(id).build()));
+                        ClientProbe.waitForServer(context, world, s -> com.tacz.guns.api.entity.IGunOperator.fromLivingEntity(
+                                s.getPlayerList().getPlayers().getFirst()).getCacheProperty() != null);
+                        context.waitFor(mc -> mc.player.getMainHandItem().getItem() instanceof com.tacz.guns.api.item.IGun && mc.player.onGround());
+                        TracerFrameSmoke.run(context);
+                        SurfaceFragmentSmoke.run(context, world);
+                        WorldTracerSmoke.run(context, world);
+                    }
                     case "particles" -> { SnowstormSmoke.run(context, world); RemoteParticleSmoke.run(context, world); }
                     case "readouts" -> { RangefinderSmoke.run(context, world); ImpactMarkerSmoke.run(context, world); }
                     case "receivers" -> { SurfaceLightSmoke.run(context, world, true); RackLoadSmoke.run(context, world); }

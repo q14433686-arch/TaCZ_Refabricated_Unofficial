@@ -19,6 +19,7 @@ public abstract class MouseHandlerMixin {
 
     @Inject(method = "onButton", at = @At("HEAD"), cancellable = true)
     private void tacz$onMouseButtonPre(long windowPointer, MouseButtonInfo buttonInfo, int action, CallbackInfo ci) {
+        if (windowPointer != minecraft.getWindow().handle()) return;
         InputEvent.MouseButton.Pre event = new InputEvent.MouseButton.Pre(buttonInfo.button(), action, buttonInfo.modifiers());
         InputEvent.MouseButton.Pre.EVENT.invoker().onMousePre(event);
 
