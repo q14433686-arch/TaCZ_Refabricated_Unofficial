@@ -22,6 +22,19 @@ public final class PackClientSmoke implements FabricClientGameTest {
             context.waitFor(mc -> CommonNetworkCache.INSTANCE.getGunIndex(id) != null && TimelessAPI.getClientGunIndex(id).isPresent());
             var optics = System.getProperty("tacz.test.optics");
             if (optics != null) { ShaderOpticSmoke.run(context, world, optics); return; }
+            if (Boolean.getBoolean("tacz.test.iris")) {
+                world.getClientLevel().waitForChunksRender(); context.waitTicks(25);
+                if (System.getProperty("tacz.test.irisColor") == null) {
+                    context.runOnClient(mc -> ShaderOpticSmoke.requirePack("tacz-regression"));
+                    ScopeUserRegressionSmoke.run(context, world);
+                    SnowstormMaterialSmoke.run(context, world);
+                } else {
+                    ReimaginedSmoke.run(context, world); // checks the actual loaded pack, options and shadow texture
+                    SurfaceLightSmoke.run(context, world, false);
+                }
+                com.tacz.guns.GunMod.LOGGER.info("PORT_IRIS: material suite complete");
+                return;
+            }
             var render = System.getProperty("tacz.test.render");
             if (render != null) {
                 if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("iris"))

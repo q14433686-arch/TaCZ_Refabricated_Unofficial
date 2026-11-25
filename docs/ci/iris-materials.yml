@@ -1,0 +1,57 @@
+name: 26.1.2 Iris materials and real shadows
+on:
+  push:
+    branches: ['arena/**', '26.1.2']
+    paths: &inputs ['src/main/java/com/tacz/guns/client/**', 'src/main/java/com/tacz/guns/compat/iris/**', 'src/main/java/com/tacz/guns/mixin/client/**', 'src/main/resources/**/shaders/**', 'src/gametest/**', 'build.gradle', 'gradle.properties', 'scripts/prepare_iris_smoke.py', '.github/workflows/iris-materials.yml']
+  pull_request:
+    branches: ['26.1.2']
+    paths: *inputs
+  workflow_dispatch:
+permissions: {contents: read}
+concurrency:
+  group: iris-materials-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  iris:
+    strategy:
+      fail-fast: false
+      matrix: {suite: [fixture, color-off, act]}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env: {TACZ_IRIS_SUITE: '${{ matrix.suite }}'}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '25'}
+      - uses: gradle/actions/setup-gradle@v4
+      - run: python3 scripts/prepare_iris_smoke.py
+      - name: Compare actual framebuffers (Iris and Sodium active in every job)
+        env: {SDL_VIDEO_DRIVER: x11, SDL_VIDEO_FORCE_EGL: '1', LIBGL_ALWAYS_SOFTWARE: 'true', MESA_GL_VERSION_OVERRIDE: '4.6', MESA_GLSL_VERSION_OVERRIDE: '460', ALSOFT_DRIVERS: 'null'}
+        run: |
+          set -o pipefail
+          xvfb-run -a -s '-screen 0 1280x1024x24 +extension GLX +render -noreset' ./gradlew --init-script scripts/ci-central.init.gradle -PtaczClientSmoke -PwithIris -PtaczIrisSuite="$TACZ_IRIS_SUITE" runClientGameTest --console=plain 2>&1 | tee "$RUNNER_TEMP/iris.log"
+          grep -F 'PORT_IRIS: material suite complete' build/run/clientGameTest/logs/latest.log
+      - if: always()
+        name: Report distinct material, aperture, shadow and receiver controls
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          log = Path('build/run/clientGameTest/logs/latest.log')
+          rows = log.read_text(errors='replace').splitlines() if log.is_file() else []
+          for tag in ('OPTIC_PACK', 'PORT_SCOPE_PARTICLE','PORT_REIMAGINED','PORT_MATERIALS','PORT_HAND_MATERIALS','PORT_PARTICLE_PASS','PORT_RECEIVER','PORT_IRIS'):
+              marker=tag+': '
+              data=[s.split(marker,1)[1] for s in rows if marker in s]
+              for i in range(0,len(data),10): print('::notice title='+tag+'::'+' | '.join(data[i:i+10]).replace('%','%25'))
+          PY
+      - if: failure()
+        run: python3 scripts/report_ci_failures.py "$RUNNER_TEMP/iris.log" build/run/clientGameTest/logs/latest.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iris-materials-${{ matrix.suite }}-${{ github.sha }}
+          retention-days: 14
+          path: |
+            build/iris-smoke/manifest.json
+            build/run/clientGameTest/logs/latest.log
+            build/run/clientGameTest/screenshots/**/*.png
+            build/run/clientGameTest/crash-reports/*.txt

@@ -197,8 +197,12 @@ def main():
                         # Don't mistake a lucky SET on the native race for a passing compatibility
                         # hook. Join and rejoin have distinct connections and must both drain bytes.
                         log = (work/'client/build/run/clientGameTest/logs/latest.log').read_text(errors='replace')
-                        if log.count('[TACZ REI] Forwarding') < 2 or '[TACZ REI] Display registries still busy' in log:
-                            raise RuntimeError('REI dedicated display decoder did not cross the ready barrier on both connections')
+                        attempts = log.split('PORT_REI: first connection closed; starting rejoin')
+                        forwards = [part.count('[TACZ REI] Forwarding') for part in attempts]
+                        if len(forwards) != 2 or min(forwards) < 1 or any(reason in log for reason in (
+                                '[TACZ REI] Display registries still busy', '[TACZ REI] Display sync exceeds', '[TACZ REI] Could not read')):
+                            raise RuntimeError(f'REI decode barrier: missing ready drain or native fallback on join/rejoin: {forwards}')
+                        print(f'::notice::PORT_REI: ready decoder drains on first connection={forwards[0]}, after reconnect={forwards[1]}; no fallback', flush=True)
                     if args.viewer != 'none':
                         for line in (evidence/'client.log').read_text(errors='replace').splitlines():
                             if 'PORT_VIEWER:' in line: print('::notice::PORT_VIEWER:' + line.split('PORT_VIEWER:', 1)[1])

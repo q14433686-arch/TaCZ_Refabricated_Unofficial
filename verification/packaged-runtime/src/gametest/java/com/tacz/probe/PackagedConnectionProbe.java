@@ -68,6 +68,7 @@ public final class PackagedConnectionProbe implements FabricClientGameTest {
             var before = ctx.computeOnClient(mc -> CACHE.getGunIndex(SECOND));
             disconnect(ctx);
             ctx.waitFor(mc -> CACHE.getGunIndex(SECOND) == null && CACHE.getSlotAdapterIndex(ADAPTER) == null);
+            if (profile.equals("rei")) com.tacz.guns.GunMod.LOGGER.info("PORT_REI: first connection closed; starting rejoin");
             connect(ctx);
             ctx.waitFor(mc -> online(mc) && CACHE.getGunIndex(SECOND) != null && CACHE.getGunIndex(SECOND) != before
                     && CACHE.getGunIndex(FIRST) == null && CACHE.getSlotAdapterIndex(ADAPTER) != null && hasNamedStock(mc), 1200);

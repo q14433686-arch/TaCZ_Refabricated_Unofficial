@@ -311,10 +311,20 @@ if (project.hasProperty('taczRenderSuite')) {
     loom.runs.clientGameTest.property 'tacz.test.render', property('taczRenderSuite')
 }
 
-if (project.hasProperty('taczOpticSuite')) {
-    loom.runs.clientGameTest.property 'tacz.test.optics', project.property('taczOpticSuite')
+if (project.hasProperty('taczOpticSuite') || project.hasProperty('taczIrisSuite')) {
+    if (!project.hasProperty('withIris') || !project.hasProperty('taczClientSmoke'))
+        throw new GradleException('Shader suites require -PwithIris and -PtaczClientSmoke')
+    def materials = project.findProperty('taczIrisSuite')
+    if (materials == null) loom.runs.clientGameTest.property 'tacz.test.optics', project.property('taczOpticSuite')
+    else {
+        if (project.hasProperty('taczOpticSuite') || !(materials in ['fixture', 'color-off', 'act']))
+            throw new GradleException('Select a single recognized shader suite')
+        loom.runs.clientGameTest.property 'tacz.test.iris', 'true'
+        if (materials != 'fixture') loom.runs.clientGameTest.property 'tacz.test.irisColor', materials == 'act' ? '128' : '0'
+    }
     def shader = tasks.register('prepareTargetShader', Copy) {
-        from layout.buildDirectory.dir('iris-smoke/complementary')
+        if (materials == 'fixture') from 'src/gametest/irisConfig'
+        else from layout.buildDirectory.dir('iris-smoke/complementary')
         into layout.buildDirectory.dir('run/clientGameTest')
         dependsOn tasks.named('deleteGameTestRunDir')
     }

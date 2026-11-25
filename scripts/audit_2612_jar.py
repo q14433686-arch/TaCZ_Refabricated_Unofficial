@@ -37,9 +37,9 @@ def audit(path):
         nested = {n for n in names if n.endswith('.jar')}
         required = {'mae-1.1.1.jar', 'commons-math3-3.6.1.jar', 'luaj-core-3.0.8-figura.jar', 'luaj-jse-3.0.8-figura.jar', 'bcel-6.6.1.jar'}
         assert nested == {'META-INF/jars/' + n for n in required} == {j['file'] for j in meta['jars']}, nested
-        assert not any(n.endswith('.java') or n.startswith(('com/tacz/guns/test/', 'assets/port_test/', 'data/port_test/', 'com/maydaymemory/')) for n in names)
+        assert not any(n.endswith('.java') or n.startswith(('com/tacz/guns/test/', 'assets/port_test/', 'data/port_test/', 'com/maydaymemory/', 'com/tacz/probe/', 'shaderpacks/', 'irisConfig/')) for n in names)
         test_classes = {str(p.relative_to(root).with_suffix('')) for root in
-                        [ROOT/'src'/kind/'java' for kind in ('gametest', 'test')] for p in root.rglob('*.java')}
+                        [ROOT/'src'/kind/'java' for kind in ('gametest', 'playerTest', 'test')] for p in root.rglob('*.java')}
         assert not any(n.split('$', 1)[0].removesuffix('.class') in test_classes for n in names if n.endswith('.class')), 'test implementation in product'
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
         prefix = '::notice::' if os.getenv('GITHUB_ACTIONS') else ''

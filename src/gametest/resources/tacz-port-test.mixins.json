@@ -21,7 +21,11 @@
     "ReceiverStateObserver",
     "SurfaceLightObserver",
     "ReimaginedShotControl",
-    "RackExtractionTimer"
+    "RackExtractionTimer",
+    "ReimaginedCasterControl",
+    "ReimaginedExposure",
+    "ReimaginedLocatorControl",
+    "ReimaginedShadowControl"
   ],
   "injectors": {
     "defaultRequire": 1

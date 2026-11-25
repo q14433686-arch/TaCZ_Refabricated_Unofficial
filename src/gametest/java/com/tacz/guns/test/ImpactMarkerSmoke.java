@@ -154,25 +154,56 @@ public final class ImpactMarkerSmoke {
             // The range text is yellow too and can shift by a pixel. Only inspect the centre
             // of the fixed scene (±15px at 854x480); don't count text, HUD or advancement toast.
             int radius = Math.min(w, h) / 32;
-            int n = 0, x0 = w, x1 = -1, y0 = h, y1 = -1;
-            for (int y = h/2-radius; y <= h/2+radius; y++) {
-                for (int x = w/2-radius; x <= w/2+radius; x++) {
-                    // The restored display layer can legitimately place yellow range text or
-                    // an etched reticle here. Measure *additional* yellow against both controls;
-                    // behind-wall marker suppression is independently asserted by zero draws.
-                    if (yellow(a.getRGB(x, y)) && yellow(c.getRGB(x, y))
-                            && !nearYellow(b,x,y) && !nearYellow(d,x,y)) {
-                        x0 = Math.min(x0,x); x1 = Math.max(x1,x);
-                        y0 = Math.min(y0,y); y1 = Math.max(y1,y);
-                        n++;
-                    }
-                }
+            // Shader jitter can move a one-pixel line by a pixel between render ticks. Taking
+            // a pixelwise intersection of two hollow outlines is not a test for a hollow outline:
+            // a ring shifted down by one pixel intersects only the former vertical edges.
+            // Require the entire box in EACH visible frame, in the same place to sub-stroke tolerance.
+            Ring first = ring(a, b, d, radius), last = ring(c, b, d, radius);
+            if (!first.hollow() || !last.hollow() || Math.abs(first.cx()-last.cx())>1 || Math.abs(first.cy()-last.cy())>1) {
+                String maps = " on="+map(a)+" off="+map(b)+" restored="+map(c)+" occluded="+map(d);
+                throw new AssertionError("No restored hollow XM157 marker: " + first + " -> " + last + "; " + diagnostic + maps);
             }
-            if (n < 6 || x1-x0 < 2 || y1-y0 < 2 || (yellow(a.getRGB((x0+x1)/2, (y0+y1)/2)) && !nearYellow(b,(x0+x1)/2,(y0+y1)/2))
-                    || (yellow(c.getRGB((x0+x1)/2, (y0+y1)/2)) && !nearYellow(b,(x0+x1)/2,(y0+y1)/2)))
-                throw new AssertionError("No restored hollow XM157 marker: " + n + " pixels in " + x0 + "," + y0 + ".." + x1 + "," + y1 + "; " + diagnostic + ", slope=" + lastSlope);
-            return n;
+            return Math.min(first.pixels, last.pixels);
         } catch (IOException ex) { throw new UncheckedIOException(ex); }
+    }
+
+    private record Ring(int x0, int y0, int x1, int y1, int pixels, boolean hollow) {
+        int cx() { return (x0+x1)/2; }
+        int cy() { return (y0+y1)/2; }
+    }
+
+    // Test the rendered ink, not the draw count or a guessed ballistic offset. Reticle/text in
+    // the controls cannot supply an edge. A solid blob, pair of bars or stray glint is not a ring.
+    private static Ring ring(BufferedImage image, BufferedImage hidden, BufferedImage wall, int radius) {
+        int w=image.getWidth(), h=image.getHeight(), x0=w, x1=-1, y0=h, y1=-1, n=0;
+        var added = new java.util.BitSet(w*h);
+        for (int y=h/2-radius; y<=h/2+radius; y++) for (int x=w/2-radius; x<=w/2+radius; x++) {
+            if (yellow(image.getRGB(x,y)) && !nearYellow(hidden,x,y) && !nearYellow(wall,x,y)) {
+                added.set(y*w+x); n++; x0=Math.min(x0,x); x1=Math.max(x1,x); y0=Math.min(y0,y); y1=Math.max(y1,y);
+            }
+        }
+        // A genuine hole is a non-marker pixel with restored marker ink on all four sides.
+        boolean hole=false;
+        for (int y=y0+1; y<y1 && !hole; y++) for (int x=x0+1; x<x1 && !hole; x++) {
+            if (added.get(y*w+x)) continue;
+            boolean left=false,right=false,top=false,bottom=false;
+            for (int i=x0;i<x;i++) left |= added.get(y*w+i);
+            for (int i=x+1;i<=x1;i++) right |= added.get(y*w+i);
+            for (int j=y0;j<y;j++) top |= added.get(j*w+x);
+            for (int j=y+1;j<=y1;j++) bottom |= added.get(j*w+x);
+            hole=left && right && top && bottom && !yellow(image.getRGB(x,y));
+        }
+        return new Ring(x0,y0,x1,y1,n,n>=6 && hole);
+    }
+
+    private static String map(BufferedImage image) {
+        StringBuilder out=new StringBuilder();
+        int cx=image.getWidth()/2,cy=image.getHeight()/2;
+        for (int y=cy-6;y<=cy+8;y++) {
+            for (int x=cx-7;x<=cx+7;x++) out.append(yellow(image.getRGB(x,y))?'#':'.');
+            out.append('/');
+        }
+        return out.toString();
     }
 
     private static boolean yellow(int rgb) {

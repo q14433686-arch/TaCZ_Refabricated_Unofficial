@@ -46,11 +46,11 @@ public final class ShaderOpticSmoke {
     private record Mount(Identifier optic, Identifier host, boolean builtin) {}
     private record View(int slot, float zoom, int locator) {}
 
-    private static void pack() {
+    static void requirePack(String expected) {
         try {
             var iris = Class.forName("net.irisshaders.iris.Iris");
             var name = iris.getMethod("getCurrentPackName").invoke(null);
-            if (!PACK.equals(name) || !IrisCompat.hasActiveIrisPack()) throw new AssertionError("Inactive or wrong shader: " + name);
+            if (!expected.equals(name) || !IrisCompat.hasActiveIrisPack()) throw new AssertionError("Inactive or wrong shader: " + name);
             GunMod.LOGGER.info("OPTIC_PACK: {} active, {}", name, com.mojang.blaze3d.systems.RenderSystem.getDevice());
         } catch (ReflectiveOperationException e) { throw new AssertionError(e); }
     }
@@ -122,7 +122,7 @@ public final class ShaderOpticSmoke {
     }
 
     static void run(ClientGameTestContext ctx, TestSingleplayerContext world, String suite) {
-        ctx.runOnClient(mc -> { pack(); mc.options.bobView().set(false); });
+        ctx.runOnClient(mc -> { requirePack(PACK); mc.options.bobView().set(false); });
         if (suite.equals("readouts")) {
             world.getClientLevel().waitForChunksRender(); ctx.waitTicks(25);
             RangefinderSmoke.run(ctx, world); ImpactMarkerSmoke.run(ctx, world);
