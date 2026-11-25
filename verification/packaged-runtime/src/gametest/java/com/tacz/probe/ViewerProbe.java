@@ -9,6 +9,7 @@ interface ViewerProbe {
     boolean hasGun(Identifier id);
     boolean hasWorkbenchRecipe(Identifier id);
     boolean hasOrdinaryCrafting();
+    default String detail() { return getClass().getSimpleName(); }
 
     static ViewerProbe load(String name) {
         if (name.equals("none")) return null;

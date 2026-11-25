@@ -136,7 +136,7 @@ def main():
         recipes = fixture/'data/net_probe/recipe'
         recipes.mkdir(parents=True)
         (recipes/'first.json').write_text(json.dumps({'type': 'tacz:gun_smith_table_crafting',
-                'materials': [{'item': 'minecraft:stick'}], 'result': {'type': 'ammo', 'id': 'tacz:12g', 'count': 5}}))
+                'materials': [{'item': 'minecraft:stick'}, {'item': 'minecraft:flint'}], 'result': {'type': 'ammo', 'id': 'tacz:12g', 'count': 5}}))
         old_export, previous, old_fingerprint = seed_previous_default(dedicated/'tacz')
         with socket.socket() as sock:
             sock.bind(('127.0.0.1', 0))
@@ -175,14 +175,21 @@ def main():
                                        'setblock 9 201 8 minecraft:crafting_table\nsetblock 7 201 8 tacz:workbench_a{BlockId:"tacz:ammo_workbench"}\ngamemode survival @a\n'
                                        'tp @a 8.5 201 8.5\ngive @a minecraft:oak_log 6\ngive @a minecraft:iron_ingot 8\ngive @a minecraft:iron_block 2\ngive @a minecraft:stick 2\n')
                     server.stdin.flush()
+                    def fund_after_short(generation):
+                        await_state((work/f'short-{generation}').is_file, [server, client], 600,
+                                    f'client did not confirm the {generation} one-short craft')
+                        server.stdin.write('give @a minecraft:flint 1\n')
+                        server.stdin.flush()
+                    fund_after_short('first')
                     await_state(ready.is_file, [server, client], 600, 'client did not receive server-only index')
                     (indexes/'first.json').rename(indexes/'second.json')
                     (recipes/'first.json').rename(recipes/'second.json')
                     server.stdin.write('reload\ngive @a minecraft:paper[minecraft:custom_name={text:"target receipt"}] 7\n')
                     server.stdin.flush()
+                    fund_after_short('second')
                     if client.wait(timeout=400) != 0 or 'PORT_DISTRIBUTION:' not in (evidence/'client.log').read_text(errors='replace'):
                         raise RuntimeError('packaged client did not complete reload and reconnect')
-                    receipt = f'PORT_CRAFT: {args.viewer} dedicated survival 3x3 before and after reload; server confirmed inventory and recipe book on rejoin'
+                    receipt = f'PORT_CRAFT: {args.viewer} dedicated survival 3x3 and bench, one short and funded before and after reload; server confirmed inventory and recipe book on rejoin'
                     if receipt not in (evidence/'client.log').read_text(errors='replace'):
                         raise RuntimeError('Missing dedicated crafting receipt')
                     print('::notice::' + receipt, flush=True)

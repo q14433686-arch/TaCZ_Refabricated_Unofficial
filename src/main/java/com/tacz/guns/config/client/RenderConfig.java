@@ -244,6 +244,9 @@ public class RenderConfig {
         builder.comment("Disable the interact hud text in center of the screen");
         DISABLE_INTERACT_HUD_TEXT = builder.define("DisableInteractHudText", false);
 
+        RENDER_CREATIVE_PACK_SIDEBAR = builder.comment("Display a pack sidebar in TaCZ creative tabs. Disabling restores the full current tab.")
+                .define("RenderCreativePackSidebar", true);
+
         builder.comment("Whether or not to automatically select the gun smith table's held item filter when opening it with a gun, attachment or ammo in main hand");
         AUTO_SELECT_GUN_SMITH_TABLE_FILTER = builder.define("AutoSelectGunSmithTableFilter", true);
 

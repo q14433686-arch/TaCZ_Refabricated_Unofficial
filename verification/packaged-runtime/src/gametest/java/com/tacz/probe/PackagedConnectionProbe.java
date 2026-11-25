@@ -53,11 +53,15 @@ public final class PackagedConnectionProbe implements FabricClientGameTest {
             Files.createFile(ready.resolveSibling("joined"));
             expectGeneration(ctx, viewer, FIRST, SECOND);
             DedicatedCrafting.craft(ctx, 0);
+            DedicatedCrafting.tableShort(ctx, FIRST, 0);
+            Files.createFile(ready.resolveSibling("short-first"));
             DedicatedCrafting.table(ctx, FIRST, 0);
             Files.createFile(ready);
             ctx.waitFor(mc -> CACHE.getGunIndex(FIRST) == null && CACHE.getGunIndex(SECOND) != null && hasNamedStock(mc), 1200);
             expectGeneration(ctx, viewer, SECOND, FIRST);
             DedicatedCrafting.craft(ctx, 1);
+            DedicatedCrafting.tableShort(ctx, SECOND, 1);
+            Files.createFile(ready.resolveSibling("short-second"));
             DedicatedCrafting.table(ctx, SECOND, 1);
             var before = ctx.computeOnClient(mc -> CACHE.getGunIndex(SECOND));
             disconnect(ctx);
@@ -69,17 +73,24 @@ public final class PackagedConnectionProbe implements FabricClientGameTest {
             ctx.waitFor(mc -> DedicatedCrafting.recipeBookHasTable(mc) && DedicatedCrafting.inventory(mc, ModItems.GUN_SMITH_TABLE) == 2
                     && DedicatedCrafting.inventory(mc, Items.OAK_LOG) == 0 && DedicatedCrafting.inventory(mc, Items.IRON_INGOT) == 0
                     && DedicatedCrafting.inventory(mc, Items.IRON_BLOCK) == 0 && DedicatedCrafting.shells(mc) == 10
-                    && DedicatedCrafting.inventory(mc, Items.STICK) == 0);
-            System.out.println("PORT_CRAFT: " + profile + " dedicated survival 3x3 before and after reload; server confirmed inventory and recipe book on rejoin");
+                    && DedicatedCrafting.inventory(mc, Items.STICK) == 0 && DedicatedCrafting.inventory(mc, Items.FLINT) == 0);
+            System.out.println("PORT_CRAFT: " + profile + " dedicated survival 3x3 and bench, one short and funded before and after reload; server confirmed inventory and recipe book on rejoin");
             ctx.takeScreenshot("tacz_distribution_rejoined");
             disconnect(ctx);
             System.out.println("PORT_DISTRIBUTION: production JAR, dedicated TCP join, server-only index replacement, disconnect and fresh rejoin with 7 named items passed");
         } catch (IOException ex) { throw new UncheckedIOException(ex); }
     }
     private static void expectGeneration(ClientGameTestContext ctx, ViewerProbe viewer, Identifier live, Identifier retired) {
-        ctx.waitFor(mc -> CACHE.getTableRecipe(live) != null && CACHE.getTableRecipe(retired) == null
-                && (viewer == null || viewer.hasOrdinaryCrafting() && viewer.hasGun(live) && !viewer.hasGun(retired)
-                        && viewer.hasWorkbenchRecipe(live) && !viewer.hasWorkbenchRecipe(retired)), 1200);
+        try {
+            ctx.waitFor(mc -> CACHE.getTableRecipe(live) != null && CACHE.getTableRecipe(retired) == null
+                    && (viewer == null || viewer.hasOrdinaryCrafting() && viewer.hasGun(live) && !viewer.hasGun(retired)
+                    && viewer.hasWorkbenchRecipe(live) && !viewer.hasWorkbenchRecipe(retired)), 1200);
+        } catch (AssertionError timeout) {
+            String detail = ctx.computeOnClient(mc -> "cache live/retired=" + (CACHE.getTableRecipe(live) != null) + "/" + (CACHE.getTableRecipe(retired) != null)
+                    + (viewer == null ? " (no viewer)" : ", ordinary=" + viewer.hasOrdinaryCrafting() + ", gun live/retired=" + viewer.hasGun(live) + "/" + viewer.hasGun(retired)
+                    + ", bench live/retired=" + viewer.hasWorkbenchRecipe(live) + "/" + viewer.hasWorkbenchRecipe(retired) + "; " + viewer.detail()));
+            throw new AssertionError("Viewer generation " + live + ": " + detail, timeout);
+        }
     }
     private static boolean sameFile(Path p, Path jar) {
         try { return Files.isSameFile(p, jar); } catch (IOException ex) { throw new UncheckedIOException(ex); }

@@ -18,6 +18,15 @@ public final class ReiProbe implements ViewerProbe {
     public boolean hasWorkbenchRecipe(Identifier id) {
         return !PluginManager.areAnyReloading() && DisplayRegistry.getInstance().get(AMMO).stream().anyMatch(d -> id.equals(d.getRecipe().getId()));
     }
+    public String detail() {
+        if (PluginManager.areAnyReloading()) return "REI reloading";
+        var registry = DisplayRegistry.getInstance();
+        var ordinary = registry.get(BuiltinPlugin.CRAFTING);
+        var table = Identifier.parse("tacz:gun_smith_table");
+        return "crafting displays=" + ordinary.size() + ", synced=" + ordinary.stream()
+                .filter(d -> registry.getDisplayOrigin(d) == DisplayRegistryImpl.SYNCED).count()
+                + ", matching location=" + ordinary.stream().filter(d -> d.getDisplayLocation().filter(table::equals).isPresent()).count();
+    }
     public boolean hasOrdinaryCrafting() {
         var displays = DisplayRegistry.getInstance();
         return !PluginManager.areAnyReloading() && displays.get(BuiltinPlugin.CRAFTING).stream()

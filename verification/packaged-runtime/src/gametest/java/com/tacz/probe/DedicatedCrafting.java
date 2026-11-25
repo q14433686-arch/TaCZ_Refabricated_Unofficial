@@ -67,19 +67,46 @@ final class DedicatedCrafting {
         return count;
     }
 
+    private static final BlockPos BENCH = TABLE.offset(-2, 0, 0);
+    private static final Identifier AMMO_BENCH = Identifier.parse("tacz:ammo_workbench");
+
+    // One flint is still withheld by the server. The earlier stick ingredient must not be
+    // debited. The following vanilla menu's open/content packets are a real TCP round trip
+    // after Craft and Close; an unchanged client prediction alone is not a negative control.
+    static void tableShort(ClientGameTestContext ctx, Identifier recipe, int before) {
+        ctx.runOnClient(mc -> checkStock(mc, before, 0));
+        open(ctx, BENCH, GunSmithTableMenu.class);
+        sendCraftAndClose(ctx, recipe, before, 0);
+        open(ctx, TABLE, CraftingMenu.class);
+        ctx.waitFor(mc -> mc.player.containerMenu instanceof CraftingMenu menu && menu.slots.stream()
+                .anyMatch(slot -> slot.getItem().is(Items.STICK)));
+        ctx.runOnClient(mc -> { checkStock(mc, before, 0); mc.player.closeContainer(); });
+        ctx.waitFor(mc -> mc.screen == null);
+    }
+
     static void table(ClientGameTestContext ctx, Identifier recipe, int before) {
-        open(ctx, TABLE.offset(-2, 0, 0), GunSmithTableMenu.class);
+        ctx.waitFor(mc -> inventory(mc, Items.FLINT) == 1);
+        open(ctx, BENCH, GunSmithTableMenu.class);
+        sendCraftAndClose(ctx, recipe, before, 1);
+        ctx.waitFor(mc -> shells(mc) == 5 * (before + 1) && inventory(mc, Items.STICK) == 1 - before
+                && inventory(mc, Items.FLINT) == 0 && mc.screen == null);
+    }
+
+    private static void checkStock(Minecraft mc, int before, int flint) {
+        if (shells(mc) != 5 * before || inventory(mc, Items.STICK) != 2 - before || inventory(mc, Items.FLINT) != flint)
+            throw new AssertionError("Dedicated bench stock: shells=" + shells(mc) + ", sticks=" + inventory(mc, Items.STICK) + ", flint=" + inventory(mc, Items.FLINT));
+    }
+
+    private static void sendCraftAndClose(ClientGameTestContext ctx, Identifier recipe, int before, int flint) {
         ctx.runOnClient(mc -> {
             var menu = (GunSmithTableMenu) mc.player.containerMenu;
-            if (!Identifier.parse("tacz:ammo_workbench").equals(menu.getBlockId()) || shells(mc) != 5 * before
-                    || !menu.selectFromViewer(recipe, false) || menu.consumeRecipeSelection() != null)
-                throw new AssertionError("Unfunded selection or wrong workbench: " + menu.getBlockId());
+            if (!AMMO_BENCH.equals(menu.getBlockId()) || !menu.selectFromViewer(recipe, false) || menu.consumeRecipeSelection() != null
+                    || !menu.selectFromViewer(recipe, true) || !recipe.equals(menu.consumeRecipeSelection()) || menu.consumeRecipeSelection() != null)
+                throw new AssertionError("Wrong bench or invalid one-shot viewer selection: " + recipe);
+            checkStock(mc, before, flint); // selecting, even with commit=true, does not craft
             ClientPlayNetworking.send(new ClientMessageCraft(recipe, menu.containerId));
-            // Generic inventory sync resumes when the slotless pack screen closes. TCP ordering
-            // delivers the craft before the close (the server also checks the live container ID).
-            mc.player.closeContainer();
+            mc.player.closeContainer(); // slotless menu: vanilla inventory sync resumes on close
         });
-        ctx.waitFor(mc -> shells(mc) == 5 * (before + 1) && inventory(mc, Items.STICK) == 1 - before);
         ctx.waitFor(mc -> mc.screen == null);
     }
 
