@@ -144,7 +144,7 @@ public final class AdsTransitionSmoke {
             var at=new BlockPos(p.blockPosition().getX(), 240, p.blockPosition().getZ());
             p.level().setBlock(at.below(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
             for (int x=-46;x<=46;x++) for (int y=-29;y<=29;y++)
-                p.level().setBlock(at.offset(x,y,-40), ((x+y)%2==0 ? Blocks.ORANGE_CONCRETE : Blocks.LIGHT_BLUE_CONCRETE).defaultBlockState(),Block.UPDATE_CLIENTS);
+                p.level().setBlock(at.offset(x,y,40), ((x+y)%2==0 ? Blocks.ORANGE_CONCRETE : Blocks.LIGHT_BLUE_CONCRETE).defaultBlockState(),Block.UPDATE_CLIENTS);
             p.setItemInHand(InteractionHand.MAIN_HAND, GunItemBuilder.create().setId(Identifier.parse("tacz:m700"))
                     .putAttachment(AttachmentType.SCOPE,optic).setAmmoCount(3).build());
             return at;
@@ -153,7 +153,8 @@ public final class AdsTransitionSmoke {
         server.runCommand("tp @a "+(base.getX()+.5)+" "+base.getY()+" "+(base.getZ()+.5));
         ctx.waitFor(mc -> mc.player.onGround() && mc.player.blockPosition().equals(base) && mc.player.getMainHandItem().getItem() instanceof IGun gun
                 && optic.equals(gun.getAttachmentId(mc.player.getMainHandItem(),AttachmentType.SCOPE)));
-        ctx.getInput().lookAt(180,0); world.getClientLevel().waitForChunksRender(); ctx.waitTicks(30);
+        // Face south; the PIP gallery uses its own unchanged northern wall and camera.
+        ctx.getInput().lookAt(0,0); world.getClientLevel().waitForChunksRender(); ctx.waitTicks(30);
         var old=ctx.computeOnClient(mc -> new boolean[]{RenderConfig.SCOPE_PIP_ENABLE.get(),RenderConfig.SCOPE_PIP_RERENDER.get(),
                 RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.get(),RenderConfig.EXPERIMENTAL_SCOPE_LENS.get(),mc.options.bobView().get(), RenderConfig.SCOPE_MASK_ENABLE.get()});
         double floor=ctx.computeOnClient(mc -> RenderConfig.SCOPE_PIP_MIN_AIMING_PROGRESS.get());

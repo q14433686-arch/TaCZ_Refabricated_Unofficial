@@ -123,11 +123,19 @@ public final class ShaderOpticSmoke {
 
     static void run(ClientGameTestContext ctx, TestSingleplayerContext world, String suite) {
         ctx.runOnClient(mc -> { requirePack(PACK); mc.options.bobView().set(false); });
+        // A missed XM157 glyph is not a lens-picture result. Run the moving picture in the
+        // PIP lane (or alone via -PtaczOpticSuite=transition), independent of the readout suite.
+        if (suite.equals("transition") || suite.equals("pip")) {
+            AdsTransitionSmoke.run(ctx, world);
+            if (suite.equals("transition")) {
+                GunMod.LOGGER.info("OPTIC_COMPLETE: transition");
+                return;
+            }
+        }
         if (suite.equals("readouts")) {
             world.getClientLevel().waitForChunksRender(); ctx.waitTicks(25);
             RangefinderSmoke.run(ctx, world); ImpactMarkerSmoke.run(ctx, world);
-            AdsTransitionSmoke.run(ctx, world);
-            GunMod.LOGGER.info("OPTIC_COMPLETE: readouts UH-1, XM157 and moving lens");
+            GunMod.LOGGER.info("OPTIC_COMPLETE: readouts UH-1 and XM157");
             return;
         }
         var server=world.getServer(); // disposable game world; uniform blue wall makes an opaque red plate distinguishable from the scene
