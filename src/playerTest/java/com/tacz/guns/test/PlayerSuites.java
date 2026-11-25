@@ -35,9 +35,10 @@ public final class PlayerSuites implements FabricClientGameTest {
             world.getClientLevel().waitForChunksRender();
             ctx.waitTicks(30);
             switch (suite) {
-                case "hud" -> { ViewTuningSmoke.run(ctx, world); SessionClockSmoke.pauseAndResume(ctx); }
+                case "hud" -> { ViewTuningSmoke.run(ctx, world); SessionClockSmoke.pauseAndResume(ctx); CreativeReloadSmoke.run(ctx, world); }
                 case "actions" -> {
                     PortInputSmoke.run(ctx, world); MovementRulesSmoke.run(ctx, world); ShotConsequencesSmoke.run(ctx, world);
+                    TrackingActionSmoke.run(ctx, world); OpticInstallSmoke.run(ctx, world);
                     ConfigPanelSmoke.run(ctx); CoreCompletionSmoke.run(ctx, world); DefaultRefitSmoke.run(ctx, world);
                 }
                 case "storage" -> saved = WorldReturnSmoke.prepare(ctx, world);

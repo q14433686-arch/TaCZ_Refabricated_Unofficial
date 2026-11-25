@@ -36,7 +36,7 @@ jobs:
           xvfb-run -a -s '-screen 0 2600x1500x24' ./gradlew --init-script scripts/ci-central.init.gradle -PtaczClientSmoke -PtaczPlayerSuite="$SUITE" runClientGameTest --console=plain 2>&1 | tee "$RUNNER_TEMP/player.log"
           grep -F "PORT_PLAYER: $SUITE complete" build/run/clientGameTest/logs/latest.log
       - if: always()
-        run: grep -E 'PORT_(PLAYER|ACCOUNT_HUD|HUD|CONTROLLER|PAL|SHOT|MOVEMENT|VIEW_TUNING|CLOCK|SAVE|CONFIG|REFIT|CORE)' build/run/clientGameTest/logs/latest.log | sed 's/^/::notice::/' || true
+        run: grep -E 'PORT_(PLAYER|CREATIVE|ACTION|OPTIC_INSTALL|ACCOUNT_HUD|HUD|CONTROLLER|PAL|SHOT|MOVEMENT|VIEW_TUNING|CLOCK|SAVE|CONFIG|REFIT|CORE)' build/run/clientGameTest/logs/latest.log | sed 's/^/::notice::/' || true
       - if: failure()
         run: python3 scripts/report_ci_failures.py "$RUNNER_TEMP/player.log" build/run/clientGameTest/logs/latest.log
       - uses: actions/upload-artifact@v4
