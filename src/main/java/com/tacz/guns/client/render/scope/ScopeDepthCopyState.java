@@ -251,7 +251,7 @@ public final class ScopeDepthCopyState {
                     // The PIP path also needs it: the lens composite runs after finalizeLevelRendering,
                     // so a bare-rim frame (or any frame where the reticle was not queued) must still
                     // force the private copy or the composite has no world depth to mask against.
-                    if (ScopeFinalOverlayState.hasPendingReticles()
+                    if (ScopeFinalOverlayState.hasPendingOverlay()
                             || ScopeLensFrame.expected != null || ScopePipRenderState.needsIrisWorldDepthCopy()) {
                         boolean copied = copyCurrentDepth(WORLD_TARGET, "final-overlay world depth");
                         worldDepthIdentity = copied ? captureDepthIdentity() : null;

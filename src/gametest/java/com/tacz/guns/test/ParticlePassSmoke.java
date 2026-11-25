@@ -40,7 +40,9 @@ final class ParticlePassSmoke {
     }
 
     private static void uv(RenderType type, float offset) {
-        var setup = ((ThermalRenderTypeAccessor)(Object)type).tacz$thermalSetup();
+        // The native depth wrapper delegates draw() (including TextureMat) to its real type.
+        // Its placeholder GUI setup never reaches the GPU.
+        var setup = ((ThermalRenderTypeAccessor)(Object)ScopeRenderTypes.underlying(type)).tacz$thermalSetup();
         var transform = ((MaterialTransformObserver)(Object)setup).taczTest$textureTransform();
         Matrix4f matrix = transform.getMatrix();
         if (!matrix.equals(new Matrix4f().translation(offset,offset,0), 1e-5f))

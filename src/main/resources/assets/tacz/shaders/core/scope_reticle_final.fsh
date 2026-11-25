@@ -76,7 +76,11 @@ vec4 coveredInk() {
 out vec4 fragColor;
 
 void main() {
+#ifdef RETICLE_COVERAGE
     vec4 color = coveredInk();
+#else
+    vec4 color = texture(Sampler0, texCoord0);
+#endif
     if (color.a == 0.0) discard;
     if (tacz_ScopeFinalOverlay == 0) {
         discard;

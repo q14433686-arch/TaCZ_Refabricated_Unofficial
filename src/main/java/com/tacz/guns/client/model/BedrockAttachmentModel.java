@@ -867,7 +867,9 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             // root-level locator is common to all groups. Do not draw a marker from the other view.
             if (active == null || !divisionByIndex.containsKey(active) || divisionByIndex.values().stream().noneMatch(impactMarker.path()::contains)
                     || impactMarker.path().contains(divisionByIndex.get(active))) {
-                impactMarker.submit(currentGunItem, poseStack, collector, orderedScopeSequence, overlay);
+                var layer = deferReticleToIrisFinalOverlay ? ImpactMarkerRender.Layer.FINAL_APERTURE
+                        : orderedScopeSequence ? ImpactMarkerRender.Layer.APERTURE : ImpactMarkerRender.Layer.MODEL;
+                impactMarker.submit(currentGunItem, poseStack, collector, layer, overlay);
             }
         }
 

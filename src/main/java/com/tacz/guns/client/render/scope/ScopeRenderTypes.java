@@ -43,6 +43,8 @@ public final class ScopeRenderTypes {
     private static final Map<Identifier, RenderType> FINAL_VISIBLE_RETICLES = new HashMap<>();
     private static final Map<Identifier, RenderType> FINAL_OCULAR_RINGS = new HashMap<>();
 
+    private static final Map<Identifier, RenderType> FINAL_READOUTS = new HashMap<>();
+
     /** Set during extraction when this first-person gun submission actually queued an ocular aperture. */
     private static boolean apertureScheduledForViewmodel;
 
@@ -100,6 +102,15 @@ public final class ScopeRenderTypes {
     private static final RenderPipeline FINAL_ETCHED_RETICLE_PIPELINE = createFinalEtchedReticlePipeline();
     private static final RenderPipeline FINAL_VISIBLE_RETICLE_PIPELINE = createFinalVisibleReticlePipeline();
     private static final RenderPipeline FINAL_OCULAR_RING_PIPELINE = createFinalOcularRingPipeline();
+    // A generated quad has no Bedrock face-coverage coordinates. Keep the exact aperture,
+    // but sample its texture normally, with self-lit vertex colour and no final depth write.
+    private static final RenderPipeline FINAL_READOUT_PIPELINE = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
+            .withLocation(Identifier.parse("tacz:pipeline/scope_final_readout"))
+            .withFragmentShader(Identifier.parse("tacz:core/scope_reticle_final"))
+            .withShaderDefine("EMISSIVE").withShaderDefine("NO_CARDINAL_LIGHTING").withSampler("Sampler1")
+            .withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM).withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM)
+            .withColorTargetState(new ColorTargetState(com.mojang.blaze3d.pipeline.BlendFunction.TRANSLUCENT)).withCull(false)
+            .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false)).build());
 
     /**
      * Masked <b>text</b> pipeline for the post-composite overlay (in-scope ammo counters).
@@ -265,6 +276,16 @@ public final class ScopeRenderTypes {
     /** Final post-composite illuminated reticle; only selected for the audited Iris 26.1 (1.11.x) path. */
     public static RenderType finalVisibleReticle(Identifier texture) {
         return FINAL_VISIBLE_RETICLES.computeIfAbsent(texture, ScopeRenderTypes::createFinalVisibleReticleType);
+    }
+
+    public static RenderType finalReadout(Identifier texture) {
+        return FINAL_READOUTS.computeIfAbsent(texture, tex -> {
+            RenderSetup setup = RenderSetup.builder(FINAL_READOUT_PIPELINE).withTexture("Sampler0", tex)
+                    .withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, tex)
+                    .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, tex).useLightmap().useOverlay().createRenderSetup();
+            return new DepthCopyRenderType("tacz_scope_final_readout", RenderType.create("tacz_scope_final_readout_base", setup),
+                    ScopeDepthCopyState.Operation.MASK);
+        });
     }
 
     /** Final post-composite physical rim, emitted after final reticle geometry. */

@@ -39,7 +39,7 @@ public final class ImpactMarkerSmoke {
     private static boolean trace;
     private static double lastSlope;
 
-    public static boolean onSubmit(ImpactMarkerRender marker, PoseStack root) {
+    public static boolean onSubmit(ImpactMarkerRender marker, PoseStack root, ImpactMarkerRender.Layer layer) {
         if (trace) {
             var mc = Minecraft.getInstance();
             Matrix4f hud = new Matrix4f();
@@ -49,7 +49,7 @@ public final class ImpactMarkerSmoke {
             try {
                 for (var part : marker.path()) part.translateAndRotateAndScale(root);
                 hud.mul(root.last().pose());
-                diagnostic = "clip=" + hud.m30() + "," + hud.m31() + "," + hud.m33()
+                diagnostic = layer + " clip=" + hud.m30() + "," + hud.m31() + "," + hud.m33()
                         + ", camera=" + mc.gameRenderer.getGameRenderState().levelRenderState.cameraRenderState.initialized;
             } finally { root.popPose(); }
         }
@@ -170,7 +170,7 @@ public final class ImpactMarkerSmoke {
             }
             if (n < 6 || x1-x0 < 2 || y1-y0 < 2 || (yellow(a.getRGB((x0+x1)/2, (y0+y1)/2)) && !nearYellow(b,(x0+x1)/2,(y0+y1)/2))
                     || (yellow(c.getRGB((x0+x1)/2, (y0+y1)/2)) && !nearYellow(b,(x0+x1)/2,(y0+y1)/2)))
-                throw new AssertionError("No restored hollow XM157 marker: " + n + " pixels in " + x0 + "," + y0 + ".." + x1 + "," + y1);
+                throw new AssertionError("No restored hollow XM157 marker: " + n + " pixels in " + x0 + "," + y0 + ".." + x1 + "," + y1 + "; " + diagnostic + ", slope=" + lastSlope);
             return n;
         } catch (IOException ex) { throw new UncheckedIOException(ex); }
     }

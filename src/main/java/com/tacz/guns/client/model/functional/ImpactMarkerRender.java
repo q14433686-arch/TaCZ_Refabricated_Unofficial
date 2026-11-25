@@ -7,12 +7,15 @@ import com.mojang.math.Axis;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.papi.RangefinderReadout;
 import com.tacz.guns.client.render.scope.ScopeRenderTypes;
+import com.tacz.guns.client.render.scope.ScopeFinalOverlayState;
+import com.tacz.guns.client.render.scope.ScopeProjection;
 import com.tacz.guns.client.render.scope.ScopePipRenderState;
 import com.tacz.guns.client.resource.pojo.display.gun.Rangefinder;
 import com.tacz.guns.client.resource.pojo.display.gun.TextShow;
 import com.tacz.guns.mixin.client.GameRendererProjectionAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix4f;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +35,9 @@ public record ImpactMarkerRender(List<BedrockPart> path, Rangefinder settings) {
                 .min(Map.Entry.comparingByKey()).map(e -> new ImpactMarkerRender(List.copyOf(path), e.getValue().getRangefinder())).orElse(null);
     }
 
-    public void submit(ItemStack stack, PoseStack root, SubmitNodeCollector collector, boolean clipped, int overlay) {
+    public enum Layer { MODEL, APERTURE, FINAL_APERTURE }
+
+    public void submit(ItemStack stack, PoseStack root, SubmitNodeCollector collector, Layer layer, int overlay) {
         double slope = RangefinderReadout.impactSlope(stack, settings);
         if (!Double.isFinite(slope)) return;
         var mc = Minecraft.getInstance();
@@ -48,8 +53,9 @@ public record ImpactMarkerRender(List<BedrockPart> path, Rangefinder settings) {
         for (var part : path) part.translateAndRotateAndScale(pose);
         pose.mulPose(Axis.ZP.rotationDegrees(180));
         pose.scale(2f/300, -2f/300, -2f/300);
-        var clip = new Matrix4f();
-        ((GameRendererProjectionAccessor)(Object)mc.gameRenderer).tacz$getHudProjection().getMatrix(clip);
+        var projection = ScopeProjection.current();
+        var clip = projection != null ? new Matrix4f(projection) :
+                ((GameRendererProjectionAccessor)(Object)mc.gameRenderer).tacz$getHudProjection().getMatrix(new Matrix4f());
         // The hand pose includes the inverse camera basis. Match the actual GPU transform
         // (and the ocular mask's submit-time capture); pose alone is not camera-local.
         // Only the CPU projection needs this factor. The collector applies ModelView at draw time.
@@ -66,8 +72,16 @@ public record ImpactMarkerRender(List<BedrockPart> path, Rangefinder settings) {
         float half = Math.max(3f, px * 2) * settings.getImpactScale();
         float line = Math.min(half, Math.max(px, half / 3));
         int color = settings.getImpactColor();
-        var type = clipped ? ScopeRenderTypes.visibleReticle(BeamRenderer.LASER_BEAM_TEXTURE) : net.minecraft.client.renderer.rendertype.RenderTypes.entityTranslucentEmissive(BeamRenderer.LASER_BEAM_TEXTURE);
-        collector.submitCustomGeometry(pose, type, (frozen, vertices) -> drawBox(frozen, vertices, y, half, line, color, overlay));
+        var texture = BeamRenderer.LASER_BEAM_TEXTURE;
+        SubmitNodeCollector.CustomGeometryRenderer box = (frozen, vertices) -> drawBox(frozen, vertices, y, half, line, color, overlay);
+        if (layer == Layer.FINAL_APERTURE) {
+            // The lens composite replaces the earlier hand colour, including this box. Queue
+            // the four frozen quads, not another hit test or a mutable locator, above the ink.
+            ScopeFinalOverlayState.queueReadout(pose, ScopeRenderTypes.finalReadout(texture), box);
+        } else {
+            collector.submitCustomGeometry(pose, layer == Layer.APERTURE ? ScopeRenderTypes.visibleReticle(texture)
+                    : RenderTypes.entityTranslucentEmissive(texture), box);
+        }
     }
 
     private static void drawBox(PoseStack.Pose pose, VertexConsumer out, float y, float h, float line, int color, int overlay) {

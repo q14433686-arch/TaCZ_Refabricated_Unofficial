@@ -11,6 +11,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
 import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.SubmitNodeStorage;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import org.joml.Matrix4f;
@@ -42,11 +43,12 @@ import java.util.List;
  */
 public final class ScopeFinalOverlayState {
     private static final int FINAL_RETICLE_ORDER = 20_000;
-    private static final int FINAL_OCULAR_RING_ORDER = 20_001;
+    private static final int FINAL_READOUT_ORDER = FINAL_RETICLE_ORDER + 1;
+    private static final int FINAL_OCULAR_RING_ORDER = FINAL_READOUT_ORDER + 1;
 
     private static final List<ReticleDraw> PENDING_RETICLES = new ArrayList<>();
     private static final List<RingDraw> PENDING_RINGS = new ArrayList<>();
-    private static final List<IFunctionalSubmitter.SubmitTask> PENDING_TEXT = new ArrayList<>();
+    private static final List<IFunctionalSubmitter.SubmitTask> PENDING_TASKS = new ArrayList<>();
     private static @Nullable HandTransform handTransform;
     private static @Nullable RenderBuffers renderBuffers;
     private static @Nullable SubmitNodeStorage submitNodes;
@@ -62,7 +64,7 @@ public final class ScopeFinalOverlayState {
     public static void beginSolidSubmission() {
         PENDING_RETICLES.clear();
         PENDING_RINGS.clear();
-        PENDING_TEXT.clear();
+        PENDING_TASKS.clear();
         handTransform = null;
     }
 
@@ -82,7 +84,7 @@ public final class ScopeFinalOverlayState {
     public static void discardPendingOverlays() {
         PENDING_RETICLES.clear();
         PENDING_RINGS.clear();
-        PENDING_TEXT.clear();
+        PENDING_TASKS.clear();
         handTransform = null;
     }
 
@@ -96,7 +98,7 @@ public final class ScopeFinalOverlayState {
 
     /** @return whether anything (reticle or bare physical rim) waits to be drawn after the final cover. */
     public static boolean hasPendingOverlay() {
-        return !PENDING_RETICLES.isEmpty() || !PENDING_RINGS.isEmpty() || !PENDING_TEXT.isEmpty();
+        return !PENDING_RETICLES.isEmpty() || !PENDING_RINGS.isEmpty() || !PENDING_TASKS.isEmpty();
     }
 
     /**
@@ -111,7 +113,12 @@ public final class ScopeFinalOverlayState {
         if (handTransform == null) {
             return;
         }
-        PENDING_TEXT.add(task);
+        PENDING_TASKS.add(task);
+    }
+
+    /** Procedural lens symbology sits above the authored scale but below the physical rim. */
+    public static void queueReadout(PoseStack frozenPose, RenderType type, SubmitNodeCollector.CustomGeometryRenderer geometry) {
+        queueFunctionalTask(nodes -> nodes.order(FINAL_READOUT_ORDER).submitCustomGeometry(frozenPose, type, geometry));
     }
 
     static void queueReticle(BedrockRenderSnapshot snapshot, RenderType renderType) {
@@ -153,7 +160,7 @@ public final class ScopeFinalOverlayState {
      * </ul>
      */
     public static void renderAfterFinalComposite() {
-        if ((PENDING_RETICLES.isEmpty() && PENDING_RINGS.isEmpty() && PENDING_TEXT.isEmpty())
+        if ((PENDING_RETICLES.isEmpty() && PENDING_RINGS.isEmpty() && PENDING_TASKS.isEmpty())
                 || handTransform == null) {
             return;
         }
@@ -165,11 +172,11 @@ public final class ScopeFinalOverlayState {
 
         List<ReticleDraw> reticles = List.copyOf(PENDING_RETICLES);
         List<RingDraw> rings = List.copyOf(PENDING_RINGS);
-        List<IFunctionalSubmitter.SubmitTask> texts = List.copyOf(PENDING_TEXT);
+        List<IFunctionalSubmitter.SubmitTask> tasks = List.copyOf(PENDING_TASKS);
         HandTransform transform = handTransform;
         PENDING_RETICLES.clear();
         PENDING_RINGS.clear();
-        PENDING_TEXT.clear();
+        PENDING_TASKS.clear();
         handTransform = null;
 
         GpuBufferSlice previousProjection = RenderSystem.getProjectionMatrixBuffer();
@@ -188,8 +195,8 @@ public final class ScopeFinalOverlayState {
             // (26.1.2's SubmitNodeStorage IS a SubmitNodeCollector; the OrderedSubmitNodeCollector
             // returned by order(int) is NOT one, so a task.submit(collector.order(...)) does not
             // even type-check). This lands text in the storage's default order bucket, i.e.
-            // before reticle (20_000) / rim (20_001) - picture -> text -> reticle -> shade.
-            for (IFunctionalSubmitter.SubmitTask task : texts) {
+            // before reticle / readout / rim.
+            for (IFunctionalSubmitter.SubmitTask task : tasks) {
                 task.submit(submitNodes);
             }
 
@@ -212,8 +219,8 @@ public final class ScopeFinalOverlayState {
             renderBuffers.bufferSource().endBatch();
             if (!loggedRendered) {
                 loggedRendered = true;
-                GunMod.LOGGER.info("[TACZ Scope] Rendered deferred reticle and ocular rim after the final cover ({} reticles, {} rims, {} texts).",
-                        reticles.size(), rings.size(), texts.size());
+                GunMod.LOGGER.info("[TACZ Scope] Rendered deferred reticle and ocular rim after the final cover ({} reticles, {} rims, {} tasks).",
+                        reticles.size(), rings.size(), tasks.size());
             }
         } catch (RuntimeException e) {
             // Optional Iris integration must not turn a shader-pack edge case into a client crash.

@@ -344,7 +344,7 @@ public class BedrockGunModel extends BedrockAnimatedModel {
         // dispatch also updates attached particle locators when there are no new keyframes.
         AnimationParticleDispatcher.submit(gunItem, this, poseStack, transformType, collector, light);
         if (impactMarker != null && transformType != null && transformType.firstPerson())
-            impactMarker.submit(gunItem, poseStack, collector, false, overlay);
+            impactMarker.submit(gunItem, poseStack, collector, ImpactMarkerRender.Layer.MODEL, overlay);
     }
 
 

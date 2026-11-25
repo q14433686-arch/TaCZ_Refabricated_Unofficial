@@ -20,7 +20,7 @@ public final class ScopeProjection {
         MIRRORS.computeIfAbsent(slice, ignored -> new Matrix4f()).set(matrix);
     }
 
-    static @Nullable Matrix4fc current() {
+    public static @Nullable Matrix4fc current() {
         return MIRRORS.get(RenderSystem.getProjectionMatrixBuffer());
     }
 

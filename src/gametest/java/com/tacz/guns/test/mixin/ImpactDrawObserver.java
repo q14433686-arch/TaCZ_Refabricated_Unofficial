@@ -15,8 +15,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = ImpactMarkerRender.class, remap = false)
 abstract class ImpactDrawObserver {
     @Inject(method = "submit", at = @At("HEAD"), cancellable = true)
-    private void captureInputs(ItemStack stack, PoseStack root, SubmitNodeCollector collector, boolean clipped, int overlay, CallbackInfo ci) {
-        if (ImpactMarkerSmoke.onSubmit((ImpactMarkerRender)(Object)this, root)) ci.cancel();
+    private void captureInputs(ItemStack stack, PoseStack root, SubmitNodeCollector collector, ImpactMarkerRender.Layer layer, int overlay, CallbackInfo ci) {
+        if (ImpactMarkerSmoke.onSubmit((ImpactMarkerRender)(Object)this, root, layer)) ci.cancel();
     }
 
     @ModifyExpressionValue(method = "submit", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/papi/RangefinderReadout;impactSlope(Lnet/minecraft/world/item/ItemStack;Lcom/tacz/guns/client/resource/pojo/display/gun/Rangefinder;)D"))
