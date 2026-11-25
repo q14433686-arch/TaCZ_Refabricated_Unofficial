@@ -55,14 +55,14 @@ public final class PackagedConnectionProbe implements FabricClientGameTest {
             DedicatedCrafting.craft(ctx, 0);
             DedicatedCrafting.tableShort(ctx, FIRST, 0);
             Files.createFile(ready.resolveSibling("short-first"));
-            DedicatedCrafting.table(ctx, FIRST, 0);
+            DedicatedCrafting.table(ctx, FIRST, 0, viewer);
             Files.createFile(ready);
             ctx.waitFor(mc -> CACHE.getGunIndex(FIRST) == null && CACHE.getGunIndex(SECOND) != null && hasNamedStock(mc), 1200);
             expectGeneration(ctx, viewer, SECOND, FIRST);
             DedicatedCrafting.craft(ctx, 1);
             DedicatedCrafting.tableShort(ctx, SECOND, 1);
             Files.createFile(ready.resolveSibling("short-second"));
-            DedicatedCrafting.table(ctx, SECOND, 1);
+            DedicatedCrafting.table(ctx, SECOND, 1, viewer);
             var before = ctx.computeOnClient(mc -> CACHE.getGunIndex(SECOND));
             disconnect(ctx);
             ctx.waitFor(mc -> CACHE.getGunIndex(SECOND) == null && CACHE.getSlotAdapterIndex(ADAPTER) == null);
@@ -91,6 +91,7 @@ public final class PackagedConnectionProbe implements FabricClientGameTest {
                     + ", bench live/retired=" + viewer.hasWorkbenchRecipe(live) + "/" + viewer.hasWorkbenchRecipe(retired) + "; " + viewer.detail()));
             throw new AssertionError("Viewer generation " + live + ": " + detail, timeout);
         }
+        if (viewer != null) viewer.checkInstalled(ctx, live);
     }
     private static boolean sameFile(Path p, Path jar) {
         try { return Files.isSameFile(p, jar); } catch (IOException ex) { throw new UncheckedIOException(ex); }

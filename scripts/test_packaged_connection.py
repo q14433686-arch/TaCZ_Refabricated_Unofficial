@@ -193,6 +193,9 @@ def main():
                     if receipt not in (evidence/'client.log').read_text(errors='replace'):
                         raise RuntimeError('Missing dedicated crafting receipt')
                     print('::notice::' + receipt, flush=True)
+                    if args.viewer != 'none':
+                        for line in (evidence/'client.log').read_text(errors='replace').splitlines():
+                            if 'PORT_VIEWER:' in line: print('::notice::PORT_VIEWER:' + line.split('PORT_VIEWER:', 1)[1])
                 server.stdin.write('stop\n'); server.stdin.flush()
                 if server.wait(timeout=60) != 0:
                     raise RuntimeError('dedicated shutdown failed')
@@ -211,7 +214,7 @@ def main():
                 # pack refresh. REI keeps its detailed registration diagnostics in rei.log.
                 if args.viewer == 'rei':
                     markers = ('Skipping recipe fill', 'displays from recipe manager', 'REI Server Display Sync',
-                               'TACZ Recipe Viewer', 'Failed to fill display for recipe:', 'Failed to encode display:')
+                               'TACZ Recipe Viewer', '[TACZ REI]', 'Failed to fill display for recipe:', 'Failed to encode display:')
                     for name in ('logs/rei.log', 'logs/latest.log'):
                         path = run/name
                         if path.is_file():

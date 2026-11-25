@@ -21,6 +21,11 @@ public class MixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        if (mixinClassName.startsWith("cn.sh1rocu.tacz.mixin.compat.roughlyenoughitems.")) {
+            // The lifetime of incoming display bytes is an implementation detail of this REI build.
+            return FabricLoader.getInstance().getModContainer("roughlyenoughitems")
+                    .map(mod -> mod.getMetadata().getVersion().getFriendlyString().split("\\+", 2)[0].equals("26.1.819")).orElse(false);
+        }
         if (mixinClassName.startsWith("cn.sh1rocu.tacz.mixin.compat.")) {
             return FabricLoader.getInstance().isModLoaded(mixinClassName.split("\\.")[5]);
         }

@@ -3,6 +3,7 @@ package com.tacz.probe;
 import com.tacz.guns.init.ModItems;
 import com.tacz.guns.api.item.IAmmo;
 import com.tacz.guns.inventory.GunSmithTableMenu;
+import com.tacz.guns.client.gui.GunSmithTableScreen;
 import com.tacz.guns.network.message.ClientMessageCraft;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.resources.Identifier;
@@ -84,8 +85,28 @@ final class DedicatedCrafting {
         ctx.waitFor(mc -> mc.screen == null);
     }
 
-    static void table(ClientGameTestContext ctx, Identifier recipe, int before) {
+    static void table(ClientGameTestContext ctx, Identifier recipe, int before, ViewerProbe viewer) {
         ctx.waitFor(mc -> inventory(mc, Items.FLINT) == 1);
+        if (viewer != null) {
+            open(ctx, BENCH, GunSmithTableMenu.class);
+            ctx.runOnClient(mc -> {
+                var screen = (GunSmithTableScreen) mc.screen;
+                var menu = screen.getMenu();
+                if (!viewer.select(screen, recipe, false) || menu.consumeRecipeSelection() != null
+                        || !viewer.select(screen, recipe, true) || !recipe.equals(menu.consumeRecipeSelection())
+                        || menu.consumeRecipeSelection() != null) throw new AssertionError("Installed transfer handler: " + recipe);
+                // Do NOT send Craft. A handler which silently crafts on the server must fail the
+                // round-trip stock check below, even if a subsequent craft would run out of flint.
+                mc.player.closeContainer();
+            });
+            ctx.waitFor(mc -> mc.screen == null);
+            open(ctx, TABLE, CraftingMenu.class);
+            ctx.waitFor(mc -> mc.player.containerMenu instanceof CraftingMenu m && m.slots.stream().anyMatch(s -> s.getItem().is(Items.FLINT)));
+            ctx.runOnClient(mc -> { checkStock(mc, before, 1); mc.player.closeContainer(); });
+            ctx.waitFor(mc -> mc.screen == null);
+            System.out.println("PORT_VIEWER: " + viewer.getClass().getSimpleName() + " " + recipe
+                    + " installed transfer checked and committed once; server stock unchanged before craft");
+        }
         open(ctx, BENCH, GunSmithTableMenu.class);
         sendCraftAndClose(ctx, recipe, before, 1);
         ctx.waitFor(mc -> shells(mc) == 5 * (before + 1) && inventory(mc, Items.STICK) == 1 - before
@@ -100,10 +121,8 @@ final class DedicatedCrafting {
     private static void sendCraftAndClose(ClientGameTestContext ctx, Identifier recipe, int before, int flint) {
         ctx.runOnClient(mc -> {
             var menu = (GunSmithTableMenu) mc.player.containerMenu;
-            if (!AMMO_BENCH.equals(menu.getBlockId()) || !menu.selectFromViewer(recipe, false) || menu.consumeRecipeSelection() != null
-                    || !menu.selectFromViewer(recipe, true) || !recipe.equals(menu.consumeRecipeSelection()) || menu.consumeRecipeSelection() != null)
-                throw new AssertionError("Wrong bench or invalid one-shot viewer selection: " + recipe);
-            checkStock(mc, before, flint); // selecting, even with commit=true, does not craft
+            if (!AMMO_BENCH.equals(menu.getBlockId())) throw new AssertionError("Wrong bench for " + recipe);
+            checkStock(mc, before, flint);
             ClientPlayNetworking.send(new ClientMessageCraft(recipe, menu.containerId));
             mc.player.closeContainer(); // slotless menu: vanilla inventory sync resumes on close
         });
