@@ -81,8 +81,10 @@ final class MarkerPixels {
             boolean left = false, right = false, top = false, bottom = false;
             for (int i = added.nextSetBit(0); i >= 0; i = added.nextSetBit(i + 1)) {
                 int x = i % size, y = i / size;
-                left |= x < hole.left; right |= x > hole.right;
-                top |= y < hole.top; bottom |= y > hole.bottom;
+                // Corners count towards rim size, but cannot stand in for an edge
+                // entirely supplied by the background (or prove two new sides at once).
+                if (y >= hole.top && y <= hole.bottom) { left |= x < hole.left; right |= x > hole.right; }
+                if (x >= hole.left && x <= hole.right) { top |= y < hole.top; bottom |= y > hole.bottom; }
                 if (!nearInk(control, x, y, size)) distinct++;
             }
             // Four sides contributed new ink. At least six pixels remain distinct even after
@@ -98,7 +100,10 @@ final class MarkerPixels {
         var exposed = rows(0x80, 0x3c0, 0x240, 0x240, 0x3c0);
         var hidden = rows(0x80, 0x80, 0, 0, 0);
         var ring = find(exposed, hidden, 7);
-        if (ring == null || ring.rim != 12 || ring.changed != 11 || ring.distinct != 8 || find(exposed, exposed, 7) != null
+        var stone = rows(0x180, 0x180);
+        if (ring == null || ring.rim != 12 || ring.changed != 11 || ring.distinct != 8
+                || find(stone, stone, 7) != null || find(exposed, exposed, 7) != null
+                || find(exposed, rows(0x80, 0x180, 0, 0, 0), 7) != null // top supplied by the reticle
                 || find(rows(0x80, 0x3c0, 0x240, 0x240, 0x240), hidden, 7) != null // missing base
                 || find(rows(0x80, 0x3c0, 0x3c0, 0x3c0, 0x3c0), hidden, 7) != null // solid
                 || find(exposed, rows(0x40, 0x1e0, 0x120, 0x120, 0x1e0), 7) != null) // unchanged ring, shifted one pixel

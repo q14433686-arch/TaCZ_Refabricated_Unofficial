@@ -131,8 +131,7 @@ public final class ImpactMarkerSmoke {
             Path blocked = ctx.takeScreenshot("tacz_xm157_occluded");
             ctx.runOnClient(mc -> hide = true);
             ctx.waitTicks(6);
-            int pixels = checkRing(on, off, again, blocked, ctx.takeScreenshot("tacz_xm157_occluded_control"));
-            GunMod.LOGGER.info("PORT_OPTIC: XM157 showed {} restored yellow pixels on entity, zero draws behind wall", pixels);
+            checkRing(on, off, again, blocked, ctx.takeScreenshot("tacz_xm157_occluded_control"));
         } finally {
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
             ctx.runOnClient(mc -> { hide = false; trace = false; });
@@ -149,7 +148,7 @@ public final class ImpactMarkerSmoke {
         ctx.runOnClient(mc -> { if (draws != 0) throw new AssertionError("XM157 marker persisted " + condition); });
     }
 
-    private static int checkRing(Path on, Path control, Path restored, Path occluded, Path occludedControl) {
+    private static void checkRing(Path on, Path control, Path restored, Path occluded, Path occludedControl) {
         try {
             var a = ImageIO.read(on.toFile());
             var b = ImageIO.read(control.toFile());
@@ -179,8 +178,7 @@ public final class ImpactMarkerSmoke {
                 GunMod.LOGGER.error("PORT_XM157: stone on/off: {} {}", map(d),map(e));
                 throw new AssertionError("No restored hollow XM157 marker: " + first + " -> " + last + "; occluded=" + blocked + "; " + diagnostic);
             }
-            GunMod.LOGGER.info("PORT_XM157: exposed {} restored {}; no enclosed marker behind stone", first, last);
-            return Math.min(first.rim(), last.rim());
+            GunMod.LOGGER.info("PORT_OPTIC: XM157 hollow yellow rim: exposed {}, restored {}; no ring or draws behind stone", first, last);
         } catch (IOException ex) { throw new UncheckedIOException(ex); }
     }
 
