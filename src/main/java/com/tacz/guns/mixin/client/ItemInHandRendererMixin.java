@@ -148,6 +148,7 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
             return;
         }
 
+        if (com.tacz.guns.compat.ysm.YsmCompat.isExternalGunRenderActive()) return;
         if (!IrisCompat.shouldRenderInCurrentHandPhase(renderStack)) {
             return;
         }

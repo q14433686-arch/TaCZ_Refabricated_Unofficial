@@ -784,19 +784,21 @@ public final class ScopePipRenderState {
             if (scene == null || worldBinding == null || apertureBinding == null) {
                 return;
             }
+            // DynamicUniformStorage maps a GPU buffer. 26.1 forbids this while a pass is open.
+            var lens = ScopeLensFrame.current();
+            var heat = lens == null ? null : ScopeThermalCapture.current();
+            var uniforms = lens == null ? null : RenderSystem.getDynamicUniforms().writeTransform(
+                    ScopeLensFrame.uniforms(lens, heat != null), new org.joml.Vector4f(1), new org.joml.Vector3f(), new org.joml.Matrix4f());
             CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
             try (RenderPass pass = encoder.createRenderPass(
                     () -> "tacz_scope_pip_composite",
                     main.getColorTextureView(),
                     OptionalInt.empty())) {
-                var lens = ScopeLensFrame.current();
                 pass.setPipeline(pipeline(compositeZoom, lens != null));
                 if (lens != null) {
-                    var heat = ScopeThermalCapture.current();
                     pass.bindTexture("HeatSampler", heat == null ? scene.view() : heat.getColorTextureView(),
                             RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
-                    pass.setUniform("DynamicTransforms", RenderSystem.getDynamicUniforms().writeTransform(
-                            ScopeLensFrame.uniforms(lens, heat != null), new org.joml.Vector4f(1), new org.joml.Vector3f(), new org.joml.Matrix4f()));
+                    pass.setUniform("DynamicTransforms", uniforms);
                 }
                 pass.bindTexture(SCENE_SAMPLER_UNIFORM,
                         scene.view(),
