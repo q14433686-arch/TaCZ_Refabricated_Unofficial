@@ -17,6 +17,8 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -24,8 +26,13 @@ import java.util.function.Consumer;
 
 /** One world-lit cutout quad instead of an external rig. Only vanilla's actual dropped-item
  * extraction provides both GROUND and the ItemEntity owner (not a display entity or a preview). */
-enum DroppedGunSprite implements SpecialModelRenderer<Identifier> {
+enum DroppedGunSprite implements SpecialModelRenderer<DroppedGunSprite.Argument> {
     INSTANCE;
+
+    /** Thin, frozen appearance only: no ItemEntity, mutable stack or external high-detail rig. */
+    record Argument(Identifier texture, Matrix4fc localTransform) {
+        Argument { localTransform = new Matrix4f(localTransform); }
+    }
 
     static @Nullable Identifier select(ItemStack stack, ItemDisplayContext context, @Nullable ItemOwner owner) {
         if (context != ItemDisplayContext.GROUND || !(owner instanceof ItemEntity drop)
@@ -42,19 +49,21 @@ enum DroppedGunSprite implements SpecialModelRenderer<Identifier> {
     }
 
     @Override
-    public void submit(Identifier texture, ItemDisplayContext displayContext, PoseStack item, SubmitNodeCollector collector,
+    public void submit(Argument argument, ItemDisplayContext displayContext, PoseStack item, SubmitNodeCollector collector,
                        int light, int overlay, boolean foil, int outline) {
         // ItemTransform has already translated by (-.5,-.5,-.5). Keep the vanilla bob,
         // model center, scale and per-copy offset, but face the camera instead of spinning
         // edge-on. World entity submit poses in 26.3 are camera-relative, in world axes.
-        var matrix = item.last().pose();
+        // 1.21.11 lacks LayerRenderState#setLocalTransform; match the full-rig submit path.
+        // Work on a copy so deferred geometry cannot mutate the caller's pose.
+        var matrix = new Matrix4f(item.last().pose()).mul(argument.localTransform());
         var center = matrix.transformPosition(.5f, .5f, .5f, new Vector3f());
         var scale = matrix.getScale(new Vector3f());
         var card = new PoseStack();
         card.translate(center.x, center.y, center.z);
         card.mulPose(Minecraft.getInstance().gameRenderer.getMainCamera().rotation());
         float w = .375f * scale.x, h = .375f * scale.y;
-        collector.submitCustomGeometry(card, RenderTypes.entityCutout(texture), (pose, vertices) -> {
+        collector.submitCustomGeometry(card, RenderTypes.entityCutout(argument.texture()), (pose, vertices) -> {
             vertex(pose, vertices, -w, -h, 0, 1, light, overlay);
             vertex(pose, vertices,  w, -h, 1, 1, light, overlay);
             vertex(pose, vertices,  w,  h, 1, 0, light, overlay);
@@ -68,5 +77,5 @@ enum DroppedGunSprite implements SpecialModelRenderer<Identifier> {
     }
 
     @Override public void getExtents(Consumer<Vector3fc> output) { TaczDynamicItemModel.visitExtents(output); }
-    @Override public @Nullable Identifier extractArgument(ItemStack stack) { return null; } // requires context + owner
+    @Override public @Nullable Argument extractArgument(ItemStack stack) { return null; } // requires context + owner
 }

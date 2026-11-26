@@ -5,7 +5,14 @@
       "description": {
         "identifier": "geometry.port_variant",
         "texture_width": 16,
-        "texture_height": 16
+        "texture_height": 16,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [
+          0,
+          0,
+          0
+        ]
       },
       "bones": [
         {

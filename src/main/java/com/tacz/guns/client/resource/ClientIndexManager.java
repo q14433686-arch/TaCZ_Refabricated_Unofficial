@@ -44,6 +44,7 @@ public class ClientIndexManager {
     static long revision() { return revision; }
 
     public static void clear() {
+        com.tacz.guns.client.model.papi.RangefinderReadout.clear();
         GUN_DISPLAY.values().forEach(GunDisplayInstance::retireModels);
         ++revision;
         GUN_DISPLAY.clear();
@@ -70,6 +71,9 @@ public class ClientIndexManager {
             try { SLOT_ADAPTER_INDEX.put(entry.getKey(), new ClientSlotAdapterIndex(entry.getValue().getPojo())); }
             catch (IllegalArgumentException e) { GunMod.LOGGER.warn("Invalid slot adapter display for {}", entry.getKey(), e); }
         });
+        // Native cache parameters include features/permissions/registries, but not gun-pack data.
+        // Invalidate on the client thread so the open/next creative screen also rebuilds search tabs.
+        com.tacz.guns.mixin.client.CreativeModeTabsAccessor.tacz$setCachedParameters(null);
         warmUpInventoryModels();
 
         LocalPlayer player = Minecraft.getInstance().player;

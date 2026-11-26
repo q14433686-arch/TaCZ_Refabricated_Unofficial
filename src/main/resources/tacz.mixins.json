@@ -13,6 +13,7 @@
     "client.AbstractButtonMixin",
     "client.CameraMixin",
     "client.CreativeModeInventoryScreenMixin",
+    "client.CreativeModeTabsAccessor",
     "client.CachedPerspectiveProjectionMixin",
     "client.DetonationLightMixin",
     "client.EntityHitboxDebugRendererMixin",

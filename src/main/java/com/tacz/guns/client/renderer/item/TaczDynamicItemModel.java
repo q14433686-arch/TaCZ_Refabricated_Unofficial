@@ -151,18 +151,17 @@ public final class TaczDynamicItemModel implements ItemModel {
             state.setAnimated();
         }
 
-        // 1.21.11: layer.setLocalTransform(...) 不存在，改由 submit() 施加（见 RenderArgument）。
-        RenderArgument argument = new RenderArgument(stack.copy(), displayContext, this.transformation);
+        // 1.21.11: layer.setLocalTransform(...) 不存在，两种 special renderer 都在 submit 应用它。
         layer.setExtents(EXTENTS);
+        this.properties.applyToLayer(layer, displayContext);
         // 26.1.2: dropped-gun sprite fallback — freeze only the appearance, not the entity/stack/rig.
         Identifier sprite = DroppedGunSprite.select(stack, displayContext, owner);
         if (sprite != null) {
-            layer.setupSpecialModel(DroppedGunSprite.INSTANCE, sprite);
+            layer.setupSpecialModel(DroppedGunSprite.INSTANCE, new DroppedGunSprite.Argument(sprite, this.transformation));
             state.appendModelIdentityElement(sprite);
             return;
         }
-        layer.setupSpecialModel(SPECIAL_RENDERER, argument);
-        this.properties.applyToLayer(layer, displayContext);
+        layer.setupSpecialModel(SPECIAL_RENDERER, new RenderArgument(stack.copy(), displayContext, this.transformation));
 
         // 26.2 修复：物品栏图标空白的根因。
         //

@@ -50,7 +50,7 @@ public class ShellRender implements IFunctionalSubmitter {
     }
 
     public void addShell(Vector3f randomVelocity) {
-        if (SHELL_QUEUE.size() > 128) {
+        if (SHELL_QUEUE.size() >= 128) {
             SHELL_QUEUE.pollFirst();
         }
         double xRandom = Math.random() * randomVelocity.x();
