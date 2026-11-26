@@ -27,7 +27,8 @@ public final class PackClientSmoke implements FabricClientGameTest {
                     +" level="+(mc.level!=null)+" player="+(mc.player!=null)+" integratedTicks="+(server==null ? -1 : server.getTickCount()));
             if (ticks[0] == 1001 && server != null && server.getTickCount() == 0) {
                 System.out.println("PORT_WORLD_STALL: ServerState "+serverScalars(server)
-                        +" connection="+(mc.getConnection()==null ? "none" : mc.getConnection().getClass().getName()));
+                        +" connection="+(mc.getConnection()==null ? "none" : mc.getConnection().getClass().getName())
+                        +" bootstrap="+bootstrapConnections(mc,server));
                 // The observed server is waiting in Fabric's phase barrier, not a pack worker.
                 // Record its party/accounting state without mutating or bypassing the barrier.
                 try {
@@ -71,6 +72,38 @@ public final class PackClientSmoke implements FabricClientGameTest {
             } finally { loading.set(false); }
         }
         System.out.println("PORT_WORLD_REPEATED: three independent fresh worlds loaded, disconnected and replaced synchronized snapshots; no retries or timeout changes");
+    }
+
+    /** Named development-test diagnostics only; never use field-name reflection in the remapped product.
+     * getConnection() stays null throughout login and server tickCount stays zero while no player has joined.
+     * Observe pending login transport as well, without changing network queues or Fabric's synchronizer. */
+    private static String bootstrapConnections(Object client, net.minecraft.server.MinecraftServer server) {
+        try {
+            var pending = client.getClass().getDeclaredField("pendingConnection");pending.setAccessible(true);
+            Object connection = pending.get(client);
+            var listener = server.getConnection();
+            var connections = listener.getClass().getDeclaredField("connections");connections.setAccessible(true);
+            var result = new java.util.ArrayList<String>();
+            result.add("pendingClient="+connectionDetails(connection));
+            Object list = connections.get(listener);
+            if (list instanceof java.util.List<?> values) {
+                synchronized (values) { for (Object value : values) result.add("server="+connectionDetails(value)); }
+            } else result.add("serverConnections="+list);
+            return result.toString();
+        } catch (ReflectiveOperationException | RuntimeException ex) { return "unavailable:"+ex; }
+    }
+
+    private static String connectionDetails(Object connection) throws ReflectiveOperationException {
+        if (connection == null) return "none";
+        var result = new java.util.ArrayList<String>();
+        for (var field : connection.getClass().getDeclaredFields()) {
+            if (java.lang.reflect.Modifier.isStatic(field.getModifiers())
+                    || !field.getName().toLowerCase(java.util.Locale.ROOT).matches(".*(listener|channel|disconnect|queue|packet|pending).*")) continue;
+            field.setAccessible(true);Object value=field.get(connection);
+            result.add(field.getName()+"="+(value instanceof java.util.Collection<?> values ? "size:"+values.size()
+                    : value == null || value instanceof Number || value instanceof Boolean || field.getName().equals("channel") ? value : value.getClass().getName()));
+        }
+        return result.toString();
     }
 
     /** Diagnostic-only scalar reads on the client tick; no task/barrier or server state changes. */

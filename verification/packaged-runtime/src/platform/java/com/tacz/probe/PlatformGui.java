@@ -19,6 +19,7 @@ public final class PlatformGui implements ClientModInitializer {
     private static boolean enabled;
     private static ItemStack first,second;
     @Override public void onInitializeClient() {
+        PlatformSnowstormSpace.register();
         HudElementRegistry.addLast(Identifier.parse("tacz_packaged_probe:cooldown"),(gui,delta) -> {
             if(!enabled) return;
             gui.fill(4,4,20,20,0xff000000);gui.fill(28,4,44,20,0xff000000);
