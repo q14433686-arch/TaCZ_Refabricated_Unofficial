@@ -162,7 +162,7 @@ def test(product, work, evidence, suite):
         'display': {'PORT_INK:': 1, 'PORT_OUTLINE:': 1, 'PORT_RACK_PREVIEW:': 5, 'PORT_CASE_HINT:': 1},
         'controller': {'PORT_CONTROLLER:': 1},
         'pal': {'PORT_PAL:': 2},
-        **{name: {f'PORT_PLATFORM_{kind}:': 1 for kind in ['INPUT','SKIN','AUDIO','GUI','ZOOM','ADS','RECOIL','MODIFIERS','TRACER','MUZZLE','PARTICLES','MESH_BUDGET','SOUND_DATA','ATTACHMENT_TIPS','CARRIED_GUNS','HURT_TILT']} for name in ['platform','platform-zoomify']},
+        **{name: {f'PORT_PLATFORM_{kind}:': 1 for kind in ['INPUT','SKIN','AUDIO','GUI','ZOOM','ADS','RECOIL','MODIFIERS','TRACER','MUZZLE','PARTICLES','MESH_BUDGET','SOUND_DATA','ATTACHMENT_TIPS','CARRIED_GUNS','HURT_TILT','SMITH_FILTER']} for name in ['platform','platform-zoomify']},
         'receiver': {'PORT_RECEIVER_INPUT:': 1, 'PORT_RECEIVER_PIXEL:': 11, 'PORT_RECEIVER_PACK:': 1},
         'receiver-iris': {'PORT_RECEIVER_INPUT:': 1, 'PORT_RECEIVER_PIXEL:': 11, 'PORT_RECEIVER_PACK:': 1},
         'optics': {'PORT_PIP_MOTION:': 16, 'PORT_PIP_WIDE:': 2, 'PORT_THERMAL_PIXELS:': 1, 'PORT_THERMAL_MODE:': 2, 'PORT_THERMAL_POSE:': 18, 'PORT_OPTIC:': 3, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_BODY_MATERIAL:': 1, 'PORT_OCULAR_BAKE:': 1, 'PORT_RETICLE_PIXELS:': 1},
@@ -178,6 +178,7 @@ def test(product, work, evidence, suite):
     ] + [f'case_hint_{s}' for s in ['gun_hover','gun_interact','empty_hover','look_away','tick_39','tick_40_held','sneak_unlock','unlocked']]}[suite]
     if suite.startswith('platform'):
         frames += [f'platform_cooldown_{stage}' for stage in ['before','half','expired']]
+        frames += [f'platform_smith_filter_{stage}' for stage in ['empty','cleared']]
     if suite.startswith('optics'):
         frames += ['reticle_full', 'reticle_control', 'reticle_luminous_only', 'reticle_none', 'reticle_restored',
                    'thermal_empty_optical', 'thermal_exposed', 'thermal_occluded', 'thermal_glass', 'thermal_disabled', 'thermal_unavailable', 'thermal_thermal_black_hot', 'thermal_thermal_ironbow']
