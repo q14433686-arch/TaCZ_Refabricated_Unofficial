@@ -39,6 +39,11 @@ for name, methods in {
     'net.minecraft.client.renderer.GameRenderer': ['renderItemInHand(', 'bobHurt('],
     'net.minecraft.client.renderer.CachedPerspectiveProjectionMatrixBuffer': ['getBuffer(', 'createProjectionMatrix('],
     'com.mojang.blaze3d.systems.RenderSystem': ['setProjectionMatrix(', 'getProjectionMatrixBuffer('],
+    # Diagnose first-world timeouts against this target's real bootstrap ordering;
+    # do not infer readiness or change Fabric's barrier from scalar snapshots alone.
+    'net.minecraft.client.Minecraft': ['doWorldLoad('],
+    'net.minecraft.server.MinecraftServer': ['runServer('],
+    'net.minecraft.client.server.IntegratedServer': ['tickServer('],
 }.items():
     print('PORT_RENDER_BYTECODE:', name, flush=True)
     text = subprocess.check_output(['javap', '-classpath', jar, '-p', '-c', name], text=True)

@@ -4,6 +4,6 @@
   "package": "com.tacz.probe.mixin",
   "compatibilityLevel": "JAVA_21",
   "refmap": "tacz_platform_probe.refmap.json",
-  "client": ["NativeInput", "NativeMouse", "PlatformActions", "SkinLookupGate", "PlatformVolume", "PlatformCooldown", "NativeHurtBob", "ImpactParticleObserver", "ImpactSoundObserver"],
+  "client": ["NativeInput", "NativeMouse", "PlatformActions", "SkinLookupGate", "PlatformVolume", "PlatformCooldown", "NativeHurtBob", "ImpactParticleObserver", "ImpactSoundObserver", "ImpactColorView"],
   "injectors": {"defaultRequire": 1}
 }
