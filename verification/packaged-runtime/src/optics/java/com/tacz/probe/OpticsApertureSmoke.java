@@ -78,6 +78,7 @@ public final class OpticsApertureSmoke extends PlayerProbe {
             ctx.waitTicks(6);
             var steady = sample(ctx, "steady");
             ReticleFrames.verify(ctx, optic);
+            ThermalFrames.verify(ctx, world, base, optic);
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
             ctx.waitFor(mc -> IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(0) < .001f);
             ctx.waitTicks(6);

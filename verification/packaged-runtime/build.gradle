@@ -33,7 +33,10 @@ if (presentation != null) {
 if (playerSuite != null) {
     assert client && presentation == null && viewer == 'none' && playerSuite in ['display', 'pal', 'controller', 'optics', 'optics-iris']
     sourceSets.main.java.srcDirs('src/player/java', "src/${playerSuite.startsWith('optics') ? 'optics' : playerSuite}/java")
-    if (playerSuite.startsWith('optics')) sourceSets.main.java.srcDir 'src/reticle-contract/java'
+    if (playerSuite.startsWith('optics')) {
+        sourceSets.main.java.srcDir 'src/reticle-contract/java'
+        sourceSets.main.resources.srcDir 'src/optics/resources'
+    }
     if (playerSuite == 'pal') {
         sourceSets.main.resources.srcDir 'src/pal/resources'
         loom.mixin { useLegacyMixinAp = true; defaultRefmapName = 'tacz_pal_probe.refmap.json' }
