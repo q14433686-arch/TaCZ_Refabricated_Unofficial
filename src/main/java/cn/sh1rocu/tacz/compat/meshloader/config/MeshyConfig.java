@@ -35,6 +35,7 @@ public final class MeshyConfig {
     public static ForgeConfigSpec.BooleanValue GPU_WORLD;
     public static ForgeConfigSpec.BooleanValue GPU_WORLD_UNDER_SHADERS;
     public static ForgeConfigSpec.IntValue GPU_LIGHT_CACHE_SIZE;
+    public static ForgeConfigSpec.IntValue GPU_BAKE_BUDGET_PER_FRAME;
     public static ForgeConfigSpec.IntValue GUI_MAX_VERTICES;
     public static ForgeConfigSpec.IntValue WORLD_MAX_VERTICES;
     public static ForgeConfigSpec.DoubleValue WORLD_FULL_DETAIL_DISTANCE;
@@ -155,6 +156,11 @@ public final class MeshyConfig {
                 "level costs GPU memory proportional to the model's vertex count.",
                 "First-person baking is unaffected (it keeps a single level).");
         GPU_LIGHT_CACHE_SIZE = builder.defineInRange("MeshGpuLightCacheSize", 4, 1, 16);
+
+        builder.comment("Maximum world VBO bakes per frame. Independent from the number of cached light levels.",
+                "Over-budget guns use the collector for this frame; cache capacity controls GPU memory,",
+                "while this budget controls per-frame CPU/upload cost.");
+        GPU_BAKE_BUDGET_PER_FRAME = builder.defineInRange("MeshGpuBakeBudgetPerFrame", 4, 1, 64);
 
         builder.comment("Vertex budget for poly_mesh in GUI/FIXED/HEAD. Icons above this",
                 "budget render cube-only (or the pack's LOD model when present).",

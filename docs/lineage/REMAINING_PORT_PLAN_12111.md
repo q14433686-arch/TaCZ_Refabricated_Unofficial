@@ -211,3 +211,14 @@ none 的 entity policy 已通过真实最近命中/穿透命中/队友伤害开�
 - 持久化静态检查识别 ValueInput.getString Optional 形式；仅允许显式 `tacz:read-only-key:old->new` 且有真实旧read/新write的迁移，不全类豁免。四个Python回归保护 Optional/合法迁移/无目标写入/未标注不对称；本地13unit+2baseline+4recipe和严格持久化检查通过。
 
 R6 仍 ACTIVE，不发版、不改版本；新消费者、开发三世界稳定性与完整共享行为验收尚未完成。
+
+### R6 `c1570e66` 消费者回执（编译/专服/平台通过，开发稳定性仍失败）
+
+- 编译 [45765549810](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45765549810) success。本体 SHA256 **`7fa0ccd804c8aa02241528aef16221daffc50e77cd27b060bef0927fae1bd57f`**。
+- 成品 none [139725473821](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45765549848/job/139725473821) success：**22/22 intermediary GameTests**，包括 ammo block/entity policy、事件阶段、statue/rotation、target_profile_roundtrip 与 target_identity_generations。之前2项弹药失败已实际转绿；TCP/目录→ZIP/reload/rejoin、旧档/部件/弹药组件保存与转换验收仍通过。
+- platform [139725473517](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45765549848/job/139725473517) / Zoomify [139725473654](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45765549848/job/139725473654) success。脚本强制包含11种平台回执，新增实际物理射击→posed muzzle 的flash/smoke独立开关（ammo6/5/4）、canceled visual pre无效果；关键帧→posed model→原生粒子一次消费与missing locator无替代也在必须回执内（GitHub单step notice数量会截去末项展示，不是跳过断言）。
+- 全构建 [45765549899](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45765549899) 的开发初次建世界依然失败。诊断 phase4421（mod4=SERVER_TASKS）、registered3/arrived2/unarrived1、serverTasks=true；但这个快照在END_CLIENT_TICK取得，本来就在正常屏障边界，不能凭它认定屏障死锁。本轮新增独立50秒只读watchdog，观察Render/Test/Server/Netty的同时栈与phaser计数，不触碰屏障、不重试、不增大超时。
+
+接续还发现供体 `MeshGpuBakeBudgetPerFrame` 被漏掉，现有实现误把LRU缓存容量当每帧烘焙额度。本轮补独立1–64/默认4配置、Cloth与中英键及实际tryReserveBake消费者，保留旧带int签名为同一闸门的兼容入口；新增真实门禁在LRU1/16×budget1/2/7的精确计数对照。**该接续尚未编译/实机验收**，19项mesh TOML/Cloth/语言键静态齐平通过。
+
+共享审计尚不能收尾：BedrockModel/BedrockRenderSnapshot 还没有消费已有 IlluminatedMaterials 的body材质划分与 ViewmodelFlash.gain 的中性反射重放；快照发光light还硬编码fullbright，未消费ILLUMINATED_REAL_SKY。另有ocular inflate配置/装配链缺口需要与已验收native depth aperture/reticle互测，不能用供体整文件替换已验收R1–R3实现。上述是已确认待办，不记为平台替代或已实现。

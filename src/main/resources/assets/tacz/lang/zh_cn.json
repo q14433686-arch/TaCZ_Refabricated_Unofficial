@@ -74,6 +74,8 @@
   "config.tacz.client.render.mesh_gpu_world.desc": "让他人手持的 mesh 枪、掉落物、展示框、展示台雕像都留在常驻 VBO 路径上：每把枪每帧只上传 O(骨骼) 个矩阵，而不是在 CPU 上逐顶点变换。GUI、内嵌 3D 预览、镜内那一遍、阴影 pass 在提交侧就被拒收、继续走 collector；按量化光照档位缓存 VBO（见「Mesh GPU：世界光照档数」）。世界 flush 钩子失联时自动回退 collector，并且每种原因只记一行日志。",
   "config.tacz.client.render.mesh_gpu_world_under_shaders": "Mesh GPU：光影下的世界语境",
   "config.tacz.client.render.mesh_gpu_world_under_shaders.desc": "光影包激活时也把世界语境（第三人称手持 / 掉落物 / 展示框 / 展示台）的 mesh 枪留在常驻 VBO 路径上，照明走光影包的实体程序（自建管线经 IrisApi.assignPipeline(IrisProgram.ENTITIES) 登记，常量已对着 Iris 1.10.7 的 jar 审计过）。与手部那条同样要求已审计的 flush 钩子，失联也自动回退。默认关的理由和手部那条一样 —— 第三人称与展示台上看到的现象完全一致，说明世界路径也一样受影响。",
+  "config.tacz.client.render.mesh_gpu_bake_budget_per_frame": "Mesh GPU 每帧烘焙额度",
+  "config.tacz.client.render.mesh_gpu_bake_budget_per_frame.desc": "一帧内最多为世界枪械执行多少次烘焙。防止同屏光照档数超过缓存容量时逐帧「逐出-重烘」打摆；超出额度的枪当帧回退 CPU 路径。与光照缓存档数相互独立（缓存=显存开销，额度=每帧 CPU/上传开销）。",
   "config.tacz.client.render.mesh_gpu_light_cache_size": "Mesh GPU：世界光照缓存档数",
   "config.tacz.client.render.mesh_gpu_light_cache_size.desc": "每把枪模型保留多少档「量化光照」的世界 VBO（LRU，1-16）。上游 TML 按未量化光照缓存 8 档；本移植先把光照量化（方块光/天空光各 4 级步进），所以 4 档几乎覆盖所有场景。每档的显存开销与模型顶点数成正比。第一人称烘焙不受影响，它只保留单档。",
   "config.tacz.client.render.mesh_world_full_detail_distance": "Mesh 世界全模距离",

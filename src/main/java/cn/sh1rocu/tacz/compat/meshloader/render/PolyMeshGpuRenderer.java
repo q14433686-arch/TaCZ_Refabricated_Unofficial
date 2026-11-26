@@ -552,8 +552,12 @@ public final class PolyMeshGpuRenderer {
      * 摆在明暗边界上），没有额度闸门就会每帧「逐出-重烘」打摆 —— 烘焙风暴比 collector
      * 还慢。额度用完后本帧余下的枪回退 collector，下一帧额度重置，缓存逐帧收敛到稳态。</p>
      */
-    public static boolean tryReserveBake(int cachedLevels) {
-        if (bakesThisFrame >= Math.max(4, cachedLevels)) {
+    /** Binary/source compatibility for integrations using the old cache-coupled entry point. */
+    @Deprecated
+    public static boolean tryReserveBake(int cachedLevels) { return tryReserveBake(); }
+
+    public static boolean tryReserveBake() {
+        if (bakesThisFrame >= MeshyConfig.GPU_BAKE_BUDGET_PER_FRAME.get()) {
             return false;
         }
         bakesThisFrame++;

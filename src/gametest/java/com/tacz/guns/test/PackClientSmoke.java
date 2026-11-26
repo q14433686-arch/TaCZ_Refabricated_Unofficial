@@ -14,6 +14,8 @@ public final class PackClientSmoke implements FabricClientGameTest {
         var loading = new java.util.concurrent.atomic.AtomicBoolean(true);
         long[] start = {System.nanoTime()};
         int[] ticks = {0}, cycle = {1};
+        var watchdog = new java.util.concurrent.atomic.AtomicLong();
+        scheduleStallSnapshot(loading, watchdog, 1);
         // Observe the pre-context failure too: worldBuilder.create() can time out before
         // any assertions run. Do not retry, lengthen Fabric's limit or suppress the failure.
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(mc -> {
@@ -58,6 +60,7 @@ public final class PackClientSmoke implements FabricClientGameTest {
             context.waitFor(mc -> mc.level == null && mc.getConnection() == null);
             var previous = context.computeOnClient(mc -> CommonNetworkCache.INSTANCE.getGunIndex(id));
             context.runOnClient(mc -> { ticks[0] = 0; cycle[0] = number; start[0] = System.nanoTime(); loading.set(true); });
+            scheduleStallSnapshot(loading, watchdog, number);
             try (var world = context.worldBuilder().create()) {
                 loading.set(false);
                 context.waitFor(mc -> CommonNetworkCache.INSTANCE.getGunIndex(id) != null
@@ -66,5 +69,30 @@ public final class PackClientSmoke implements FabricClientGameTest {
             } finally { loading.set(false); }
         }
         System.out.println("PORT_WORLD_REPEATED: three independent fresh worlds loaded, disconnected and replaced synchronized snapshots; no retries or timeout changes");
+    }
+
+    private static void scheduleStallSnapshot(java.util.concurrent.atomic.AtomicBoolean loading,
+                                              java.util.concurrent.atomic.AtomicLong watchdog, int cycle) {
+        long token = watchdog.incrementAndGet();
+        java.util.concurrent.CompletableFuture.delayedExecutor(50, java.util.concurrent.TimeUnit.SECONDS).execute(() -> {
+            if (!loading.get() || watchdog.get() != token) return;
+            // END_CLIENT_TICK always observes the server at a normal phase boundary. An
+            // independent observer is needed to see which party is absent *between* ticks.
+            // Never release a semaphore, arrive at the phaser, or call game-thread APIs here.
+            try {
+                var threading = Class.forName("net.fabricmc.fabric.impl.client.gametest.threading.ThreadingImpl");
+                var phaser = (java.util.concurrent.Phaser)threading.getField("PHASER").get(null);
+                System.out.println("PORT_WORLD_STALL: ASYNC cycle="+cycle+" phase="+phaser.getPhase()+" registered="+phaser.getRegisteredParties()
+                        +" arrived="+phaser.getArrivedParties()+" unarrived="+phaser.getUnarrivedParties()
+                        +" serverTasks="+threading.getField("serverCanAcceptTasks").get(null)
+                        +" clientTasks="+threading.getField("clientCanAcceptTasks").get(null));
+                Thread.getAllStackTraces().entrySet().stream()
+                        .filter(e -> e.getKey().getName().equals("Server thread") || e.getKey().getName().equals("Render thread")
+                                || e.getKey().getName().equals("Test thread") || e.getKey().getName().contains("Netty"))
+                        .sorted(java.util.Comparator.comparing(e -> e.getKey().getName())).limit(12)
+                        .forEach(e -> System.out.println("PORT_WORLD_STALL: ASYNC "+e.getKey().getName()+" "+e.getKey().getState()+" "
+                                +java.util.Arrays.stream(e.getValue()).limit(24).map(Object::toString).collect(java.util.stream.Collectors.joining(" <- "))));
+            } catch (ReflectiveOperationException ex) { System.out.println("PORT_WORLD_STALL: ASYNC diagnostic unavailable: "+ex); }
+        });
     }
 }

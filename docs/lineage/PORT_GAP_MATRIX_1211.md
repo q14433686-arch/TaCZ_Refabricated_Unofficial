@@ -69,3 +69,7 @@ GunInputHandler（统一物理输入）与 LevelRendererReceiverLightMixin（本
 ### 最新状态覆盖：R1–R5 已闭环，R6 ACTIVE（2026-11-26）
 
 上文 R3/R4“接续”是历史节点，最新原版/Iris receiver 与平台/Zoomify 输入/音效/GUI均已有目标回执；详见[活动计划](REMAINING_PORT_PLAN_12111.md)。R6 的 `42cbc3b6` 编译成功，ADS/recoil/modifiers/tracer 与 statue/rotation 消费者成品专项通过，但 none 的20项专服中2项失败，三世界开发门禁也暴露 memory-cache 夹具错误，不能称全构建或整体对齐成功。已接续修正首次 FCAP 注册顺序与夹具，并补独立外部高/低模、reload 代数/退役和 shell override，尚待目标验证。Target profile/legacy/异步身份、native muzzle 消费者及完整共享行为审计仍待完成。不改版本、不发布。
+
+### R6 消费者校验接续：`c1570e66`
+
+编译45765549810成功；成品none的22/22专服GameTests（含弹药policy与target原生profile迁移/异步代数），platform/Zoomify实际muzzle与animation-particle consumer通过。完整发行45765549848的最终结果以活动计划为准；开发全构建45765549899仍因建世界超时失败，不宣布稳定性已修复。接续独立GPU bake budget待验证；body illuminated/真实sky/reflection重放及ocular inflate链仍属真实共享行为缺口，R6 ACTIVE。
