@@ -11,7 +11,9 @@ public final class ThermalReadback {
         var future = new CompletableFuture<Pixels>();
         ctx.runOnClient(mc -> {
             var target = ScopeThermalCapture.current();
-            if (target == null) throw new AssertionError("Thermal attachment not ready");
+            if (target == null) throw new AssertionError("Thermal attachment not ready: expected=" + ScopeLensFrame.expected
+                    + " current=" + ScopeLensFrame.current() + " bounds=" + java.util.Arrays.toString(ScopeLensFrame.currentBounds())
+                    + " projection=" + ScopeProjection.current() + " state=" + captureState());
             Screenshot.takeScreenshot(target, pixels -> {
                 try (pixels) {
                     int w = pixels.getWidth(), h = pixels.getHeight(), hot = 0, central = 0;
@@ -26,8 +28,28 @@ public final class ThermalReadback {
         ctx.waitFor(mc -> future.isDone());
         return future.join();
     }
+    public static void releaseAndVerify() {
+        var target = ScopeThermalCapture.current();
+        if (target == null) throw new AssertionError("Cannot test release without a live heat target");
+        var color = target.getColorTexture();
+        var depth = target.getDepthTexture();
+        ScopeLensFrame.clear();
+        assertCleared();
+        if (!color.isClosed() || !depth.isClosed()) throw new AssertionError("Heat attachments leaked across lens clear");
+    }
     public static void assertCleared() {
         if (ScopeThermalCapture.current() != null) throw new AssertionError("Stale heat attachment remained usable");
+    }
+    private static String captureState() {
+        var state = new StringBuilder();
+        try {
+            for (String name : new String[]{"active", "recording", "ready", "failed", "shaderPack"}) {
+                var field = ScopeThermalCapture.class.getDeclaredField(name);
+                field.setAccessible(true);
+                state.append(name).append('=').append(field.get(null)).append(' ');
+            }
+        } catch (ReflectiveOperationException e) { throw new AssertionError(e); }
+        return state.toString();
     }
     private ThermalReadback() {}
 }

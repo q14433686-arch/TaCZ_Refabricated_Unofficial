@@ -86,6 +86,9 @@ final class ThermalFrames {
             summon(ctx,world,base,"minecart","NoGravity:1b");
             var whitelisted=ThermalReadback.read(ctx);
             if(whitelisted.centralHot()<3) throw new AssertionError("Nonliving whitelist failed: "+whitelisted);
+            ctx.runOnClient(mc -> ThermalReadback.releaseAndVerify());
+            ctx.waitTicks(8);
+            if (ThermalReadback.read(ctx).centralHot()<3) throw new AssertionError("Heat failed to reallocate after resource cleanup");
             System.out.println("PORT_THERMAL_PIXELS: empty="+empty.hot()+" exposed="+exposed.centralHot()+" sensorWhite="+white(hot)
                     +" opaque="+covered.hot()+" opaqueWhite="+white(behind)+" glass="+glass.centralHot()+" chicken="+chicken.centralHot()
                     +" invisible="+invisible.hot()+" blacklist="+blacklisted.hot()+" whitelist="+whitelisted.centralHot()+" optical fallback and recovery passed");

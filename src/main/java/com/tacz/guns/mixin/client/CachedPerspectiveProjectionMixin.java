@@ -23,6 +23,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(CachedPerspectiveProjectionMatrixBuffer.class)
 abstract class CachedPerspectiveProjectionMixin {
+    // Unlike the world projection buffer this cached HUD buffer computes its matrix only when
+    // dimensions/FOV change, but returns a slice every frame. Index BOTH: a buffer-instance
+    // mirror alone cannot identify the currently bound hand projection in ScopeLensFrame.
+    @Inject(method = "getBuffer", at = @At("RETURN"))
+    private void tacz$rememberProjectionSlice(CallbackInfoReturnable<com.mojang.blaze3d.buffers.GpuBufferSlice> cir) {
+        var matrix = ScopeProjection.lastOf(this);
+        if (matrix != null) ScopeProjection.uploaded(cir.getReturnValue(), matrix);
+    }
+
     @Inject(method = "createProjectionMatrix", at = @At("RETURN"))
     private void tacz$mirrorProjection(int width, int height, float fov, CallbackInfoReturnable<Matrix4f> cir) {
         Matrix4f matrix = cir.getReturnValue();
