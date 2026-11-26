@@ -257,3 +257,9 @@ R6 仍 ACTIVE，不发版、不改版本；新消费者、开发三世界稳定�
 ### R6 attachment tooltip消费者接续（待编译/实机）
 
 补回builtin、显式flash/smoke正反倍率、thermal sensor、rangefinder、impact prediction与scope-only ammo counter的真实tooltip消费者；ClientAttachmentIndex从当前display的text_show读能力，ammo marker在查询时走当前Language而非缓存翻译。补11个原先缺失的中英标题键。新增PORT_PLATFORM_ATTACHMENT_TIPS，原生/Zoomify都实际构造ClientAttachmentItemTooltip，检查正反/neutral/非scope/changed-display、builtin开关及加载后的翻译，而非只测试几个helper布尔值。与此同时unshaded world material按供体进入Iris EMISSIVE_ENTITIES，保留shadow原材质与HAND/HAND_TRANSLUCENT分类。新改动仍待目标回执；52e76e0e的结果不包含它们。
+
+### R6 `52e76e0e` 部分回执与开发加载诊断
+
+编译45770219491 success；成品原版optics139740800792 success，新增PORT_BODY_MATERIAL与PORT_OCULAR_BAKE均实际通过，现有分划/热像/移动PIP像素矩阵也通过；Iris最终状态仍待记录。本体SHA256 `1b1fb2c3f02b3d77dcb755e58d5d988be768a2d131381d856e7b97eb85dc1bfd`。
+
+完整开发45770219489再次初次worldBuilder.create超时，不能宣称稳定性通过。独立50秒观察确实取得phase3617，后续tick诊断phase4409，registered3/arrived2；相位仍推进，因此不是停死在单个Phaser相位的证据。Render线程独立样本在native framebuffer blit，Test线程在Fabric waitTick，Netty闲等；仍不能仅凭采样认定产品根因。CI reporter把6条长stack拼进3.8KB一条annotation，实际丢失后面的Server样本；本批改为独立phase/Server/Render/Test各一条优先annotation，并保留10-error上限，新Python正反例验证长stack末尾未丢。观察器优先这3线程+1Netty，另在正常client tick只读server primitive readiness/tick/pause标志，继续不触碰Phaser/Semaphore、不重试、不放宽1200tick门禁。

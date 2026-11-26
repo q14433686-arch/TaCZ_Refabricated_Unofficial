@@ -26,6 +26,8 @@ public final class PackClientSmoke implements FabricClientGameTest {
                     +" overlay="+(mc.getOverlay()==null ? "none" : mc.getOverlay().getClass().getName())
                     +" level="+(mc.level!=null)+" player="+(mc.player!=null)+" integratedTicks="+(server==null ? -1 : server.getTickCount()));
             if (ticks[0] == 1001 && server != null && server.getTickCount() == 0) {
+                System.out.println("PORT_WORLD_STALL: ServerState "+serverScalars(server)
+                        +" connection="+(mc.getConnection()==null ? "none" : mc.getConnection().getClass().getName()));
                 // The observed server is waiting in Fabric's phase barrier, not a pack worker.
                 // Record its party/accounting state without mutating or bypassing the barrier.
                 try {
@@ -71,6 +73,21 @@ public final class PackClientSmoke implements FabricClientGameTest {
         System.out.println("PORT_WORLD_REPEATED: three independent fresh worlds loaded, disconnected and replaced synchronized snapshots; no retries or timeout changes");
     }
 
+    /** Diagnostic-only scalar reads on the client tick; no task/barrier or server state changes. */
+    private static String serverScalars(Object server) {
+        var fields = new java.util.ArrayList<String>();
+        for (Class<?> type = server.getClass(); type != null; type = type.getSuperclass()) {
+            for (var field : type.getDeclaredFields()) {
+                if (java.lang.reflect.Modifier.isStatic(field.getModifiers()) || !field.getType().isPrimitive()
+                        || !field.getName().toLowerCase(java.util.Locale.ROOT).matches(".*(tick|ready|running|stopp|pause|load).*")) continue;
+                try { field.setAccessible(true); fields.add(field.getName()+"="+field.get(server)); }
+                catch (ReflectiveOperationException | RuntimeException ex) { fields.add(field.getName()+"=unavailable"); }
+                if (fields.size() >= 20) return fields.toString();
+            }
+        }
+        return fields.toString();
+    }
+
     private static void scheduleStallSnapshot(java.util.concurrent.atomic.AtomicBoolean loading,
                                               java.util.concurrent.atomic.AtomicLong watchdog, int cycle) {
         long token = watchdog.incrementAndGet();
@@ -89,7 +106,12 @@ public final class PackClientSmoke implements FabricClientGameTest {
                 Thread.getAllStackTraces().entrySet().stream()
                         .filter(e -> e.getKey().getName().equals("Server thread") || e.getKey().getName().equals("Render thread")
                                 || e.getKey().getName().equals("Test thread") || e.getKey().getName().contains("Netty"))
-                        .sorted(java.util.Comparator.comparing(e -> e.getKey().getName())).limit(12)
+                        .sorted(java.util.Comparator.comparingInt(e -> switch (e.getKey().getName()) {
+                            case "Server thread" -> 0;
+                            case "Render thread" -> 1;
+                            case "Test thread" -> 2;
+                            default -> 3;
+                        })).limit(4)
                         .forEach(e -> System.out.println("PORT_WORLD_STALL: ASYNC "+e.getKey().getName()+" "+e.getKey().getState()+" "
                                 +java.util.Arrays.stream(e.getValue()).limit(24).map(Object::toString).collect(java.util.stream.Collectors.joining(" <- "))));
             } catch (ReflectiveOperationException ex) { System.out.println("PORT_WORLD_STALL: ASYNC diagnostic unavailable: "+ex); }
