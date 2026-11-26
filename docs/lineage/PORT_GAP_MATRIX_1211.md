@@ -46,3 +46,8 @@
 ## R2 已接线、尚未验收通过
 
 `365a71d0` 新增 capture/material/scene-depth/body-submit 四个同路径类并接通镜片链，故当前未出现的 Java 路径为 13 个，**不代表 R2 DONE**。`863219b7` 的成品专项发现：本版 cached HUD projection 原先只镜像 buffer 实例，没有记录返回切片，`ScopeLensFrame.current()` 无法识别手部投影；`13e929c7` 补切片镜像后，`77e8c406` 将测量移到 batch 消费，`484da3e1` 修正暂停测试后的 ADS 输入重建；原版专项已通过，Iris 仍 heat=0。当前 `a7cfda59` 用确切世界 view 参数继续修复 Iris。先前 R1 和全构建绿灯不能掩盖该失败。详见 [活动项记录](REMAINING_PORT_PLAN_12111.md)。
+
+
+### R2 最新专项回执
+
+`08b1bf0b` 的 canonical float-depth copy 已令 Iris heat=1122；仍 white=0 的剩余故障由 `53d55a39` 的精确 Iris 1.10.8 final-overlay gate 修复。该 SHA 编译/全构建与原版/Iris 专项均 success，包含新增独立光学轮廓 ≥83% 填充（原版 992/992）、遮挡/透明面/列表/禁用恢复。尚不关闭 R2：`c1f38fb2` 正跑 16/36 格、三 yaw、classic/PIP/narrow 的 18 组逐帧正反例；完整回执及未验证边界见 [活动计划](REMAINING_PORT_PLAN_12111.md)。未发布、未改版本；R3–R6 仍排队。
