@@ -44,6 +44,9 @@ public class PackConversionSmoke {
                      "result":{"type":"ammo","id":"tacz:12g","nbt":"{named:3b,AttachmentSCOPE:{id:'tacz:attachment',Count:1b,tag:{AttachmentId:'demo:sight'}}}"}}
                     """;
             Files.writeString(recipes.resolve("table.json"), table);
+            // tacz:nbt strict compares CUSTOM_DATA only; forge:nbt compares all components.
+            // Converting one into the other would silently change recipe eligibility.
+            Files.writeString(recipes.resolve("strict.json"), table.replace("forge:partial_nbt", "tacz:nbt"));
             Files.writeString(recipes.resolve("modded.json"), """
                     {"type":"minecraft:crafting_shapeless","conditions":[{"type":"forge:mod_loaded","modid":"absent"}],
                      "ingredients":[{"item":"absent:part"}],"result":{"item":"minecraft:stick","count":2}}
@@ -94,6 +97,16 @@ public class PackConversionSmoke {
                 helper.assertTrue(ingredient != null && !ingredient.test(stick), "Partial-NBT ingredient widened to any stick");
                 ItemNbtUtils.updateTag(stick, n -> n.putByte("marked", (byte) 1));
                 helper.assertTrue(ingredient.test(stick), "Partial-NBT ingredient no longer matches");
+                var strictRecipe = com.tacz.guns.crafting.GunSmithTableSerializer.CODEC.codec()
+                        .parse(ops, json(zip, base + "recipe/strict.json")).getOrThrow();
+                var strict = strictRecipe.getInputs().getFirst().getIngredient();
+                helper.assertTrue(strict.test(stick), "Strict tacz:nbt did not match equal custom data");
+                stick.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME,
+                        net.minecraft.network.chat.Component.literal("cosmetic only"));
+                helper.assertTrue(strict.test(stick), "Strict tacz:nbt was widened to forge:nbt component equality");
+                ItemNbtUtils.updateTag(stick, n -> n.putByte("extra", (byte) 1));
+                helper.assertTrue(!strict.test(stick) && ingredient.test(stick),
+                        "Strict/partial custom-data semantics were collapsed");
                 helper.assertTrue(json(zip, base + "recipe/chisel.json").getAsJsonObject("result").get("count").getAsInt() == 3,
                         "Stonecutting count defaulted to 1");
                 var modded = json(zip, base + "recipe/modded.json");
@@ -110,6 +123,17 @@ public class PackConversionSmoke {
         } finally {
             try (var files = Files.walk(temp)) { for (var p : files.sorted(Comparator.reverseOrder()).toList()) Files.delete(p); }
         }
+        // Do not bind ItemNbtUtils manually here: the real TAGS_LOADED lifecycle must
+        // supply dynamic registry owners, not just built-in item registries.
+        var enchanted = new ItemStack(Items.STICK);
+        enchanted.enchant(helper.getLevel().registryAccess()
+                .lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
+                .getOrThrow(net.minecraft.world.item.enchantment.Enchantments.UNBREAKING), 1);
+        var restored = ItemNbtUtils.loadItemStack(ItemNbtUtils.saveItemStack(enchanted));
+        helper.assertTrue(ItemStack.isSameItemSameComponents(enchanted, restored),
+                "Lifecycle-bound nested stack codec lost enchantment registry components");
+        helper.assertTrue(ItemNbtUtils.loadItemStack(ItemNbtUtils.saveItemStack(ItemStack.EMPTY)).isEmpty(),
+                "Empty nested stack failed roundtrip");
         com.tacz.guns.GunMod.LOGGER.info("PORT_RECEIVER_SERVER: conversion codec and export assertions passed");
         helper.succeed();
     }

@@ -36,6 +36,9 @@ def audit(path):
                     errors.append(f'invalid class header: {name}')
                 elif struct.unpack('>H', header[6:8])[0] > 65:
                     errors.append(f'class requires newer than Java 21: {name}')
+        optional_entry = 'com/tacz/guns/compat/zoomify/ZoomifyCompat.class'
+        if optional_entry in files and b'dev/isxander/zoomify/' in jar.read(optional_entry):
+            errors.append('baseline ZoomifyCompat directly links optional Zoomify classes')
         if 'fabric.mod.json' in files:
             mod = json.loads(jar.read('fabric.mod.json'))
             if '1.21.11' not in mod.get('depends', {}).get('minecraft', ''):

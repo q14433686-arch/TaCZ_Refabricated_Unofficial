@@ -12,6 +12,14 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 
 @Environment(EnvType.CLIENT)
 public class CommonNetworkCacheEvent {
+    /** Retire teardown tasks discarded by a previous voluntary disconnect, before any pack
+     * snapshot. Initial tags may already have arrived in CONFIGURATION, so immediately
+     * bind the new PLAY listener's registry owners after retiring the old cache. */
+    public static void onConnectionInit(ClientPacketListener handler, Minecraft client) {
+        onLocalLogout(handler.getConnection());
+        com.tacz.guns.util.ItemNbtUtils.updateRegistries(handler.registryAccess(), true);
+    }
+
     /** Transport close (possibly off-thread). Never clear the snapshot of a newer server. */
     public static void onDisconnect(ClientPacketListener handler, Minecraft client) {
         // Packet application, viewer state and the chunk receiver are game-thread owned.

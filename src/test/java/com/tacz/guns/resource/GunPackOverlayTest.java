@@ -67,7 +67,7 @@ class GunPackOverlayTest {
         var files = Map.of("gunpack.meta.json", META, "assets/fixture/check/a.txt", "base",
                 "early/assets/fixture/check/a.txt", "first", "late/assets/fixture/check/a.txt", "winner",
                 "data/fixture/check/b.txt", "base only", "wrong/data/fixture/check/b.txt", "wrong version",
-                "late/assets/fixture/lang/en_us.json", "{\"ok\":\"kept\"}",
+                "late/assets/fixture/lang/en_us.json", "{\"ok\":\"kept\",\"bad\":[]}",
                 "early/data/fixture/recipes/r.json", "{\"type\":\"minecraft:crafting_shaped\",\"result\":{\"item\":\"minecraft:stick\"}}");
         Path pack = temp.resolve(archive ? "pack.zip" : "pack");
         if (archive) {
@@ -102,6 +102,8 @@ class GunPackOverlayTest {
             check(resources, PackType.SERVER_DATA, "recipe", "r.json", recipe);
             var lang = read(resources.getResource(PackType.CLIENT_RESOURCES, Identifier.parse("fixture:lang/en_us.json")));
             assertTrue(lang.contains("kept"));
+            // Resource transport must preserve the native language loader's fallback.
+            assertTrue(lang.contains("bad"));
         }
     }
 

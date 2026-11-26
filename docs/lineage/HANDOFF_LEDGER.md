@@ -71,3 +71,7 @@
 > `R<n>` 后，`-hotfix<n>` 只在真正发补丁时用）。
 
 | L-29 | 六线 CI 上线盘点与待上线件（`docs/ci/INSTALL_MATRIX_20260902.md`、`docs/ci/pending/`） | 1.21.11 → refab 26.1.2 / 26.2 与 TaCZ_Renovated 三线 | **OPEN（待维护者手动上线）** | 本分支已应用 `verify_mixin_targets.py` 可移植化补丁，并保存 refab 1.21.11 的 build.yml 运行期校验说明；renov 三线 build/compile-check 模板仅供对应姊妹仓使用。真实 Actions 首跑仍待执行。 |
+
+### 2026-11-26 大整合回执补充
+
+`335c89f4` 完整 build 与十组成品矩阵已通过，含 17/17 服务端 GameTest、真实 TCP、附魔实体配件和关服换 JVM 重开。`compile-check` 的 Java 步骤通过但日志回写 exit126，workflow 失败；另行修正，不能掩盖。完整 run/artifact/散列与仍 OPEN 的画面差异见本轮[执行账本](PORT_1_2_TO_1_21_11_20261126.md)和[差异表](PORT_GAP_MATRIX_1211.md)。

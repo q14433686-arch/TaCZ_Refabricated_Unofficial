@@ -420,6 +420,3 @@ publishing {
 if (project.hasProperty('meshProbe')) {
     apply from: 'scripts/mesh_render_probe.gradle'
 }
-
-// Tests use the same Java 21/mapped classpath as this receiver, never the donor JAR.
-test { useJUnitPlatform() }

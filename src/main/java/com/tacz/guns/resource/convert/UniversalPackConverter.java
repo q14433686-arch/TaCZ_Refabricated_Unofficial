@@ -680,7 +680,8 @@ public final class UniversalPackConverter {
         // The 1.21.11 loader also exposes legacy recipes/. Shadow the remapped ID: don't reactivate an
         // unsupported base recipe (or make the world's dynamic recipe registry fail to load).
         JsonObject mask = new JsonObject();
-        mask.add(FABRIC_KEY, alwaysFalse());
+        mask.add(FABRIC_KEY, ResourceCondition.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE,
+                ResourceConditions.not(ResourceConditions.alwaysTrue())).getOrThrow());
         putGenerated(generated, targetPath(name), GSON.toJson(mask).getBytes(StandardCharsets.UTF_8));
     }
 

@@ -154,6 +154,7 @@ public class TaCZFabricClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> com.tacz.guns.compat.ysm.YsmCompat.clearExternalGunRender());
         com.tacz.guns.api.event.common.GunFirePostEvent.EVENT.register(com.tacz.guns.client.renderer.crosshair.GunCrosshair::onLocalFire);
         PackCompatibilityNotice.register();
+        ClientPlayConnectionEvents.INIT.register(CommonNetworkCacheEvent::onConnectionInit);
         ClientPlayConnectionEvents.DISCONNECT.register(CommonNetworkCacheEvent::onDisconnect);
         ClientPlayerNetworkEvent.LOGGING_OUT.register(e -> CommonNetworkCacheEvent.onLocalLogout(e.getConnection()));
 

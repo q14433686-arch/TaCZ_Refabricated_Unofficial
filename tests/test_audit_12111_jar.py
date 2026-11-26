@@ -55,6 +55,14 @@ class ProductionJarAuditTest(unittest.TestCase):
         self.assertEqual(2, sum('non-production content' in error for error in errors))
         self.assertTrue(any('donor game' in error for error in errors))
 
+    def test_optional_zoomify_link_is_isolated(self):
+        name = 'com/tacz/guns/compat/zoomify/ZoomifyCompat.class'
+        header = b'\xca\xfe\xba\xbe' + struct.pack('>HH', 0, 65)
+        # Minimal byte fixtures exercise the byte-level dependency guard, not JVM loading.
+        self.assertEqual([], self.check(self.fixture({name: header + b'ZoomifyCompatInner'})))
+        errors = self.check(self.fixture({name: header + b'dev/isxander/zoomify/Zoomify'}))
+        self.assertTrue(any('optional Zoomify' in error for error in errors))
+
     def test_missing_nested_dependency_fails(self):
         mod = {'id': 'tacz', 'depends': {'minecraft': '1.21.11'}, 'jars': [{'file': 'META-INF/jars/mae.jar'}]}
         self.assertTrue(any('nested dependency' in error for error in self.check(self.fixture({'fabric.mod.json': json.dumps(mod)}))))
