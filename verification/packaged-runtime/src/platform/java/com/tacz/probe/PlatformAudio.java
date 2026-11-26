@@ -22,6 +22,9 @@ final class PlatformAudio {
                 field.setAccessible(true);var engine=(PlatformVolume)field.get(mc.getSoundManager());
                 var previous=mc.player.getEffect(ModEffects.DEAFENED);
                 SoundInstance[] sounds={sound(SoundSource.PLAYERS),sound(SoundSource.BLOCKS),sound(SoundSource.UI),sound(SoundSource.MUSIC),sound(SoundSource.MASTER),new StunRingingSound()};
+                // SoundEngine normally resolves the event before volume calculation;
+                // AbstractSoundInstance.getVolume() reads the resolved sound's gain.
+                for(var sound:sounds) sound.resolve(mc.getSoundManager());
                 try {
                     mc.player.removeEffect(ModEffects.DEAFENED);
                     float[] base=read(engine,sounds);

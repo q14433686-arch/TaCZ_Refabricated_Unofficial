@@ -60,7 +60,12 @@ def prepare_zoomify_seed(work, evidence):
             if dep.get('version_id'): chosen = modrinth('/version/'+dep['version_id'])
             else:
                 available = modrinth('/project/'+dep['project_id']+'/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%221.21.11%22%5D')
-                chosen = next(v for v in available if v['version_type']=='release')
+                # Zoomify's own 2.15.2 tag builds with this FLK (loader >=0.16.9).
+                # Today's FLK 1.14.2 instead requires loader >=0.19.5; do not change
+                # the product loader to satisfy an accidentally selected newest helper.
+                pinned = {'fabric-language-kotlin': '1.13.8+kotlin.2.3.0',
+                          'yacl': '3.8.2+1.21.11-fabric', 'yet-another-config-lib': '3.8.2+1.21.11-fabric'}.get(project['slug'])
+                chosen = next(v for v in available if v['version_number']==pinned) if pinned else next(v for v in available if v['version_type']=='release')
             queue.append(chosen)
     (evidence/'zoomify-runtime.json').write_text(json.dumps(receipt, indent=2)+'\n')
 

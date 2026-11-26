@@ -24,7 +24,9 @@ public final class PlatformSkins {
                 var expected=DefaultPlayerSkin.get(target.partialProfile()).body().texturePath();
                 PlayerSkinRenderCache.RenderInfo readyInfo=null;
                 for(int i=0;i<32;i++) {
-                    watched=TargetOwnerProfiles.fromName("port_ready_"+i);
+                    // Name-only partial profiles can share the NIL UUID and default skin.
+                    // Distinct known UUIDs select real native fallback skins without network.
+                    watched=ResolvableProfile.createUnresolved(new java.util.UUID(0,i+1));
                     future=CompletableFuture.completedFuture(Optional.empty());
                     var info=mc.playerSkinRenderCache().getOrDefault(watched);
                     if(!info.playerSkin().body().texturePath().equals(expected)) { readyInfo=info;break; }

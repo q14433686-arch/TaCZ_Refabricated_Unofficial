@@ -143,3 +143,12 @@ R4 实机正例必须为真实 stock AK 按键射击并确认服务端少一发�
 所有到期/隔墙残差绝对值≤1。Iris 暗背板上一轮是 4→9（+5），并非无响应；新增独立明亮框架固定≥6 判据，暗背板另需≥2倍底色、≥4 code 且≥4倍实测 control noise，负例噪声≤2；没有把旧的完全无反应当通过。最终两环境暗背板也分别 +23/+6。各六张原始 PNG；receiver 拆为独立原版/Iris 启动，**原有光学全部断言仍保留在独立 optics / optics-iris**，发行矩阵现12项。
 
 本体 SHA-256 **`767e1c68b79653873f622731410c73159bbb448c6592a0a2900981a11392668c`**，文件名/version 未改，未发 Release。R4 四步闭环完成，继续 R5（统一物理输入、Zoomify 装/不装、异步皮肤/失败、LRT GUI/音量）。R6 仍保留开发建世界间歇超时、最终全矩阵与全共享代码复核；其他光影/Voxy不冒称实测。
+
+
+## R5 施工（ACTIVE，未验收）
+
+`3c88ff3c` 接回供体统一物理输入分发，保留本版 ViewTuning 原生 click queue 与 shoot polling、控制器与混合按住语义；补原来检视/改装/配置只支持键盘的遗漏；物理 key/scancode/mouse 一套身份匹配，unload 及 ALT+reload 优先并 return；鼠标在 refit 屏幕的 Pre 阶段关闭且取消事件，不穿透为新一次开启。`ceaee475` 改用本版已有 public action dispatcher（不访问供体 private helper），[编译45757011850](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45757011850) success。
+
+`6f472f63` 新增独立 platform / platform-zoomify 成品启动，矩阵14项。原版首次已实际通过 native KeyboardHandler/MouseHandler 的 scancode、mouse inspect、repeat/release 不触发、GUI veto、refit鼠标开/关、卸弹冲突与ALT优先，以及原版 getOrDefault 上受控异步 future 的 pending/ready/空结果/异常回退（不冒称实测外网账号服务）。其后音量夹具绕过了正常 resolve 前置步骤而 NPE，已补；Zoomify 首次被误选的最新 Kotlin helper（需 loader>=0.19.5）拦在 loader，改钉 Zoomify 2.15.2 本身 tag 的 FLK1.13.8+kotlin2.3.0（需 loader>=0.16.9），不改产品 loader0.19.3。
+
+新音量专项走实际 SoundEngine.calculateVolume，GUI专项走真实私有 renderItemCooldown + LRT TAIL 注入并存三帧；这两项仍待通过。开发 `PackClientSmoke` 在 `ceaee475` 全构建再次 worldBuilder.create 超时，保留失败；本次只加 pre-context tick/screen/overlay/level/player/集成服tick 与墙钟诊断，不重试、不改 Fabric1200tick 限制，用于 R6 定位。
