@@ -261,7 +261,8 @@ public final class ScopePipRerender {
         if (!ScopePipRenderState.suppressesWorldFovZoom(partialTicks)) {
             return false;
         }
-        float magnification = ScopePipRenderState.currentZoom();
+        // The source itself is magnified; ramp its FOV with the same interpolated ADS clock.
+        float magnification = ScopePipRenderState.currentDetailZoom();
         if (magnification <= 1.0f) {
             return false;
         }

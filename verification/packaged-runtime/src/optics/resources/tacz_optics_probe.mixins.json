@@ -3,6 +3,13 @@
   "minVersion": "0.8",
   "package": "com.tacz.probe.mixin",
   "compatibilityLevel": "JAVA_21",
-  "client": ["ThermalPoseObserver"],
-  "injectors": {"defaultRequire": 1}
+  "client": [
+    "ThermalPoseObserver",
+    "AdsCompositeObserver",
+    "AdsStepControl",
+    "AdsForegroundObserver"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
 }

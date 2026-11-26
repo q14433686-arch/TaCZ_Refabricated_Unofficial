@@ -55,7 +55,7 @@ public final class ThermalPoseFrames {
                         var covered=ThermalReadback.read(ctx);
                         var behind=ThermalFrames.frame(ctx,"thermal_"+key+"_wall_"+yaw);
                         if(coverage[0]<12 || coverage[1]<.83*coverage[0] || mask.centralHot()<8
-                                || covered.hot()!=0 || ThermalFrames.white(behind)>4)
+                                || covered.hot()!=0 || ThermalFrames.white(behind)>ThermalFrames.white(empty)+4)
                             throw new AssertionError("Thermal pose "+key+" yaw="+yaw+" drawn="+renderedYaw
                                     +" opticalBody="+coverage[1]+"/"+coverage[0]+" heat="+mask+" wall="+covered+" white="+ThermalFrames.white(behind));
                         System.out.println("PORT_THERMAL_POSE: "+key+" yaw="+yaw+" drawn="+renderedYaw

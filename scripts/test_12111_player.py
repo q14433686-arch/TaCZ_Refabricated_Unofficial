@@ -119,8 +119,8 @@ def test(product, work, evidence, suite):
         'display': {'PORT_INK:': 1, 'PORT_OUTLINE:': 1, 'PORT_RACK_PREVIEW:': 5, 'PORT_CASE_HINT:': 1},
         'controller': {'PORT_CONTROLLER:': 1},
         'pal': {'PORT_PAL:': 2},
-        'optics': {'PORT_THERMAL_PIXELS:': 1, 'PORT_THERMAL_MODE:': 2, 'PORT_THERMAL_POSE:': 18, 'PORT_OPTIC:': 3, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_RETICLE_PIXELS:': 1},
-        'optics-iris': {'PORT_THERMAL_PIXELS:': 1, 'PORT_THERMAL_MODE:': 2, 'PORT_THERMAL_POSE:': 18, 'PORT_OPTIC:': 3, 'PORT_IRIS:': 1, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_RETICLE_PIXELS:': 1},
+        'optics': {'PORT_PIP_MOTION:': 16, 'PORT_THERMAL_PIXELS:': 1, 'PORT_THERMAL_MODE:': 2, 'PORT_THERMAL_POSE:': 18, 'PORT_OPTIC:': 3, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_RETICLE_PIXELS:': 1},
+        'optics-iris': {'PORT_PIP_MOTION:': 16, 'PORT_THERMAL_PIXELS:': 1, 'PORT_THERMAL_MODE:': 2, 'PORT_THERMAL_POSE:': 18, 'PORT_OPTIC:': 3, 'PORT_IRIS:': 1, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_RETICLE_PIXELS:': 1},
     }[suite]
     text = log.read_text(errors='replace')
     for marker, count in {**markers, 'PORT_PLAYER:': 1}.items():
@@ -137,6 +137,14 @@ def test(product, work, evidence, suite):
                    for kind in ['empty'] + [f'{stage}_{yaw}' for stage in ['optical','heat','wall'] for yaw in [0,45,90]]]
     for frame in frames:
         if not any((instance/'screenshots').glob(f'*tacz_{frame}.png')): raise AssertionError(f'Missing raw frame: {frame}')
+    if suite.startswith('optics'):
+        transition = instance/'screenshots/ads-transition'
+        samples = [f'{mode}_{phase}' for mode in ['reproject','narrow']
+                   for phase in ['raise','mid','steady','missing_mask','below_floor','lower','hip']] + ['classic_raise','classic_lower']
+        for sample in samples:
+            for suffix in ['', '_before', '_lens']:
+                if not (transition/f'{sample}{suffix}.png').is_file():
+                    raise AssertionError(f'Missing same-frame motion evidence: {sample}{suffix}')
     with product.open('rb') as f: digest = hashlib.file_digest(f, 'sha256').hexdigest()
     print(f'::notice::PORT_CLIENT_JAR: {suite} used {product.name}, SHA-256 {digest}', flush=True)
 

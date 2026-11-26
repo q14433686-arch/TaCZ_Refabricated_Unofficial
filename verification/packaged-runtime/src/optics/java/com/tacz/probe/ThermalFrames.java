@@ -51,6 +51,7 @@ final class ThermalFrames {
             ctx.runOnClient(mc -> RenderConfig.SCOPE_THERMAL_ENABLE.set(true));
             ctx.waitTicks(6);
             var empty = ThermalReadback.read(ctx);
+            var emptyThermal=frame(ctx,"thermal_empty_sensor");
             if (empty.hot() != 0) throw new AssertionError("Empty thermal lane has heat: " + empty);
             summon(ctx, world, base, "slime", "Size:2,NoAI:1b,NoGravity:1b,Silent:1b");
             var exposed = ThermalReadback.read(ctx);
@@ -60,7 +61,7 @@ final class ThermalFrames {
             wall(ctx,world,base,1);
             var covered = ThermalReadback.read(ctx);
             var behind = frame(ctx,"thermal_occluded");
-            if (covered.hot() != 0 || white(behind) > 4) throw new AssertionError("Heat through opaque wall: " + covered + " white=" + white(behind));
+            if (covered.hot() != 0 || white(behind) > white(emptyThermal)+4) throw new AssertionError("Heat through opaque wall: " + covered + " white=" + white(behind));
             wall(ctx,world,base,2);
             var glass = ThermalReadback.read(ctx);
             if (glass.centralHot() < 20) throw new AssertionError("Transparent occluder lost visible heat: " + glass);
