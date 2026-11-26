@@ -309,3 +309,16 @@ R6 client-lifecycle续审确认：ClientIndexManager.clear缺RangefinderReadout.
 26de505e：compile45779243434 SUCCESS/full45779243442 SUCCESS；distribution45779243475最终12/14，其余12（含native/Iris optics）SUCCESS，platform两项已实际通过rangefinder text、loose variants及impact消费者（含颜色/fragment独立性/step按tick）。两平台阻塞于新增Cloth断言：本版IlluminatedRealSky默认true而donor UI硬编码false；修为读本版spec.getDefault，不篡改本版已有默认。顺手对齐idle-release面板30..1200与本版既有spec（donor UI的1..600不适用于此版），补原生slider边界检查；不改本版范围。发现21项共42个label/tooltip在两语言均缺，补donor已有40项及自编真实天空光两项，并按本版默认/范围和fragment独立语义适配。离线两locale全键检查+native I18n断言防只出现翻译key。清理已被运行证据推翻的旧thermal/光影rerender“尚未移植”注释。此轮jar SHA256 88e013b58063830d99a63f1b64832f30cf9c11eecae5f2588f7d2814b99c41d7。Cloth后面的sprite/index检查尚未执行，不称已过。
 
 新增PlatformSnowstormSpace：在实际BEFORE_ENTITIES事件用当帧world matrices/ModelView/camera审计独立真实WorldEmitterManager的deferred quad中心，三组yaw/pitch，提交后改变simulation/anchor检验冻结；当前只新增审计，未根据猜测改生产world变换。另给开发world timeout诊断补pendingClient与server connection listener/channel/queue/packet字段快照（仅named gametest，非remapped产品），避免把getConnection()==null/paused0tick误读为没有bootstrap进展。测试不修改网络队列、phaser、原1200tick限制或自动重试。
+
+### R6 5ce0b94f 全链回执（2026-11-26）
+
+- compile-check **45780983016 SUCCESS**；完整build **45780982980 SUCCESS**；remapped分发/TCP **45780982969 SUCCESS 14/14**。
+- JAR SHA-256 `be842ad3732a02442bca79ab65dee03181d6cbb0171758081560467ed599c2a9`，Java21/intermediary AW/refmap，4176有效默认包文件/5库。platform job139776080632、platform-zoomify job139776080760均SUCCESS，脚本强制26个PORT_PLATFORM marker各恰好一次及screenshots，不是只凭进程退出码。
+- 因此Cloth21项current/reset/14布尔save+真实TOML/reopen/discard、slider30..1200与native语言键、sprite实际四顶点/冻结local transform/调用者隔离、index reload真实range sample/vanilla creative缓存与128shell FIFO均有本轮原生及Zoomify回执。不能扩大为进程重启后Cloth保存证明。
+- SNOWSTORM_SPACE三组真实BEFORE_ENTITIES坐标/延迟模拟状态变化验证均通过。此前“没用ctx.matrices可能漏world transform”的猜测**未被本版事件实际坐标合约证实**；不为追求donor形状盲目改生产变换。此门禁是事件当帧quad中心/冻结检查，不是烟雾全FaceCameraMode像素矩阵。
+- native/Iris optics与receiver仍均SUCCESS，光影组合范围保持既有固定哈希，不外推Voxy或别的光影。
+- full本次3次独立fresh-world成功；仍不称间歇性bootstrap超时根因已修。pendingClient/server transport诊断已编译，等待真实失败时观察，保留原超时/零重试。
+
+再次复核donor-only十个Java路径：MinecraftAccessor由本版原生调用/已注册accessor替代；ShapedRecipeMixin/RecipeCompat由本版LegacyGunPackRecipeMigrator+LegacyGunPackPaths处理；TargetSkinResolver由TargetOwnerProfiles及native skin cache替代；IrisScopeFragment/Thermal三个accessor由本版native depth aperture/RenderTypeStateAccessor/RenderSetupTextureAccessor/TextureBindingAccessor替代；GuiGraphicsExtractorMixin换本版GuiGraphicsMixin；SoundInstanceVolumeMixin换实际SoundEngine音量hook。不能按文件缺失把错代API复制回来。共享方法清单余项复核含GUI extract→render、native Gizmos爆头盒、Fabric1.21.11 ingredient接口、input集中注册→原生各key注册、ConfigPersist实际Fcap写入及scope/mesh本版helper合并；同名符号存在与否仍只是线索，不作为完成证明。
+
+验收日志可见性改进：GitHub单step最多展示10个notice，旧platform每项各发notice导致后半新回执在Checks UI被静默隐藏（断言仍全执行）。改为保留完整stdout并按3500字符分批、转义workflow字符；新增离线27项末尾可见及超长/特殊字符不截断测试。下一轮目标重新验证；不反写旧run数值、不捏造未取到的Snowstorm centerError/rootIdentity详细值。

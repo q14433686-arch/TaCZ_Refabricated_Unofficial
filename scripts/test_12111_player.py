@@ -142,6 +142,28 @@ def audit_iris_hooks(jar, evidence):
     print('::notice::PORT_IRIS_API: hash-pinned 1.10.8 runtime bytecode: pre-hand depth and post-world final overlay boundaries verified', flush=True)
 
 
+def report_receipts(receipts):
+    """Keep every enforced receipt visible under Actions' ten-notices-per-step limit.
+
+    Individual notices silently hid the later platform contracts. Preserve readable full
+    stdout too; batch escaped payloads instead of truncating or weakening assertions.
+    """
+    chunks, group = [], ''
+    for receipt in receipts:
+        print(receipt, flush=True)
+        # Bound even an unusually long pixel matrix without cutting a workflow escape.
+        for start in range(0, len(receipt), 1000):
+            part = receipt[start:start + 1000].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+            if group and len(group) + len(part) + 3 > 3500:
+                chunks.append(group)
+                group = ''
+            group += (' | ' if group else '') + part
+    if group:
+        chunks.append(group)
+    for group in chunks:
+        print('::notice::' + group, flush=True)
+
+
 def test(product, work, evidence, suite):
     copy_project(work, 'client')
     evidence.mkdir(parents=True, exist_ok=True)
@@ -169,10 +191,12 @@ def test(product, work, evidence, suite):
         'optics-iris': {'PORT_PIP_MOTION:': 16, 'PORT_PIP_WIDE:': 2, 'PORT_THERMAL_PIXELS:': 1, 'PORT_THERMAL_MODE:': 2, 'PORT_THERMAL_POSE:': 18, 'PORT_OPTIC:': 3, 'PORT_IRIS:': 1, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_RETICLE_GROUPS:': 1, 'PORT_BODY_MATERIAL:': 1, 'PORT_OCULAR_BAKE:': 1, 'PORT_RETICLE_PIXELS:': 1},
     }[suite]
     text = log.read_text(errors='replace')
+    receipts = []
     for marker, count in {**markers, 'PORT_PLAYER:': 1}.items():
         rows = [row.split(marker, 1)[1].strip() for row in text.splitlines() if marker in row]
         if len(rows) != count: raise AssertionError(f'{suite}: expected {count} {marker} receipts, got {rows}')
-        print(f'::notice::{marker} ' + ' | '.join(rows), flush=True)
+        receipts.append(f'{marker} ' + ' | '.join(rows))
+    report_receipts(receipts)
     frames = {'optics': ['optic_raise', 'optic_steady', 'optic_hip'], 'optics-iris': ['optic_raise', 'optic_steady', 'optic_hip'], 'pal': ['pal_remote_rifle', 'pal_remote_pistol'], 'controller': [], 'receiver': [], 'receiver-iris': [], 'platform': [], 'platform-zoomify': [], 'display': [
         f'{scene}_{state}' for scene in ['rack', 'case', 'corner', 'vanilla_quad', 'mesh'] for state in ['empty', 'ghost', 'placed']
     ] + [f'case_hint_{s}' for s in ['gun_hover','gun_interact','empty_hover','look_away','tick_39','tick_40_held','sneak_unlock','unlocked']]}[suite]
