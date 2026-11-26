@@ -1,4 +1,4 @@
-commit: e64f698d5121c4a6aa5c18f33b525f91f9bae1c9
+commit: 08b1bf0b4e13a478660af6d38bc437bf41051020
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
 
@@ -482,7 +482,7 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :classes
 > Task :compileTestJava
 > Task :compileGametestJava
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795660037656.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795660429364.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -492,7 +492,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 7s
+BUILD SUCCESSFUL in 1m
 4 actionable tasks: 4 executed
 PORT_RENDER_API: /home/runner/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/minecraft-merged/1.21.11-loom.mappings.1_21_11.layered+hash.2198-v2/minecraft-merged-1.21.11-loom.mappings.1_21_11.layered+hash.2198-v2.jar
 Compiled from "SubmitNodeStorage.java"
@@ -675,6 +675,44 @@ public class net.minecraft.client.renderer.PlayerSkinRenderCache {
   private static net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo method_74048(net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo);
   static {};
 }
+PORT_RENDER_BYTECODE: com.mojang.blaze3d.pipeline.RenderTarget
+  public void copyDepthFrom(com.mojang.blaze3d.pipeline.RenderTarget);
+    Code:
+       0: invokestatic  #67                 // Method com/mojang/blaze3d/systems/RenderSystem.assertOnRenderThread:()V
+       3: aload_0
+       4: getfield      #75                 // Field depthTexture:Lcom/mojang/blaze3d/textures/GpuTexture;
+       7: ifnonnull     20
+      10: new           #94                 // class java/lang/IllegalStateException
+      13: dup
+      14: ldc           #96                 // String Trying to copy depth texture to a RenderTarget without a depth texture
+      16: invokespecial #99                 // Method java/lang/IllegalStateException."<init>":(Ljava/lang/String;)V
+      19: athrow
+      20: aload_1
+      21: getfield      #75                 // Field depthTexture:Lcom/mojang/blaze3d/textures/GpuTexture;
+      24: ifnonnull     37
+      27: new           #94                 // class java/lang/IllegalStateException
+      30: dup
+      31: ldc           #101                // String Trying to copy depth texture from a RenderTarget without a depth texture
+      33: invokespecial #99                 // Method java/lang/IllegalStateException."<init>":(Ljava/lang/String;)V
+      36: athrow
+      37: invokestatic  #105                // Method com/mojang/blaze3d/systems/RenderSystem.getDevice:()Lcom/mojang/blaze3d/systems/GpuDevice;
+      40: invokeinterface #111,  1          // InterfaceMethod com/mojang/blaze3d/systems/GpuDevice.createCommandEncoder:()Lcom/mojang/blaze3d/systems/CommandEncoder;
+      45: aload_1
+      46: getfield      #75                 // Field depthTexture:Lcom/mojang/blaze3d/textures/GpuTexture;
+      49: aload_0
+      50: getfield      #75                 // Field depthTexture:Lcom/mojang/blaze3d/textures/GpuTexture;
+      53: iconst_0
+      54: iconst_0
+      55: iconst_0
+      56: iconst_0
+      57: iconst_0
+      58: aload_0
+      59: getfield      #113                // Field width:I
+      62: aload_0
+      63: getfield      #115                // Field height:I
+      66: invokeinterface #121,  10         // InterfaceMethod com/mojang/blaze3d/systems/CommandEncoder.copyTextureToTexture:(Lcom/mojang/blaze3d/textures/GpuTexture;Lcom/mojang/blaze3d/textures/GpuTexture;IIIIIII)V
+      71: return
+
 PORT_RENDER_BYTECODE: net.minecraft.client.renderer.GameRenderer
   private void renderItemInHand(float, boolean, org.joml.Matrix4f);
     Code:
