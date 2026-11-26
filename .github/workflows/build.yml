@@ -158,6 +158,20 @@ jobs:
       - name: Full build
         run: ./gradlew build --console=plain --stacktrace --no-daemon
 
+      - name: Dedicated receiver GameTests
+        run: ./gradlew runGametest --console=plain --stacktrace --no-daemon
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: receiver-tests-1.21.11-${{ github.sha }}
+          path: |
+            build/reports/tests/
+            build/test-results/
+            build/gametest/
+          if-no-files-found: warn
+
       - name: Upload jars
         uses: actions/upload-artifact@v4
         with:

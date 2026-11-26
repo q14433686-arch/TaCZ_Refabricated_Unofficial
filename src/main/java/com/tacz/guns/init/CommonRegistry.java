@@ -25,6 +25,7 @@ public final class CommonRegistry {
     }
 
     public static void onAddPackFinders(AddPackFindersEvent event) {
-        event.addRepositorySource(GunPackLoader.INSTANCE);
+        // Each repository keeps its own PackType, including integrated-server reloads.
+        event.addRepositorySource(GunPackLoader.forType(event.getPackType()));
     }
 }

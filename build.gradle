@@ -13,12 +13,19 @@ base {
 }
 
 fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = 'tacz_port_test'
+        enableGameTests = true
+        enableClientGameTests = project.hasProperty('taczClientSmoke')
+    }
     configureDataGeneration {
         client = true
     }
 }
 
 loom {
+    mods { tacz { sourceSet sourceSets.main } }
     accessWidenerPath = file("src/main/resources/tacz.accesswidener")
     // 1.21.11 is obfuscated, so mappings exist again and the legacy mixin AP is both
     // available and REQUIRED: mixin targets written in official Mojang names have to be
@@ -130,6 +137,9 @@ repositories {
 }
 
 dependencies {
+    testImplementation platform('org.junit:junit-bom:5.12.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     // ================================================================
     // 1.21.11 是混淆版本，Loom 回到 remap 模式：
     //   * 必须声明 mappings（官方 Mojang 映射）
@@ -420,3 +430,6 @@ publishing {
 if (project.hasProperty('meshProbe')) {
     apply from: 'scripts/mesh_render_probe.gradle'
 }
+
+// Tests use the same Java 21/mapped classpath as this receiver, never the donor JAR.
+test { useJUnitPlatform() }

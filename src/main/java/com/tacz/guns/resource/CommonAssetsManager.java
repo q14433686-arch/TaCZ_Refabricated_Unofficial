@@ -12,8 +12,7 @@ import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
 import com.tacz.guns.crafting.result.GunSmithTableResult;
 import com.tacz.guns.init.ModRecipe;
-import com.tacz.guns.network.NetworkHandler;
-import com.tacz.guns.network.message.ServerMessageSyncGunPack;
+import com.tacz.guns.network.message.ServerMessageSyncGunPackPart;
 import com.tacz.guns.resource.filter.RecipeFilter;
 import com.tacz.guns.resource.index.CommonAmmoIndex;
 import com.tacz.guns.resource.index.CommonAttachmentIndex;
@@ -67,6 +66,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
             .registerTypeAdapter(TabConfig.class, new TabConfig.Deserializer())
             .create();
 
+    private ServerMessageSyncGunPackPart.Snapshot networkSnapshot;
     private final List<INetworkCacheReloadListener> listeners = new ArrayList<>();
     private CommonDataManager<GunData> gunData;
     private CommonDataManager<AttachmentData> attachmentData;
@@ -100,18 +100,22 @@ public class CommonAssetsManager implements ICommonResourceProvider {
         attachmentIndex = register(new CommonDataManager<>(DataType.ATTACHMENT_INDEX, CommonAttachmentIndex.class, GSON, "index/attachments", "AttachmentIndexLoader"));
         blockIndex = register(new CommonDataManager<>(DataType.BLOCK_INDEX, CommonBlockIndex.class, GSON, "index/blocks", "BlockIndexLoader"));
         // 第 12 轮：把工作台配方也纳入同步。目录与 vanilla 数据包配方一致（data/<ns>/recipe），
-        // 这样客户端无需 RecipeManager 也能列出配方（26.2 客户端已无完整配方表）。
+        // 这样客户端无需 RecipeManager 也能列出配方（26.1.2 客户端已无完整配方表）。
         //
         // 必须用 TableRecipeManager 而非裸的 CommonDataManager：该目录里混着原版
         // 与其他模组的配方（实测原版 1585 条），不按 "type" 过滤会全部灌进
         // TableRecipe 的解析器刷屏，并被原样打进同步包。详见该类的注释。
-        tableRecipe = register(new TableRecipeManager());
+        tableRecipe = register(new TableRecipeManager(id -> recipeManager.byKey(net.minecraft.resources.ResourceKey.create(
+                net.minecraft.core.registries.Registries.RECIPE, id)).isPresent()));
 
         listeners.forEach(register);
         register.accept((sharedState, backgroundExecutor, barrier, gameExecutor) -> {
             return barrier
                     .wait(null)
-                    .thenRunAsync(AllowAttachmentTagMatcher::resetCache, gameExecutor);
+                    .thenRunAsync(() -> {
+                        AllowAttachmentTagMatcher.resetCache();
+                        networkSnapshot = ServerMessageSyncGunPackPart.prepare(getNetworkCache());
+                    }, gameExecutor);
         });
     }
 
@@ -155,7 +159,7 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     /**
      * 枪包声明过要注入的<b>目标战利品表 ID 集合</b>。
      *
-     * <p>供 {@code LootTableInjectorModifier} 做「正查」用：26.2 无法由 LootTable 实例
+     * <p>供 {@code LootTableInjectorModifier} 做「正查」用：26.1.2 无法由 LootTable 实例
      * 反查其注册 ID（RELOADABLE 层只给 HolderLookup，没有反查接口），
      * 因此改为拿这个候选集去逐个正查比对实例。默认枪包只有 1 个目标表。</p>
      */
@@ -305,11 +309,8 @@ public class CommonAssetsManager implements ICommonResourceProvider {
     }
 
     public static void OnDatapackSync(ServerPlayer player, boolean joined) {
-        if (getInstance() == null) {
-            return;
-        }
-        ServerMessageSyncGunPack message = new ServerMessageSyncGunPack(getInstance().getNetworkCache());
-        NetworkHandler.sendToClientPlayer(message, player);
+        var manager = getInstance();
+        if (player != null && manager != null && manager.networkSnapshot != null) manager.networkSnapshot.send(player);
 
     }
 

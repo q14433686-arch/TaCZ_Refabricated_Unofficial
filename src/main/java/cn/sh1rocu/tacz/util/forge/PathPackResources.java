@@ -44,7 +44,11 @@ public class PathPackResources extends AbstractPackResources {
      * @param source    the root path of the pack. This needs to point to the folder that contains "assets" and/or "data", not the asset folder itself!
      */
     public PathPackResources(String packId, boolean isBuiltin, final Path source) {
-        super(new PackLocationInfo(packId, Component.literal(packId), PackSource.DEFAULT, Optional.empty()));
+        this(packId, Component.literal(packId), isBuiltin, source);
+    }
+
+    public PathPackResources(String packId, Component title, boolean isBuiltin, Path source) {
+        super(new PackLocationInfo(packId, title, PackSource.DEFAULT, Optional.empty()));
         this.source = source;
     }
 
@@ -83,8 +87,31 @@ public class PathPackResources extends AbstractPackResources {
 
     @Override
     public void listResources(PackType type, String namespace, String path, ResourceOutput resourceOutput) {
+        java.util.Set<Identifier> seen = new java.util.HashSet<>();
+        ResourceOutput current = (id, supplier) -> {
+            if (seen.add(id)) resourceOutput.accept(id, wrapRecipe(type, id, supplier));
+        };
+        listPath(type, namespace, path, current);
+        if (type == PackType.SERVER_DATA && (path.equals("recipe") || path.startsWith("recipe/"))) {
+            listPath(type, namespace, "recipes" + path.substring("recipe".length()), (legacy, supplier) -> {
+                Identifier id = legacy.withPath("recipe" + legacy.getPath().substring("recipes".length()));
+                if (!seen.contains(id)) {
+                    var migrated = LegacyGunPackRecipeMigrator.migrateLegacyVanillaRecipe(id, supplier);
+                    if (migrated != null && seen.add(id)) resourceOutput.accept(id, migrated);
+                }
+            });
+        }
+    }
+
+    private void listPath(PackType type, String namespace, String path, ResourceOutput output) {
         FileUtil.decomposePath(path).result().ifPresent(parts ->
-                net.minecraft.server.packs.PathPackResources.listPath(namespace, resolve(type.getDirectory(), namespace).toAbsolutePath(), parts, resourceOutput));
+                net.minecraft.server.packs.PathPackResources.listPath(namespace,
+                        resolve(type.getDirectory(), namespace).toAbsolutePath(), parts, output));
+    }
+
+    private static IoSupplier<InputStream> wrapRecipe(PackType type, Identifier id, IoSupplier<InputStream> supplier) {
+        return type == PackType.SERVER_DATA && id.getPath().startsWith("recipe/")
+                ? LegacyGunPackRecipeMigrator.migrate(id, supplier) : supplier;
     }
 
     @Override
@@ -117,7 +144,14 @@ public class PathPackResources extends AbstractPackResources {
 
     @Override
     public IoSupplier<InputStream> getResource(PackType type, Identifier location) {
-        return this.getRootResource(getPathFromLocation(location.getPath().startsWith("lang/") ? PackType.CLIENT_RESOURCES : type, location));
+        var current = getRootResource(getPathFromLocation(location.getPath().startsWith("lang/") ? PackType.CLIENT_RESOURCES : type, location));
+        if (current != null) return wrapRecipe(type, location, current);
+        if (type == PackType.SERVER_DATA && location.getPath().startsWith("recipe/")) {
+            var legacy = getRootResource(getPathFromLocation(type,
+                    location.withPath("recipes" + location.getPath().substring("recipe".length()))));
+            if (legacy != null) return LegacyGunPackRecipeMigrator.migrateLegacyVanillaRecipe(location, legacy);
+        }
+        return null;
     }
 
     private static String[] getPathFromLocation(PackType type, Identifier location) {

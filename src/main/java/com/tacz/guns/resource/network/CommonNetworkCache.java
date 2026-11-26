@@ -35,7 +35,7 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
     public Map<Identifier, GunData> gunData = new HashMap<>();
     public Map<Identifier, AttachmentData> attachmentData = new HashMap<>();
     public Map<Identifier, RecipeFilter> recipeFilter = new HashMap<>();
-    /** 第 12 轮：服务端同步过来的工作台配方（26.2 客户端无完整配方表）。 */
+    /** 第 12 轮：服务端同步过来的工作台配方（26.1.2 客户端无完整配方表）。 */
     public Map<Identifier, TableRecipe> tableRecipe = new HashMap<>();
     public Map<Identifier, BlockData> blockData = new HashMap<>();
     public Map<Identifier, CommonGunIndex> gunIndex = new HashMap<>();
@@ -215,6 +215,10 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
 
 
     private void fromNetwork(DataType type, Map<Identifier, String> data) {
+        if (type == DataType.ATTACHMENT_TAGS) {
+            resolveAttachmentTags(data); // one pass over the snapshot, not one per tag
+            return;
+        }
         for (Map.Entry<Identifier, String> entry : data.entrySet()) {
             try {
                 switch (type) {
@@ -224,7 +228,6 @@ public enum CommonNetworkCache implements ICommonResourceProvider {
                     case ATTACHMENT_DATA -> attachmentData.put(entry.getKey(), parseAttachmentData(entry.getValue()));
                     case ATTACHMENT_INDEX ->
                             attachmentIndex.put(entry.getKey(), parse(entry.getValue(), CommonAttachmentIndex.class));
-                    case ATTACHMENT_TAGS -> resolveAttachmentTags(data);
                     case BLOCK_INDEX -> blockIndex.put(entry.getKey(), parse(entry.getValue(), CommonBlockIndex.class));
                     case RECIPE_FILTER -> recipeFilter.put(entry.getKey(), parse(entry.getValue(), RecipeFilter.class));
                     // 第 12 轮：接上此前只声明未接线的 RECIPES 通道
