@@ -100,7 +100,7 @@ def test(product, work, evidence, suite):
         f'{scene}_{state}' for scene in ['rack', 'case', 'corner', 'vanilla_quad', 'mesh'] for state in ['empty', 'ghost', 'placed']
     ] + [f'case_hint_{s}' for s in ['gun_hover','gun_interact','empty_hover','look_away','tick_39','tick_40_held','sneak_unlock','unlocked']]}[suite]
     if suite.startswith('optics'):
-        frames += ['reticle_full', 'reticle_luminous_only', 'reticle_none', 'reticle_restored']
+        frames += ['reticle_full', 'reticle_control', 'reticle_luminous_only', 'reticle_none', 'reticle_restored']
     for frame in frames:
         if not any((instance/'screenshots').glob(f'*tacz_{frame}.png')): raise AssertionError(f'Missing raw frame: {frame}')
     with product.open('rb') as f: digest = hashlib.file_digest(f, 'sha256').hexdigest()

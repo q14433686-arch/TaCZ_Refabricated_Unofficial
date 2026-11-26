@@ -32,6 +32,7 @@ public final class OpticsApertureSmoke extends PlayerProbe {
     @Override void exercise(ClientGameTestContext ctx, TestSingleplayerContext world) {
         ctx.runOnClient(mc -> {
             com.tacz.guns.client.render.scope.ReticleContractSmoke.verify();
+            ReticleGroups.verify();
             int program = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL20.GL_CURRENT_PROGRAM);
             try {
                 org.lwjgl.opengl.GL20.glUseProgram(0);
@@ -45,7 +46,7 @@ public final class OpticsApertureSmoke extends PlayerProbe {
                 org.lwjgl.opengl.GL20.glUseProgram(program);
             }
         });
-        System.out.println("PORT_RETICLE_CONTRACT: hybrid materials, inherited light, dedup, frozen pose, visibility, ADS, fallback and draw veto passed in intermediary");
+        System.out.println("PORT_RETICLE_CONTRACT: hybrid materials, inherited light, dedup, frozen pose, visibility, ADS, safe fallback, draw veto, HAMR/Vudu active groups and TA31 housing exclusion passed in intermediary");
         var optic = Identifier.parse("tacz:scope_standard_8x");
         var server = world.getServer();
         var base = server.computeOnServer(s -> {

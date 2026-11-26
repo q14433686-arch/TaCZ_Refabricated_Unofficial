@@ -24,8 +24,11 @@ final class ReticleFrames {
             for (String root : List.of("division", "division_2")) collect(model.getNode(root), false, ink, light);
             if (ink.isEmpty() || light.isEmpty()) throw new AssertionError("Default hybrid fixture has no ink/luminous geometry");
         });
+        ctx.setScreen(BlankPause::new);
+        ctx.waitFor(mc -> mc.isPaused() && !com.tacz.guns.util.time.GunTime.shouldTick());
         try {
             var full = frame(ctx, "reticle_full");
+            var control = frame(ctx, "reticle_control");
             ctx.runOnClient(mc -> ink.keySet().forEach(p -> p.cubes.clear()));
             var luminousOnly = frame(ctx, "reticle_luminous_only");
             ctx.runOnClient(mc -> light.keySet().forEach(p -> p.cubes.clear()));
@@ -33,13 +36,16 @@ final class ReticleFrames {
             ctx.runOnClient(mc -> { restore(ink); restore(light); });
             var restored = frame(ctx, "reticle_restored");
             int inkPixels = darker(full, luminousOnly), restoredInk = darker(restored, luminousOnly);
-            int lightPixels = redder(luminousOnly, none);
-            if (inkPixels < 8 || restoredInk < 8 || lightPixels < 1)
-                throw new AssertionError("Missing material pixels: ink=" + inkPixels + " restoredInk=" + restoredInk + " luminous=" + lightPixels);
+            int noise = darker(full, control), lightPixels = redder(luminousOnly, none);
+            if (inkPixels < Math.max(8, 3*noise) || restoredInk < Math.max(8, 3*noise) || lightPixels < 1)
+                throw new AssertionError("Missing material pixels: ink=" + inkPixels + " restoredInk=" + restoredInk + " luminous=" + lightPixels + " controlNoise=" + noise);
             System.out.println("PORT_RETICLE_PIXELS: default " + optic + " ink=" + inkPixels
-                    + " restoredInk=" + restoredInk + " luminous=" + lightPixels + "; independent material removal and restore");
+                    + " restoredInk=" + restoredInk + " luminous=" + lightPixels + " controlNoise=" + noise
+                    + "; paused independent material removal and restore");
         } finally {
             ctx.runOnClient(mc -> { restore(ink); restore(light); });
+            ctx.setScreen(() -> null);
+            ctx.waitFor(mc -> !mc.isPaused());
         }
     }
     private static void collect(BedrockPart part, boolean inherited, Map<BedrockPart, List<BedrockCube>> ink,
@@ -78,5 +84,11 @@ final class ReticleFrames {
     private static int r(int p) { return p>>16 & 255; }
     private static int g(int p) { return p>>8 & 255; }
     private static int blue(int p) { return p & 255; }
+    private static final class BlankPause extends net.minecraft.client.gui.screens.Screen {
+        BlankPause() { super(net.minecraft.network.chat.Component.empty()); }
+        @Override public boolean isPauseScreen() { return true; }
+        @Override public void render(net.minecraft.client.gui.GuiGraphics gui, int x, int y, float delta) {}
+        @Override public void renderBackground(net.minecraft.client.gui.GuiGraphics gui, int x, int y, float delta) {}
+    }
     private ReticleFrames() {}
 }
