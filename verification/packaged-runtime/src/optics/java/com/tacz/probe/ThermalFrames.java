@@ -77,6 +77,25 @@ final class ThermalFrames {
             ctx.runOnClient(mc -> RenderConfig.SCOPE_THERMAL_ENABLE.set(true));
             ctx.waitTicks(6);
             if (ThermalReadback.read(ctx).centralHot() < 20) throw new AssertionError("Heat did not recover after disable");
+            try {
+                ctx.runOnClient(mc -> ThermalReadback.forceUnavailable(true));
+                ctx.waitTicks(6);
+                ctx.runOnClient(mc -> ThermalReadback.assertCleared());
+                var fallback=frame(ctx,"thermal_unavailable");
+                if(coverage(fallback,emptyOptical,hot)[0]<20 || white(fallback)>=white(hot)/2)
+                    throw new AssertionError("Unavailable heat did not preserve the real optical body");
+            } finally { ctx.runOnClient(mc -> ThermalReadback.forceUnavailable(false)); }
+            ctx.waitTicks(6);
+            if(ThermalReadback.read(ctx).centralHot()<20) throw new AssertionError("Heat failed to recover after unavailable source");
+            var camera=ctx.computeOnClient(mc -> mc.options.getCameraType());
+            try {
+                ctx.runOnClient(mc -> mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK));
+                ctx.waitTicks(6);
+                ctx.runOnClient(mc -> ThermalReadback.assertCleared());
+            } finally { ctx.runOnClient(mc -> mc.options.setCameraType(camera)); }
+            ctx.waitTicks(8);
+            if(ThermalReadback.read(ctx).centralHot()<20) throw new AssertionError("Heat failed to recover after camera change");
+            palettes(ctx,optic,config,optical,emptyOptical);
             kill(ctx,world);
             summon(ctx,world,base,"chicken","NoAI:1b,NoGravity:1b,Silent:1b");
             var chicken=ThermalReadback.read(ctx);
@@ -116,6 +135,31 @@ final class ThermalFrames {
                 ScopeLensFrame.clear();
             });
         }
+    }
+    private static void palettes(ClientGameTestContext ctx,Identifier optic,ScopeLensConfig white,
+                                 BufferedImage optical,BufferedImage empty) {
+        try {
+            for(String mode:new String[]{"THERMAL_BLACK_HOT","THERMAL_IRONBOW"}) {
+                var json=new Gson().toJsonTree(white).getAsJsonObject(); json.addProperty("vision_mode",mode);
+                var lens=new Gson().fromJson(json,ScopeLensConfig.class); lens.init();
+                ctx.runOnClient(mc -> TimelessAPI.getClientAttachmentIndex(optic).orElseThrow().getAttachmentModel().setScopeLens(lens));
+                ctx.waitTicks(6);
+                var image=frame(ctx,"thermal_"+mode.toLowerCase(java.util.Locale.ROOT));
+                int w=image.getWidth(),h=image.getHeight(),r=h/7,visible=0,filled=0;
+                for(int y=h/2-r;y<h/2+r;y++) for(int x=w/2-r;x<w/2+r;x++) {
+                    if(!greenDelta(optical,empty,x,y) || !greenDelta(optical,empty,x-1,y) || !greenDelta(optical,empty,x+1,y)
+                            || !greenDelta(optical,empty,x,y-1) || !greenDelta(optical,empty,x,y+1)) continue;
+                    visible++;
+                    int p=image.getRGB(x,y),red=p>>16&255,g=p>>8&255,b=p&255;
+                    if(mode.equals("THERMAL_BLACK_HOT") ? Math.max(red,Math.max(g,b))<76 && Math.max(red,Math.max(g,b))-Math.min(red,Math.min(g,b))<15
+                            : red>200 && g>100) filled++;
+                }
+                if(visible<20 || filled<.83*visible || ThermalReadback.read(ctx).centralHot()<20)
+                    throw new AssertionError("Thermal palette "+mode+" body="+filled+"/"+visible);
+                System.out.println("PORT_THERMAL_MODE: "+mode+" opticalBody="+filled+"/"+visible+"; unavailable/camera recovery passed");
+            }
+        } finally { ctx.runOnClient(mc -> TimelessAPI.getClientAttachmentIndex(optic).orElseThrow().getAttachmentModel().setScopeLens(white)); }
+        ctx.waitTicks(6);
     }
     static void summon(ClientGameTestContext ctx,TestSingleplayerContext world,BlockPos base,String type,String nbt) {
         world.getServer().runCommand("summon minecraft:"+type+" "+(base.getX()+.5)+" "+(base.getY()+1.2)+" "+(base.getZ()+16.5)+" {Tags:[\"thermal_probe\"],"+nbt+"}");

@@ -101,6 +101,15 @@ public final class ThermalReadback {
         } catch(ReflectiveOperationException e){throw new AssertionError(e);}
         finally { for(int i=0;i<keys.length;i++)org.lwjgl.opengl.GL45C.glPixelStorei(keys[i],old[i]); }
     }
+    /** Test-only failure injection: exercise the production fail-open lens branch, not a
+     * disabled-feature substitute for a working positive. Callers restore in finally. */
+    public static void forceUnavailable(boolean value) {
+        try {
+            var field = ScopeThermalCapture.class.getDeclaredField("failed");
+            field.setAccessible(true);
+            field.setBoolean(null,value);
+        } catch(ReflectiveOperationException e) { throw new AssertionError(e); }
+    }
     public static void releaseAndVerify() {
         var target = ScopeThermalCapture.current();
         if (target == null) throw new AssertionError("Cannot test release without a live heat target");
