@@ -99,6 +99,11 @@ dependencies {
         if (client) modCompileOnly(mod) { transitive = false }
         productionRuntimeMods(mod) { transitive = false }
     }
+    if (playerSuite != null && playerSuite.startsWith('platform')) {
+        def cloth = "me.shedaniel.cloth:cloth-config-fabric:${cloth_config_fabric}"
+        modCompileOnly(cloth) { transitive = false }
+        productionRuntimeMods(cloth) { transitive = false }
+    }
     if (playerSuite == 'pal') {
         def pal = "maven.modrinth:player-animation-library:${player_animation_lib}"
         modCompileOnly pal
