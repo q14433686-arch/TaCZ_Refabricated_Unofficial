@@ -1,4 +1,4 @@
-commit: e200b9d87d92ac7e5ac1ab86269d4ee2ee5715c2
+commit: 160509c197170cbf703774407d03a3dfa48f02f8
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
 
@@ -25,7 +25,6 @@ Cannot remap lambda$addMainPass$1 because it does not exist in any of the target
 Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
 Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
@@ -33,6 +32,7 @@ Cannot remap lambda$addMainPass$1 because it does not exist in any of the target
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
 Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap contents because it does not exist in any of the targets [mezz/jei/gui/overlay/IngredientListOverlay] or their parents.
 Cannot remap lambda$reload$3 because it does not exist in any of the targets [net/minecraft/class_1060]
@@ -65,19 +65,20 @@ Cannot remap valueFormatter because it does not exist in any of the targets [] o
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/HumanoidModelMixin.java:68: warning: Cannot find target method "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V" for @Inject.method="setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V" in net.minecraft.client.model.HumanoidModel
     @Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At(value = "TAIL"))
     ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/event/PackCompatibilityNotice.java:7: error: cannot find symbol
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
-                                                       ^
-  symbol:   class ClientCommands
-  location: package net.fabricmc.fabric.api.client.command.v2
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/event/PackCompatibilityNotice.java:7: error: static import only from classes and interfaces
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
-^
-2 errors
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/event/PackCompatibilityNotice.java:37: error: cannot find symbol
+            client.player.sendSystemMessage(Component.translatable("message.tacz.pack_compatibility.notice",String.join(", ",fresh))
+                         ^
+  symbol:   method sendSystemMessage(MutableComponent)
+  location: variable player of type LocalPlayer
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+1 error
 8 warnings
 
 > Task :compileJava FAILED
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795653138622.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795653267874.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -86,9 +87,6 @@ FAILURE: Build failed with an exception.
 * What went wrong:
 Execution failed for task ':compileJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
 > Compilation failed; see the compiler output below.
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/event/PackCompatibilityNotice.java:7: error: static import only from classes and interfaces
-  import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
-  ^
   /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/SoundManagerPreparationsMixin.java:16: warning: Mixin target net.minecraft.client.sounds.SoundManager$Preparations is public and should be specified in value
   @Mixin(targets = "net.minecraft.client.sounds.SoundManager$Preparations")
   ^
@@ -113,12 +111,16 @@ Execution failed for task ':compileJava' (registered by plugin class 'org.gradle
   /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/HumanoidModelMixin.java:68: warning: Cannot find target method "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V" for @Inject.method="setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V" in net.minecraft.client.model.HumanoidModel
       @Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At(value = "TAIL"))
       ^
-  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/event/PackCompatibilityNotice.java:7: error: cannot find symbol
-  import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
-                                                         ^
-    symbol:   class ClientCommands
-    location: package net.fabricmc.fabric.api.client.command.v2
-  2 errors
+  Note: Recompile with -Xlint:deprecation for details.
+  Note: Recompile with -Xlint:unchecked for details.
+  Note: Some input files use or override a deprecated API.
+  Note: Some input files use unchecked or unsafe operations.
+  /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/event/PackCompatibilityNotice.java:37: error: cannot find symbol
+              client.player.sendSystemMessage(Component.translatable("message.tacz.pack_compatibility.notice",String.join(", ",fresh))
+                           ^
+    symbol:   method sendSystemMessage(MutableComponent)
+    location: variable player of type LocalPlayer
+  1 error
   8 warnings
 
 * Try:
@@ -185,15 +187,16 @@ Caused by: org.gradle.api.internal.tasks.compile.CompilationFailedException: Com
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/HumanoidModelMixin.java:68: warning: Cannot find target method "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V" for @Inject.method="setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V" in net.minecraft.client.model.HumanoidModel
     @Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At(value = "TAIL"))
     ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/event/PackCompatibilityNotice.java:7: error: cannot find symbol
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
-                                                       ^
-  symbol:   class ClientCommands
-  location: package net.fabricmc.fabric.api.client.command.v2
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/event/PackCompatibilityNotice.java:7: error: static import only from classes and interfaces
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
-^
-2 errors
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/client/event/PackCompatibilityNotice.java:37: error: cannot find symbol
+            client.player.sendSystemMessage(Component.translatable("message.tacz.pack_compatibility.notice",String.join(", ",fresh))
+                         ^
+  symbol:   method sendSystemMessage(MutableComponent)
+  location: variable player of type LocalPlayer
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+1 error
 8 warnings
 	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:89)
 	at org.gradle.api.internal.tasks.compile.JdkJavaCompiler.execute(JdkJavaCompiler.java:50)
@@ -335,7 +338,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 1m 2s
+BUILD FAILED in 1m 34s
 1 actionable task: 1 executed
 
 == job status: failure ==
