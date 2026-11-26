@@ -23,7 +23,7 @@ R1 的专项测试必须增加自己的分划断言，原有 `PORT_OPTIC` 孔径
 
 ## R1 收口回执（2026-11-26）
 
-**R1 已完成本项闭环，下一项为 R2；尚未开始热像代码施工。**
+**R1 已完成本项闭环，当前活动项为下文 R2。**
 
 实现提交 `269d7091`，专项对照加固 `c7366cf7`，实际验收 SHA **`3515cf985e209600808b28c7073815e4bca8bd08`**。`0b07456e` 仅回写成功编译日志。
 
@@ -56,3 +56,25 @@ R1 的专项测试必须增加自己的分划断言，原有 `PORT_OPTIC` 孔径
 ```
 
 边界：这关闭的是 R1 的几何/材质/活动组与目标原版、钉住的 Iris 组合回归，不代表所有第三方模型、所有光影包都实测过；没有把热像或 PIP 运动/近场的验收借此标绿。未提升版本、未发布 Release。
+
+
+## R2 施工与验收状态（2026-11-26，进行中）
+
+- `ff3abb47` 的 CI 对 **named 1.21.11** JAR 做 `javap`：`ModelFeatureRenderer.Storage.add(RenderType, ModelSubmit<?>)` 可作为 solid / sorted-alpha 模型提交的共同记录点；`ModelSubmit` 保留 model、state、pose、sprite、UV 对应材质。CameraRenderState **没有**供体的 `viewRotationMatrix`，不能直接照抄。
+- 实现 `365a71d0`：原生世界遍使用目标版 `renderLevel` 的 `viewMatrix`；Iris 在 `beginHand` 前用本版 camera orientation 的逆旋转冻结世界热源，保留当前世界/窄遍投影。独立颜色/深度附件回放真实模型，cutout coverage、scene-depth sampling、shift-match 和 nested bypass 归还均已接线。复用本分支已存在的材质 accessor，不重复新增同字段 accessor。
+- 补齐原先未接线的 `scope_lens` display → model → 每帧观察/预测 → clean scene capture → dynamic uniforms / HeatSampler → 深度孔径镜内合成；保留枪口特效 ownership wrapper 和 native aperture。资源重载/离线销毁热像资源；热像窄遍不做隔帧复用，避免热源与颜色错帧。
+- `365a71d0` 目标版 Java 21 main/test/gametest 编译成功：[45737416522](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45737416522)。这**不是** R2 实机通过证明。
+- 专项 `69f708a6` 在两套现有 intermediary 光学客户端中增加实际 heat attachment 和最终镜内像素双重读取：空场、透明 slime、opaque wall、glass、关闭/恢复、chicken cutout、invisible、blacklist armor stand、测试资源白名单 minecart。测试临时配置仅改内存模型并在 finally 归还，不改默认包字节。另增加供体的 ScopeLensConfig JUnit。
+- 目前仍等专项运行结果；**R2 未关闭，R3–R6 未借此标绿**。后续失败必须在 R2 修复，四步闭环后立即继续 R3，不等待用户逐项批准。
+
+- 首次专项 `69f708a6` 失败于测试按运行时 poly-mesh 子类查找父类字段；`863219b7` 已修正。该轮实机进一步暴露 heat not ready，检查确认 cached HUD 投影只有实例镜像、没有返回 slice 的身份索引，致使 ocular 观察失败。`13e929c7` 补 `CachedPerspectiveProjectionMatrixBuffer.getBuffer` 返回切片镜像，增加失败状态诊断与附件销毁/重建断言；正在重跑。未将失败项标绿。
+
+- `13e929c7` 的实机诊断仍是 expected/current/projection=null、active=false；不能仅凭补 slice 就报修复。`77e8c406` 将 bounds 测量移到真正消费手部 batch 的回调，提取时仅观察 display；`484da3e1` 另修正暂停分划测试打开 Screen 后按键被释放的测试时序，热像专项先重新完成一次真实 ADS。
+- **`484da3e1` 原版热像专项已通过**（[139640272453](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45739333635/job/139640272453)）：empty=0、slime=1122、sensorWhite=1122、opaque mask=0 / white=0、glass=841、chicken=349、invisible=0、blacklist=0、whitelist=392，关闭/恢复与附件释放/重建均通过；R1 contract/pixels 与 hip 孔径清理亦通过。该 SHA 的发行矩阵 **9/10**，Iris 专项失败于 slime heat=0 / sensorWhite=0，因此 **R2 不关闭**。该 SHA 全构建和编译通过；产品 SHA-256 `116b0e44047f2933aa46779fbdb3a717e6abb8ae64cc36e3a1f524c55dcfcd7f`。
+- `a7cfda59` 将 Iris 捕获视图改为本版 `renderLevel` 的确切 view 参数，不再从 camera quaternion 重建；同时保存提交/材质计数供失败定位。继续验收原版/Iris，不能因原版通过跳到 R3。
+
+- `a7cfda59` 的 Iris 失败仍为 0 像素，但诊断计数为 submittedModels=2 / texturedModels=2：不是实体分类或丢提交。`187d9453` 的独立测试探针曾因调用未向消费工程开放的 RenderPipelines.register 编译失败，`a2901742` 改为仅 build 测试管线。
+- `a2901742` 的 Iris 故障实验明确得到：原生片元 + 普通 LEQUAL 仍 0；**仅在测试模组临时关闭深度时可见 1122 像素**。该实验执行后仍然抛失败，finally 归还生产管线，绝不计作通过或发布无深度热像。当前已将问题缩到场景/回放深度一致性；`e64f698d` 增加测试专用 24-bit window-depth 读回，同时读取 private/main depth，以便查明数值差而不是猜测放宽遮挡阈值。原版专项继续通过，R2 仍 ACTIVE。
+
+- `e64f698d` 的真实读回：replay windowZ=0.9967458669742406、private sceneZ=0.99674094；差值约 4.93e-6，与 Complementary 的 -0.00015 clip-space 位移量在该距离的换算相符。捕获/材质/投影到屏幕的位置成立，不能靠 no-depth 对照冒充修复。
+- `08b1bf0b` 尝试适配目标版 **DEPTH_COMPONENT32（UNORM32）** 的精度边界：普通 bit-copy 会保留采样器 float 无法表示的低位，精确 EQUAL 回放因而不能可靠往返。先在独立 private depth 上用深度-only pass 写入同一场景采样器的 float 值，再保留供体的 shifted EQUAL / read-only 判据；不做放宽 LEQUAL、坡度 bias 或关遮挡。新增量化往返 JUnit，测试专用 no-depth 实验仍只在失败后执行、仍抛失败、仍 finally 还原。**该适配尚待当前原版/Iris 实机结果，不提前写通过。**
