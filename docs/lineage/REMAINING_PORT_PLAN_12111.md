@@ -342,3 +342,5 @@ PlatformStance新增强制marker：真实client/server实体的2开关×2落地�
 为避免仅静态声明或测试端直接set误称“服务器同步”，TCP夹具在独立server-seed/defaultconfigs/tacz-server.toml设置12/7/true三个非默认值，client不写这三个配置、不发测试payload；真实FCAP连接后读值，两次join均必须满足，none套件还跨原有服务端保存/停机/从world复制重启。新强制PORT_SERVER_CONFIG，none/JEI/REI均执行；probe项目只增加FCAP compileOnly以读取已有产品配置类型，不给生产新增依赖。该增量待下一目标编译与真实TCP，不能借PlatformStance直接设内存的matrix声称已通过远程同步。
 
 3d2da078当前compile45830221409/full45830221413 SUCCESS；两个platform（139944733982/139944733875）均已实际PASS新增STANCE，分发最终仍待最后Iris optics。Python22项PASS、diff-check PASS；UI/TCP新增量不在该轮SHA内。
+
+3d2da078分发45830221480最终 **SUCCESS 14/14**；本体SHA-256 `93d3f638e3cf8bd8060695c3bdfec1022e45ec3c3e2f5a818328172c74438b5f`。因此本轮新增三个sync配置定义/stance两端分支/merged mouse wrapper与tagged variant灵敏度全部通过本轮native+Zoomify，native/Iris optics回归同过。不把此回执扩大成下一轮server-only非默认配置的TCP同步证明。
