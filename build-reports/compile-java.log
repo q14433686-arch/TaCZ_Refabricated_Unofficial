@@ -1,4 +1,4 @@
-commit: 42cbc3b6eea03dd696586173d0089e7d9c4bb07f
+commit: c54ab28218be0ebd2f88016c893f13cce4332000
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
 
@@ -198,71 +198,7 @@ duplicate input class me/shedaniel/rei/api/common/registry/display/DisplayConsum
 duplicate input class me/shedaniel/rei/api/common/registry/display/DisplayConsumer$RecipeManagerConsumer$RecipeFillerBuilder, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
 duplicate input class me/shedaniel/rei/api/common/registry/display/DisplayConsumer$RecipeDisplayConsumer, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
 duplicate input class me/shedaniel/rei/api/common/registry/display/DisplayConsumer$RecipeDisplayConsumer$RecipeFillerBuilder, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-...[truncated 1963 lines total]...
-       9: aload         4
-      11: invokevirtual #700                // Method net/minecraft/world/phys/Vec3.x:()D
-      14: dstore        5
-      16: aload         4
-      18: invokevirtual #707                // Method net/minecraft/world/phys/Vec3.y:()D
-      21: dstore        7
-      23: aload         4
-      25: invokevirtual #710                // Method net/minecraft/world/phys/Vec3.z:()D
-      28: dstore        9
-      30: aload_2
-      31: getfield      #1473               // Field net/minecraft/client/renderer/state/LevelRenderState.blockEntityRenderStates:Ljava/util/List;
-      34: invokeinterface #1396,  1         // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
-      39: astore        11
-      41: aload         11
-      43: invokeinterface #634,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
-      48: ifeq          127
-      51: aload         11
-      53: invokeinterface #637,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
-      58: checkcast     #1507               // class net/minecraft/client/renderer/blockentity/state/BlockEntityRenderState
-      61: astore        12
-      63: aload         12
-      65: getfield      #1509               // Field net/minecraft/client/renderer/blockentity/state/BlockEntityRenderState.blockPos:Lnet/minecraft/core/BlockPos;
-      68: astore        13
-      70: aload_1
-      71: invokevirtual #1442               // Method com/mojang/blaze3d/vertex/PoseStack.pushPose:()V
-      74: aload_1
-      75: aload         13
-      77: invokevirtual #1444               // Method net/minecraft/core/BlockPos.getX:()I
-      80: i2d
-      81: dload         5
-      83: dsub
-      84: aload         13
-      86: invokevirtual #1331               // Method net/minecraft/core/BlockPos.getY:()I
-      89: i2d
-      90: dload         7
-      92: dsub
-      93: aload         13
-      95: invokevirtual #1446               // Method net/minecraft/core/BlockPos.getZ:()I
-      98: i2d
-      99: dload         9
-     101: dsub
-     102: invokevirtual #1449               // Method com/mojang/blaze3d/vertex/PoseStack.translate:(DDD)V
-     105: aload_0
-     106: getfield      #300                // Field blockEntityRenderDispatcher:Lnet/minecraft/client/renderer/blockentity/BlockEntityRenderDispatcher;
-     109: aload         12
-     111: aload_1
-     112: aload_3
-     113: aload_2
-     114: getfield      #1178               // Field net/minecraft/client/renderer/state/LevelRenderState.cameraRenderState:Lnet/minecraft/client/renderer/state/CameraRenderState;
-     117: invokevirtual #1512               // Method net/minecraft/client/renderer/blockentity/BlockEntityRenderDispatcher.submit:(Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V
-     120: aload_1
-     121: invokevirtual #1466               // Method com/mojang/blaze3d/vertex/PoseStack.popPose:()V
-     124: goto          41
-     127: return
-
-  private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle);
-    Code:
-       0: aload_1
-       1: invokestatic  #2345               // Method com/mojang/blaze3d/systems/RenderSystem.setShaderFog:(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;)V
-       4: aload_2
-       5: getfield      #1178               // Field net/minecraft/client/renderer/state/LevelRenderState.cameraRenderState:Lnet/minecraft/client/renderer/state/CameraRenderState;
-       8: getfield      #1183               // Field net/minecraft/client/renderer/state/CameraRenderState.pos:Lnet/minecraft/world/phys/Vec3;
-      11: astore        10
-      13: aload         10
+...[truncated 2027 lines total]...
       15: invokevirtual #700                // Method net/minecraft/world/phys/Vec3.x:()D
       18: dstore        11
       20: aload         10
@@ -998,6 +934,70 @@ public abstract class net.minecraft.client.resources.sounds.AbstractSoundInstanc
   public net.minecraft.client.resources.sounds.SoundInstance$Attenuation getAttenuation();
   public boolean isRelative();
   public java.lang.String toString();
+}
+PORT_PLATFORM_API: net.minecraft.world.item.component.ResolvableProfile
+Compiled from "ResolvableProfile.java"
+public abstract class net.minecraft.world.item.component.ResolvableProfile implements net.minecraft.world.item.component.TooltipProvider {
+  private static final com.mojang.serialization.Codec<net.minecraft.world.item.component.ResolvableProfile> FULL_CODEC;
+  public static final com.mojang.serialization.Codec<net.minecraft.world.item.component.ResolvableProfile> CODEC;
+  public static final net.minecraft.network.codec.StreamCodec<io.netty.buffer.ByteBuf, net.minecraft.world.item.component.ResolvableProfile> STREAM_CODEC;
+  protected final com.mojang.authlib.GameProfile partialProfile;
+  protected final net.minecraft.world.entity.player.PlayerSkin$Patch skinPatch;
+  private static net.minecraft.world.item.component.ResolvableProfile create(com.mojang.datafixers.util.Either<com.mojang.authlib.GameProfile, net.minecraft.world.item.component.ResolvableProfile$Partial>, net.minecraft.world.entity.player.PlayerSkin$Patch);
+  public static net.minecraft.world.item.component.ResolvableProfile createResolved(com.mojang.authlib.GameProfile);
+  public static net.minecraft.world.item.component.ResolvableProfile createUnresolved(java.lang.String);
+  public static net.minecraft.world.item.component.ResolvableProfile createUnresolved(java.util.UUID);
+  protected abstract com.mojang.datafixers.util.Either<com.mojang.authlib.GameProfile, net.minecraft.world.item.component.ResolvableProfile$Partial> unpack();
+  protected net.minecraft.world.item.component.ResolvableProfile(com.mojang.authlib.GameProfile, net.minecraft.world.entity.player.PlayerSkin$Patch);
+  public abstract java.util.concurrent.CompletableFuture<com.mojang.authlib.GameProfile> resolveProfile(net.minecraft.server.players.ProfileResolver);
+  public com.mojang.authlib.GameProfile partialProfile();
+  public net.minecraft.world.entity.player.PlayerSkin$Patch skinPatch();
+  static com.mojang.authlib.GameProfile createPartialProfile(java.util.Optional<java.lang.String>, java.util.Optional<java.util.UUID>, com.mojang.authlib.properties.PropertyMap);
+  public abstract java.util.Optional<java.lang.String> name();
+  private static java.util.UUID method_73310(java.util.Optional);
+  private static net.minecraft.world.item.component.ResolvableProfile method_73309(net.minecraft.world.entity.player.PlayerSkin$Patch, net.minecraft.world.item.component.ResolvableProfile$Partial);
+  private static net.minecraft.world.item.component.ResolvableProfile$Dynamic method_73315(net.minecraft.world.item.component.ResolvableProfile$Partial, net.minecraft.world.entity.player.PlayerSkin$Patch);
+  private static net.minecraft.world.item.component.ResolvableProfile$Dynamic method_73316(net.minecraft.world.entity.player.PlayerSkin$Patch, java.lang.String);
+  private static net.minecraft.world.item.component.ResolvableProfile method_73314(net.minecraft.world.entity.player.PlayerSkin$Patch, com.mojang.authlib.GameProfile);
+  private static com.mojang.datafixers.kinds.App method_74888(com.mojang.serialization.codecs.RecordCodecBuilder$Instance);
+  static {};
+}
+PORT_PLATFORM_API: net.minecraft.world.item.component.ResolvableProfile$Dynamic
+Compiled from "ResolvableProfile.java"
+public final class net.minecraft.world.item.component.ResolvableProfile$Dynamic extends net.minecraft.world.item.component.ResolvableProfile {
+  private static final net.minecraft.network.chat.Component DYNAMIC_TOOLTIP;
+  private final com.mojang.datafixers.util.Either<java.lang.String, java.util.UUID> nameOrId;
+  net.minecraft.world.item.component.ResolvableProfile$Dynamic(com.mojang.datafixers.util.Either<java.lang.String, java.util.UUID>, net.minecraft.world.entity.player.PlayerSkin$Patch);
+  public java.util.Optional<java.lang.String> name();
+  public boolean equals(java.lang.Object);
+  public int hashCode();
+  protected com.mojang.datafixers.util.Either<com.mojang.authlib.GameProfile, net.minecraft.world.item.component.ResolvableProfile$Partial> unpack();
+  public java.util.concurrent.CompletableFuture<com.mojang.authlib.GameProfile> resolveProfile(net.minecraft.server.players.ProfileResolver);
+  public void addToTooltip(net.minecraft.world.item.Item$TooltipContext, java.util.function.Consumer<net.minecraft.network.chat.Component>, net.minecraft.world.item.TooltipFlag, net.minecraft.core.component.DataComponentGetter);
+  private com.mojang.authlib.GameProfile method_73318(net.minecraft.server.players.ProfileResolver);
+  static {};
+}
+PORT_PLATFORM_API: net.minecraft.server.Services
+Compiled from "Services.java"
+public final class net.minecraft.server.Services extends java.lang.Record {
+  private final com.mojang.authlib.minecraft.MinecraftSessionService sessionService;
+  private final com.mojang.authlib.yggdrasil.ServicesKeySet servicesKeySet;
+  private final com.mojang.authlib.GameProfileRepository profileRepository;
+  private final net.minecraft.server.players.UserNameToIdResolver nameToIdCache;
+  private final net.minecraft.server.players.ProfileResolver profileResolver;
+  private static final java.lang.String USERID_CACHE_FILE;
+  public net.minecraft.server.Services(com.mojang.authlib.minecraft.MinecraftSessionService, com.mojang.authlib.yggdrasil.ServicesKeySet, com.mojang.authlib.GameProfileRepository, net.minecraft.server.players.UserNameToIdResolver, net.minecraft.server.players.ProfileResolver);
+  public static net.minecraft.server.Services create(com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService, java.io.File);
+  public net.minecraft.util.SignatureValidator profileKeySignatureValidator();
+  public boolean canValidateProfileKeys();
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public com.mojang.authlib.minecraft.MinecraftSessionService sessionService();
+  public com.mojang.authlib.yggdrasil.ServicesKeySet servicesKeySet();
+  public com.mojang.authlib.GameProfileRepository profileRepository();
+  public net.minecraft.server.players.UserNameToIdResolver nameToIdCache();
+  public net.minecraft.server.players.ProfileResolver profileResolver();
 }
 
 == job status: success ==
