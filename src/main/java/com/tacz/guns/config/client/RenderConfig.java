@@ -127,8 +127,9 @@ public class RenderConfig {
      * 二次渲染用窄 FOV 真画一遍，镜内是<b>原生分辨率</b>，代价是每帧多跑一遍世界渲染。
      * 与 26.2 的 {@code ScopePipRerender} 同名同义。</p>
      *
-     * <p><b>注意</b>：本分支当前只实现无光影（vanilla）路径；Iris 光影下仍走现有
-     * 屏幕空间成品帧合成，此开关暂不生效（见配置 tooltip）。默认关闭。</p>
+     * <p>默认关闭。光影下还需 {@link #SCOPE_PIP_ALLOW_SHADER_PACKS}；隔离管线由
+     * {@link #SCOPE_PIP_ISOLATE_PIPELINE} 控制。已验证组合见移植验收文档，不能据此
+     * 推广为所有 Iris/光影包或 Voxy 组合均已实测。</p>
      */
     public static ForgeConfigSpec.BooleanValue SCOPE_PIP_RERENDER;
     /**
@@ -208,7 +209,7 @@ public class RenderConfig {
         EXPLOSION_SURFACE_LIGHT = builder.define("ExplosionSurfaceLight", true);
         builder.comment("Apply the active display's lens to its masked aperture (native renderer).");
         EXPERIMENTAL_SCOPE_LENS = builder.define("EnableExperimentalScopeLens", true);
-        builder.comment("Capture visible heat sources for thermal lenses; otherwise use their optics. (Thermal capture itself is not yet ported to 1.21.11.)");
+        builder.comment("Capture visible heat sources for thermal lenses; otherwise use their optics.");
         SCOPE_THERMAL_ENABLE = builder.define("EnableScopeThermal", true);
         builder.comment("Yield the first-person gun render only if the installed Yes Steve Model requests it this tick.");
         YSM_COMPAT = builder.define("YsmCompat", true);

@@ -8,6 +8,7 @@ import com.tacz.guns.config.common.OtherConfig;
 import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.gui.entries.BooleanListEntry;
+import me.shedaniel.clothconfig2.gui.entries.IntegerSliderEntry;
 import me.shedaniel.clothconfig2.gui.AbstractConfigScreen;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.loader.api.FabricLoader;
@@ -60,8 +61,18 @@ final class PlatformClothSettings {
                 int toggled=0;
                 for(var setting:settings){
                     var entry=entry(builder,setting);
+                    String translation="config.tacz."+setting.category+"."+setting.key;
+                    if(!net.minecraft.client.resources.language.I18n.exists(translation) || !net.minecraft.client.resources.language.I18n.exists(translation+".desc"))
+                        throw new AssertionError("Native language loader lost Cloth label/tooltip: "+translation);
                     if(!entry.getValue().equals(setting.value.get()) || !entry.getDefaultValue().orElseThrow().equals(setting.value.getDefault()))
                         throw new AssertionError("Cloth current/reset binding mismatch: "+setting.key);
+                    if(setting.value==RenderConfig.SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES){
+                        var slider=(IntegerSliderEntry)entry;int original=slider.getValue();
+                        slider.setValue(30);if(slider.getValue()!=30)throw new AssertionError("Native idle-release minimum inaccessible");
+                        slider.setValue(1200);if(slider.getValue()!=1200)throw new AssertionError("Native idle-release maximum inaccessible");
+                        slider.setValue(1);if(slider.getValue()!=30)throw new AssertionError("Cloth accepts value outside native idle-release range");
+                        slider.setValue(original);
+                    }
                     if(entry instanceof BooleanListEntry bool){
                         originals.put(setting.value,setting.value.get());
                         ((Button)bool.children().getFirst()).onPress(new KeyEvent(257,0,0));

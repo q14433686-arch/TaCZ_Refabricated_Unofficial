@@ -1,5 +1,6 @@
 """Offline authored-fixture validation only; native probes remain the runtime acceptance gate."""
 import json
+import re
 from pathlib import Path
 import unittest
 
@@ -21,6 +22,17 @@ class PlatformFixtureContracts(unittest.TestCase):
                     self.assertGreater(desc['texture_width'], 0)
                     self.assertGreater(desc['texture_height'], 0)
                     self.assertTrue(geometry['bones'])
+
+    def test_cloth_labels_and_tooltips_exist_in_both_shipped_locales(self):
+        keys = set()
+        for name in ('client/RenderClothConfig.java', 'common/GunClothConfig.java', 'common/OtherClothConfig.java'):
+            text = (ROOT / 'src/main/java/com/tacz/guns/compat/cloth' / name).read_text()
+            keys.update(re.findall(r'Component.translatable\("([^"]+)"\)', text))
+        for locale in ('en_us', 'zh_cn'):
+            translations = json.loads((ROOT / f'src/main/resources/assets/tacz/lang/{locale}.json').read_text())
+            with self.subTest(locale=locale):
+                self.assertFalse(keys - translations.keys())
+                self.assertTrue(all(isinstance(translations[key], str) and translations[key] for key in keys))
 
     def test_sprite_early_return_retains_properties_and_authored_transform(self):
         source = (ROOT / 'src/main/java/com/tacz/guns/client/renderer/item/TaczDynamicItemModel.java').read_text()

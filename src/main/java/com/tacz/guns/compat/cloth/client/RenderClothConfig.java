@@ -147,7 +147,7 @@ public class RenderClothConfig {
                 .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_release_idle_pipeline.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_PIP_RELEASE_IDLE_PIPELINE::set).build());
 
-        render.addEntry(entryBuilder.startIntSlider(Component.translatable("config.tacz.client.render.scope_pip_idle_release_delay_frames"), RenderConfig.SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES.get(), 1, 600)
+        render.addEntry(entryBuilder.startIntSlider(Component.translatable("config.tacz.client.render.scope_pip_idle_release_delay_frames"), RenderConfig.SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES.get(), 30, 1200)
                 .setDefaultValue(120).setTooltip(Component.translatable("config.tacz.client.render.scope_pip_idle_release_delay_frames.desc"))
                 .setSaveConsumer(RenderConfig.SCOPE_PIP_IDLE_RELEASE_DELAY_FRAMES::set).build());
 
@@ -248,7 +248,7 @@ public class RenderClothConfig {
                 .setSaveConsumer(MeshyConfig.POLY_PREFER_PACK_NORMALS::set).build());
 
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.illuminated_real_sky"), RenderConfig.ILLUMINATED_REAL_SKY.get())
-                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.illuminated_real_sky.desc"))
+                .setDefaultValue(RenderConfig.ILLUMINATED_REAL_SKY.getDefault()).setTooltip(Component.translatable("config.tacz.client.render.illuminated_real_sky.desc"))
                 .setSaveConsumer(RenderConfig.ILLUMINATED_REAL_SKY::set).build());
 
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.mesh_poly_illuminated_real_sky"), MeshyConfig.POLY_ILLUMINATED_REAL_SKY.get())
