@@ -52,6 +52,10 @@ jobs:
           echo "commit: ${{ github.sha }}" > build-reports/compile-java.log
           ./gradlew --init-script scripts/ci-central.init.gradle compileJava compileTestJava compileGametestJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
 
+      - name: Record target render API for native porting
+        if: startsWith(github.ref, 'refs/heads/arena/')
+        run: python3 scripts/inspect_12111_render_api.py >> build-reports/compile-java.log 2>&1
+
       - name: Push compile log back via contents API
         # 只有 arena/** 回推：主分支的提交历史必须干净
         if: always() && startsWith(github.ref, 'refs/heads/arena/')
