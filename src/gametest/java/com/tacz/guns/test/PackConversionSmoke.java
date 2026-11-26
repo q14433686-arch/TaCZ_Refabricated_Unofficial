@@ -98,7 +98,9 @@ public class PackConversionSmoke {
                         "Stonecutting count defaulted to 1");
                 var modded = json(zip, base + "recipe/modded.json");
                 helper.assertTrue(modded.has("fabric:load_conditions") && modded.getAsJsonArray("ingredients").get(0).getAsString().equals("absent:part"), "Validation placeholder leaked into export");
-                helper.assertTrue(json(zip, base + "recipe/unsupported.json").getAsJsonObject("fabric:load_conditions").get("condition").getAsString().equals("fabric:false"), "Skipped base recipe can reactivate");
+                var disabled = json(zip, base + "recipe/unsupported.json").get("fabric:load_conditions");
+                var condition = net.fabricmc.fabric.api.resource.conditions.v1.ResourceCondition.CONDITION_CODEC.parse(ops, disabled).getOrThrow();
+                helper.assertTrue(!condition.test(null), "Skipped base recipe can reactivate");
                 var pool = json(zip, base + "loot_table/roll.json").getAsJsonArray("pools").get(0).getAsJsonObject();
                 helper.assertTrue(pool.getAsJsonArray("conditions").get(0).getAsJsonObject().get("condition").getAsString().equals("minecraft:survives_explosion")
                         && pool.getAsJsonArray("entries").get(0).getAsJsonObject().getAsJsonArray("functions").get(0).getAsJsonObject().get("function").getAsString().equals("minecraft:set_custom_data"), "Legacy loot fields silently ignored");
@@ -108,6 +110,7 @@ public class PackConversionSmoke {
         } finally {
             try (var files = Files.walk(temp)) { for (var p : files.sorted(Comparator.reverseOrder()).toList()) Files.delete(p); }
         }
+        com.tacz.guns.GunMod.LOGGER.info("PORT_RECEIVER_SERVER: conversion codec and export assertions passed");
         helper.succeed();
     }
 

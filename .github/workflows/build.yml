@@ -182,6 +182,8 @@ jobs:
         run: |
           set -o pipefail
           ./gradlew runGameTest --console=plain --stacktrace --no-daemon 2>&1 | tee "$RUNNER_TEMP/server.log"
+          grep -F 'PORT_RECEIVER_SERVER: conversion codec and export assertions passed' "$RUNNER_TEMP/server.log"
+          grep -F 'PORT_RECEIVER_SERVER: export upgrade backup assertions passed' "$RUNNER_TEMP/server.log"
 
       - name: Client pack export, reload and synchronized indexes
         env:
@@ -210,6 +212,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload jars
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           # 注意:artifact 名不能含 '/' 等字符,所以这里不能用 github.ref_name

@@ -47,6 +47,7 @@ public final class ExportUpgradeSmoke {
             FileUtils.deleteDirectory(root.toFile());
             FileUtils.deleteDirectory(backup.toFile());
         }
+        com.tacz.guns.GunMod.LOGGER.info("PORT_RECEIVER_SERVER: export upgrade backup assertions passed");
         h.succeed();
     }
 }

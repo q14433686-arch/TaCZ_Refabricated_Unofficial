@@ -11,7 +11,7 @@ def report(text):
 
 def excerpt(lines, start):
     # Minecraft can print its entire classpath as one line in a native-library warning.
-    return '\n'.join(s.rsplit('/src/', 1)[-1][:350] for s in lines[start:start + 5])
+    return '\n'.join(s.rsplit('/src/', 1)[-1][:1600] for s in lines[start:start + 5])
 
 
 files = [Path(name) for name in sys.argv[1:]] + list(Path('build/run').glob('*/crash-reports/*.txt'))

@@ -611,7 +611,12 @@ public final class UniversalPackConverter {
                         convertCondition(child.getAsJsonObject(), path + ".values", plan);
             }
             case "true" -> condition.addProperty("condition", "fabric:true");
-            case "false" -> condition.addProperty("condition", "fabric:false");
+            case "false" -> {
+                condition.addProperty("condition", "fabric:not");
+                JsonObject truth = new JsonObject();
+                truth.addProperty("condition", "fabric:true");
+                condition.add("value", truth);
+            }
         }
     }
 
@@ -669,7 +674,12 @@ public final class UniversalPackConverter {
         plan.skipRecipe(name, path, code, reason);
         // The 1.21.11 loader also exposes legacy recipes/. Shadow the remapped ID: don't reactivate an
         // unsupported base recipe (or make the world's dynamic recipe registry fail to load).
-        putGenerated(generated, targetPath(name), "{\"fabric:load_conditions\":{\"condition\":\"fabric:false\"}}".getBytes(StandardCharsets.UTF_8));
+        // Encode the receiver's registered condition instead of guessing a fabric:false ID.
+        // Fabric API 0.141.6 has true/not but no false condition.
+        JsonObject disabled = new JsonObject();
+        disabled.add(FABRIC_KEY, ResourceCondition.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE,
+                ResourceConditions.not(ResourceConditions.alwaysTrue())).getOrThrow());
+        putGenerated(generated, targetPath(name), GSON.toJson(disabled).getBytes(StandardCharsets.UTF_8));
     }
 
     private static boolean isLegacyRecipe(String name) {
