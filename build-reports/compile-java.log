@@ -1,4 +1,4 @@
-commit: 695818d2c7d0e30b32a445ccea110ba1746fcf47
+commit: 9374fc6eac917f663d6c4a3bd2765545ff9fb597
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
 
@@ -198,280 +198,7 @@ duplicate input class me/shedaniel/rei/api/common/registry/display/DisplayConsum
 duplicate input class me/shedaniel/rei/api/common/registry/display/DisplayConsumer$RecipeManagerConsumer$RecipeFillerBuilder, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
 duplicate input class me/shedaniel/rei/api/common/registry/display/DisplayConsumer$RecipeDisplayConsumer, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
 duplicate input class me/shedaniel/rei/api/common/registry/display/DisplayConsumer$RecipeDisplayConsumer$RecipeFillerBuilder, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-...[truncated 1192 lines total]...
-duplicate input class me/shedaniel/rei/api/client/favorites/FavoriteEntryType$Section, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/favorites/FavoriteEntryType$Registry, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/favorites/FavoriteEntry, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/favorites/CompoundFavoriteRenderer, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/entry/type/BuiltinClientEntryTypes, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/entry/renderer/ForwardingEntryRenderer, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/entry/renderer/EntryRendererRegistry, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/entry/renderer/EntryRendererRegistry$TooltipTransformer, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/entry/renderer/EntryRendererRegistry$1, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/entry/renderer/EntryRendererProvider, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/entry/renderer/EntryRenderer, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/entry/region/RegionEntry, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/entry/filtering/base/BasicFilteringRule, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/entry/filtering/base/BasicFilteringRule$MarkDirty, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/entry/filtering/FilteringRuleTypeRegistry, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/entry/filtering/FilteringRuleType, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/entry/filtering/FilteringRule, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/entry/filtering/FilteringResultFactory, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/entry/filtering/FilteringResult, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/entry/filtering/FilteringContext, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/config/entry/EntryStackProvider, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/config/entry/EntryStackProvider$2, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/config/entry/EntryStackProvider$1, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/config/addon/ConfigAddonRegistry, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/config/addon/ConfigAddon, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/config/ConfigObject, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/config/ConfigManager, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/REIRuntime, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-duplicate input class me/shedaniel/rei/api/client/ClientHelper, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-Cannot remap navigation because it does not exist in any of the targets [] or their parents.
-Cannot remap ingredientGrid because it does not exist in any of the targets [] or their parents.
-Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap enumClass because it does not exist in any of the targets [] or their parents.
-Cannot remap push because it does not exist in any of the targets [net/minecraft/class_287]
-Cannot remap ingredientListRenderer because it does not exist in any of the targets [] or their parents.
-Cannot remap lambda$submit$0 because it does not exist in any of the targets [net/minecraft/class_840]
-Cannot remap lambda$tick$1 because it does not exist in any of the targets [net/minecraft/class_4897]
-Cannot remap buffers because it does not exist in any of the targets [] or their parents.
-Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
-Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap contents because it does not exist in any of the targets [mezz/jei/gui/overlay/IngredientListOverlay] or their parents.
-Cannot remap lambda$reload$3 because it does not exist in any of the targets [net/minecraft/class_1060]
-Cannot remap tick because it does not exist in any of the targets [net/minecraft/class_11890]
-Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap valueFormatter because it does not exist in any of the targets [] or their parents.
-
-> Task :compileJava
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/SoundManagerPreparationsMixin.java:16: warning: Mixin target net.minecraft.client.sounds.SoundManager$Preparations is public and should be specified in value
-@Mixin(targets = "net.minecraft.client.sounds.SoundManager$Preparations")
-^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/GlCommandEncoderScopeDepthCopyMixin.java:20: warning: Mixin target com.mojang.blaze3d.opengl.GlCommandEncoder is public and should be specified in value
-@Mixin(targets = "com.mojang.blaze3d.opengl.GlCommandEncoder")
-^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisHandRendererReticlePassMixin.java:22: warning: Mixin target net.irisshaders.iris.pathways.HandRenderer is public and should be specified in value
-@Mixin(targets = "net.irisshaders.iris.pathways.HandRenderer", remap = false)
-^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisFinalScopeOverlayMixin.java:26: warning: Mixin target net.irisshaders.iris.pipeline.IrisRenderingPipeline is public and should be specified in value
-@Mixin(targets = "net.irisshaders.iris.pipeline.IrisRenderingPipeline", remap = false)
-^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisScopeDimensionMixin.java:24: warning: Mixin target net.irisshaders.iris.Iris is public and should be specified in value
-@Mixin(targets = "net.irisshaders.iris.Iris", remap = false)
-^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisShadowResolutionMixin.java:32: warning: Mixin target net.irisshaders.iris.shaderpack.properties.PackShadowDirectives is public and should be specified in value
-@Mixin(targets = "net.irisshaders.iris.shaderpack.properties.PackShadowDirectives", remap = false)
-^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisDepthRestoreShaderMixin.java:23: warning: Mixin target net.irisshaders.iris.pipeline.programs.ShaderCreator is public and should be specified in value
-@Mixin(targets = "net.irisshaders.iris.pipeline.programs.ShaderCreator", remap = false)
-^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/HumanoidModelMixin.java:68: warning: Cannot find target method "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V" for @Inject.method="setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V" in net.minecraft.client.model.HumanoidModel
-    @Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At(value = "TAIL"))
-    ^
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-Note: Some input files use unchecked or unsafe operations.
-Note: Recompile with -Xlint:unchecked for details.
-8 warnings
-
-> Task :processResources
-> Task :classes
-> Task :compileTestJava
-> Task :compileGametestJava
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795666096330.json
-
-[Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
-
-Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
-
-You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
-
-For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
-
-BUILD SUCCESSFUL in 1m 32s
-4 actionable tasks: 4 executed
-PORT_RENDER_API: /home/runner/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/minecraft-merged/1.21.11-loom.mappings.1_21_11.layered+hash.2198-v2/minecraft-merged-1.21.11-loom.mappings.1_21_11.layered+hash.2198-v2.jar
-Compiled from "SubmitNodeStorage.java"
-public final class net.minecraft.client.renderer.SubmitNodeStorage$ModelSubmit<S> extends java.lang.Record {
-  private final com.mojang.blaze3d.vertex.PoseStack$Pose pose;
-  private final net.minecraft.client.model.Model<? super S> model;
-  private final S state;
-  private final int lightCoords;
-  private final int overlayCoords;
-  private final int tintedColor;
-  private final net.minecraft.client.renderer.texture.TextureAtlasSprite sprite;
-  private final int outlineColor;
-  private final net.minecraft.client.renderer.feature.ModelFeatureRenderer$CrumblingOverlay crumblingOverlay;
-  public net.minecraft.client.renderer.SubmitNodeStorage$ModelSubmit(com.mojang.blaze3d.vertex.PoseStack$Pose, net.minecraft.client.model.Model<? super S>, S, int, int, int, net.minecraft.client.renderer.texture.TextureAtlasSprite, int, net.minecraft.client.renderer.feature.ModelFeatureRenderer$CrumblingOverlay);
-  public final java.lang.String toString();
-  public final int hashCode();
-  public final boolean equals(java.lang.Object);
-  public com.mojang.blaze3d.vertex.PoseStack$Pose pose();
-  public net.minecraft.client.model.Model<? super S> model();
-  public S state();
-  public int lightCoords();
-  public int overlayCoords();
-  public int tintedColor();
-  public net.minecraft.client.renderer.texture.TextureAtlasSprite sprite();
-  public int outlineColor();
-  public net.minecraft.client.renderer.feature.ModelFeatureRenderer$CrumblingOverlay crumblingOverlay();
-}
-Compiled from "ModelFeatureRenderer.java"
-public class net.minecraft.client.renderer.feature.ModelFeatureRenderer$Storage {
-  final java.util.Map<net.minecraft.client.renderer.rendertype.RenderType, java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$ModelSubmit<?>>> opaqueModelSubmits;
-  final java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$TranslucentModelSubmit<?>> translucentModelSubmits;
-  private final java.util.Set<net.minecraft.client.renderer.rendertype.RenderType> usedModelSubmitBuckets;
-  public net.minecraft.client.renderer.feature.ModelFeatureRenderer$Storage();
-  public void add(net.minecraft.client.renderer.rendertype.RenderType, net.minecraft.client.renderer.SubmitNodeStorage$ModelSubmit<?>);
-  public void clear();
-  public void endFrame();
-  private boolean method_74819(net.minecraft.client.renderer.rendertype.RenderType);
-  private static java.util.List method_74822(net.minecraft.client.renderer.rendertype.RenderType);
-}
-Compiled from "RenderType.java"
-public class net.minecraft.client.renderer.rendertype.RenderType {
-  private static final int MEGABYTE;
-  public static final int BIG_BUFFER_SIZE;
-  public static final int SMALL_BUFFER_SIZE;
-  public static final int TRANSIENT_BUFFER_SIZE;
-  private final net.minecraft.client.renderer.rendertype.RenderSetup state;
-  private final java.util.Optional<net.minecraft.client.renderer.rendertype.RenderType> outline;
-  protected final java.lang.String name;
-  private net.minecraft.client.renderer.rendertype.RenderType(java.lang.String, net.minecraft.client.renderer.rendertype.RenderSetup);
-  static net.minecraft.client.renderer.rendertype.RenderType create(java.lang.String, net.minecraft.client.renderer.rendertype.RenderSetup);
-  public java.lang.String toString();
-  public void draw(com.mojang.blaze3d.vertex.MeshData);
-  public int bufferSize();
-  public com.mojang.blaze3d.vertex.VertexFormat format();
-  public com.mojang.blaze3d.vertex.VertexFormat$Mode mode();
-  public java.util.Optional<net.minecraft.client.renderer.rendertype.RenderType> outline();
-  public boolean isOutline();
-  public com.mojang.blaze3d.pipeline.RenderPipeline pipeline();
-  public boolean affectsCrumbling();
-  public boolean canConsolidateConsecutiveGeometry();
-  public boolean sortOnUpload();
-  private java.lang.String method_75941();
-  private static net.minecraft.client.renderer.rendertype.RenderType method_75939(net.minecraft.client.renderer.rendertype.RenderSetup, net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding);
-}
-Compiled from "RenderSetup.java"
-public final class net.minecraft.client.renderer.rendertype.RenderSetup {
-  final com.mojang.blaze3d.pipeline.RenderPipeline pipeline;
-  final java.util.Map<java.lang.String, net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding> textures;
-  final net.minecraft.client.renderer.rendertype.TextureTransform textureTransform;
-  final net.minecraft.client.renderer.rendertype.OutputTarget outputTarget;
-  final net.minecraft.client.renderer.rendertype.RenderSetup$OutlineProperty outlineProperty;
-  final boolean useLightmap;
-  final boolean useOverlay;
-  final boolean affectsCrumbling;
-  final boolean sortOnUpload;
-  final int bufferSize;
-  final net.minecraft.client.renderer.rendertype.LayeringTransform layeringTransform;
-  net.minecraft.client.renderer.rendertype.RenderSetup(com.mojang.blaze3d.pipeline.RenderPipeline, java.util.Map<java.lang.String, net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding>, boolean, boolean, net.minecraft.client.renderer.rendertype.LayeringTransform, net.minecraft.client.renderer.rendertype.OutputTarget, net.minecraft.client.renderer.rendertype.TextureTransform, net.minecraft.client.renderer.rendertype.RenderSetup$OutlineProperty, boolean, boolean, int);
-  public java.lang.String toString();
-  public static net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder builder(com.mojang.blaze3d.pipeline.RenderPipeline);
-  public java.util.Map<java.lang.String, net.minecraft.client.renderer.rendertype.RenderSetup$TextureAndSampler> getTextures();
-}
-Compiled from "RenderSetup.java"
-final class net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding extends java.lang.Record {
-  final net.minecraft.resources.Identifier location;
-  private final java.util.function.Supplier<com.mojang.blaze3d.textures.GpuSampler> sampler;
-  net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding(net.minecraft.resources.Identifier, java.util.function.Supplier<com.mojang.blaze3d.textures.GpuSampler>);
-  public final java.lang.String toString();
-  public final int hashCode();
-  public final boolean equals(java.lang.Object);
-  public net.minecraft.resources.Identifier location();
-  public java.util.function.Supplier<com.mojang.blaze3d.textures.GpuSampler> sampler();
-}
-Compiled from "CameraRenderState.java"
-public class net.minecraft.client.renderer.state.CameraRenderState {
-  public net.minecraft.core.BlockPos blockPos;
-  public net.minecraft.world.phys.Vec3 pos;
-  public boolean initialized;
-  public net.minecraft.world.phys.Vec3 entityPos;
-  public org.joml.Quaternionf orientation;
-  public net.minecraft.client.renderer.state.CameraRenderState();
-}
-Compiled from "AbstractTexture.java"
-public abstract class net.minecraft.client.renderer.texture.AbstractTexture implements java.lang.AutoCloseable {
-  protected com.mojang.blaze3d.textures.GpuTexture texture;
-  protected com.mojang.blaze3d.textures.GpuTextureView textureView;
-  protected com.mojang.blaze3d.textures.GpuSampler sampler;
-  public net.minecraft.client.renderer.texture.AbstractTexture();
-  public void close();
-  public com.mojang.blaze3d.textures.GpuTexture getTexture();
-  public com.mojang.blaze3d.textures.GpuTextureView getTextureView();
-  public com.mojang.blaze3d.textures.GpuSampler getSampler();
-}
-Compiled from "RenderPipeline.java"
-public class com.mojang.blaze3d.pipeline.RenderPipeline$Builder {
-  private static int nextPipelineSortKey;
-  private java.util.Optional<net.minecraft.resources.Identifier> location;
-  private java.util.Optional<net.minecraft.resources.Identifier> fragmentShader;
-  private java.util.Optional<net.minecraft.resources.Identifier> vertexShader;
-  private java.util.Optional<net.minecraft.client.renderer.ShaderDefines$Builder> definesBuilder;
-  private java.util.Optional<java.util.List<java.lang.String>> samplers;
-  private java.util.Optional<java.util.List<com.mojang.blaze3d.pipeline.RenderPipeline$UniformDescription>> uniforms;
-  private java.util.Optional<com.mojang.blaze3d.platform.DepthTestFunction> depthTestFunction;
-  private java.util.Optional<com.mojang.blaze3d.platform.PolygonMode> polygonMode;
-  private java.util.Optional<java.lang.Boolean> cull;
-  private java.util.Optional<java.lang.Boolean> writeColor;
-  private java.util.Optional<java.lang.Boolean> writeAlpha;
-  private java.util.Optional<java.lang.Boolean> writeDepth;
-  private java.util.Optional<com.mojang.blaze3d.platform.LogicOp> colorLogic;
-  private java.util.Optional<com.mojang.blaze3d.pipeline.BlendFunction> blendFunction;
-  private java.util.Optional<com.mojang.blaze3d.vertex.VertexFormat> vertexFormat;
-  private java.util.Optional<com.mojang.blaze3d.vertex.VertexFormat$Mode> vertexFormatMode;
-  private float depthBiasScaleFactor;
-  private float depthBiasConstant;
-  com.mojang.blaze3d.pipeline.RenderPipeline$Builder();
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withLocation(java.lang.String);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withLocation(net.minecraft.resources.Identifier);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withFragmentShader(java.lang.String);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withFragmentShader(net.minecraft.resources.Identifier);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withVertexShader(java.lang.String);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withVertexShader(net.minecraft.resources.Identifier);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withShaderDefine(java.lang.String);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withShaderDefine(java.lang.String, int);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withShaderDefine(java.lang.String, float);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withSampler(java.lang.String);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withUniform(java.lang.String, com.mojang.blaze3d.shaders.UniformType);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withUniform(java.lang.String, com.mojang.blaze3d.shaders.UniformType, com.mojang.blaze3d.textures.TextureFormat);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withDepthTestFunction(com.mojang.blaze3d.platform.DepthTestFunction);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withPolygonMode(com.mojang.blaze3d.platform.PolygonMode);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withCull(boolean);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withBlend(com.mojang.blaze3d.pipeline.BlendFunction);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withoutBlend();
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withColorWrite(boolean);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withColorWrite(boolean, boolean);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withDepthWrite(boolean);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withColorLogic(com.mojang.blaze3d.platform.LogicOp);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withVertexFormat(com.mojang.blaze3d.vertex.VertexFormat, com.mojang.blaze3d.vertex.VertexFormat$Mode);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withDepthBias(float, float);
-  void withSnippet(com.mojang.blaze3d.pipeline.RenderPipeline$Snippet);
-  public com.mojang.blaze3d.pipeline.RenderPipeline$Snippet buildSnippet();
-  public com.mojang.blaze3d.pipeline.RenderPipeline build();
-  private void lambda$withSnippet$1(java.util.List);
-  private void lambda$withSnippet$0(java.util.List);
-}
-Compiled from "PlayerSkinRenderCache.java"
-public class net.minecraft.client.renderer.PlayerSkinRenderCache {
-  public static final net.minecraft.client.renderer.rendertype.RenderType DEFAULT_PLAYER_SKIN_RENDER_TYPE;
-  public static final java.time.Duration CACHE_DURATION;
-  private final com.google.common.cache.LoadingCache<net.minecraft.world.item.component.ResolvableProfile, java.util.concurrent.CompletableFuture<java.util.Optional<net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo>>> renderInfoCache;
-  private final com.google.common.cache.LoadingCache<net.minecraft.world.item.component.ResolvableProfile, net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo> defaultSkinCache;
+...[truncated 1465 lines total]...
   final net.minecraft.client.renderer.texture.TextureManager textureManager;
   final net.minecraft.client.resources.SkinManager skinManager;
   final net.minecraft.server.players.ProfileResolver profileResolver;
@@ -756,6 +483,279 @@ PORT_RENDER_BYTECODE: net.minecraft.client.renderer.LevelRenderer
      121: invokevirtual #1466               // Method com/mojang/blaze3d/vertex/PoseStack.popPose:()V
      124: goto          41
      127: return
+
+  private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle);
+    Code:
+       0: aload_1
+       1: invokestatic  #2345               // Method com/mojang/blaze3d/systems/RenderSystem.setShaderFog:(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;)V
+       4: aload_2
+       5: getfield      #1178               // Field net/minecraft/client/renderer/state/LevelRenderState.cameraRenderState:Lnet/minecraft/client/renderer/state/CameraRenderState;
+       8: getfield      #1183               // Field net/minecraft/client/renderer/state/CameraRenderState.pos:Lnet/minecraft/world/phys/Vec3;
+      11: astore        10
+      13: aload         10
+      15: invokevirtual #700                // Method net/minecraft/world/phys/Vec3.x:()D
+      18: dstore        11
+      20: aload         10
+      22: invokevirtual #707                // Method net/minecraft/world/phys/Vec3.y:()D
+      25: dstore        13
+      27: aload         10
+      29: invokevirtual #710                // Method net/minecraft/world/phys/Vec3.z:()D
+      32: dstore        15
+      34: aload_3
+      35: ldc_w         #2485               // String terrain
+      38: invokeinterface #697,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.push:(Ljava/lang/String;)V
+      43: aload_0
+      44: getfield      #332                // Field chunkLayerSampler:Lcom/mojang/blaze3d/textures/GpuSampler;
+      47: ifnonnull     114
+      50: aload_0
+      51: getfield      #296                // Field minecraft:Lnet/minecraft/client/Minecraft;
+      54: getfield      #402                // Field net/minecraft/client/Minecraft.options:Lnet/minecraft/client/Options;
+      57: invokevirtual #2488               // Method net/minecraft/client/Options.textureFiltering:()Lnet/minecraft/client/OptionInstance;
+      60: invokevirtual #524                // Method net/minecraft/client/OptionInstance.get:()Ljava/lang/Object;
+      63: getstatic     #2494               // Field net/minecraft/client/TextureFilteringMethod.ANISOTROPIC:Lnet/minecraft/client/TextureFilteringMethod;
+      66: if_acmpne     82
+      69: aload_0
+      70: getfield      #296                // Field minecraft:Lnet/minecraft/client/Minecraft;
+      73: getfield      #402                // Field net/minecraft/client/Minecraft.options:Lnet/minecraft/client/Options;
+      76: invokevirtual #2497               // Method net/minecraft/client/Options.maxAnisotropyValue:()I
+      79: goto          83
+      82: iconst_1
+      83: istore        17
+      85: aload_0
+      86: invokestatic  #2438               // Method com/mojang/blaze3d/systems/RenderSystem.getDevice:()Lcom/mojang/blaze3d/systems/GpuDevice;
+      89: getstatic     #2503               // Field com/mojang/blaze3d/textures/AddressMode.CLAMP_TO_EDGE:Lcom/mojang/blaze3d/textures/AddressMode;
+      92: getstatic     #2503               // Field com/mojang/blaze3d/textures/AddressMode.CLAMP_TO_EDGE:Lcom/mojang/blaze3d/textures/AddressMode;
+      95: getstatic     #2509               // Field com/mojang/blaze3d/textures/FilterMode.LINEAR:Lcom/mojang/blaze3d/textures/FilterMode;
+      98: getstatic     #2509               // Field com/mojang/blaze3d/textures/FilterMode.LINEAR:Lcom/mojang/blaze3d/textures/FilterMode;
+     101: iload         17
+     103: invokestatic  #2515               // Method java/util/OptionalDouble.empty:()Ljava/util/OptionalDouble;
+     106: invokeinterface #2519,  7         // InterfaceMethod com/mojang/blaze3d/systems/GpuDevice.createSampler:(Lcom/mojang/blaze3d/textures/AddressMode;Lcom/mojang/blaze3d/textures/AddressMode;Lcom/mojang/blaze3d/textures/FilterMode;Lcom/mojang/blaze3d/textures/FilterMode;ILjava/util/OptionalDouble;)Lcom/mojang/blaze3d/textures/GpuSampler;
+     111: putfield      #332                // Field chunkLayerSampler:Lcom/mojang/blaze3d/textures/GpuSampler;
+     114: aload_0
+     115: aload         4
+     117: dload         11
+     119: dload         13
+     121: dload         15
+     123: invokevirtual #2521               // Method prepareChunkRenders:(Lorg/joml/Matrix4fc;DDD)Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;
+     126: astore        17
+     128: aload         17
+     130: getstatic     #2527               // Field net/minecraft/client/renderer/chunk/ChunkSectionLayerGroup.OPAQUE:Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;
+     133: aload_0
+     134: getfield      #332                // Field chunkLayerSampler:Lcom/mojang/blaze3d/textures/GpuSampler;
+     137: invokevirtual #2531               // Method net/minecraft/client/renderer/chunk/ChunkSectionsToRender.renderGroup:(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;Lcom/mojang/blaze3d/textures/GpuSampler;)V
+     140: aload_0
+     141: getfield      #296                // Field minecraft:Lnet/minecraft/client/Minecraft;
+     144: getfield      #445                // Field net/minecraft/client/Minecraft.gameRenderer:Lnet/minecraft/client/renderer/GameRenderer;
+     147: invokevirtual #2535               // Method net/minecraft/client/renderer/GameRenderer.getLighting:()Lcom/mojang/blaze3d/platform/Lighting;
+     150: getstatic     #2539               // Field com/mojang/blaze3d/platform/Lighting$Entry.LEVEL:Lcom/mojang/blaze3d/platform/Lighting$Entry;
+     153: invokevirtual #2543               // Method com/mojang/blaze3d/platform/Lighting.setupFor:(Lcom/mojang/blaze3d/platform/Lighting$Entry;)V
+     156: aload         5
+     158: ifnull        181
+     161: aload         5
+     163: invokeinterface #2272,  1         // InterfaceMethod com/mojang/blaze3d/resource/ResourceHandle.get:()Ljava/lang/Object;
+     168: checkcast     #321                // class com/mojang/blaze3d/pipeline/RenderTarget
+     171: aload_0
+     172: getfield      #296                // Field minecraft:Lnet/minecraft/client/Minecraft;
+     175: invokevirtual #433                // Method net/minecraft/client/Minecraft.getMainRenderTarget:()Lcom/mojang/blaze3d/pipeline/RenderTarget;
+     178: invokevirtual #2476               // Method com/mojang/blaze3d/pipeline/RenderTarget.copyDepthFrom:(Lcom/mojang/blaze3d/pipeline/RenderTarget;)V
+     181: aload_0
+     182: invokevirtual #429                // Method shouldShowEntityOutlines:()Z
+     185: ifeq          230
+     188: aload         6
+     190: ifnull        230
+     193: aload         6
+     195: invokeinterface #2272,  1         // InterfaceMethod com/mojang/blaze3d/resource/ResourceHandle.get:()Ljava/lang/Object;
+     200: checkcast     #321                // class com/mojang/blaze3d/pipeline/RenderTarget
+     203: astore        18
+     205: invokestatic  #2438               // Method com/mojang/blaze3d/systems/RenderSystem.getDevice:()Lcom/mojang/blaze3d/systems/GpuDevice;
+     208: invokeinterface #2444,  1         // InterfaceMethod com/mojang/blaze3d/systems/GpuDevice.createCommandEncoder:()Lcom/mojang/blaze3d/systems/CommandEncoder;
+     213: aload         18
+     215: invokevirtual #2546               // Method com/mojang/blaze3d/pipeline/RenderTarget.getColorTexture:()Lcom/mojang/blaze3d/textures/GpuTexture;
+     218: iconst_0
+     219: aload         18
+     221: invokevirtual #2448               // Method com/mojang/blaze3d/pipeline/RenderTarget.getDepthTexture:()Lcom/mojang/blaze3d/textures/GpuTexture;
+     224: dconst_1
+     225: invokeinterface #2550,  6         // InterfaceMethod com/mojang/blaze3d/systems/CommandEncoder.clearColorAndDepthTextures:(Lcom/mojang/blaze3d/textures/GpuTexture;ILcom/mojang/blaze3d/textures/GpuTexture;D)V
+     230: new           #44                 // class com/mojang/blaze3d/vertex/PoseStack
+     233: dup
+     234: invokespecial #1411               // Method com/mojang/blaze3d/vertex/PoseStack."<init>":()V
+     237: astore        18
+     239: aload_0
+     240: getfield      #302                // Field renderBuffers:Lnet/minecraft/client/renderer/RenderBuffers;
+     243: invokevirtual #2420               // Method net/minecraft/client/renderer/RenderBuffers.bufferSource:()Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+     246: astore        19
+     248: aload_0
+     249: getfield      #302                // Field renderBuffers:Lnet/minecraft/client/renderer/RenderBuffers;
+     252: invokevirtual #2553               // Method net/minecraft/client/renderer/RenderBuffers.crumblingBufferSource:()Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;
+     255: astore        20
+     257: aload_3
+     258: ldc_w         #2554               // String submitEntities
+     261: invokeinterface #895,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.popPush:(Ljava/lang/String;)V
+     266: aload_0
+     267: aload         18
+     269: aload_2
+     270: aload_0
+     271: getfield      #310                // Field submitNodeStorage:Lnet/minecraft/client/renderer/SubmitNodeStorage;
+     274: invokevirtual #2556               // Method submitEntities:(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/state/LevelRenderState;Lnet/minecraft/client/renderer/SubmitNodeCollector;)V
+     277: aload_3
+     278: ldc_w         #2557               // String submitBlockEntities
+     281: invokeinterface #895,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.popPush:(Ljava/lang/String;)V
+     286: aload_0
+     287: aload         18
+     289: aload_2
+     290: aload_0
+     291: getfield      #310                // Field submitNodeStorage:Lnet/minecraft/client/renderer/SubmitNodeStorage;
+     294: invokevirtual #2559               // Method submitBlockEntities:(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/state/LevelRenderState;Lnet/minecraft/client/renderer/SubmitNodeStorage;)V
+     297: aload_3
+     298: ldc_w         #2561               // String renderFeatures
+     301: invokeinterface #895,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.popPush:(Ljava/lang/String;)V
+     306: aload_0
+     307: getfield      #314                // Field featureRenderDispatcher:Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher;
+     310: invokevirtual #2482               // Method net/minecraft/client/renderer/feature/FeatureRenderDispatcher.renderAllFeatures:()V
+     313: aload         19
+     315: invokevirtual #1709               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endLastBatch:()V
+     318: aload_0
+     319: aload         18
+     321: invokevirtual #2460               // Method checkPoseStack:(Lcom/mojang/blaze3d/vertex/PoseStack;)V
+     324: aload         19
+     326: invokestatic  #2564               // Method net/minecraft/client/renderer/rendertype/RenderTypes.solidMovingBlock:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+     329: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+     332: aload         19
+     334: invokestatic  #2570               // Method net/minecraft/client/renderer/rendertype/RenderTypes.endPortal:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+     337: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+     340: aload         19
+     342: invokestatic  #2573               // Method net/minecraft/client/renderer/rendertype/RenderTypes.endGateway:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+     345: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+     348: aload         19
+     350: invokestatic  #2578               // Method net/minecraft/client/renderer/Sheets.solidBlockSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+     353: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+     356: aload         19
+     358: invokestatic  #2581               // Method net/minecraft/client/renderer/Sheets.cutoutBlockSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+     361: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+     364: aload         19
+     366: invokestatic  #2584               // Method net/minecraft/client/renderer/Sheets.bedSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+     369: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+     372: aload         19
+     374: invokestatic  #2587               // Method net/minecraft/client/renderer/Sheets.shulkerBoxSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+     377: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+     380: aload         19
+     382: invokestatic  #2590               // Method net/minecraft/client/renderer/Sheets.signSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+     385: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+     388: aload         19
+     390: invokestatic  #2593               // Method net/minecraft/client/renderer/Sheets.hangingSignSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+     393: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+     396: aload         19
+     398: invokestatic  #2596               // Method net/minecraft/client/renderer/Sheets.chestSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+     401: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+     404: aload_0
+     405: getfield      #302                // Field renderBuffers:Lnet/minecraft/client/renderer/RenderBuffers;
+     408: invokevirtual #2600               // Method net/minecraft/client/renderer/RenderBuffers.outlineBufferSource:()Lnet/minecraft/client/renderer/OutlineBufferSource;
+     411: invokevirtual #2605               // Method net/minecraft/client/renderer/OutlineBufferSource.endOutlineBatch:()V
+     414: iload         7
+     416: ifeq          429
+     419: aload_0
+     420: aload         19
+     422: aload         18
+     424: iconst_0
+     425: aload_2
+     426: invokevirtual #2607               // Method renderBlockOutline:(Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lcom/mojang/blaze3d/vertex/PoseStack;ZLnet/minecraft/client/renderer/state/LevelRenderState;)V
+     429: aload_3
+     430: invokeinterface #737,  1          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.pop:()V
+     435: aload_0
+     436: invokevirtual #2609               // Method finalizeGizmoCollection:()V
+     439: aload_0
+     440: getfield      #294                // Field finalizedGizmos:Lnet/minecraft/client/renderer/LevelRenderer$FinalizedGizmos;
+     443: invokevirtual #2612               // Method net/minecraft/client/renderer/LevelRenderer$FinalizedGizmos.standardPrimitives:()Lnet/minecraft/client/renderer/gizmos/DrawableGizmoPrimitives;
+     446: aload         18
+     448: aload         19
+     450: aload_2
+     451: getfield      #1178               // Field net/minecraft/client/renderer/state/LevelRenderState.cameraRenderState:Lnet/minecraft/client/renderer/state/CameraRenderState;
+     454: aload         4
+     456: invokevirtual #2458               // Method net/minecraft/client/renderer/gizmos/DrawableGizmoPrimitives.render:(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/renderer/state/CameraRenderState;Lorg/joml/Matrix4f;)V
+     459: aload         19
+     461: invokevirtual #1709               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endLastBatch:()V
+     464: aload_0
+     465: aload         18
+     467: invokevirtual #2460               // Method checkPoseStack:(Lcom/mojang/blaze3d/vertex/PoseStack;)V
+     470: aload         19
+     472: invokestatic  #2615               // Method net/minecraft/client/renderer/Sheets.translucentItemSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+     475: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+     478: aload         19
+     480: invokestatic  #2618               // Method net/minecraft/client/renderer/Sheets.bannerSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+     483: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+     486: aload         19
+     488: invokestatic  #2621               // Method net/minecraft/client/renderer/Sheets.shieldSheet:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+     491: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+     494: aload         19
+     496: invokestatic  #2624               // Method net/minecraft/client/renderer/rendertype/RenderTypes.armorEntityGlint:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+     499: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+     502: aload         19
+     504: invokestatic  #2627               // Method net/minecraft/client/renderer/rendertype/RenderTypes.glint:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+     507: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+     510: aload         19
+     512: invokestatic  #2630               // Method net/minecraft/client/renderer/rendertype/RenderTypes.glintTranslucent:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+     515: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+     518: aload         19
+     520: invokestatic  #2633               // Method net/minecraft/client/renderer/rendertype/RenderTypes.entityGlint:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+     523: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+     526: aload_3
+     527: ldc_w         #2635               // String destroyProgress
+     530: invokeinterface #697,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.push:(Ljava/lang/String;)V
+     535: aload_0
+     536: aload         18
+     538: aload         20
+     540: aload_2
+     541: invokevirtual #2637               // Method renderBlockDestroyAnimation:(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/state/LevelRenderState;)V
+     544: aload         20
+     546: invokevirtual #2470               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:()V
+     549: aload_3
+     550: invokeinterface #737,  1          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.pop:()V
+     555: aload_0
+     556: aload         18
+     558: invokevirtual #2460               // Method checkPoseStack:(Lcom/mojang/blaze3d/vertex/PoseStack;)V
+     561: aload         19
+     563: invokestatic  #2640               // Method net/minecraft/client/renderer/rendertype/RenderTypes.waterMask:()Lnet/minecraft/client/renderer/rendertype/RenderType;
+     566: invokevirtual #2567               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:(Lnet/minecraft/client/renderer/rendertype/RenderType;)V
+     569: aload         19
+     571: invokevirtual #2470               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:()V
+     574: aload         8
+     576: ifnull        602
+     579: aload         8
+     581: invokeinterface #2272,  1         // InterfaceMethod com/mojang/blaze3d/resource/ResourceHandle.get:()Ljava/lang/Object;
+     586: checkcast     #321                // class com/mojang/blaze3d/pipeline/RenderTarget
+     589: aload         9
+     591: invokeinterface #2272,  1         // InterfaceMethod com/mojang/blaze3d/resource/ResourceHandle.get:()Ljava/lang/Object;
+     596: checkcast     #321                // class com/mojang/blaze3d/pipeline/RenderTarget
+     599: invokevirtual #2476               // Method com/mojang/blaze3d/pipeline/RenderTarget.copyDepthFrom:(Lcom/mojang/blaze3d/pipeline/RenderTarget;)V
+     602: aload_3
+     603: ldc_w         #1027               // String translucent
+     606: invokeinterface #697,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.push:(Ljava/lang/String;)V
+     611: aload         17
+     613: getstatic     #2643               // Field net/minecraft/client/renderer/chunk/ChunkSectionLayerGroup.TRANSLUCENT:Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;
+     616: aload_0
+     617: getfield      #332                // Field chunkLayerSampler:Lcom/mojang/blaze3d/textures/GpuSampler;
+     620: invokevirtual #2531               // Method net/minecraft/client/renderer/chunk/ChunkSectionsToRender.renderGroup:(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;Lcom/mojang/blaze3d/textures/GpuSampler;)V
+     623: aload_3
+     624: ldc_w         #2645               // String string
+     627: invokeinterface #895,  2          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.popPush:(Ljava/lang/String;)V
+     632: aload         17
+     634: getstatic     #2648               // Field net/minecraft/client/renderer/chunk/ChunkSectionLayerGroup.TRIPWIRE:Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;
+     637: aload_0
+     638: getfield      #332                // Field chunkLayerSampler:Lcom/mojang/blaze3d/textures/GpuSampler;
+     641: invokevirtual #2531               // Method net/minecraft/client/renderer/chunk/ChunkSectionsToRender.renderGroup:(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;Lcom/mojang/blaze3d/textures/GpuSampler;)V
+     644: iload         7
+     646: ifeq          659
+     649: aload_0
+     650: aload         19
+     652: aload         18
+     654: iconst_1
+     655: aload_2
+     656: invokevirtual #2607               // Method renderBlockOutline:(Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lcom/mojang/blaze3d/vertex/PoseStack;ZLnet/minecraft/client/renderer/state/LevelRenderState;)V
+     659: aload         19
+     661: invokevirtual #2470               // Method net/minecraft/client/renderer/MultiBufferSource$BufferSource.endBatch:()V
+     664: aload_3
+     665: invokeinterface #737,  1          // InterfaceMethod net/minecraft/util/profiling/ProfilerFiller.pop:()V
+     670: return
 
 PORT_RENDER_BYTECODE: com.mojang.blaze3d.pipeline.RenderTarget
   public void copyDepthFrom(com.mojang.blaze3d.pipeline.RenderTarget);
