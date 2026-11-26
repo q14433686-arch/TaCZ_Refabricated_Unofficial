@@ -100,7 +100,9 @@ final class ReceiverLightSmoke {
             inputs(off,on,expired,blockedRest,blocked);
             var probes=List.of(new Probe("cow",cowPos.add(0,.99,-.4),.075,16),new Probe("stand",standPos.add(0,1.41,-.09),.035,16),
                     new Probe("helmet",standPos.add(0,1.76,-.25),.066,16),new Probe("statue",Vec3.atLowerCornerOf(statue).add(.50,2.19,.22),.065,16),
-                    new Probe("board",Vec3.atLowerCornerOf(board).add(.22,.25,.8125),.075,16),new Probe("case",Vec3.atLowerCornerOf(cabinet).add(.23,.25,.875),.045,16),
+                    new Probe("board",Vec3.atLowerCornerOf(board).add(.22,.25,.8125),.075,16),
+                    new Probe("case_dark_back",Vec3.atLowerCornerOf(cabinet).add(.23,.25,.875),.045,16),
+                    new Probe("case_lower_frame",Vec3.atLowerCornerOf(cabinet).add(.50,.03125,.25),.018,16),
                     new Probe("board_item",Vec3.atLowerCornerOf(board).add(.625,.625,.75),.035,8),
                     new Probe("fullbright_case_item",Vec3.atLowerCornerOf(cabinet).add(.625,.625,.75),.035,8),
                     new Probe("near_wall",new Vec3(eye.x+.2,eye.y+1.0,origin.getZ()+5),.12,16),
@@ -109,7 +111,16 @@ final class ReceiverLightSmoke {
             for(var probe:probes) {
                 int[] a=List.of(rest,off,on,expired,blockedRest,blocked).stream().mapToInt(probe::value).toArray();
                 int light=a[2]-a[1],expiry=a[3]-a[0],wall=a[5]-a[4];
-                if((probe.name.startsWith("fullbright") ? Math.abs(light)>7 : light<6) || Math.abs(expiry)>7 || Math.abs(wall)>7)
+                // The real case back albedo is only 37/255. In the HDR shader its
+                // native 23-code response becomes five display codes (4 -> 9). Test
+                // material-relative contrast plus >=4x measured control noise there,
+                // AND independently require the normal >=6-code response on its frame.
+                // Zero response (the former overwritten pass) fails both criteria.
+                boolean dark=probe.name.equals("case_dark_back");
+                int noise=Math.max(Math.abs(expiry),Math.abs(wall));
+                boolean failed=probe.name.startsWith("fullbright") ? Math.abs(light)>7 : dark
+                        ? light<Math.max(4,4*noise) || a[2]<2*a[1] || noise>2 : light<6;
+                if(failed || Math.abs(expiry)>7 || Math.abs(wall)>7)
                     error.append(probe.name).append(Arrays.toString(a)).append(' ');
                 System.out.println("PORT_RECEIVER_PIXEL: "+probe.name+" rest/off/on/expired/blocked-rest/blocked="+Arrays.toString(a)+" delta="+light+"/"+expiry+"/"+wall);
             }
