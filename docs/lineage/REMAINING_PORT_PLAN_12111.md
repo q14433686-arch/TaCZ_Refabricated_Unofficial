@@ -269,3 +269,5 @@ R6 仍 ACTIVE，不发版、不改版本；新消费者、开发三世界稳定�
 52e76e0e分发最终回执：45770219504 **SUCCESS 14/14**，optics-iris job139740801014亦SUCCESS；同一JAR SHA-256 `1b1fb2c3f02b3d77dcb755e58d5d988be768a2d131381d856e7b97eb85dc1bfd`。原生及Iris均记录PORT_BODY_MATERIAL与PORT_OCULAR_BAKE实际提交/顶点验证（Iris 1.10.8/Sodium0.8.14/Complementary r5.8.1固定哈希，不外推别的组合）。这不覆盖随后audio/tooltip改动，也不消除dev完整测试进世界超时。
 
 下一增量：恢复DisableThirdPersonOffhandAndHotbarGunRender默认false、Cloth与en/zh，门控只在HumanoidOffhandRender入口，不碰主手层。PlatformCarriedGuns使用真实玩家/AvatarRenderState/枪械item-model解析捕获native submissions，分别测副手、未选中槽位、运行时隐藏与selected槽不重复提交；恢复玩家/显示数据/config；强制platform及platform-zoomify回执。待编译与runtime，不能据此关闭R6。
+
+TargetMinecart额外补验证（production未改）：实际本版entity.getOwnerProfile及TargetMinecartRenderer.extractRenderState分别覆盖无名→命名→改名→清名→空白，缓存稳定性、render state不残留旧头像、pick物品保留新名字；复用现有受控native lookup pending/ready/exception/empty测试，不依赖Mojang网络也不声称在线解析已实测。待下一轮runtime。
