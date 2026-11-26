@@ -29,6 +29,43 @@ public final class ThermalReadback {
         ctx.waitFor(mc -> future.isDone());
         return future.join();
     }
+    /** Failure-only experiment, never an acceptance path: distinguish shader depth matching from
+     * rasterization/target errors. All production materials are restored before the test fails. */
+    public static String diagnoseDepth(ClientGameTestContext ctx) {
+        try {
+            var field = ScopeThermalMaterial.Depth.class.getDeclaredField("pipeline");
+            field.setAccessible(true);
+            var scene = field.get(ScopeThermalMaterial.Depth.SCENE);
+            var shifted = field.get(ScopeThermalMaterial.Depth.SHIFTED);
+            try {
+                StringBuilder result = new StringBuilder();
+                for (boolean noDepth : new boolean[]{false, true}) {
+                    ctx.runOnClient(mc -> {
+                        try {
+                            var original = (com.mojang.blaze3d.pipeline.RenderPipeline) field.get(ScopeThermalMaterial.Depth.NATIVE);
+                            var builder = ScopeRenderTypes.clonePipeline(original, net.minecraft.resources.Identifier.parse("tacz_probe:thermal_" + noDepth));
+                            if (noDepth) builder.withDepthTestFunction(com.mojang.blaze3d.platform.DepthTestFunction.NO_DEPTH_TEST).withDepthWrite(false);
+                            var diagnostic = net.minecraft.client.renderer.RenderPipelines.register(builder.build());
+                            field.set(ScopeThermalMaterial.Depth.SCENE, diagnostic);
+                            field.set(ScopeThermalMaterial.Depth.SHIFTED, diagnostic);
+                            ScopeThermalMaterial.clear();
+                        } catch (ReflectiveOperationException e) { throw new AssertionError(e); }
+                    });
+                    ctx.waitTicks(5);
+                    result.append(noDepth ? " noDepth=" : " ordinaryDepth=").append(read(ctx));
+                }
+                return result.toString();
+            } finally {
+                ctx.runOnClient(mc -> {
+                    try {
+                        field.set(ScopeThermalMaterial.Depth.SCENE, scene);
+                        field.set(ScopeThermalMaterial.Depth.SHIFTED, shifted);
+                        ScopeThermalMaterial.clear();
+                    } catch (ReflectiveOperationException e) { throw new AssertionError(e); }
+                });
+            }
+        } catch (ReflectiveOperationException e) { throw new AssertionError(e); }
+    }
     public static void releaseAndVerify() {
         var target = ScopeThermalCapture.current();
         if (target == null) throw new AssertionError("Cannot test release without a live heat target");

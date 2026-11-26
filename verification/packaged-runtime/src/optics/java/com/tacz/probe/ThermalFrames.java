@@ -50,7 +50,8 @@ final class ThermalFrames {
             summon(ctx, world, base, "slime", "Size:2,NoAI:1b,NoGravity:1b,Silent:1b");
             var exposed = ThermalReadback.read(ctx);
             var hot = frame(ctx,"thermal_exposed");
-            if (exposed.centralHot() < 20 || white(hot) < 10) throw new AssertionError("Missing translucent posed heat / sensor pixels: " + exposed + " white=" + white(hot));
+            if (exposed.centralHot() < 20 || white(hot) < 10) throw new AssertionError("Missing translucent posed heat / sensor pixels: " + exposed + " white=" + white(hot)
+                    + " diagnostic-only:" + ThermalReadback.diagnoseDepth(ctx));
             wall(ctx,world,base,1);
             var covered = ThermalReadback.read(ctx);
             var behind = frame(ctx,"thermal_occluded");
