@@ -132,7 +132,7 @@ public class TaCZFabricClient implements ClientModInitializer {
         BeforeRenderHandEvent.CALLBACK.register(CameraSetupEvent::applyItemInHandCameraAnimation);
         ViewportEvent.FOV.register(CameraSetupEvent::applyScopeMagnification);
         ViewportEvent.FOV.register(CameraSetupEvent::applyGunModelFovModifying);
-        GunFireEvent.CALLBACK.register(CameraSetupEvent::initialCameraRecoil);
+        com.tacz.guns.api.event.common.GunFirePostEvent.EVENT.register(CameraSetupEvent::initialCameraRecoilPost);
         ViewportEvent.CAMERA.register(CameraSetupEvent::applyCameraRecoil);
         // LRTactical explosion shake is deliberately layered after gun recoil. It changes only
         // the extracted camera for this frame; player yaw/pitch remains server-authoritative.
@@ -165,7 +165,7 @@ public class TaCZFabricClient implements ClientModInitializer {
         // 以免再有人把它误当作第一人称链路来排查。
 
         RenderItemInHandBobEvent.VIEW.register(FirstPersonRenderGunEvent::cancelItemInHandViewBobbing);
-        GunFireEvent.CALLBACK.register(FirstPersonRenderGunEvent::onGunFire);
+        com.tacz.guns.api.event.common.GunFirePostEvent.EVENT.register(FirstPersonRenderGunEvent::onGunFirePost);
 
         ClientTickEvents.START_CLIENT_TICK.register(client -> InventoryEvent.onPlayerChangeSelect(client, false));
         ClientTickEvents.END_CLIENT_TICK.register(client -> InventoryEvent.onPlayerChangeSelect(client, true));

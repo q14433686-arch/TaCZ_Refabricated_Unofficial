@@ -171,3 +171,13 @@ R4 实机正例必须为真实 stock AK 按键射击并确认服务端少一发�
 - 同批补 GunFireEvent 的 Fabric 优先级阶段、动画 exit deadline 的世界 epoch 失效、公共枪名 blank fallback；新增原生事件逆序注册验证、真实 TCP disconnect 后 deadline 失效断言。
 - 继续待核实：CameraSetupEvent 未消费已有 AdsFov authored 通道、配件 variant FOV；第一人称 tracer 的出生帧 offset/quaternion 冻结；modifier UI 的 RPM/弹速/射程/小数精度与可选字段消费者。文件同名不代表这些已对齐，后续必须逐项接完与实测。
 - 开发建世界超时在 `65010ffc` 全构建没有重现，但不宣布已修复。前轮实际诊断 integratedTicks=0 持续约60秒；本轮增加失败前 server/worker thread stacks 与 Checks 长诊断，不重试、不放宽1200tick限制。根因尚未定位。
+
+### R6 共享消费者接续（未验收）
+
+`94270755` 编译 [45760609909](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45760609909) / 全构建 [45760609950](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45760609950) success；本体 SHA-256 `beb468f4b852b5e2ec531acf6141462cf2e44a6aeb9e27fafa2a3cefe3cfa309`。发行 [45760609912](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45760609912) **13/14**：原有光学、receiver、平台均通过，none 已通过真正 TCP/旧档恢复/动画 epoch 断线失效，但新增专服 policy 测试工程缺 FCAP compile-only，尚未运行这3项，不能称20项GameTest成功。`01137d6c` 只补测试consumer编译类路径，不改变产品依赖。
+
+本轮继续接回已定义却无消费者的 AdsPath 分轴/AdsFov 双通道、scope variant views/FOV 和 adapter mount offset；后坐力/枪口动画订阅成功的 GunFirePostEvent，而不是先于最后取消投票的 GunFireEvent。保留 public legacy 调用并检查 canceled。新增客户端实际 viewport callback（5进度点）、实际 first-person positioning XYZ/恢复、真实物理扳机的末位视觉取消/成功对照；客户端视觉 veto 不假装取消服务器独立结算。补 modifier 面板消费者的全局弹速倍率、已修改射程、爆头/伤害小数、burst BPM、独立准确度字段识别与四行计数，逐项测试真实返回给面板的数据。
+
+另恢复 LazyJsonDataManager 的线程安全命中缓存、lazy parse/reload apply 共用锁与独立 ID 快照，增加阻塞旧worker与reload并发的JUnit对照，不允许旧parse覆盖新generation。开发客户端新增3个独立fresh-world生命周期门禁，任一失败即失败，不是重试、没有放宽Fabric限制；保留失败前线程栈诊断。上述新接续尚待目标编译与实机结果。
+
+后续仍需复核/接完的已知共享差异：第一人称 tracer 的出生帧 offset/quaternion；外部模型高/低精度异步 bake 与reload代数、shell display override；动画粒子在真实posed rig提交的消费者；雕像owner兼容存档/异步身份。不得因非同路径表只剩平台替代就将这些同名类行为漏项标绿。
