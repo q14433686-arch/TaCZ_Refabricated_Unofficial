@@ -48,3 +48,12 @@ for name, methods in {
             selected = any(method in line for method in methods)
         if selected:
             print(line, flush=True)
+
+# Keep the R5 compact API at the tail so CI's head/tail log cap cannot elide it.
+for name in [
+    'net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo',
+    'net.minecraft.client.sounds.SoundManager',
+    'net.minecraft.client.resources.sounds.AbstractSoundInstance',
+]:
+    print('PORT_PLATFORM_API:', name, flush=True)
+    subprocess.run(['javap', '-classpath', jar, '-p', name], check=True)

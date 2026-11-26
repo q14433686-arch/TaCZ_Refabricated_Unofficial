@@ -16,7 +16,7 @@ jobs:
     name: 1.21.11 production (${{ matrix.viewer }})
     strategy:
       fail-fast: false
-      matrix: {viewer: [none, jei, rei, rei-client-only, presentation, display, pal, controller, optics, optics-iris, receiver, receiver-iris]}
+      matrix: {viewer: [none, jei, rei, rei-client-only, presentation, display, pal, controller, optics, optics-iris, receiver, receiver-iris, platform, platform-zoomify]}
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
@@ -69,7 +69,7 @@ jobs:
         run: python3 -u scripts/test_12111_presentation.py --accept-test-eula build/libs/*.jar
       - name: Exercise a native display, a separately installed player integration, or the vanilla aperture mask
         id: player
-        if: contains(fromJSON('["display", "pal", "controller", "optics", "optics-iris", "receiver", "receiver-iris"]'), matrix.viewer)
+        if: contains(fromJSON('["display", "pal", "controller", "optics", "optics-iris", "receiver", "receiver-iris", "platform", "platform-zoomify"]'), matrix.viewer)
         env: {LIBGL_ALWAYS_SOFTWARE: 'true', ALSOFT_DRIVERS: 'null'}
         run: python3 -u scripts/test_12111_player.py --suite ${{ matrix.viewer }} --accept-test-eula build/libs/*.jar
       - name: Exercise the actual catalog, component stock, both upgrades and display inventory

@@ -35,6 +35,36 @@ def download_checked(url, sha1, target):
     return hashlib.sha256(data).hexdigest()
 
 
+def prepare_zoomify_seed(work, evidence):
+    """Install the exact target Zoomify release and its declared required dependency closure.
+    Record each resolved release and content hashes; never substitute a fake Zoomify class."""
+    import json
+    target = work/'client/fixtures/platform-zoomify/mods'
+    target.mkdir(parents=True, exist_ok=True)
+    versions = modrinth('/project/zoomify/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%221.21.11%22%5D')
+    root = next(v for v in versions if v['version_number'] == '2.15.2+1.21.11')
+    queue, seen, receipt = [root], set(), []
+    while queue:
+        version = queue.pop(0)
+        if version['project_id'] in seen: continue
+        seen.add(version['project_id'])
+        if len(seen)>12: raise AssertionError('Unexpected Zoomify dependency closure')
+        file = next((f for f in version['files'] if f.get('primary')), version['files'][0])
+        sha = download_checked(file['url'], file['hashes']['sha1'], target/file['filename'])
+        receipt.append({'id': version['id'], 'project': version['project_id'], 'version': version['version_number'], 'file': file['filename'], 'sha256': sha})
+        print(f"::notice::PORT_ZOOMIFY_MOD: {version['version_number']} {file['filename']} SHA-256 {sha}", flush=True)
+        for dep in version['dependencies']:
+            if dep.get('dependency_type') != 'required' or not dep.get('project_id'): continue
+            project = modrinth('/project/'+dep['project_id'])
+            if project['slug'] in ['fabric-api', 'fabricloader']: continue
+            if dep.get('version_id'): chosen = modrinth('/version/'+dep['version_id'])
+            else:
+                available = modrinth('/project/'+dep['project_id']+'/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%221.21.11%22%5D')
+                chosen = next(v for v in available if v['version_type']=='release')
+            queue.append(chosen)
+    (evidence/'zoomify-runtime.json').write_text(json.dumps(receipt, indent=2)+'\n')
+
+
 def prepare_iris_seed(work, evidence):
     """Shader pack + the Iris/Sodium pair that Modrinth's 1.21.11 Iris release requires.
 
@@ -104,6 +134,7 @@ def test(product, work, evidence, suite):
     copy_project(work, 'client')
     evidence.mkdir(parents=True, exist_ok=True)
     if suite.endswith('-iris'): prepare_iris_seed(work, evidence)
+    if suite == 'platform-zoomify': prepare_zoomify_seed(work, evidence)
     instance = work/'client/build/instance'
     log = evidence/'client.log'
     args = runtime_command(work, 'client', product, 'none', '-PprobeClient', f'-PplayerSuite={suite}', 'probeClient')
@@ -119,6 +150,7 @@ def test(product, work, evidence, suite):
         'display': {'PORT_INK:': 1, 'PORT_OUTLINE:': 1, 'PORT_RACK_PREVIEW:': 5, 'PORT_CASE_HINT:': 1},
         'controller': {'PORT_CONTROLLER:': 1},
         'pal': {'PORT_PAL:': 2},
+        **{name: {f'PORT_PLATFORM_{kind}:': 1 for kind in ['INPUT','SKIN','AUDIO','GUI','ZOOM']} for name in ['platform','platform-zoomify']},
         'receiver': {'PORT_RECEIVER_INPUT:': 1, 'PORT_RECEIVER_PIXEL:': 11, 'PORT_RECEIVER_PACK:': 1},
         'receiver-iris': {'PORT_RECEIVER_INPUT:': 1, 'PORT_RECEIVER_PIXEL:': 11, 'PORT_RECEIVER_PACK:': 1},
         'optics': {'PORT_PIP_MOTION:': 16, 'PORT_PIP_WIDE:': 2, 'PORT_THERMAL_PIXELS:': 1, 'PORT_THERMAL_MODE:': 2, 'PORT_THERMAL_POSE:': 18, 'PORT_OPTIC:': 3, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_RETICLE_PIXELS:': 1},
@@ -129,9 +161,11 @@ def test(product, work, evidence, suite):
         rows = [row.split(marker, 1)[1].strip() for row in text.splitlines() if marker in row]
         if len(rows) != count: raise AssertionError(f'{suite}: expected {count} {marker} receipts, got {rows}')
         print(f'::notice::{marker} ' + ' | '.join(rows), flush=True)
-    frames = {'optics': ['optic_raise', 'optic_steady', 'optic_hip'], 'optics-iris': ['optic_raise', 'optic_steady', 'optic_hip'], 'pal': ['pal_remote_rifle', 'pal_remote_pistol'], 'controller': [], 'receiver': [], 'receiver-iris': [], 'display': [
+    frames = {'optics': ['optic_raise', 'optic_steady', 'optic_hip'], 'optics-iris': ['optic_raise', 'optic_steady', 'optic_hip'], 'pal': ['pal_remote_rifle', 'pal_remote_pistol'], 'controller': [], 'receiver': [], 'receiver-iris': [], 'platform': [], 'platform-zoomify': [], 'display': [
         f'{scene}_{state}' for scene in ['rack', 'case', 'corner', 'vanilla_quad', 'mesh'] for state in ['empty', 'ghost', 'placed']
     ] + [f'case_hint_{s}' for s in ['gun_hover','gun_interact','empty_hover','look_away','tick_39','tick_40_held','sneak_unlock','unlocked']]}[suite]
+    if suite.startswith('platform'):
+        frames += [f'platform_cooldown_{stage}' for stage in ['before','half','expired']]
     if suite.startswith('optics'):
         frames += ['reticle_full', 'reticle_control', 'reticle_luminous_only', 'reticle_none', 'reticle_restored',
                    'thermal_empty_optical', 'thermal_exposed', 'thermal_occluded', 'thermal_glass', 'thermal_disabled', 'thermal_unavailable', 'thermal_thermal_black_hot', 'thermal_thermal_ironbow']
@@ -158,7 +192,7 @@ def test(product, work, evidence, suite):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--accept-test-eula', required=True, action='store_true')
-    parser.add_argument('--suite', required=True, choices=['display','pal','controller','optics','optics-iris','receiver','receiver-iris'])
+    parser.add_argument('--suite', required=True, choices=['display','pal','controller','optics','optics-iris','receiver','receiver-iris','platform','platform-zoomify'])
     parser.add_argument('jar', type=Path)
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='tacz-12111-player-') as tmp:

@@ -26,11 +26,11 @@ abstract class PlayerProbe implements FabricClientGameTest {
         var loader = FabricLoader.getInstance();
         String suite = System.getProperty("tacz.probe.player");
         boolean iris = suite.endsWith("-iris");
-        String id = switch (suite) { case "pal" -> "player_animation_library"; case "controller" -> "controllable"; case "display", "optics", "receiver" -> ""; case "optics-iris", "receiver-iris" -> "iris"; default -> throw new AssertionError(suite); };
-        var loaded = Stream.of("iris", "sodium", "jei", "roughlyenoughitems", "player_animation_library", "controllable").filter(loader::isModLoaded).collect(Collectors.toSet());
+        String id = switch (suite) { case "platform-zoomify" -> "zoomify"; case "pal" -> "player_animation_library"; case "controller" -> "controllable"; case "display", "optics", "receiver", "platform" -> ""; case "optics-iris", "receiver-iris" -> "iris"; default -> throw new AssertionError(suite); };
+        var loaded = Stream.of("iris", "sodium", "jei", "roughlyenoughitems", "player_animation_library", "controllable", "zoomify").filter(loader::isModLoaded).collect(Collectors.toSet());
         var expected = iris ? Set.of("iris", "sodium") : id.isEmpty() ? Set.of() : Set.of(id);
         String version = id.isEmpty() ? "bare" : loader.getModContainer(id).orElseThrow().getMetadata().getVersion().getFriendlyString();
-        String wanted = iris ? version.split("\\+", 2)[0] :  suite.equals("pal") ? "1.1.9" : suite.equals("controller") ? "0.25.7" : "bare";
+        String wanted = iris ? version.split("\\+", 2)[0] :  suite.equals("platform-zoomify") ? "2.15.2" : suite.equals("pal") ? "1.1.9" : suite.equals("controller") ? "0.25.7" : "bare";
         if (!loaded.equals(expected) || !version.split("\\+", 2)[0].equals(wanted)) throw new AssertionError("Wrong optional combination: " + loaded + " / " + version);
         try (var world = ctx.worldBuilder().create()) {
             var ak = Identifier.parse("tacz:ak47");
