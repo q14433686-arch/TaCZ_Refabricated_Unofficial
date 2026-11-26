@@ -91,6 +91,13 @@ public class DelegatingPackResources extends AbstractPackResources {
                 delegate.listResources(type, resourceNamespace, paths,
                         GunPackLangCompat.mayListLangFiles(paths)
                                 ? GunPackLangCompat.wrapOutput(GunPackLangCompat.describe(delegate), output) : output);
+                String oldPath = type == PackType.SERVER_DATA ? LegacyGunPackPaths.legacy(paths) : null;
+                if (oldPath != null) {
+                    delegate.listResources(type, resourceNamespace, oldPath, (location, supplier) -> {
+                        String modern = LegacyGunPackPaths.modern(location.getPath());
+                        if (modern != null) emit.accept(location.withPath(modern), supplier);
+                    });
+                }
                 continue;
             }
 
@@ -159,6 +166,7 @@ public class DelegatingPackResources extends AbstractPackResources {
             return parts.isEmpty() ? null : () -> AttachmentTagLayers.merge(location.toString(), parts);
         }
         Identifier legacyLocation = toLegacyRecipeLocation(type, location);
+        String oldDataPath = type == PackType.SERVER_DATA ? LegacyGunPackPaths.legacy(location.getPath()) : null;
         for (PackResources pack : candidates(type, location.getNamespace())) {
             // Prefer the current path in each pack, then transparently fall back to the old plural
             // path. Doing this per pack preserves the aggregate pack's existing priority order.
@@ -167,6 +175,10 @@ public class DelegatingPackResources extends AbstractPackResources {
                 return GunPackLangCompat.isLangFile(location)
                         ? GunPackLangCompat.wrap(GunPackLangCompat.describe(pack), location, currentSupplier)
                         : migrateRecipeResultIfNeeded(type, location, currentSupplier);
+            }
+            if (oldDataPath != null) {
+                var legacy = pack.getResource(type, location.withPath(oldDataPath));
+                if (legacy != null) return legacy;
             }
             if (legacyLocation != null) {
                 IoSupplier<InputStream> legacySupplier = pack.getResource(type, legacyLocation);

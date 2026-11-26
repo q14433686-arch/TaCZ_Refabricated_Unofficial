@@ -92,6 +92,16 @@ public class PathPackResources extends AbstractPackResources {
             if (seen.add(id)) resourceOutput.accept(id, wrapRecipe(type, id, supplier));
         };
         listPath(type, namespace, path, current);
+        String legacyPath = type == PackType.SERVER_DATA ? LegacyGunPackPaths.legacy(path) : null;
+        if (legacyPath != null) {
+            listPath(type, namespace, legacyPath, (legacy, supplier) -> {
+                String modern = LegacyGunPackPaths.modern(legacy.getPath());
+                if (modern != null) {
+                    Identifier id = legacy.withPath(modern);
+                    if (seen.add(id)) resourceOutput.accept(id, supplier);
+                }
+            });
+        }
         if (type == PackType.SERVER_DATA && (path.equals("recipe") || path.startsWith("recipe/"))) {
             listPath(type, namespace, "recipes" + path.substring("recipe".length()), (legacy, supplier) -> {
                 Identifier id = legacy.withPath("recipe" + legacy.getPath().substring("recipes".length()));
@@ -146,6 +156,11 @@ public class PathPackResources extends AbstractPackResources {
     public IoSupplier<InputStream> getResource(PackType type, Identifier location) {
         var current = getRootResource(getPathFromLocation(location.getPath().startsWith("lang/") ? PackType.CLIENT_RESOURCES : type, location));
         if (current != null) return wrapRecipe(type, location, current);
+        String legacyPath = type == PackType.SERVER_DATA ? LegacyGunPackPaths.legacy(location.getPath()) : null;
+        if (legacyPath != null) {
+            var legacy = getRootResource(getPathFromLocation(type, location.withPath(legacyPath)));
+            if (legacy != null) return legacy;
+        }
         if (type == PackType.SERVER_DATA && location.getPath().startsWith("recipe/")) {
             var legacy = getRootResource(getPathFromLocation(type,
                     location.withPath("recipes" + location.getPath().substring("recipe".length()))));
