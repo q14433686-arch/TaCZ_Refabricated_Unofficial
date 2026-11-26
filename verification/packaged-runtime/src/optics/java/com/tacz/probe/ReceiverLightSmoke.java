@@ -52,7 +52,7 @@ final class ReceiverLightSmoke {
         var ids=server.computeOnServer(s -> {
             var p=s.getPlayerList().getPlayers().getFirst();var level=p.level();
             for(int x=-8;x<=8;x++) for(int y=-2;y<=5;y++) for(int z=-3;z<=30;z++) {
-                var block=Math.abs(x)==8 || y==-2 || y==5 || z==-3 || z==30 ? Blocks.GRAY_CONCRETE : Blocks.AIR;
+                var block=Math.abs(x)==8 || y==-2 || y==5 || z==-3 || z==5 || z==30 ? Blocks.GRAY_CONCRETE : Blocks.AIR;
                 level.setBlock(origin.offset(x,y,z),block.defaultBlockState(),Block.UPDATE_ALL);
             }
             var cow=EntityType.COW.create(level,EntitySpawnReason.COMMAND);
@@ -102,7 +102,9 @@ final class ReceiverLightSmoke {
                     new Probe("helmet",standPos.add(0,1.76,-.25),.066,16),new Probe("statue",Vec3.atLowerCornerOf(statue).add(.50,2.19,.22),.065,16),
                     new Probe("board",Vec3.atLowerCornerOf(board).add(.22,.25,.8125),.075,16),new Probe("case",Vec3.atLowerCornerOf(cabinet).add(.23,.25,.875),.045,16),
                     new Probe("board_item",Vec3.atLowerCornerOf(board).add(.625,.625,.75),.035,8),
-                    new Probe("fullbright_case_item",Vec3.atLowerCornerOf(cabinet).add(.625,.625,.75),.035,8));
+                    new Probe("fullbright_case_item",Vec3.atLowerCornerOf(cabinet).add(.625,.625,.75),.035,8),
+                    new Probe("near_wall",new Vec3(eye.x+.2,eye.y+1.0,origin.getZ()+5),.12,16),
+                    new Probe("near_floor",new Vec3(eye.x+2,origin.getY()-1,eye.z+3),.12,16,true));
             var error=new StringBuilder();
             for(var probe:probes) {
                 int[] a=List.of(rest,off,on,expired,blockedRest,blocked).stream().mapToInt(probe::value).toArray();
@@ -135,14 +137,18 @@ final class ReceiverLightSmoke {
         return frame;
     }
     private static void inputs(LightFrames.Frame off,LightFrames.Frame on,LightFrames.Frame expired,LightFrames.Frame base,LightFrames.Frame wall) {
+        if(LightFrames.exceptionRestores!=1) throw new AssertionError("Nested exception path was not exercised");
         for(int i=0;i<6;i++) {
             int a=off.light()[i],b=on.light()[i];
             if(a<0 || b<0 || a!=expired.light()[i] || base.light()[i]!=wall.light()[i] || wall.light()[i]<0
                     || (i==5 ? a!=LightTexture.FULL_BRIGHT || a!=b : LightTexture.block(b)-LightTexture.block(a)<3 || LightTexture.sky(a)!=LightTexture.sky(b)))
                 throw new AssertionError("Receiver UV2 "+i+" OFF="+off+" ON="+on+" expired="+expired+" wall="+base+"/"+wall);
         }
-        System.out.println("PORT_RECEIVER_INPUT: OFF="+off+" ON="+on+" no sky change, expiry/wall leaks; original submit inputs restored");
+        System.out.println("PORT_RECEIVER_INPUT: OFF="+off+" ON="+on+" no sky change, expiry/wall leaks; original submit inputs and nested exception context restored");
     }
-    private record Probe(String name,Vec3 center,double extent,int shift) { int value(LightFrames.Frame f) {return f.mean(center,extent,shift);} }
+    private record Probe(String name,Vec3 center,double extent,int shift,boolean horizontal) {
+        Probe(String name,Vec3 center,double extent,int shift) { this(name,center,extent,shift,false); }
+        int value(LightFrames.Frame f) {return f.mean(center,extent,shift,horizontal);}
+    }
     private ReceiverLightSmoke() {}
 }

@@ -31,6 +31,8 @@ public final class LightFrames {
     private static Vec3 cow,stand,drop;
     private static BlockPos statue,board,cabinet;
     public static int shots;
+    private static boolean faultProbe;
+    static int exceptionRestores;
     private static final ArrayDeque<IdentityHashMap<Object,Integer>> scopes=new ArrayDeque<>();
     private record View(Vec3 camera,Matrix4f rotation,float fx,float fy) {}
     private static final class Request {
@@ -41,7 +43,7 @@ public final class LightFrames {
         Request(String name,boolean triggered) { this.name=name; this.triggered=triggered; }
     }
     static void setup(Vec3 a,Vec3 b,Vec3 c,BlockPos s,BlockPos normal,BlockPos fullbright) {
-        cow=a;stand=b;drop=c;statue=s;board=normal;cabinet=fullbright;
+        cow=a;stand=b;drop=c;statue=s;board=normal;cabinet=fullbright;exceptionRestores=0;
         if(registered) return; registered=true;
         GunFirePostEvent.EVENT.register(e -> {
             if(e.getLogicalSide().isClient() && e.getShooter()==Minecraft.getInstance().player) {
@@ -57,6 +59,7 @@ public final class LightFrames {
         view=new View(mc.gameRenderer.getMainCamera().position(),new Matrix4f(rotation),fy*mc.getWindow().getHeight()/mc.getWindow().getWidth(),fy);
     }
     public static void beginScope(LevelRenderState state,boolean entities) {
+        if(faultProbe) return;
         var saved=new IdentityHashMap<Object,Integer>();
         if(observing()) {
             if(entities) for(var e:state.entityRenderStates) saved.put(e,e.lightCoords);
@@ -65,6 +68,7 @@ public final class LightFrames {
         scopes.push(saved);
     }
     public static void endScope() {
+        if(faultProbe) return;
         var saved=scopes.pop();
         saved.forEach((state,old) -> {
             int now=state instanceof EntityRenderState e ? e.lightCoords : ((BlockEntityRenderState)state).lightCoords;
@@ -72,7 +76,8 @@ public final class LightFrames {
         });
     }
     public static void submitted(LevelRenderState state,boolean entities) {
-        if(!observing()) return;
+        if(faultProbe || !observing()) return;
+        if(entities && pending.name.equals("on") && exceptionRestores==0) exceptionRestore(state);
         pending.submitted=true;
         if(entities) for(var e:state.entityRenderStates) {
             int i=e.entityType==EntityType.COW ? 0 : e.entityType==EntityType.ARMOR_STAND ? 1 : e.entityType==EntityType.ITEM ? 2 : -1;
@@ -81,6 +86,28 @@ public final class LightFrames {
         }
         else for(var b:state.blockEntityRenderStates) if(statue!=null && statue.equals(b.blockPos)) pending.light[3]=b.lightCoords;
     }
+    /** A test-only nested original throws, then the real outer draw proceeds with
+     * exactly its original lit state. Exercise Java 21 finally restoration, not a fake renderer. */
+    private static void exceptionRestore(LevelRenderState state) {
+        var parent=com.tacz.guns.client.render.light.WorldFlashFrame.current();
+        if(parent==null) throw new AssertionError("No live receiver context on the ON submission");
+        var body=state.entityRenderStates.stream().filter(e -> e.entityType==EntityType.COW).findFirst().orElseThrow();
+        int lit=body.lightCoords,ambient=net.minecraft.client.renderer.LightTexture.pack(0,net.minecraft.client.renderer.LightTexture.sky(lit));
+        boolean raised=false;
+        faultProbe=true;body.lightCoords=ambient;
+        try {
+            try {
+                com.tacz.guns.client.render.light.WorldFlashFrame.submitWorld(state,true,() -> {
+                    if(body.lightCoords==ambient) throw new AssertionError("Nested receiver never received source light");
+                    throw new ExpectedSubmissionFailure();
+                });
+            } catch(ExpectedSubmissionFailure expected) { raised=true; }
+            if(!raised || body.lightCoords!=ambient || com.tacz.guns.client.render.light.WorldFlashFrame.current()!=parent)
+                throw new AssertionError("Nested exception leaked receiver input or Java 21 light context");
+            exceptionRestores++;
+        } finally { body.lightCoords=lit;faultProbe=false; }
+    }
+    private static final class ExpectedSubmissionFailure extends RuntimeException {}
     public static void rack(BlockPos pos,int light) {
         if(!observing()) return;
         if(pos.equals(board)) pending.light[4]=light;
@@ -115,9 +142,12 @@ public final class LightFrames {
             if(x<0 || y<0 || x>=image.getWidth() || y>=image.getHeight()) throw new AssertionError("Receiver outside frame: "+point+" -> "+x+","+y);
             return image.getRGB(x,y);
         }
-        int mean(Vec3 center,double extent,int shift) {
+        int mean(Vec3 center,double extent,int shift,boolean horizontal) {
             int sum=0,n=0;
-            for(int j=-10;j<=10;j++) for(int i=-10;i<=10;i++) { sum+=rgb(center.add(i*extent/10,j*extent/10,0))>>shift&255;n++; }
+            for(int j=-10;j<=10;j++) for(int i=-10;i<=10;i++) {
+                double v=j*extent/10;
+                sum+=rgb(center.add(i*extent/10,horizontal?0:v,horizontal?v:0))>>shift&255;n++;
+            }
             return sum/n;
         }
         @Override public String toString() { return Arrays.toString(light); }
