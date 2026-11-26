@@ -39,6 +39,7 @@
     "client.SingleQuadParticleAccessor",
     "client.SoundManagerPreparationsMixin",
     "client.StairBlockAccessor",
+    "client.ThermalBodyNodesMixin",
     "client.ThermalEntityMixin"
   ],
   "_comment": "26.1.2: ItemInHandRendererMixin and ItemInHandLayerMixin restored against SubmitNodeCollector signatures; PlayerModelMixin applies TACZ/PAL third-person poses from AvatarRenderState.",

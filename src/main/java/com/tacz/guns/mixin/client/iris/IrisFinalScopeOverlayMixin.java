@@ -25,6 +25,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(targets = "net.irisshaders.iris.pipeline.IrisRenderingPipeline", remap = false)
 public abstract class IrisFinalScopeOverlayMixin {
+    @Inject(method = "beginHand", at = @At("HEAD"), require = 1)
+    private void tacz$freezeWorldHeatBeforeHand(CallbackInfo ci) {
+        var mc = Minecraft.getInstance();
+        var orientation = mc.gameRenderer.getLevelRenderState().cameraRenderState.orientation;
+        com.tacz.guns.client.render.scope.ScopeThermalCapture.finish(mc.getMainRenderTarget(),
+                new org.joml.Matrix4f().rotation(orientation).transpose());
+    }
+
     @Inject(method = "finalizeLevelRendering", at = @At("TAIL"), require = 1)
     private void tacz$drawScopeAfterShaderPackFinal(CallbackInfo ci) {
         Minecraft minecraft = Minecraft.getInstance();

@@ -23,7 +23,7 @@ public final class ScopeLensFrame {
         observed = expected = null;
         measured = false;
         disabled = false;
-        // 热成像捕获（ScopeThermalCapture）尚未移植到 1.21.11：见 docs/lineage/PORT_GAP_MATRIX_1211.md
+        ScopeThermalCapture.close();
     }
 
     public static void ocular(@Nullable ScopeLensConfig lens, java.util.List<com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot> geometry) {
@@ -48,7 +48,7 @@ public final class ScopeLensFrame {
                 || mc.player.isEyeInFluid(net.minecraft.tags.FluidTags.LAVA)
                 || IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(
                         mc.getDeltaTracker().getGameTimeDeltaPartialTick(false)) <= 0.001f)) expected = null;
-        // ScopeThermalCapture.beginFrame(needsHeat()) —— 热成像捕获尚未移植到 1.21.11
+        ScopeThermalCapture.beginFrame(needsHeat());
     }
 
     /** A pack-authored classic lens also composites scene colour, below the PIP cutover.

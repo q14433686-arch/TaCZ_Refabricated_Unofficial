@@ -182,6 +182,7 @@ public abstract class GameRendererMixin {
                     camera, viewMatrix, projectionMatrix, cullingMatrix, fogBuffer, fogColor, renderSky);
             levelRenderer.renderLevel(allocator, deltaTracker, blockOutline, camera,
                     viewMatrix, projectionMatrix, cullingMatrix, fogBuffer, fogColor, renderSky);
+            if (!IrisCompat.isUsingRenderPack()) com.tacz.guns.client.render.scope.ScopeThermalCapture.finish(minecraft.getMainRenderTarget(), viewMatrix);
         } finally {
             PolyMeshGpuRenderer.setLevelRenderActive(false);
         }
@@ -196,6 +197,7 @@ public abstract class GameRendererMixin {
         // 「本帧/上一帧有无掩码周期」的时效查询以此为基准。不清 maskValid —— 终局叠加
         // 在本帧手部阶段之前还要用它。
         ScopeDepthCopyState.onClientFrameStart();
+        com.tacz.guns.client.render.scope.ScopeLensFrame.beginFrame(minecraft);
         // 光影下的瞄具管线在这个「世界渲染之前、不在任何 render pass 内」的空档里建好；
         // 顺带按空闲释放计数把用不上的那套还回去（默认关）。整段 fail-open。
         ScopePipRerender.prewarmShaderPipelineIfNeeded();

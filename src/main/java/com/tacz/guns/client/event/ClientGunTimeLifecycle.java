@@ -18,6 +18,7 @@ public final class ClientGunTimeLifecycle {
         var player = event.getPlayer();
         if (player == null) return; // No play session (e.g. closing from the title screen).
         IClientPlayerGunOperator.fromLocalPlayer(player).getDataHolder().cancelPendingActions();
+        com.tacz.guns.client.render.scope.ScopeLensFrame.clear();
         GunTime.resetEpoch();
         LocalPlayerDataHolder.clientClickButtonTimestamp = -1L;
         RefitTransform.resetTimestamps();

@@ -199,7 +199,7 @@ public final class ScopeRenderTypes {
      * small lens.</p>
      */
     public static boolean shouldClipViewmodel() {
-        return apertureScheduledForViewmodel && ScopePipRenderState.shouldClipViewmodelForeground();
+        return apertureScheduledForViewmodel && (ScopeLensFrame.usesAuthoredLens() || ScopePipRenderState.shouldClipViewmodelForeground());
     }
 
     /**

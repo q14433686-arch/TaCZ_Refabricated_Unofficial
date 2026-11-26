@@ -31,6 +31,7 @@ public abstract class RefitOptionModel {
                 if (result != null) {
                     result.setIsScope(display.isScope());
                     result.setIsSight(display.isSight());
+                    result.setScopeLens(display.getScopeLens());
                 }
                 return result;
             } catch (RuntimeException e) {

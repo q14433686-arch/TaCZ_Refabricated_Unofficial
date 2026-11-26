@@ -19,8 +19,7 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue EXPERIMENTAL_SCOPE_LENS;
     /**
      * 热成像镜头：捕获可见热源。donor 26.1.2 {@code EnableScopeThermal}。
-     * <b>注意：</b>1.21.11 线的热成像渲染（ScopeThermalCapture 等）尚未移植，
-     * 本键当前只被 {@code ScopeLensFrame#needsHeat} 读取 —— 见 docs/lineage/PORT_GAP_MATRIX_1211.md。
+     * 使用实际 posed model 的 cutout 覆盖与独立场景深度；失败时保留普通光学镜片。
      */
     public static ForgeConfigSpec.BooleanValue SCOPE_THERMAL_ENABLE;
     /** YSM（Yes Steve Model）兼容：被请求时才让位第一人称枪械渲染（donor 26.1.2 {@code YsmCompat}）。 */

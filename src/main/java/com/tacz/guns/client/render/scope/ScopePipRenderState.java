@@ -120,7 +120,7 @@ public final class ScopePipRenderState {
      * 按参数缓存的合成管线（键 = 倍率/锐度/贴镜开关）。倍率渐变会在会话内产生
      * ≤ 步数+1 个倍率档 × 每把枪的稳态倍率，注册数有界；查表命中则零构建。
      */
-    private static final java.util.Map<Long, RenderPipeline> PIPELINES = new java.util.HashMap<>();
+    private static RenderPipeline plainPipeline, lensPipeline;
     private static boolean failed;
     private static boolean sceneCaptured;
     private static boolean loggedCapture;
@@ -193,8 +193,8 @@ public final class ScopePipRenderState {
         // only when the player explicitly opted in (ScopePipAllowShaderPacks); otherwise Iris
         // keeps the classic whole-screen FOV zoom because there is no PIP picture to take its
         // place. Min magnification keeps low-power scopes on the classic whole-screen zoom too.
-        return isEnabled() && irisCompatible()
-                && currentZoom() >= minMagnification() && isAimingStarted(partialTicks);
+        return ScopeLensFrame.expected != null || (isEnabled() && irisCompatible()
+                && currentZoom() >= minMagnification() && isAimingStarted(partialTicks));
     }
 
     /**
@@ -473,6 +473,10 @@ public final class ScopePipRenderState {
      * gun has not been rasterized into it yet, so this copy is exactly the clean lens source.</p>
      */
     public static void captureScene(Minecraft mc) {
+        if (ScopeLensFrame.expected != null && !failed && !IrisCompat.isUsingRenderPack()) {
+            if (!ScopePipRerender.hasScene()) copyMainColor(mc);
+            return;
+        }
         if (ScopePipRerender.rerenderMode()) {
             // 二次渲染模式：镜内画面由 ScopePipRerender.renderScopeView 在 renderLevel 的
             // 镜内那遍之后拷好。这里再拷一次会用宽视场的手前画面覆盖窄视场成品。
@@ -516,6 +520,10 @@ public final class ScopePipRenderState {
      * for its own Iris pipeline; ours uses the same finished-frame property on 1.21.11).
      */
     public static void captureSceneAfterIrisFinal(Minecraft mc) {
+        if (ScopeLensFrame.expected != null && !failed && IrisCompat.supportsFinalScopeOverlay()) {
+            if (!ScopePipRerender.hasScene()) copyMainColor(mc);
+            return;
+        }
         if (ScopePipRerender.rerenderMode()) {
             // 二次渲染模式（无光影/光影同理）：镜内画面由 ScopePipRerender 在窄遍返回后立刻拷好。
             // 这里再拷一次会用宽视场的成品帧覆盖窄视场成品 —— 与 captureScene 的守卫同款；
@@ -613,6 +621,7 @@ public final class ScopePipRenderState {
 
     /** Composites the captured scene into the lens after the hand pass has finished. */
     public static void compositeAfterHand(Minecraft mc) {
+        if (compositeClassicLens(mc, false)) return;
         if (!isEnabled() || failed || mc == null) {
             return;
         }
@@ -672,6 +681,7 @@ public final class ScopePipRenderState {
      * private GL textures, so they remain sampleable after Iris has finished binding depthtex2.</p>
      */
     public static void compositeAfterIrisFinal(Minecraft mc) {
+        if (compositeClassicLens(mc, true)) return;
         if (!isEnabled() || failed || mc == null) {
             return;
         }
@@ -725,6 +735,16 @@ public final class ScopePipRenderState {
         compositeScene(mc, reveal);
     }
 
+    private static boolean compositeClassicLens(Minecraft mc, boolean irisFinal) {
+        if (mc == null || failed || !sceneCaptured || ScopeLensFrame.current() == null
+                || IrisCompat.isUsingRenderPack() != irisFinal) return false;
+        if (irisFinal && !IrisCompat.supportsFinalScopeOverlay()) return false;
+        boolean pip = isEnabled() && (!irisFinal || allowShaderPacks()) && currentZoom() >= minMagnification();
+        if (pip && (!ScopePipRerender.rerenderMode() || ScopePipRerender.hasScene())) return false;
+        compositeScene(mc, 1.0f);
+        return true;
+    }
+
     /** Shared composite body (vanilla and Iris call sites). */
     private static void compositeScene(Minecraft mc) {
         compositeScene(mc, lensZoom());
@@ -769,12 +789,20 @@ public final class ScopePipRenderState {
             if (scene == null || worldBinding == null || apertureBinding == null) {
                 return;
             }
+            var lens = ScopeLensFrame.current();
+            var heat = lens == null ? null : ScopeThermalCapture.current();
+            var uniforms = RenderSystem.getDynamicUniforms().writeTransform(ScopeLensFrame.uniforms(lens, heat != null),
+                    new org.joml.Vector4f(compositeZoom, sharpness(), debugPaintLens() ? 1 : 0, 0),
+                    new org.joml.Vector3f(), new org.joml.Matrix4f());
             CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
             try (RenderPass pass = encoder.createRenderPass(
                     () -> "tacz_scope_pip_composite",
                     main.getColorTextureView(),
                     OptionalInt.empty())) {
-                pass.setPipeline(pipeline(compositeZoom));
+                pass.setPipeline(pipeline(lens != null));
+                pass.setUniform("DynamicTransforms", uniforms);
+                if (lens != null) pass.bindTexture("HeatSampler", heat == null ? scene.view() : heat.getColorTextureView(),
+                        RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
                 pass.bindTexture(SCENE_SAMPLER_UNIFORM,
                         scene.view(),
                         RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
@@ -812,43 +840,25 @@ public final class ScopePipRenderState {
         }
     }
 
-    private static RenderPipeline pipeline(float lensZoomValue) {
-        float clampedZoom = Math.max(1.0f, lensZoomValue);
-        int lensZoom1k = (int) Math.round(clampedZoom * 1000.0f);
-        int sharpness1k = (int) Math.round(sharpness() * 1000.0f);
-        boolean paintLens = debugPaintLens();
-        long cacheKey = (lensZoom1k & 0xFFFFFL)
-                | ((sharpness1k & 0x3FFL) << 20)
-                | (paintLens ? 1L << 30 : 0L);
-        RenderPipeline cachedPipeline = PIPELINES.get(cacheKey);
-        if (cachedPipeline != null) {
-            return cachedPipeline;
-        }
-        RenderPipeline pipeline;
-        {
-            RenderPipeline source = RenderPipelines.ENTITY_OUTLINE_BLIT;
-            pipeline = RenderPipelines.register(
-                    RenderPipeline.builder()
-                            .withLocation(Identifier.fromNamespaceAndPath(
-                                    GunMod.MOD_ID, "pipeline/scope_pip_composite"))
-                            .withVertexShader(Identifier.fromNamespaceAndPath(
-                                    "minecraft", "core/screenquad"))
-                            .withFragmentShader(Identifier.fromNamespaceAndPath(
-                                    GunMod.MOD_ID, "core/scope_pip"))
-                            .withShaderDefine("TACZ_PIP_ZOOM", clampedZoom)
-                            .withShaderDefine("TACZ_PIP_SHARPNESS", sharpness())
-                            .withShaderDefine("TACZ_PIP_PAINT_LENS", paintLens ? 1.0f : 0.0f)
-                            .withVertexFormat(source.getVertexFormat(), source.getVertexFormatMode())
-                            .withSampler(SCENE_SAMPLER_UNIFORM)
-                            .withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM)
-                            .withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM)
-                            .withCull(false)
-                            .withoutBlend()
-                            .withColorWrite(true)
-                            // No depth in/out: this is a pure screen-space overwrite inside the lens.
-                            .build());
-            PIPELINES.put(cacheKey, pipeline);
-        }
+    private static RenderPipeline pipeline(boolean lens) {
+        RenderPipeline cached = lens ? lensPipeline : plainPipeline;
+        if (cached != null) return cached;
+        RenderPipeline source = RenderPipelines.ENTITY_OUTLINE_BLIT;
+        var builder = RenderPipeline.builder()
+                .withLocation(Identifier.fromNamespaceAndPath(GunMod.MOD_ID,
+                        lens ? "pipeline/scope_pip_composite_lens" : "pipeline/scope_pip_composite"))
+                .withVertexShader(Identifier.fromNamespaceAndPath("minecraft", "core/screenquad"))
+                .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_pip"))
+                .withVertexFormat(source.getVertexFormat(), source.getVertexFormatMode())
+                .withUniform("DynamicTransforms", com.mojang.blaze3d.shaders.UniformType.UNIFORM_BUFFER)
+                .withSampler(SCENE_SAMPLER_UNIFORM)
+                .withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM)
+                .withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM)
+                .withCull(false)
+                .withoutBlend().withColorWrite(true);
+        if (lens) builder.withShaderDefine("TACZ_SCOPE_LENS").withSampler("HeatSampler");
+        var pipeline = RenderPipelines.register(builder.build());
+        if (lens) lensPipeline = pipeline; else plainPipeline = pipeline;
         return pipeline;
     }
 

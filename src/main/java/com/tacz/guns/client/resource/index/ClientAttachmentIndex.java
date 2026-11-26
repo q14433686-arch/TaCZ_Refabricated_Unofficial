@@ -164,6 +164,7 @@ public class ClientAttachmentIndex {
         if (index.attachmentModel != null) {
             index.attachmentModel.setIsScope(display.isScope());
             index.attachmentModel.setIsSight(display.isSight());
+            index.attachmentModel.setScopeLens(display.getScopeLens());
         }
         index.modelTexture = display.getTexture();
     }

@@ -402,6 +402,10 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         return scopeViewPaths.get(viewSwitchCount);
     }
 
+    private com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig scopeLens;
+
+    public void setScopeLens(com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig lens) { this.scopeLens = lens; }
+
     public void setIsScope(boolean isScope) {
         this.isScope = isScope;
     }
@@ -620,6 +624,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         // lens picture overwrites both. When the PIP composite is active this frame we therefore run
         // the reticle/rim through the post-composite overlay even without Iris; normal vanilla stays
         // in its established immediate solid-pass order.
+        if (orderedScopeSequence) com.tacz.guns.client.render.scope.ScopeLensFrame.ocular(
+                isScope && (!(isScope && isSight) || activeViewGroup == 0 || activeViewGroup == 2) ? scopeLens : null, ocularSnapshots);
         boolean pipDefersReticle = ScopePipRenderState.shouldDeferReticleOverlay();
         boolean deferReticleToIrisFinalOverlay = orderedScopeSequence
                 && ((IrisCompat.isRenderingSolidHandPass()
