@@ -15,7 +15,12 @@ public class EntityTrackingGunSoundInstance extends GunSoundInstance implements 
     private boolean stopped;
 
     public EntityTrackingGunSoundInstance(SoundEvent soundEvent, SoundSource source, float volume, float pitch, Entity entity, int soundDistance, @Nullable Identifier registryName, boolean mono) {
-        super(soundEvent, source, volume, pitch, entity, soundDistance, registryName, mono, false);
+        this(soundEvent, source, volume, pitch, entity, soundDistance, registryName, mono, true);
+    }
+
+    public EntityTrackingGunSoundInstance(SoundEvent soundEvent, SoundSource source, float volume, float pitch, Entity entity,
+                                          int soundDistance, @Nullable Identifier registryName, boolean mono, boolean useTaczSound) {
+        super(soundEvent, source, volume, pitch, entity, soundDistance, registryName, mono, false, useTaczSound);
         this.entityRef = new WeakReference<>(entity);
     }
 

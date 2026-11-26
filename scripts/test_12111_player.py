@@ -162,7 +162,7 @@ def test(product, work, evidence, suite):
         'display': {'PORT_INK:': 1, 'PORT_OUTLINE:': 1, 'PORT_RACK_PREVIEW:': 5, 'PORT_CASE_HINT:': 1},
         'controller': {'PORT_CONTROLLER:': 1},
         'pal': {'PORT_PAL:': 2},
-        **{name: {f'PORT_PLATFORM_{kind}:': 1 for kind in ['INPUT','SKIN','AUDIO','GUI','ZOOM','ADS','RECOIL','MODIFIERS','TRACER','MUZZLE','PARTICLES','MESH_BUDGET']} for name in ['platform','platform-zoomify']},
+        **{name: {f'PORT_PLATFORM_{kind}:': 1 for kind in ['INPUT','SKIN','AUDIO','GUI','ZOOM','ADS','RECOIL','MODIFIERS','TRACER','MUZZLE','PARTICLES','MESH_BUDGET','SOUND_DATA']} for name in ['platform','platform-zoomify']},
         'receiver': {'PORT_RECEIVER_INPUT:': 1, 'PORT_RECEIVER_PIXEL:': 11, 'PORT_RECEIVER_PACK:': 1},
         'receiver-iris': {'PORT_RECEIVER_INPUT:': 1, 'PORT_RECEIVER_PIXEL:': 11, 'PORT_RECEIVER_PACK:': 1},
         'optics': {'PORT_PIP_MOTION:': 16, 'PORT_PIP_WIDE:': 2, 'PORT_THERMAL_PIXELS:': 1, 'PORT_THERMAL_MODE:': 2, 'PORT_THERMAL_POSE:': 18, 'PORT_OPTIC:': 3, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_BODY_MATERIAL:': 1, 'PORT_OCULAR_BAKE:': 1, 'PORT_RETICLE_PIXELS:': 1},

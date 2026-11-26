@@ -2,6 +2,7 @@ package com.tacz.guns.client.resource.pojo.display.attachment;
 
 import org.joml.Vector3f;
 import com.google.common.collect.Maps;
+import com.tacz.guns.client.resource.pojo.display.SoundData;
 import com.google.gson.annotations.SerializedName;
 import com.tacz.guns.client.resource.pojo.display.IDisplay;
 import com.tacz.guns.client.resource.pojo.display.LaserConfig;
@@ -91,7 +92,7 @@ public class AttachmentDisplay implements IDisplay {
     public @Nullable Vector3f getMountOffset() { return mountOffset != null && mountOffset.isFinite() ? mountOffset : null; }
 
     @SerializedName("sounds")
-    private Map<String, Identifier> sounds = Maps.newHashMap();
+    private Map<String, SoundData> sounds = Maps.newHashMap();
 
     public Identifier getSlotTextureLocation() {
         return slotTextureLocation;
@@ -155,8 +156,10 @@ public class AttachmentDisplay implements IDisplay {
     }
 
     public Map<String, Identifier> getSounds() {
-        return sounds;
+        return sounds == null ? null : Maps.transformValues(sounds, SoundData::getSound);
     }
+
+    public Map<String, SoundData> getSoundData() { return sounds; }
 
     @Nullable
     public LaserConfig getLaserConfig() {

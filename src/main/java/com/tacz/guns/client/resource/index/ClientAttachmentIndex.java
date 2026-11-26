@@ -2,6 +2,7 @@ package com.tacz.guns.client.resource.index;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import com.tacz.guns.client.resource.pojo.display.SoundData;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
 import com.tacz.guns.client.resource.ClientAssetLoadDispatcher;
@@ -53,7 +54,7 @@ public class ClientAttachmentIndex {
     private boolean showMount;
     private @Nullable String adapterNodeName;
     private @Nullable String tooltipKey;
-    private Map<String, Identifier> sounds;
+    private Map<String, SoundData> sounds;
     private @Nullable LaserConfig laserConfig;
     private volatile boolean modelsLoaded = false;
     private volatile boolean modelsLoadFailed = false;
@@ -297,7 +298,7 @@ public class ClientAttachmentIndex {
 
 
     private static void checkSounds(AttachmentDisplay display, ClientAttachmentIndex index) {
-        Map<String, Identifier> displaySounds = display.getSounds();
+        Map<String, SoundData> displaySounds = display.getSoundData();
         if (displaySounds == null) {
             index.sounds = Maps.newHashMap();
             return;
@@ -380,8 +381,10 @@ public class ClientAttachmentIndex {
     }
 
     public Map<String, Identifier> getSounds() {
-        return sounds;
+        return sounds == null ? null : Maps.transformValues(sounds, SoundData::getSound);
     }
+
+    public Map<String, SoundData> getSoundData() { return sounds; }
 
     public @Nullable LaserConfig getLaserConfig() {
         return laserConfig;

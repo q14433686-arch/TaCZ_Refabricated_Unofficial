@@ -79,6 +79,7 @@ public final class PlatformSmoke extends PlayerProbe {
             System.out.println("PORT_PLATFORM_INPUT: native key/scancode/mouse press, repeat/release, screen veto, refit open/close, unload collision and ALT priority passed");
             PlatformSkins.verify(ctx);
             PlatformAudio.verify(ctx);
+            PlatformSoundData.verify(ctx);
             PlatformGui.verify(ctx);
             PlatformZoom.verify(ctx);
             PlatformRecoil.verify(ctx,world);
