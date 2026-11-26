@@ -36,7 +36,7 @@ for name, methods in {
     'net.minecraft.client.sounds.SoundEngine': ['calculateVolume('],
     'net.minecraft.client.KeyMapping': ['matches(', 'click(', 'resetMapping('],
     'com.mojang.blaze3d.pipeline.RenderTarget': ['copyDepthFrom('],
-    'net.minecraft.client.renderer.GameRenderer': ['renderItemInHand('],
+    'net.minecraft.client.renderer.GameRenderer': ['renderItemInHand(', 'bobHurt('],
     'net.minecraft.client.renderer.CachedPerspectiveProjectionMatrixBuffer': ['getBuffer(', 'createProjectionMatrix('],
     'com.mojang.blaze3d.systems.RenderSystem': ['setProjectionMatrix(', 'getProjectionMatrixBuffer('],
 }.items():
