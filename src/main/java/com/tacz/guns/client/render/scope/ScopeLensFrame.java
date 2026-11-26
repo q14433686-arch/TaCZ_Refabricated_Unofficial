@@ -26,6 +26,13 @@ public final class ScopeLensFrame {
         ScopeThermalCapture.close();
     }
 
+    /** Extraction precedes the actual hand projection binding on 1.21.11. Observe the display
+     * now for prediction/clipping; measure its frozen geometry only when that batch is consumed. */
+    public static void observe(@Nullable ScopeLensConfig lens) {
+        observed = lens;
+        measured = false;
+    }
+
     public static void ocular(@Nullable ScopeLensConfig lens, java.util.List<com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot> geometry) {
         observed = lens;
         measured = false;

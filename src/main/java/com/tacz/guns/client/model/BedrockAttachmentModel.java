@@ -624,8 +624,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         // lens picture overwrites both. When the PIP composite is active this frame we therefore run
         // the reticle/rim through the post-composite overlay even without Iris; normal vanilla stays
         // in its established immediate solid-pass order.
-        if (orderedScopeSequence) com.tacz.guns.client.render.scope.ScopeLensFrame.ocular(
-                isScope && (!(isScope && isSight) || activeViewGroup == 0 || activeViewGroup == 2) ? scopeLens : null, ocularSnapshots);
+        var frameLens = isScope && (!(isScope && isSight) || activeViewGroup == 0 || activeViewGroup == 2) ? scopeLens : null;
+        if (orderedScopeSequence) com.tacz.guns.client.render.scope.ScopeLensFrame.observe(frameLens);
         boolean pipDefersReticle = ScopePipRenderState.shouldDeferReticleOverlay();
         boolean deferReticleToIrisFinalOverlay = orderedScopeSequence
                 && ((IrisCompat.isRenderingSolidHandPass()
@@ -642,6 +642,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             RenderType apertureWriter = ScopeRenderTypes.depthAperture(texture);
             OrderedSubmitNodeCollector apertureCollector = collector.order(SCOPE_APERTURE_ORDER);
             apertureCollector.submitCustomGeometry(identity, apertureWriter, (entryPose, consumer) -> {
+                com.tacz.guns.client.render.scope.ScopeLensFrame.ocular(frameLens, ocularSnapshots);
                 for (BedrockRenderSnapshot ocularSnap : ocularSnapshots) {
                     ocularSnap.write(consumer);
                 }

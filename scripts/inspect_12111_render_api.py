@@ -20,3 +20,18 @@ for name in [
     'net.minecraft.client.renderer.PlayerSkinRenderCache',
 ]:
     subprocess.run(['javap', '-classpath', jar, '-p', name], check=True)
+
+# Keep selected method bytecode, not whole classes (the CI log is deliberately bounded).
+for name, methods in {
+    'net.minecraft.client.renderer.GameRenderer': ['renderItemInHand('],
+    'net.minecraft.client.renderer.CachedPerspectiveProjectionMatrixBuffer': ['getBuffer(', 'createProjectionMatrix('],
+    'com.mojang.blaze3d.systems.RenderSystem': ['setProjectionMatrix(', 'getProjectionMatrixBuffer('],
+}.items():
+    print('PORT_RENDER_BYTECODE:', name, flush=True)
+    text = subprocess.check_output(['javap', '-classpath', jar, '-p', '-c', name], text=True)
+    selected = False
+    for line in text.splitlines():
+        if line.startswith('  ') and not line.startswith('    ') and '(' in line:
+            selected = any(method in line for method in methods)
+        if selected:
+            print(line, flush=True)
