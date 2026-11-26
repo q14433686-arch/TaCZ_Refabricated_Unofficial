@@ -350,3 +350,13 @@ f1f47537：compile45832954469 SUCCESS；full45832954527再次FAIL于首个worldB
 该轮两platform均SUCCESS，新增UI_LABELS确认实际产品23×title/description+3sidebar共49键走native I18n。JEI与REI的真实FCAP TCP双join非默认12/7/true均SUCCESS。none套件首join通过、停机复制后第二join配置断言FAIL，未冒称restart通过。核对**实际pin v21.11.1-mc1.21.11/fabric commit e78e07380844d4c573f947347402cfe3830de511 的1.21.11/Fabric/.../ServerLifecycleHandler.java**：默认server配置在instance/config，world/serverconfig（单数）仅显式文件覆盖；旧测试只复制world/tacz，遗漏保存过的config，不是本轮产品sync失效的证据。修restart supervisor同时复制实际config，不再从初始defaultconfigs重播；离线测试验证global config、world override、world状态和包编辑均为独立字节副本；修正ConfigPersist内错误的自动world/serverconfigs注释（实现原本就不接管SERVER，不改实现）。none实际停机/重连仍须下一轮重验。
 
 f1f47537分发45832954441最终 **13/14**：仅none上述重启夹具遗漏config失败；其它13项（含optics-iris139954214890、两platform、JEI/REI非默认配置双join）SUCCESS。本体SHA-256 `98b326b73028be8cf55288fbe99118e300c9da4ca635d0c5c4937c1e9d939a83`。不忽略none失败，修正夹具后仍须重新完整验收。
+
+### R6 eebcb7a0 最新完整回执（2026-11-26）
+
+- compile-check **45835740961 SUCCESS**；完整build **45835740955 SUCCESS**；remapped发行/TCP **45835740995 SUCCESS 14/14**（原生及Iris optics/receiver、platform/Zoomify全过）。
+- 本体SHA-256 `ff98d21ec027852356dd56219f397c9339ed706b4336b49160e9706256ca3db0`，Java21/intermediary AW/refmap，4176有效默认包文件/5库。
+- none job139964000113实际PORT_SERVER_CONFIG及PORT_PERSIST同时通过：独立专服进程关停、从真实config/world/tacz字节副本启动新JVM，第二次TCP join仍收到server-only非默认12/7/true；原有组件库存/挂载/实体持久化与目录→ZIP /reload、两次2-part同步不退化。JEI/REI非默认配置双join同过。
+- 两platform强制STANCE/UI_LABELS及之前全部消费者门禁通过；默认23项成就46个标题/说明+3sidebar在native语言loader有实际回执；中英离线全键检查通过。Python23项、弹孔方向数学6项、默认包graph4176文件、block drops/persistence静态守门均PASS（这些离线检查不替代目标运行）。
+- full本次三次fresh-world成功，新增configuration任务/队列/网络标量诊断编译通过；但f1f47537已实际复现的间歇性configuration-stage超时**仍未根治，不因后来一次SUCCESS而抹掉**。新增失败路径的task/future快照要等下一次真实复现，不能捏造未运行的数据。
+
+**当前边界：R1–R5保持已关闭；R6仍ACTIVE，剩余明确开放项为间歇性dev configuration bootstrap定位/修复及任何后续审计发现。未升级版本、未发布，也未声明整体parity完成。**
