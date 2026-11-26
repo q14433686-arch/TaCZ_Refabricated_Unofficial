@@ -17,7 +17,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 abstract class ReceiverLightObserver {
     @Inject(method="submitWorld",at=@At("HEAD"),remap=false)
     private static void begin(LevelRenderState state,boolean entities,Runnable original,CallbackInfo ci) { LightFrames.beginScope(state,entities); }
-    @Inject(method="submitWorld",at=@At(value="INVOKE",target="Ljava/lang/Runnable;run()V"),remap=false)
+    // Only the two original.run sites (fast/no-light and scoped). Do not observe the
+    // finally restore Runnable list, which intentionally contains ambient UV2 again.
+    @Inject(method="submitWorld",at={@At(value="INVOKE",target="Ljava/lang/Runnable;run()V",ordinal=0),
+            @At(value="INVOKE",target="Ljava/lang/Runnable;run()V",ordinal=1)},remap=false)
     private static void submitted(LevelRenderState state,boolean entities,Runnable original,CallbackInfo ci) { LightFrames.submitted(state,entities); }
     @Inject(method="submitWorld",at=@At("RETURN"),remap=false)
     private static void end(LevelRenderState state,boolean entities,Runnable original,CallbackInfo ci) { LightFrames.endScope(); }
