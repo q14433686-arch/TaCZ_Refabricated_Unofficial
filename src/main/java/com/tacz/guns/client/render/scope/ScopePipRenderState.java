@@ -193,8 +193,11 @@ public final class ScopePipRenderState {
         // only when the player explicitly opted in (ScopePipAllowShaderPacks); otherwise Iris
         // keeps the classic whole-screen FOV zoom because there is no PIP picture to take its
         // place. Min magnification keeps low-power scopes on the classic whole-screen zoom too.
-        return ScopeLensFrame.expected != null || (isEnabled() && irisCompatible()
-                && currentZoom() >= minMagnification() && isAimingStarted(partialTicks));
+        // An authored thermal/optical lens alone does not own magnification: the classic
+        // composite is 1:1 and must retain the normal whole-world ADS FOV. Only active PIP
+        // transfers that zoom to its scene source/composite (as on the donor branch).
+        return isEnabled() && irisCompatible()
+                && currentZoom() >= minMagnification() && isAimingStarted(partialTicks);
     }
 
     /**
