@@ -75,6 +75,14 @@ public class PackConversionSmoke {
                     helper.assertTrue(layers.equals(switch (version) { case "1.21.11" -> List.of("compat_1_21_11"); case "1.21.1" -> List.of("compat_1_21_1"); default -> List.of(); }), "Wrong overlay for " + version);
                 }
                 String base = "compat_1_21_11/data/demo/";
+                var convertedJson = json(zip, base + "recipe/table.json");
+                var ops = helper.getLevel().registryAccess().createSerializationContext(com.mojang.serialization.JsonOps.INSTANCE);
+                var registryRecipe = com.tacz.guns.crafting.GunSmithTableSerializer.CODEC.codec().parse(ops, convertedJson).getOrThrow();
+                registryRecipe.getResult().init();
+                helper.assertTrue(ItemNbtUtils.getTag(registryRecipe.getResult().getResult()).getByteOr("named", (byte) 0) == 3,
+                        "Native recipe-registry codec lost converted result components");
+                var reencoded = com.tacz.guns.crafting.GunSmithTableSerializer.CODEC.codec().encodeStart(ops, registryRecipe).getOrThrow().getAsJsonObject();
+                helper.assertTrue(reencoded.get("result").equals(convertedJson.get("result")), "Registry re-encode lost the source result specification");
                 var recipe = CommonAssetsManager.GSON.fromJson(text(zip, base + "recipe/table.json"), TableRecipe.class);
                 recipe.getResult().init();
                 var stack = recipe.getResult().getResult();
