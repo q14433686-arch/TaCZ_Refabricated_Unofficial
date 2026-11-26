@@ -141,6 +141,7 @@ if (client) {
             }
         } else if (playerSuite != null) {
             jvmArgs.add("-Dtacz.probe.player=$playerSuite".toString())
+            if (playerSuite.startsWith('platform')) doFirst { project.copy { from 'fixtures/platform'; into runDir.dir('tacz/lang_probe').get().asFile } }
             if (playerSuite == 'platform-zoomify') doFirst { project.copy { from 'fixtures/platform-zoomify'; into runDir.get().asFile } }
             if (playerSuite == 'display') doFirst { project.copy { from 'fixtures/display'; into runDir.dir('tacz/display_probe').get().asFile } }
             // The shader pack archive is fetched and hash-checked by scripts/test_12111_player.py before this copy.

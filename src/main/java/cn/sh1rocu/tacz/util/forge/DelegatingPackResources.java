@@ -1,6 +1,7 @@
 package cn.sh1rocu.tacz.util.forge;
 
 import com.google.common.collect.ImmutableList;
+import cn.sh1rocu.tacz.util.GunPackLangCompat;
 import com.tacz.guns.resource.filter.RecipeFilter;
 import com.tacz.guns.util.AttachmentTagLayers;
 import net.minecraft.network.chat.Component;
@@ -85,9 +86,11 @@ public class DelegatingPackResources extends AbstractPackResources {
         };
         for (PackResources delegate : candidates(type, resourceNamespace)) {
             if (legacyPath == null) {
+                ResourceOutput output = (location, supplier) -> emit.accept(location,
+                        migrateRecipeResultIfNeeded(type, location, supplier));
                 delegate.listResources(type, resourceNamespace, paths,
-                        (location, supplier) -> emit.accept(location,
-                                migrateRecipeResultIfNeeded(type, location, supplier)));
+                        GunPackLangCompat.mayListLangFiles(paths)
+                                ? GunPackLangCompat.wrapOutput(GunPackLangCompat.describe(delegate), output) : output);
                 continue;
             }
 
@@ -161,7 +164,9 @@ public class DelegatingPackResources extends AbstractPackResources {
             // path. Doing this per pack preserves the aggregate pack's existing priority order.
             IoSupplier<InputStream> currentSupplier = pack.getResource(type, location);
             if (currentSupplier != null) {
-                return migrateRecipeResultIfNeeded(type, location, currentSupplier);
+                return GunPackLangCompat.isLangFile(location)
+                        ? GunPackLangCompat.wrap(GunPackLangCompat.describe(pack), location, currentSupplier)
+                        : migrateRecipeResultIfNeeded(type, location, currentSupplier);
             }
             if (legacyLocation != null) {
                 IoSupplier<InputStream> legacySupplier = pack.getResource(type, legacyLocation);

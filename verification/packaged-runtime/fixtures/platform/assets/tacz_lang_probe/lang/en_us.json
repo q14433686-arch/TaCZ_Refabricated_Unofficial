@@ -1,0 +1,6 @@
+{
+  "port.lang.first": "Recovered first"
+  "port.lang.second": "Recovered second",
+  "port.lang.bad": {"port.lang.nested": "Must not leak"},
+  "port.lang.last": "Recovered last"
+}
