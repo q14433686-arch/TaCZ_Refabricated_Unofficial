@@ -113,3 +113,12 @@ R1 的专项测试必须增加自己的分划断言，原有 `PORT_OPTIC` 孔径
 WideScene 两环境 narrow/released 均保留真实宽遍：原版换色 panel11557、slime1659、day-night sky20000/20000；Iris panel11543/11539、slime1659/1660、sky20000/20000。R2 的18组热像、三色盘及全部生命周期回归仍通过；同帧 pre/lens/final 共48张运动 PNG 与镜外场景均保留。
 
 本体 SHA-256 `2a6be490f038a6f7834e7f42ff1a1142932d547192a70d07f0c3924d81d68706`。`2cf04dd9` 的完整 build/JUnit 曾 success；`b2ad0276` 完成 build/JUnit/JAR 与服务端测试后，开发 PackClientSmoke **再次**建世界超时，不能泛称本 SHA 全构建绿；已作为 R6 必查回归保留，不用放宽光学断言掩盖。当前关闭的是 R3 的实际光学闭环（编译/数值测试/原版及 Iris 成品光学矩阵），近场散射/receiver 光照顺序立即进入 R4；其他光影、Voxy 未实测，版本不变。
+
+
+## R4 施工（当前活动项）
+
+`6b31bddd` 的目标 named JAR `javap` [45750956437](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45750956437) 证明：**1.21.11 实际存在**稳定 `submitEntities(PoseStack, state.LevelRenderState, SubmitNodeCollector)` 与 `submitBlockEntities(..., SubmitNodeStorage)`；先前接收树声称只能用长事件窗口的注释不正确。`1834fc62` 已适配供体两个 native submit wrapper，不注入 lambda：每类 receiver 在同步 submit 窗口中临时提高 block light，finally 归还字段与 Java21 ThreadLocal；source/terrain/预算每主帧共享一次时钟，shadow/narrow 不借用外层灯。进一步接通此前完全无调用者的 RackSurfaceLight 与 rackSlotLight：冻结 rack modelState/dye、逐真实面投反射、每面 slot light；glowing case contents 保持原 fullbright，预览仍走本版 RackPreviewCollector。
+
+`1834fc62` [编译45751652189](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45751652189) / [全构建45751652128](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45751652128) success；成品原版到达 receiver 夹具后被正常 whitelist 拒绝 emerald，不能算光照通过。`4df18f54` 仅在测试模组添加同显示专项已有的 emerald 白名单 tag（不改默认包），并补近墙/地面、嵌套提交主动抛异常后的字段/context 还原检查。
+
+R4 实机正例必须为真实 stock AK 按键射击并确认服务端少一发；readback 取第一次对应主遍完成帧，读取实际提交的 cow/stand/item/statue/pegboard slot/fullbright case UV2 与真实表面像素。对照为开关、到期、发射者被石墙挡住（仅此负例可用 synthetic event）。新增测试随现有原版/Iris 发行客户端运行，因累积专项增大仅把外层进程预算 720→1200 秒，未改像素/深度/UV2 判据。当前仍待运行，不将 R4 标绿；R5/R6 尚未开始。
