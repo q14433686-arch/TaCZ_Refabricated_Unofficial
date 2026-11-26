@@ -1,4 +1,4 @@
-commit: 3515cf985e209600808b28c7073815e4bca8bd08
+commit: ff3abb473557765d3bab1ec6ea42fcdd9f509f0f
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
 
@@ -431,16 +431,16 @@ Cannot remap buffers because it does not exist in any of the targets [] or their
 Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
-Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap contents because it does not exist in any of the targets [mezz/jei/gui/overlay/IngredientListOverlay] or their parents.
 Cannot remap lambda$reload$3 because it does not exist in any of the targets [net/minecraft/class_1060]
 Cannot remap tick because it does not exist in any of the targets [net/minecraft/class_11890]
@@ -482,7 +482,7 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :classes
 > Task :compileTestJava
 > Task :compileGametestJava
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795656242052.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795657099033.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -492,7 +492,188 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 33s
+BUILD SUCCESSFUL in 1m 8s
 4 actionable tasks: 4 executed
+PORT_RENDER_API: /home/runner/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/minecraft-merged/1.21.11-loom.mappings.1_21_11.layered+hash.2198-v2/minecraft-merged-1.21.11-loom.mappings.1_21_11.layered+hash.2198-v2.jar
+Compiled from "SubmitNodeStorage.java"
+public final class net.minecraft.client.renderer.SubmitNodeStorage$ModelSubmit<S> extends java.lang.Record {
+  private final com.mojang.blaze3d.vertex.PoseStack$Pose pose;
+  private final net.minecraft.client.model.Model<? super S> model;
+  private final S state;
+  private final int lightCoords;
+  private final int overlayCoords;
+  private final int tintedColor;
+  private final net.minecraft.client.renderer.texture.TextureAtlasSprite sprite;
+  private final int outlineColor;
+  private final net.minecraft.client.renderer.feature.ModelFeatureRenderer$CrumblingOverlay crumblingOverlay;
+  public net.minecraft.client.renderer.SubmitNodeStorage$ModelSubmit(com.mojang.blaze3d.vertex.PoseStack$Pose, net.minecraft.client.model.Model<? super S>, S, int, int, int, net.minecraft.client.renderer.texture.TextureAtlasSprite, int, net.minecraft.client.renderer.feature.ModelFeatureRenderer$CrumblingOverlay);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public com.mojang.blaze3d.vertex.PoseStack$Pose pose();
+  public net.minecraft.client.model.Model<? super S> model();
+  public S state();
+  public int lightCoords();
+  public int overlayCoords();
+  public int tintedColor();
+  public net.minecraft.client.renderer.texture.TextureAtlasSprite sprite();
+  public int outlineColor();
+  public net.minecraft.client.renderer.feature.ModelFeatureRenderer$CrumblingOverlay crumblingOverlay();
+}
+Compiled from "ModelFeatureRenderer.java"
+public class net.minecraft.client.renderer.feature.ModelFeatureRenderer$Storage {
+  final java.util.Map<net.minecraft.client.renderer.rendertype.RenderType, java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$ModelSubmit<?>>> opaqueModelSubmits;
+  final java.util.List<net.minecraft.client.renderer.SubmitNodeStorage$TranslucentModelSubmit<?>> translucentModelSubmits;
+  private final java.util.Set<net.minecraft.client.renderer.rendertype.RenderType> usedModelSubmitBuckets;
+  public net.minecraft.client.renderer.feature.ModelFeatureRenderer$Storage();
+  public void add(net.minecraft.client.renderer.rendertype.RenderType, net.minecraft.client.renderer.SubmitNodeStorage$ModelSubmit<?>);
+  public void clear();
+  public void endFrame();
+  private boolean method_74819(net.minecraft.client.renderer.rendertype.RenderType);
+  private static java.util.List method_74822(net.minecraft.client.renderer.rendertype.RenderType);
+}
+Compiled from "RenderType.java"
+public class net.minecraft.client.renderer.rendertype.RenderType {
+  private static final int MEGABYTE;
+  public static final int BIG_BUFFER_SIZE;
+  public static final int SMALL_BUFFER_SIZE;
+  public static final int TRANSIENT_BUFFER_SIZE;
+  private final net.minecraft.client.renderer.rendertype.RenderSetup state;
+  private final java.util.Optional<net.minecraft.client.renderer.rendertype.RenderType> outline;
+  protected final java.lang.String name;
+  private net.minecraft.client.renderer.rendertype.RenderType(java.lang.String, net.minecraft.client.renderer.rendertype.RenderSetup);
+  static net.minecraft.client.renderer.rendertype.RenderType create(java.lang.String, net.minecraft.client.renderer.rendertype.RenderSetup);
+  public java.lang.String toString();
+  public void draw(com.mojang.blaze3d.vertex.MeshData);
+  public int bufferSize();
+  public com.mojang.blaze3d.vertex.VertexFormat format();
+  public com.mojang.blaze3d.vertex.VertexFormat$Mode mode();
+  public java.util.Optional<net.minecraft.client.renderer.rendertype.RenderType> outline();
+  public boolean isOutline();
+  public com.mojang.blaze3d.pipeline.RenderPipeline pipeline();
+  public boolean affectsCrumbling();
+  public boolean canConsolidateConsecutiveGeometry();
+  public boolean sortOnUpload();
+  private java.lang.String method_75941();
+  private static net.minecraft.client.renderer.rendertype.RenderType method_75939(net.minecraft.client.renderer.rendertype.RenderSetup, net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding);
+}
+Compiled from "RenderSetup.java"
+public final class net.minecraft.client.renderer.rendertype.RenderSetup {
+  final com.mojang.blaze3d.pipeline.RenderPipeline pipeline;
+  final java.util.Map<java.lang.String, net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding> textures;
+  final net.minecraft.client.renderer.rendertype.TextureTransform textureTransform;
+  final net.minecraft.client.renderer.rendertype.OutputTarget outputTarget;
+  final net.minecraft.client.renderer.rendertype.RenderSetup$OutlineProperty outlineProperty;
+  final boolean useLightmap;
+  final boolean useOverlay;
+  final boolean affectsCrumbling;
+  final boolean sortOnUpload;
+  final int bufferSize;
+  final net.minecraft.client.renderer.rendertype.LayeringTransform layeringTransform;
+  net.minecraft.client.renderer.rendertype.RenderSetup(com.mojang.blaze3d.pipeline.RenderPipeline, java.util.Map<java.lang.String, net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding>, boolean, boolean, net.minecraft.client.renderer.rendertype.LayeringTransform, net.minecraft.client.renderer.rendertype.OutputTarget, net.minecraft.client.renderer.rendertype.TextureTransform, net.minecraft.client.renderer.rendertype.RenderSetup$OutlineProperty, boolean, boolean, int);
+  public java.lang.String toString();
+  public static net.minecraft.client.renderer.rendertype.RenderSetup$RenderSetupBuilder builder(com.mojang.blaze3d.pipeline.RenderPipeline);
+  public java.util.Map<java.lang.String, net.minecraft.client.renderer.rendertype.RenderSetup$TextureAndSampler> getTextures();
+}
+Compiled from "RenderSetup.java"
+final class net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding extends java.lang.Record {
+  final net.minecraft.resources.Identifier location;
+  private final java.util.function.Supplier<com.mojang.blaze3d.textures.GpuSampler> sampler;
+  net.minecraft.client.renderer.rendertype.RenderSetup$TextureBinding(net.minecraft.resources.Identifier, java.util.function.Supplier<com.mojang.blaze3d.textures.GpuSampler>);
+  public final java.lang.String toString();
+  public final int hashCode();
+  public final boolean equals(java.lang.Object);
+  public net.minecraft.resources.Identifier location();
+  public java.util.function.Supplier<com.mojang.blaze3d.textures.GpuSampler> sampler();
+}
+Compiled from "CameraRenderState.java"
+public class net.minecraft.client.renderer.state.CameraRenderState {
+  public net.minecraft.core.BlockPos blockPos;
+  public net.minecraft.world.phys.Vec3 pos;
+  public boolean initialized;
+  public net.minecraft.world.phys.Vec3 entityPos;
+  public org.joml.Quaternionf orientation;
+  public net.minecraft.client.renderer.state.CameraRenderState();
+}
+Compiled from "AbstractTexture.java"
+public abstract class net.minecraft.client.renderer.texture.AbstractTexture implements java.lang.AutoCloseable {
+  protected com.mojang.blaze3d.textures.GpuTexture texture;
+  protected com.mojang.blaze3d.textures.GpuTextureView textureView;
+  protected com.mojang.blaze3d.textures.GpuSampler sampler;
+  public net.minecraft.client.renderer.texture.AbstractTexture();
+  public void close();
+  public com.mojang.blaze3d.textures.GpuTexture getTexture();
+  public com.mojang.blaze3d.textures.GpuTextureView getTextureView();
+  public com.mojang.blaze3d.textures.GpuSampler getSampler();
+}
+Compiled from "RenderPipeline.java"
+public class com.mojang.blaze3d.pipeline.RenderPipeline$Builder {
+  private static int nextPipelineSortKey;
+  private java.util.Optional<net.minecraft.resources.Identifier> location;
+  private java.util.Optional<net.minecraft.resources.Identifier> fragmentShader;
+  private java.util.Optional<net.minecraft.resources.Identifier> vertexShader;
+  private java.util.Optional<net.minecraft.client.renderer.ShaderDefines$Builder> definesBuilder;
+  private java.util.Optional<java.util.List<java.lang.String>> samplers;
+  private java.util.Optional<java.util.List<com.mojang.blaze3d.pipeline.RenderPipeline$UniformDescription>> uniforms;
+  private java.util.Optional<com.mojang.blaze3d.platform.DepthTestFunction> depthTestFunction;
+  private java.util.Optional<com.mojang.blaze3d.platform.PolygonMode> polygonMode;
+  private java.util.Optional<java.lang.Boolean> cull;
+  private java.util.Optional<java.lang.Boolean> writeColor;
+  private java.util.Optional<java.lang.Boolean> writeAlpha;
+  private java.util.Optional<java.lang.Boolean> writeDepth;
+  private java.util.Optional<com.mojang.blaze3d.platform.LogicOp> colorLogic;
+  private java.util.Optional<com.mojang.blaze3d.pipeline.BlendFunction> blendFunction;
+  private java.util.Optional<com.mojang.blaze3d.vertex.VertexFormat> vertexFormat;
+  private java.util.Optional<com.mojang.blaze3d.vertex.VertexFormat$Mode> vertexFormatMode;
+  private float depthBiasScaleFactor;
+  private float depthBiasConstant;
+  com.mojang.blaze3d.pipeline.RenderPipeline$Builder();
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withLocation(java.lang.String);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withLocation(net.minecraft.resources.Identifier);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withFragmentShader(java.lang.String);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withFragmentShader(net.minecraft.resources.Identifier);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withVertexShader(java.lang.String);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withVertexShader(net.minecraft.resources.Identifier);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withShaderDefine(java.lang.String);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withShaderDefine(java.lang.String, int);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withShaderDefine(java.lang.String, float);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withSampler(java.lang.String);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withUniform(java.lang.String, com.mojang.blaze3d.shaders.UniformType);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withUniform(java.lang.String, com.mojang.blaze3d.shaders.UniformType, com.mojang.blaze3d.textures.TextureFormat);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withDepthTestFunction(com.mojang.blaze3d.platform.DepthTestFunction);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withPolygonMode(com.mojang.blaze3d.platform.PolygonMode);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withCull(boolean);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withBlend(com.mojang.blaze3d.pipeline.BlendFunction);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withoutBlend();
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withColorWrite(boolean);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withColorWrite(boolean, boolean);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withDepthWrite(boolean);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withColorLogic(com.mojang.blaze3d.platform.LogicOp);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withVertexFormat(com.mojang.blaze3d.vertex.VertexFormat, com.mojang.blaze3d.vertex.VertexFormat$Mode);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Builder withDepthBias(float, float);
+  void withSnippet(com.mojang.blaze3d.pipeline.RenderPipeline$Snippet);
+  public com.mojang.blaze3d.pipeline.RenderPipeline$Snippet buildSnippet();
+  public com.mojang.blaze3d.pipeline.RenderPipeline build();
+  private void lambda$withSnippet$1(java.util.List);
+  private void lambda$withSnippet$0(java.util.List);
+}
+Compiled from "PlayerSkinRenderCache.java"
+public class net.minecraft.client.renderer.PlayerSkinRenderCache {
+  public static final net.minecraft.client.renderer.rendertype.RenderType DEFAULT_PLAYER_SKIN_RENDER_TYPE;
+  public static final java.time.Duration CACHE_DURATION;
+  private final com.google.common.cache.LoadingCache<net.minecraft.world.item.component.ResolvableProfile, java.util.concurrent.CompletableFuture<java.util.Optional<net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo>>> renderInfoCache;
+  private final com.google.common.cache.LoadingCache<net.minecraft.world.item.component.ResolvableProfile, net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo> defaultSkinCache;
+  final net.minecraft.client.renderer.texture.TextureManager textureManager;
+  final net.minecraft.client.resources.SkinManager skinManager;
+  final net.minecraft.server.players.ProfileResolver profileResolver;
+  public net.minecraft.client.renderer.PlayerSkinRenderCache(net.minecraft.client.renderer.texture.TextureManager, net.minecraft.client.resources.SkinManager, net.minecraft.server.players.ProfileResolver);
+  public net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo getOrDefault(net.minecraft.world.item.component.ResolvableProfile);
+  public java.util.function.Supplier<net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo> createLookup(net.minecraft.world.item.component.ResolvableProfile);
+  public java.util.concurrent.CompletableFuture<java.util.Optional<net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo>> lookup(net.minecraft.world.item.component.ResolvableProfile);
+  static net.minecraft.client.renderer.rendertype.RenderType playerSkinRenderType(net.minecraft.world.entity.player.PlayerSkin);
+  private static net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo method_74049(java.util.concurrent.CompletableFuture, net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo);
+  private static net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo method_74048(net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo);
+  static {};
+}
 
 == job status: success ==
