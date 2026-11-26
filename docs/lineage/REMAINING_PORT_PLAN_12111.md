@@ -360,3 +360,5 @@ f1f47537分发45832954441最终 **13/14**：仅none上述重启夹具遗漏confi
 - full本次三次fresh-world成功，新增configuration任务/队列/网络标量诊断编译通过；但f1f47537已实际复现的间歇性configuration-stage超时**仍未根治，不因后来一次SUCCESS而抹掉**。新增失败路径的task/future快照要等下一次真实复现，不能捏造未运行的数据。
 
 **当前边界：R1–R5保持已关闭；R6仍ACTIVE，剩余明确开放项为间歇性dev configuration bootstrap定位/修复及任何后续审计发现。未升级版本、未发布，也未声明整体parity完成。**
+
+14:19 UTC：在上述14/14已完成后，尝试以相同源版本独立workflow_dispatch运行build.yml以捕获新增configuration-task诊断（不重跑失败断言、不给旧失败改状态），GitHub返回HTTP403 `Resource not accessible by integration`，未创建运行。当前集成无Actions dispatch权限；不能把未启动的诊断说成运行过，也不提交无意义源改动来绕过此权限。继续这项独立复现需要维护者手动运行build工作流或补足GitHub连接的Actions运行权限。已触发且完成的push CI结果不受此权限问题影响。
