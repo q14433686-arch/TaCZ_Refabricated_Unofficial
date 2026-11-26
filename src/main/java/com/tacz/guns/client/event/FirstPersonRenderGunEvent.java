@@ -1,5 +1,6 @@
 package com.tacz.guns.client.event;
 
+import com.tacz.guns.util.time.GunTime;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.tacz.guns.api.DefaultAssets;
@@ -14,6 +15,7 @@ import com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor;
 import com.tacz.guns.client.animation.screen.RefitTransform;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
 import com.tacz.guns.client.model.BedrockGunModel;
+import com.tacz.guns.client.tuning.ViewmodelPosition;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.MuzzleFlashRender;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
@@ -99,7 +101,7 @@ public class FirstPersonRenderGunEvent {
             }
             TimelessAPI.getClientGunIndex(iGun.getGunId(mainHandItem)).ifPresent(gunIndex -> {
                 // 记录开火时间戳，用于后坐力程序动画
-                shootTimeStamp = System.currentTimeMillis();
+                shootTimeStamp = GunTime.nowMillis();
                 // 记录枪口火焰数据
                 MuzzleFlashRender.onShoot();
             });
@@ -206,6 +208,7 @@ public class FirstPersonRenderGunEvent {
         List<BedrockPart> toNode = model.getRefitAttachmentViewPath(currentType);
         MathUtil.applyMatrixLerp(transformMatrix, getPositioningNodeInverse(fromNode), transformMatrix, refitScreenOpeningProgress);
         MathUtil.applyMatrixLerp(transformMatrix, getPositioningNodeInverse(toNode), transformMatrix, refitScreenOpeningProgress * refitTransformProgress);
+        ViewmodelPosition.apply(transformMatrix, aimingProgress, refitScreenOpeningProgress);
         // 应用变换到 PoseStack
         poseStack.translate(0, 1.5f, 0);
         poseStack.mulPose(transformMatrix);
@@ -240,7 +243,7 @@ public class FirstPersonRenderGunEvent {
     private static void applyShootSwayAndRotation(BedrockGunModel model, float aimingProgress) {
         BedrockPart rootNode = model.getRootNode();
         if (rootNode != null) {
-            float progress = 1 - (System.currentTimeMillis() - shootTimeStamp) / (SHOOT_ANIMATION_TIME * 1000);
+            float progress = 1 - (GunTime.nowMillis() - shootTimeStamp) / (SHOOT_ANIMATION_TIME * 1000);
             if (progress < 0) {
                 progress = 0;
             }
@@ -254,7 +257,7 @@ public class FirstPersonRenderGunEvent {
 
     private static void applyJumpingSway(BedrockGunModel model, float partialTicks) {
         if (jumpingTimeStamp == -1) {
-            jumpingTimeStamp = System.currentTimeMillis();
+            jumpingTimeStamp = GunTime.nowMillis();
         }
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null) {
@@ -271,7 +274,7 @@ public class FirstPersonRenderGunEvent {
                     }
                     lastOnGround = true;
                 } else {
-                    jumpingSwayProgress -= (System.currentTimeMillis() - jumpingTimeStamp) / (LANDING_SWAY_TIME * 1000);
+                    jumpingSwayProgress -= (GunTime.nowMillis() - jumpingTimeStamp) / (LANDING_SWAY_TIME * 1000);
                     if (jumpingSwayProgress < 0) {
                         jumpingSwayProgress = 0;
                     }
@@ -285,14 +288,14 @@ public class FirstPersonRenderGunEvent {
                     }
                     lastOnGround = false;
                 } else {
-                    jumpingSwayProgress -= (System.currentTimeMillis() - jumpingTimeStamp) / (JUMPING_SWAY_TIME * 1000);
+                    jumpingSwayProgress -= (GunTime.nowMillis() - jumpingTimeStamp) / (JUMPING_SWAY_TIME * 1000);
                     if (jumpingSwayProgress < 0) {
                         jumpingSwayProgress = 0;
                     }
                 }
             }
         }
-        jumpingTimeStamp = System.currentTimeMillis();
+        jumpingTimeStamp = GunTime.nowMillis();
         float ySway = JUMPING_DYNAMICS.update(JUMPING_Y_SWAY * jumpingSwayProgress);
         BedrockPart rootNode = model.getRootNode();
         if (rootNode != null) {
@@ -429,5 +432,15 @@ public class FirstPersonRenderGunEvent {
         poseMatrix.m30(poseMatrix.m30() + constraintTranslation.x() * weight);
         poseMatrix.m31(poseMatrix.m31() + constraintTranslation.y() * weight);
         poseMatrix.m32(poseMatrix.m32() + constraintTranslation.z() * weight);
+    }
+
+    public static void resetTimestamps() {
+        shootTimeStamp = -1;
+        jumpingTimeStamp = -1;
+        jumpingSwayProgress = 0;
+        lastOnGround = false;
+        currentViewIndex = -1;
+        if (SWITCH_VIEW_DYNAMICS != null) SWITCH_VIEW_DYNAMICS.stop();
+        SWITCH_VIEW_DYNAMICS = null;
     }
 }

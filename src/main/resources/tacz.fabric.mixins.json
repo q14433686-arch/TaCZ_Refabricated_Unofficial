@@ -40,6 +40,7 @@
     "client.TextureAtlasMixin",
     "compat.controllable.BindingContextMixin",
     "compat.jei.JeiClientLifecycleHandlerMixin",
+    "compat.roughlyenoughitems.ReiDisplayReceiverMixin",
     "compat.punchy.PunchyArmRendererMixin",
     "compat.punchy.PunchyHandEquipStateMachineMixin",
     "compat.punchy.PunchyHandRenderBobContextMixin",

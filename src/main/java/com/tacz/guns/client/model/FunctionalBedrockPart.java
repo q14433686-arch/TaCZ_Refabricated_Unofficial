@@ -46,8 +46,8 @@ public class FunctionalBedrockPart extends BedrockPart {
     public void render(PoseStack poseStack, ItemDisplayContext transformType, VertexConsumer consumer, int light, int overlay, float red, float green, float blue, float alpha) {
         int cubePackedLight = light;
         if (illuminated) {
-            // 最大亮度
-            cubePackedLight = 15728880;
+            // IlluminatedLights: full bright without shaders, real sky column under shader packs.
+            cubePackedLight = com.tacz.guns.util.IlluminatedLights.resolve(light);
         }
 
         poseStack.pushPose();

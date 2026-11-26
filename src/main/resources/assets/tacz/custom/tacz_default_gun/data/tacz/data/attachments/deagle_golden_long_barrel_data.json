@@ -1,0 +1,24 @@
+{
+  "weight": 0.4,
+  "ads": {
+    // 加数（多个配件的数值相加，作为第一个乘区）
+    "addend": 0.04
+  },
+  "inaccuracy": {
+    "multiplier": 0.9
+  },
+  "aim_inaccuracy": {
+    "multiplier": 0.85
+  },
+  "recoil": {
+    "pitch": {
+      "multiplier": 0.8
+    },
+    "yaw": {
+      "multiplier": 0.8
+    }
+  },
+  "effective_range": {
+    "addend": 5
+  }
+}

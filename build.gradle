@@ -136,6 +136,8 @@ repositories {
     }
 }
 
+test { useJUnitPlatform() }
+
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.12.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -260,6 +262,8 @@ dependencies {
 
     // REI — 26.1.2
     modCompileOnly "dev.architectury:architectury-fabric:${architectury_version}"
+    // Holder removal is needed for an owned-only refresh; never package the optional viewer.
+    modCompileOnly("me.shedaniel:RoughlyEnoughItems-fabric:$rei_version") { transitive = false }
     modCompileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:$rei_version"
     modCompileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin-fabric:$rei_version"
 
@@ -281,34 +285,20 @@ processResources {
     inputs.file bundledSourcesAndResources
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-    // Any file hand-written under src/main/resources overrides its bundle copy.
-    // DuplicatesStrategy.EXCLUDE already makes the first spec win (the source-set
-    // resources are added before this one), but relying on copy-spec ordering is
-    // fragile: a bundle file that shadows a deliberate fix fails silently at runtime.
-    // Enumerate the overrides and exclude them explicitly instead.
-    //
-    // This exists because assets/tacz/shaders/core/scope_body.vsh in the 26.1.2 bundle
-    // still imports <minecraft:sample_lightmap.glsl>, an include that does not exist in
-    // 1.21.11. ShaderManager NPEs on the missing import, the resource reload aborts with
-    // "Caught error loading resourcepacks", and the client hangs on a black screen.
-    // See docs/verify_shader_imports.py.
-    def overriddenBySource = []
-    def sourceResourceRoot = file("src/main/resources")
-    if (sourceResourceRoot.exists()) {
-        sourceResourceRoot.eachFileRecurse(groovy.io.FileType.FILES) { f ->
-            overriddenBySource << sourceResourceRoot.toPath()
-                    .relativize(f.toPath()).toString().replace(File.separator, "/")
-        }
-    }
-
+    // Preserve the immutable historical bundle. Never let a retired entry or a fallback
+    // copy of a target-specific shader/resource slip into the intermediary product.
+    def sourceRoot = file('src/main/resources')
+    def retiredPaths = file('resources/retired-default-pack-paths.txt')
+    inputs.file retiredPaths
+    def retired = retiredPaths.readLines('UTF-8').collect { "assets/tacz/custom/tacz_default_gun/$it".toString() }.toSet()
     from(zipTree(bundledSourcesAndResources)) {
+        exclude { e -> !e.directory && (retired.contains(e.path) || new File(sourceRoot, e.path).isFile()) }
         exclude "META-INF/**"
         exclude "**/*.java"
         exclude "fabric.mod.json"
         exclude "*.mixins.json"
         exclude "tacz.accesswidener"
         exclude "shouldersurfing_plugin.json"
-        overriddenBySource.each { exclude it }
     }
     inputs.property "minecraft_version", project.minecraft_version
     inputs.property "loader_version", project.loader_version

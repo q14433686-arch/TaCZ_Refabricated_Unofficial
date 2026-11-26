@@ -4,7 +4,6 @@ import cn.sh1rocu.tacz.util.forge.PathPackResources;
 import com.tacz.guns.GunMod;
 import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackResources;
 
 import java.io.IOException;
@@ -38,7 +37,7 @@ public final class GunPackOverlayResolver {
         return List.copyOf(selected);
     }
 
-    /** Return layers highest-priority first. All paths pass through the same 1.21.11 recipe compatibility layer. */
+    /** Return layers highest-priority first. All paths pass through the same 1.21.11 aggregate and legacy-recipe migrator. */
     static List<PackResources> open(Path path, String name, List<String> selected) throws IOException {
         boolean directory = Files.isDirectory(path);
         if (!directory && !selected.isEmpty()) {
@@ -55,7 +54,6 @@ public final class GunPackOverlayResolver {
         FileSystem archive = directory ? null : FileSystems.newFileSystem(path, Map.of());
         try {
             Path root = directory ? path.toRealPath() : archive.getPath("/");
-            Component title = Component.literal(path.getFileName().toString());
             var layers = new ArrayList<PackResources>(selected.size() + 1);
             for (String dir : selected.reversed()) {
                 Path overlay = root.resolve(dir);
@@ -70,11 +68,11 @@ public final class GunPackOverlayResolver {
                         }
                     }
                 }
-                layers.add(new PathPackResources(name, title, false, overlay));
+                layers.add(new PathPackResources(name, false, overlay));
             }
             // Exactly one close owner per mount. Opening metadata, another repository or a reload
             // must never borrow this mount or invalidate a supplier from another resource manager.
-            layers.add(new PathPackResources(name, title, false, root) {
+            layers.add(new PathPackResources(name, false, root) {
                 @Override public void close() {
                     if (archive != null) {
                         try { archive.close(); }

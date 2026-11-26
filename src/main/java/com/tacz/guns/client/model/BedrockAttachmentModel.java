@@ -6,6 +6,7 @@ import com.tacz.guns.client.model.IFunctionalSubmitter;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.bedrock.ModelRendererWrapper;
 import com.tacz.guns.client.model.functional.BeamRenderer;
+import com.tacz.guns.client.model.functional.ImpactMarkerRender;
 import com.tacz.guns.client.render.scope.IReticleRenderer;
 import com.tacz.guns.client.render.scope.ReticleRendererRegistry;
 import com.tacz.guns.client.render.scope.ScopeFinalOverlayState;
@@ -157,6 +158,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     protected @Nullable List<List<BedrockPart>> laserBeamPaths;
 
     private @Nullable ItemStack currentGunItem;
+    private @Nullable ImpactMarkerRender impactMarker;
     private @Nullable ItemStack attachmentItem;
 
     private boolean isScope = false;
@@ -469,6 +471,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      * 枪身上的文字（如弹匣计数）本就该常显。
      */
     public void setTextShowList(Map<String, TextShow> textShowList) {
+        impactMarker = ImpactMarkerRender.of(getPath(modelMap.get(ImpactMarkerRender.NODE)), textShowList);
         textShowList.forEach((name, textShow) -> this.setFunctionalRenderer(name,
                 bedrockPart -> {
                     // 未开镜（或刚开始开镜）时不提交：那时镜内画面不存在（裁剪后文字会整条被丢弃，
@@ -798,6 +801,19 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 // solid-pass rim rather than forcing an otherwise unnecessary deferred pass.
                 collector.order(SCOPE_OCULAR_RING_ORDER).submitCustomGeometry(new PoseStack(), renderType,
                         (entryPose, consumer) -> ocularRingSnapshot.write(consumer));
+            }
+        }
+
+        // 26.1.2: rangefinder impact-marker in the first-person scope path.
+        if (impactMarker != null && transformType != null && transformType.firstPerson()) {
+            Integer active = isScope && isSight && activeViewGroup != 0 ? activeOcularIndex() : null;
+            // Named division roots are hidden from the main pass; respect the active one, but a
+            // root-level locator is common to all groups. Do not draw a marker from the other view.
+            if (active == null || !divisionByIndex.containsKey(active) || divisionByIndex.values().stream().noneMatch(impactMarker.path()::contains)
+                    || impactMarker.path().contains(divisionByIndex.get(active))) {
+                var layer = deferReticleToIrisFinalOverlay ? ImpactMarkerRender.Layer.FINAL_APERTURE
+                        : orderedScopeSequence ? ImpactMarkerRender.Layer.APERTURE : ImpactMarkerRender.Layer.MODEL;
+                impactMarker.submit(currentGunItem, poseStack, collector, layer, overlay);
             }
         }
 

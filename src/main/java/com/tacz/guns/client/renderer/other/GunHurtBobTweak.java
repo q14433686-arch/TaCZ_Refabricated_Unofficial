@@ -1,5 +1,6 @@
 package com.tacz.guns.client.renderer.other;
 
+import com.tacz.guns.util.time.GunTime;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.player.LocalPlayer;
@@ -11,7 +12,7 @@ public class GunHurtBobTweak {
 
     public static boolean onHurtBobTweak(LocalPlayer player, PoseStack matrixStack, float partialTicks) {
         // 原版受伤的时长是 500 ms，所以如果大于 500 ms，那么说明不是子弹造成的伤害了
-        if (System.currentTimeMillis() - hurtByGunTimeStamp > 500) {
+        if (GunTime.nowMillis() - hurtByGunTimeStamp > 500) {
             // 返回 false，让程序调用原版受伤晃动
             return false;
         }
@@ -33,7 +34,12 @@ public class GunHurtBobTweak {
     }
 
     public static void markTimestamp(float tweakMultiplier) {
-        hurtByGunTimeStamp = System.currentTimeMillis();
+        hurtByGunTimeStamp = GunTime.nowMillis();
         lastTweakMultiplier = tweakMultiplier;
+    }
+
+    public static void resetTimestamp() {
+        hurtByGunTimeStamp = -1L;
+        lastTweakMultiplier = 0.05f;
     }
 }

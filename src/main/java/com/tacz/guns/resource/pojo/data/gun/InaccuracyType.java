@@ -9,6 +9,7 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.Map;
+import java.util.function.DoubleSupplier;
 
 public enum InaccuracyType {
     /**
@@ -44,6 +45,11 @@ public enum InaccuracyType {
      * @return 不准度情况
      */
     public static InaccuracyType getInaccuracyType(LivingEntity livingEntity) {
+        return getInaccuracyType(livingEntity, () -> movement(livingEntity));
+    }
+
+    /** Same stance priority on both sides; the HUD has local tick displacement, not the server's hitbox history. */
+    public static InaccuracyType getInaccuracyType(LivingEntity livingEntity, DoubleSupplier displacement) {
         float aimingProgress = IGunOperator.fromLivingEntity(livingEntity).getSynAimingProgress();
         // 瞄准优先级最高
         if (aimingProgress == 1.0f) {
@@ -56,7 +62,7 @@ public enum InaccuracyType {
         if (livingEntity.getPose() == Pose.CROUCHING) {
             return InaccuracyType.SNEAK;
         }
-        if (isMove(livingEntity)) {
+        if (displacement.getAsDouble() > 0.05f) {
             return InaccuracyType.MOVE;
         }
         return InaccuracyType.STAND;
@@ -72,7 +78,7 @@ public enum InaccuracyType {
         return inaccuracy;
     }
 
-    private static boolean isMove(LivingEntity livingEntity) {
+    private static double movement(LivingEntity livingEntity) {
         // 26.2 对齐：上游 1.21.1 用的是 Math.abs(walkDist - walkDistO)，即“本 tick 的水平位移 * 0.6”。
         // 移植时换成了 walkAnimation.speed()，两者量纲不同：
         //   walkDist 增量        = 位移 * 0.6
@@ -86,7 +92,7 @@ public enum InaccuracyType {
         if (livingEntity instanceof Player player) {
             distance = HitboxHelper.getPlayerVelocity(player).length();
         }
-        return distance > 0.05f;
+        return distance;
     }
 
     public boolean isAim() {

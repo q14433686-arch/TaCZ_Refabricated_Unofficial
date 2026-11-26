@@ -1,0 +1,9 @@
+{
+  "name": "Test mount",
+  "display": "tacz:riser_rail_mid_adapter_display",
+  "data": "port_test:mount",
+  "slot": "scope",
+  "allowed_attachments": [
+    "#port_test:optics"
+  ]
+}

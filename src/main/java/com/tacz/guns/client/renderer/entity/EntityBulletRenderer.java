@@ -67,7 +67,7 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
         EntityKineticBullet bullet = state.bullet;
         if (bullet == null) return;
         float partialTicks = state.partialTicks;
-        
+
         Identifier gunId = bullet.getGunId();
         Identifier gunDisplayId = bullet.getGunDisplayId();
         Optional<GunDisplayInstance> display = TimelessAPI.getGunDisplay(gunDisplayId, gunId);
@@ -96,7 +96,7 @@ public class EntityBulletRenderer extends EntityRenderer<EntityKineticBullet, En
             }
         });
     }
-    
+
     private RenderType getRenderType(Identifier textureLocation) {
         // 由于entityTranslucentCull不可用，使用entityTranslucent作为替代
         return RenderTypes.entityTranslucent(textureLocation);

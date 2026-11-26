@@ -1,100 +1,60 @@
 package com.tacz.guns.util;
 
-import java.util.LinkedList;
+import com.tacz.guns.util.time.GunTime;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
+/** Ticked on the server thread. Lua may schedule another cycle from inside a callback. */
 public final class CycleTaskHelper {
-    private static final List<CycleTaskTicker> CYCLE_TASKS = new LinkedList<>();
-    private static final List<CycleTaskTicker> TEMP_CYCLE_TASKS = new LinkedList<>();
+    private static final List<Cycle> tasks = new ArrayList<>();
+    private CycleTaskHelper() {}
 
-    /**
-     * 根据提供的时间间隔循环执行任务。会立刻调用一次。
-     *
-     * @param task     循环执行的任务，会根据返回的 boolean 值决定是否继续下一次循环。如果返回 false ，则将不再循环。
-     * @param periodMs 循环调用的时间间隔，单位为毫秒。
-     * @param cycles   最大循环次数。-1 代表无限次。
-     */
     public static void addCycleTask(BooleanSupplier task, long periodMs, int cycles) {
-        CycleTaskTicker ticker = new CycleTaskTicker(task, periodMs, cycles);
-        if (ticker.tick()) {
-            CYCLE_TASKS.add(ticker);
-        }
+        addCycleTask(task, 0, periodMs, cycles);
     }
 
     public static void addCycleTask(BooleanSupplier task, long delayMs, long periodMs, int cycles) {
-        if (delayMs <= 0) {
-            addCycleTask(task, periodMs, cycles);
-            return;
-        }
-        CycleTaskTicker ticker = new CycleTaskTicker(task, delayMs, periodMs, cycles);
-        CYCLE_TASKS.add(ticker);
+        long now = GunTime.nowMillis();
+        var cycle = new Cycle(task, now + Math.max(0, delayMs), periodMs, cycles, GunTime.epoch());
+        if (cycle.tick(now, GunTime.epoch(), GunTime.shouldTick())) tasks.add(cycle);
     }
 
     public static void tick() {
-        TEMP_CYCLE_TASKS.addAll(CYCLE_TASKS);
-        CYCLE_TASKS.clear();
-        TEMP_CYCLE_TASKS.removeIf(ticker -> !ticker.tick());
-        CYCLE_TASKS.addAll(TEMP_CYCLE_TASKS);
-        TEMP_CYCLE_TASKS.clear();
+        if (tasks.isEmpty()) return;
+        var current = List.copyOf(tasks);
+        tasks.clear();
+        long now = GunTime.nowMillis();
+        for (var cycle : current) {
+            if (cycle.tick(now, GunTime.epoch(), GunTime.shouldTick())) tasks.add(cycle);
+        }
     }
 
-    private static class CycleTaskTicker {
-        private final BooleanSupplier task;
-        private final float periodS;
-        private final int cycles;
-        private float delayS = 0;
-        private long timestamp = -1;
-        private float compensation = 0;
-        private int count = 0;
+    public static void clear() { tasks.clear(); }
 
-        private CycleTaskTicker(BooleanSupplier task, long periodMs, int cycles) {
-            this.task = task;
-            this.periodS = periodMs / 1000f;
-            this.cycles = cycles;
+    static final class Cycle {
+        final BooleanSupplier action;
+        final long period, epoch;
+        long due;
+        int remaining;
+
+        Cycle(BooleanSupplier action, long due, long period, int cycles, long epoch) {
+            this.action = action;
+            this.due = due;
+            this.period = Math.max(1, period);
+            this.remaining = cycles;
+            this.epoch = epoch;
         }
 
-        private CycleTaskTicker(BooleanSupplier task, long delayMs, long periodMs, int cycles) {
-            this.delayS = delayMs / 1000f;
-            this.timestamp = System.currentTimeMillis();
-            this.task = task;
-            this.periodS = periodMs / 1000f;
-            this.cycles = cycles;
-        }
-
-        private boolean tick() {
-            if (timestamp == -1) {
-                timestamp = System.currentTimeMillis();
-                if (cycles > 0 && ++count > cycles) {
-                    return false;
-                }
-                return task.getAsBoolean();
-            }
-            float duration = (System.currentTimeMillis() - timestamp) / 1000f + compensation;
-            if (delayS > 0) {
-                if (delayS > duration) {
-                    // 延迟还没结束，减少延迟，继续tick
-                    delayS = delayS - duration;
-                    return true;
-                } else {
-                    // 延迟执行结束，将延迟设为 0
-                    // 减少 duration 再加上一个 period，使得后续循环中 task 至少被执行一次。
-                    delayS = 0;
-                    duration = duration - delayS + periodS;
-                }
-            }
-            if (duration > periodS) {
-                compensation = duration;
-                timestamp = System.currentTimeMillis();
-                while (compensation > periodS) {
-                    if (cycles > 0 && ++count > cycles) {
-                        return false;
-                    }
-                    if (!task.getAsBoolean()) {
-                        return false;
-                    }
-                    compensation -= periodS;
-                }
+        boolean tick(long now, long currentEpoch, boolean running) {
+            if (epoch != currentEpoch || remaining == 0 || remaining < -1) return false;
+            if (!running) return true;
+            // Keep sub-tick periods, but do not replay an unbounded backlog on a stalled tick.
+            for (int n = 0; due <= now; n++) {
+                if (!action.getAsBoolean() || remaining > 0 && --remaining == 0) return false;
+                due += period;
+                if (n == 63 && due <= now) { due = now + period; break; }
             }
             return true;
         }

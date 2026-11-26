@@ -38,6 +38,18 @@ class GunPackSyncTest {
         assertArrayEquals(new byte[]{1, 2, 3}, receiver.accept(part));
     }
 
+    @Test void legacyOnlySeesKnownOrdinalsAndStringBuiltinData() {
+        var id = Identifier.parse("test:gun");
+        var old = ServerMessageSyncGunPackPart.prepare(Map.of(DataType.GUN_DATA, Map.of(id, "{builtin_attachments:{scope:'test:a'}}"),
+                DataType.SLOT_ADAPTER_INDEX, Map.of()));
+        assertFalse(old.extended());
+        assertFalse(old.legacy().getCache().containsKey(DataType.SLOT_ADAPTER_INDEX));
+        var object = ServerMessageSyncGunPackPart.prepare(Map.of(DataType.GUN_DATA, Map.of(id, "{builtin_attachments:{scope:['test:a']}}")));
+        assertTrue(object.extended());
+        assertNull(object.legacy());
+        assertTrue(ServerMessageSyncGunPackPart.prepare(Map.of(DataType.SLOT_ADAPTER_DATA, Map.of(id, "{}"))).extended());
+    }
+
     @Test void actualPayloadCodecsAndLegacyLimit() throws Exception {
         var id = Identifier.parse("fixture:gun");
         var json = "x".repeat(Short.MAX_VALUE + 1);

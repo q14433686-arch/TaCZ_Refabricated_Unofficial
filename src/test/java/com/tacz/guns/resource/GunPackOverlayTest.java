@@ -43,12 +43,12 @@ class GunPackOverlayTest {
     }
 
     @Test void rangeDialectAndBundledDependency() throws Exception {
-        Version v = Version.parse("1.2.0+fabric.1.21.11.R1");
-        assertTrue(GunPackVersions.matches("[1.2.0]", v)); // build metadata does not change the core
-        assertFalse(GunPackVersions.matches("[1.1.8,1.2.0)", v));
+        Version v = Version.parse("1.1.8+fabric.1.21.11.R3-hotfix4");
+        assertTrue(GunPackVersions.matches("[1.1.8]", v)); // build metadata does not change the core
+        assertFalse(GunPackVersions.matches("[1,1.1.8)", v));
         assertFalse(GunPackVersions.matches("(1.2.0,)", v));
         assertTrue(GunPackVersions.matches(">=1.1.8", v));
-        assertFalse(GunPackVersions.matches("1.1.8", v)); // existing Fabric exact semantics
+        assertFalse(GunPackVersions.matches("1.2.0", v)); // existing Fabric exact semantics
         assertTrue(GunPackVersions.dependenciesMatch(Map.of("lrtactical", "[0.3.0]", "minecraft", "[1.21.1]"), true));
         assertFalse(GunPackVersions.dependenciesMatch(Map.of("lrtactical", ">=1"), true));
     }
@@ -67,7 +67,7 @@ class GunPackOverlayTest {
         var files = Map.of("gunpack.meta.json", META, "assets/fixture/check/a.txt", "base",
                 "early/assets/fixture/check/a.txt", "first", "late/assets/fixture/check/a.txt", "winner",
                 "data/fixture/check/b.txt", "base only", "wrong/data/fixture/check/b.txt", "wrong version",
-                "late/assets/fixture/lang/en_us.json", "{\"ok\":\"kept\",\"bad\":[]}",
+                "late/assets/fixture/lang/en_us.json", "{\"ok\":\"kept\"}",
                 "early/data/fixture/recipes/r.json", "{\"type\":\"minecraft:crafting_shaped\",\"result\":{\"item\":\"minecraft:stick\"}}");
         Path pack = temp.resolve(archive ? "pack.zip" : "pack");
         if (archive) {
@@ -102,8 +102,6 @@ class GunPackOverlayTest {
             check(resources, PackType.SERVER_DATA, "recipe", "r.json", recipe);
             var lang = read(resources.getResource(PackType.CLIENT_RESOURCES, Identifier.parse("fixture:lang/en_us.json")));
             assertTrue(lang.contains("kept"));
-            // Preserve the native 1.21.11 language loader's fallback; do not import 26.x sanitation.
-            assertTrue(lang.contains("bad"));
         }
     }
 

@@ -1,5 +1,6 @@
 package com.tacz.guns.client.gui.overlay;
 
+import com.tacz.guns.util.time.GunTime;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.config.client.RenderConfig;
@@ -50,7 +51,7 @@ public class KillAmountOverlay {
         // 连杀数达到该值时颜色变到最红；上游取 30。
         float colorCount = 30;
 
-        long remainTime = System.currentTimeMillis() - killTimestamp;
+        long remainTime = GunTime.nowMillis() - killTimestamp;
         if (remainTime > timeout) {
             return;
         }
@@ -94,10 +95,15 @@ public class KillAmountOverlay {
 
     public static void markTimestamp() {
         int timeout = (int) (RenderConfig.KILL_AMOUNT_DURATION_SECOND.get() * 1000);
-        if (System.currentTimeMillis() - killTimestamp > timeout) {
+        if (GunTime.nowMillis() - killTimestamp > timeout) {
             killAmount = 0;
         }
-        killTimestamp = System.currentTimeMillis();
+        killTimestamp = GunTime.nowMillis();
         killAmount += 1;
+    }
+
+    public static void resetTimestamp() {
+        killTimestamp = -1L;
+        killAmount = 0;
     }
 }

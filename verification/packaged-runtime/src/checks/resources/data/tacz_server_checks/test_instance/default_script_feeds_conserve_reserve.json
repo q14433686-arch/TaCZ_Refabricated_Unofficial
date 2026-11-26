@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tacz_server_checks:default_script_feeds_conserve_reserve",
+  "structure": "fabric-gametest-api-v1:empty",
+  "max_ticks": 80,
+  "setup_ticks": 1,
+  "required": true
+}

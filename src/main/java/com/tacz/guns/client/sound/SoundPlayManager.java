@@ -160,6 +160,12 @@ public class SoundPlayManager {
         tmpSoundInstance = playCompositeAnimationContainerSound(entity, sound);
     }
 
+    public static void playUnloadSound(LivingEntity entity, Identifier gunId, Identifier displayId) {
+        var sound = TimelessAPI.getGunDisplay(displayId, gunId).map(display -> display.getSounds(SoundManager.UNLOAD_SOUND))
+                .orElseGet(() -> Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "attachments/attachment_general_uninstall"));
+        playClientSound(entity, sound, 1f, 1f, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get());
+    }
+
     public static void playInspectSound(LivingEntity entity, GunDisplayInstance display, boolean noAmmo) {
         Identifier sound = display.getSounds(noAmmo ? SoundManager.INSPECT_EMPTY_SOUND : SoundManager.INSPECT_SOUND);
         tmpSoundInstance = playCompositeAnimationContainerSound(entity, sound);

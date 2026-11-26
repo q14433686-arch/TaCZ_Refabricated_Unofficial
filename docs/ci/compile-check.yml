@@ -50,7 +50,7 @@ jobs:
         run: |
           mkdir -p build-reports
           echo "commit: ${{ github.sha }}" > build-reports/compile-java.log
-          ./gradlew compileJava compileTestJava compileGametestJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
+          ./gradlew --init-script scripts/ci-central.init.gradle compileJava compileTestJava compileGametestJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
 
       - name: Push compile log back via contents API
         # 只有 arena/** 回推：主分支的提交历史必须干净

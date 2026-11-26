@@ -42,6 +42,9 @@ public class ClientAttachmentIndex {
     private float[] viewsFov;
     private float @Nullable [] zoom;
     private int[] views;
+    private float muzzleFlashOffset;
+
+    public float getMuzzleFlashOffset() { return muzzleFlashOffset; }
     private boolean isScope;
     private boolean isSight;
     private boolean showMuzzle;
@@ -111,6 +114,7 @@ public class ClientAttachmentIndex {
                 }
             }
         }
+        index.muzzleFlashOffset = display.getMuzzleFlashOffset();
         index.isScope = display.isScope();
         index.isSight = display.isSight();
         index.adapterNodeName = display.getAdapterNodeName();

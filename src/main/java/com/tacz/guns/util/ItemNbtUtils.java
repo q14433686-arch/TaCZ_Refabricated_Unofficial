@@ -1,5 +1,6 @@
 package com.tacz.guns.util;
 
+import cn.sh1rocu.tacz.TaCZFabric;
 import com.mojang.serialization.DataResult;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponents;
@@ -14,21 +15,39 @@ import net.minecraft.world.item.component.CustomData;
 import java.util.function.Consumer;
 
 /**
- * Utility class for accessing ItemStack custom data in MC 26.2+.
+ * Access to custom data and nested component-bearing stacks on Fabric 1.21.11.
  * Replaces the removed getOrCreateTag()/getTag()/hasTag() methods.
  */
 public final class ItemNbtUtils {
-    private static RegistryOps<Tag> nbtOps;
+    // Built-in registries alone cannot encode nested stacks that refer to world data
+    // (e.g. enchantments). Never reuse an old connection's holder owners after logout.
+    private static volatile RegistryOps<Tag> clientOps, serverOps;
+
+    private static final class Bootstrap {
+        static final RegistryOps<Tag> OPS = RegistryOps.create(NbtOps.INSTANCE,
+                RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY));
+    }
+
+    public static void updateRegistries(RegistryAccess registries, boolean client) {
+        RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, registries);
+        if (client) clientOps = ops; else serverOps = ops;
+    }
+
+    public static void clearRegistries(boolean client) {
+        if (client) clientOps = null; else serverOps = null;
+    }
 
     private ItemNbtUtils() {
     }
 
     private static RegistryOps<Tag> getOps() {
-        if (nbtOps == null) {
-            RegistryAccess access = RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
-            nbtOps = RegistryOps.create(NbtOps.INSTANCE, access);
+        var client = clientOps;
+        var server = serverOps;
+        if (client != null && server != null) {
+            var owner = TaCZFabric.getServer();
+            return owner != null && owner.isSameThread() ? server : client;
         }
-        return nbtOps;
+        return client != null ? client : server != null ? server : Bootstrap.OPS;
     }
 
     /**

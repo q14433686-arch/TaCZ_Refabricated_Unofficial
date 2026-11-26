@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "tacz_packaged_probe",
+  "version": "1.0.0",
+  "name": "1.21.11 distribution test client",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-client-gametest": [
+      "com.tacz.probe.PackagedConnectionProbe"
+    ],
+    "jei_mod_plugin": []
+  },
+  "depends": {
+    "tacz": "*",
+    "minecraft": "1.21.11"
+  }
+}

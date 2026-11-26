@@ -16,7 +16,8 @@ Checks:
 
 Run from the repo root:  python3 docs/verify_mixin_targets.py
 """
-import re, json, os, subprocess, glob, sys
+import re, json, os, subprocess, sys
+from target_12111_jar import named_jar
 
 # 【可移植化 2026-09-02】原先这两条是沙箱专属硬编码路径
 # （/usr/lib/jvm/java-21-openjdk-amd64 与 /home/user/.gradle），挂进 GitHub Actions 必然找不到：
@@ -33,14 +34,7 @@ def _find_javap():
 
 
 JAVAP = _find_javap()
-_GRADLE_HOME = os.environ.get('GRADLE_USER_HOME') or os.path.expanduser('~/.gradle')
-_j = sorted(glob.glob(os.path.join(
-    _GRADLE_HOME, 'caches', 'fabric-loom', 'minecraftMaven',
-    'net', 'minecraft', 'minecraft-merged', '1.21.11*', '*.jar')))
-if not _j:
-    sys.exit('1.21.11 merged jar not found - run ./gradlew help first '
-             '(looked under %s)' % _GRADLE_HOME)
-JAR = _j[0]
+JAR = named_jar()
 SRC = 'src/main/java'
 VANILLA = ('net.minecraft', 'com.mojang')
 
@@ -247,6 +241,8 @@ def main():
                         problems.append((base, 'AT-DESC', owner, t2.group(2) + t2.group(3)))
 
     print(f'checked {checked} items across {len(_sig)} vanilla classes\n')
+    if not checked:
+        sys.exit('No vanilla targets were checked (check javap and the named JAR)')
     if not problems:
         print('OK - all targets and handler signatures resolve against 1.21.11')
         return 0

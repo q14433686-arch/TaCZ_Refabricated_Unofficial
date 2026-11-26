@@ -11,6 +11,8 @@ public class SyncConfig {
     public static ForgeConfigSpec.ConfigValue<List<String>> INTERACT_KEY_WHITELIST_ENTITIES;
     public static ForgeConfigSpec.ConfigValue<List<String>> INTERACT_KEY_BLACKLIST_BLOCKS;
     public static ForgeConfigSpec.ConfigValue<List<String>> INTERACT_KEY_BLACKLIST_ENTITIES;
+    public static ForgeConfigSpec.ConfigValue<List<String>> GUN_PEGBOARD_WHITELIST_ITEMS;
+    public static ForgeConfigSpec.ConfigValue<List<String>> GUN_PEGBOARD_BLACKLIST_ITEMS;
     public static ForgeConfigSpec.BooleanValue ENABLE_TABLE_FILTER;
     public static ForgeConfigSpec.BooleanValue SERVER_SHOOT_NETWORK_V;
     public static ForgeConfigSpec.BooleanValue SERVER_SHOOT_COOLDOWN_V;
@@ -19,6 +21,8 @@ public class SyncConfig {
     public static ForgeConfigSpec.DoubleValue DAMAGE_BASE_MULTIPLIER;
     public static ForgeConfigSpec.DoubleValue ARMOR_IGNORE_BASE_MULTIPLIER;
     public static ForgeConfigSpec.DoubleValue HEAD_SHOT_BASE_MULTIPLIER;
+    /** 方块命中特效的同步半格（donor 26.1.2 {@code BulletHitBlockEffectSendDistance}）。 */
+    public static ForgeConfigSpec.IntValue BULLET_HIT_BLOCK_EFFECT_SEND_DISTANCE;
     public static ForgeConfigSpec.DoubleValue WEIGHT_SPEED_MULTIPLIER;
 
     // 需要同步到客户端，方便客户端 debug 显示碰撞箱
@@ -29,9 +33,14 @@ public class SyncConfig {
     public static ForgeConfigSpec.ConfigValue<List<List<String>>> CLIENT_GUN_PACK_DOWNLOAD_URLS;
     // 禁用趴下战术动作
     public static ForgeConfigSpec.BooleanValue ENABLE_CRAWL;
+    public static ForgeConfigSpec.BooleanValue ENABLE_CRAWL_WITHOUT_GUN;
 
     public static void init(ForgeConfigSpec.Builder builder) {
         interactKey(builder);
+        builder.push("gun_pegboard");
+        GUN_PEGBOARD_WHITELIST_ITEMS = builder.comment("Additional item ids permitted on display walls").define("GunPegboardWhitelistItems", Lists.newArrayList());
+        GUN_PEGBOARD_BLACKLIST_ITEMS = builder.comment("Denied display item ids (overrides whitelist and built-ins)").define("GunPegboardBlacklistItems", Lists.newArrayList());
+        builder.pop();
         baseMultiplier(builder);
         misc(builder);
     }
@@ -74,6 +83,8 @@ public class SyncConfig {
 
     private static void misc(ForgeConfigSpec.Builder builder) {
         builder.push("misc");
+        // 随 f26 接线引入，定义逐字取自 donor 26.1.2（bc05ca6）。
+        BULLET_HIT_BLOCK_EFFECT_SEND_DISTANCE = builder.comment("Impact effect send radius; 0 means unlimited in the same level, shooter is always included").defineInRange("BulletHitBlockEffectSendDistance", 128, 0, Integer.MAX_VALUE);
 
         builder.comment("The entity's head hitbox during the headshot");
         builder.comment("Format: touhou_little_maid:maid [-0.5, 1.0, -0.5, 0.5, 1.5, 0.5]");
@@ -87,6 +98,8 @@ public class SyncConfig {
 
         builder.comment("Whether or not players are allowed to use the crawl feature");
         ENABLE_CRAWL = builder.define("EnableCrawl", true);
+        ENABLE_CRAWL_WITHOUT_GUN = builder.comment("Allow players to crawl without a gun. Requires EnableCrawl")
+                .define("EnableCrawlWithoutGun", true);
 
         builder.comment("Enable the recipe limit of default gunsmith table or not");
         ENABLE_TABLE_FILTER = builder.define("EnableDefaultGunSmithTableFilter", true);

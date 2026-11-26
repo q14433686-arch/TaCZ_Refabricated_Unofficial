@@ -123,6 +123,17 @@ public final class ScopeDepthCopyState {
     }
 
     /**
+     * 26.2 的 {@code ScopePipRenderer#frameNumber()} 等价物：当前客户端帧号。
+     *
+     * <p>1.2.0 的表面光源/枪口锚点用它做"这份锚点还新不新鲜"的判定（{@code frame - a.frame <= 2}），
+     * 因此这里暴露的就是 {@link #onClientFrameStart()} 递增的那个计数，不再单独维护第二个计数器
+     * ——两个计数器一旦不同步，"新鲜度"判据会静默失效。</p>
+     */
+    public static int frameNumber() {
+        return frameCounter;
+    }
+
+    /**
      * 本帧手部阶段是否已完成整帧掩码周期（{@code maskValid} 且周期落在当前帧）。
      *
      * <p>供「与目镜序列同帧」的消费者使用：poly_mesh 手部批次的孔外剔除（目镜序列先

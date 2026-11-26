@@ -7,7 +7,7 @@ import tempfile
 import unittest
 import zipfile
 
-SPEC = importlib.util.spec_from_file_location('audit_12111', Path(__file__).resolve().parents[1] / 'scripts/audit_12111_jar.py')
+SPEC = importlib.util.spec_from_file_location('audit_12111', Path(__file__).resolve().parents[1] / 'scripts/audit_12111_foundation_jar.py')
 AUDIT = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(AUDIT)
 

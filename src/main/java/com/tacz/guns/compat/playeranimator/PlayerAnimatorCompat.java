@@ -14,7 +14,7 @@ import java.io.File;
 import java.util.function.Consumer;
 import java.util.zip.ZipFile;
 
-/** Compatibility facade migrated from the discontinued KosmX PlayerAnimator to PAL 1.2.5. */
+/** Compatibility facade migrated from the discontinued KosmX PlayerAnimator to target PAL 1.1.9. */
 public final class PlayerAnimatorCompat {
     public static final Identifier LOWER_ANIMATION = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "lower_animation");
     public static final Identifier LOOP_UPPER_ANIMATION = Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "loop_upper_animation");
@@ -53,6 +53,11 @@ public final class PlayerAnimatorCompat {
     public static boolean hasPlayerAnimator3rd(LivingEntity livingEntity, GunDisplayInstance display) {
         return installed && livingEntity instanceof AbstractClientPlayer
                 && PalAnimationManager.hasAnimations(display);
+    }
+
+    /** Rendering fallback for a first visible frame; ticks also update out-of-view players. */
+    public static boolean updatePlayerLayers(LivingEntity entity) {
+        return installed && entity instanceof AbstractClientPlayer player && PalAnimationManager.update(player);
     }
 
     public static void stopAllAnimation(LivingEntity livingEntity) {

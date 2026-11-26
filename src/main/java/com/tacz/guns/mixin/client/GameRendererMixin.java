@@ -10,6 +10,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.event.RenderLevelBobEvent;
 import com.tacz.guns.client.render.scope.ScopeDepthCopyState;
+import com.tacz.guns.client.renderer.crosshair.GunSpread;
 import com.tacz.guns.client.render.scope.ScopeFinalOverlayState;
 import com.tacz.guns.client.render.scope.ScopePipDepthDebug;
 import com.tacz.guns.client.render.scope.ScopePipRenderState;
@@ -174,6 +175,7 @@ public abstract class GameRendererMixin {
         // poly_mesh 世界 GPU：把「本帧正在跑世界渲染」这件事告诉渲染器（世界表的消费点
         // 挂在 renderAllFeatures 的 RETURN 上，那个 API 是公开的，必须圈定语境才安全）。
         // try/finally：世界渲染中途抛异常也不能把标志卡在 true。
+        GunSpread.setWorldProjectionY(projectionMatrix.m11());
         PolyMeshGpuRenderer.setLevelRenderActive(true);
         try {
             ScopePipRerender.renderScopeView(levelRenderer, allocator, deltaTracker, blockOutline,
@@ -189,6 +191,7 @@ public abstract class GameRendererMixin {
     private void tacz$renderTickStart(DeltaTracker deltaTracker, boolean renderLevel, CallbackInfo ci) {
         // poly_mesh GPU：帧首归零绘制表 + 检测光影开关翻转（烘焙世代号）。
         PolyMeshGpuRenderer.beginFrame();
+        GunSpread.setWorldProjectionY(0);
         // 目镜掩码周期的帧戳推进（ScopeDepthCopyState#onClientFrameStart）：帧计数 +1，
         // 「本帧/上一帧有无掩码周期」的时效查询以此为基准。不清 maskValid —— 终局叠加
         // 在本帧手部阶段之前还要用它。

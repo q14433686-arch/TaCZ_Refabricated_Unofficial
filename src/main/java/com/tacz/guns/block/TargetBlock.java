@@ -134,6 +134,7 @@ public class TargetBlock extends BaseEntityBlock {
             if (!world.isClientSide() && projectile.getOwner() instanceof Player player && state.getValue(STAND)) {
                 if (projectile instanceof EntityKineticBullet bullet) {
                     String formattedDamage = String.format("%.1f", bullet.getDamage(hit.getLocation()));
+                    if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) com.tacz.guns.advancement.TargetHitTrigger.INSTANCE.trigger(serverPlayer, hit.getLocation().distanceTo(player.position()));
                     String formattedDistance = String.format("%.2f", hit.getLocation().distanceTo(player.position()));
                     player.displayClientMessage(Component.translatable("message.tacz.target_minecart.hit", formattedDamage, formattedDistance), true);
                 }

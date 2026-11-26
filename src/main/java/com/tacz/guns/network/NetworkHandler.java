@@ -32,8 +32,13 @@ public class NetworkHandler {
      */
     public static void registerPayloads() {
         // C2S (serverbound play)
+        PayloadTypeRegistry.playC2S().register(ClientMessageSelectRefitOption.TYPE, ClientMessageSelectRefitOption.CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessageInstallVirtualAttachment.TYPE, ClientMessageInstallVirtualAttachment.CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessageAmmoStorageClick.TYPE, ClientMessageAmmoStorageClick.STREAM_CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessageAmmoStorageInteract.TYPE, ClientMessageAmmoStorageInteract.STREAM_CODEC);
         PayloadTypeRegistry.playC2S().register(ClientMessagePlayerShoot.TYPE, ClientMessagePlayerShoot.CODEC);
         PayloadTypeRegistry.playC2S().register(ClientMessagePlayerReloadGun.TYPE, ClientMessagePlayerReloadGun.CODEC);
+        PayloadTypeRegistry.playC2S().register(ClientMessagePlayerUnloadGun.TYPE, ClientMessagePlayerUnloadGun.STREAM_CODEC);
         PayloadTypeRegistry.playC2S().register(ClientMessagePlayerCancelReload.TYPE, ClientMessagePlayerCancelReload.CODEC);
         PayloadTypeRegistry.playC2S().register(ClientMessagePlayerFireSelect.TYPE, ClientMessagePlayerFireSelect.CODEC);
         PayloadTypeRegistry.playC2S().register(ClientMessagePlayerAim.TYPE, ClientMessagePlayerAim.CODEC);
@@ -48,6 +53,8 @@ public class NetworkHandler {
         PayloadTypeRegistry.playC2S().register(ClientMessageSyncBaseTimestamp.TYPE, ClientMessageSyncBaseTimestamp.CODEC);
         PayloadTypeRegistry.playC2S().register(ClientMessageLaserColor.TYPE, ClientMessageLaserColor.CODEC);
         // S2C (clientbound play)
+        PayloadTypeRegistry.playS2C().register(ServerMessageSyncGunPackPart.Extended.TYPE, ServerMessageSyncGunPackPart.Extended.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageAmmoStorageContents.TYPE, ServerMessageAmmoStorageContents.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(ServerMessageSound.TYPE, ServerMessageSound.CODEC);
         PayloadTypeRegistry.playS2C().register(ServerMessageCraft.TYPE, ServerMessageCraft.CODEC);
         PayloadTypeRegistry.playS2C().register(ServerMessageRefreshRefitScreen.TYPE, ServerMessageRefreshRefitScreen.CODEC);
@@ -58,7 +65,7 @@ public class NetworkHandler {
         PayloadTypeRegistry.playS2C().register(ServerMessageUpdateEntityData.TYPE, ServerMessageUpdateEntityData.CODEC);
         PayloadTypeRegistry.playS2C().register(ServerMessageSyncGunPackPart.TYPE, ServerMessageSyncGunPackPart.CODEC);
         PayloadTypeRegistry.playS2C().register(ServerMessagePackWarnings.TYPE, ServerMessagePackWarnings.CODEC);
-        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             var names = com.tacz.guns.resource.GunPackLoader.INSTANCE.getPacksNeedingConversion(net.minecraft.server.packs.PackType.SERVER_DATA);
             if (!names.isEmpty() && ServerPlayNetworking.canSend(handler.player, ServerMessagePackWarnings.TYPE))
                 ServerPlayNetworking.send(handler.player, new ServerMessagePackWarnings(names));
@@ -66,11 +73,15 @@ public class NetworkHandler {
         PayloadTypeRegistry.playS2C().register(ServerMessageSyncGunPack.TYPE, ServerMessageSyncGunPack.CODEC);
         PayloadTypeRegistry.playS2C().register(ServerMessageGunDraw.TYPE, ServerMessageGunDraw.CODEC);
         PayloadTypeRegistry.playS2C().register(ServerMessageGunFire.TYPE, ServerMessageGunFire.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageGunActionPost.TYPE, ServerMessageGunActionPost.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageGunUnload.TYPE, ServerMessageGunUnload.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(ServerMessageGunFireSelect.TYPE, ServerMessageGunFireSelect.CODEC);
         PayloadTypeRegistry.playS2C().register(ServerMessageGunMelee.TYPE, ServerMessageGunMelee.CODEC);
         PayloadTypeRegistry.playS2C().register(ServerMessageGunReload.TYPE, ServerMessageGunReload.CODEC);
         PayloadTypeRegistry.playS2C().register(ServerMessageGunShoot.TYPE, ServerMessageGunShoot.CODEC);
         PayloadTypeRegistry.playS2C().register(ServerMessageSyncBaseTimestamp.TYPE, ServerMessageSyncBaseTimestamp.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageBulletHitBlock.Incendiary.TYPE, ServerMessageBulletHitBlock.Incendiary.CODEC);
+        PayloadTypeRegistry.playS2C().register(ServerMessageBulletHitBlock.TYPE, ServerMessageBulletHitBlock.STREAM_CODEC);
         // Extra spawn data payload
         IEntityAdditionalSpawnData.registerPayload();
     }
@@ -78,8 +89,13 @@ public class NetworkHandler {
     public static void registerC2SPackets() {
         registerPayloads();
 
+        ServerPlayNetworking.registerGlobalReceiver(ClientMessageSelectRefitOption.TYPE, (msg, ctx) -> msg.handle(ctx.player()));
+        ServerPlayNetworking.registerGlobalReceiver(ClientMessageInstallVirtualAttachment.TYPE, (msg, ctx) -> msg.handle(ctx.player()));
+        ServerPlayNetworking.registerGlobalReceiver(ClientMessageAmmoStorageClick.TYPE, ClientMessageAmmoStorageClick::handle);
+        ServerPlayNetworking.registerGlobalReceiver(ClientMessageAmmoStorageInteract.TYPE, ClientMessageAmmoStorageInteract::handle);
         ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerShoot.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerReloadGun.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
+        ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerUnloadGun.TYPE, ClientMessagePlayerUnloadGun::handle);
         ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerCancelReload.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerFireSelect.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessagePlayerAim.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
@@ -100,6 +116,8 @@ public class NetworkHandler {
 
     @Environment(EnvType.CLIENT)
     public static void registerS2CPackets() {
+        ClientPlayNetworking.registerGlobalReceiver(ServerMessageSyncGunPackPart.Extended.TYPE, (msg, ctx) -> msg.payload().handle(ctx.player().connection.getConnection()));
+        ClientPlayNetworking.registerGlobalReceiver(ServerMessageAmmoStorageContents.TYPE, ServerMessageAmmoStorageContents::handle);
         ClientPlayNetworking.registerGlobalReceiver(IEntityAdditionalSpawnData.EXTRA_DATA_TYPE, (payload, context) -> {
             context.client().execute(() -> {
                 Entity entity = Objects.requireNonNull(context.client().level).getEntity(payload.entityId());
@@ -119,11 +137,16 @@ public class NetworkHandler {
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunHurt.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunKill.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageUpdateEntityData.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
-        ClientPlayNetworking.registerGlobalReceiver(ServerMessagePackWarnings.TYPE, ServerMessagePackWarnings::handle);
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageSyncGunPackPart.TYPE, (msg, ctx) -> msg.handle(ctx.player().connection.getConnection()));
+        ClientPlayNetworking.registerGlobalReceiver(ServerMessagePackWarnings.TYPE, ServerMessagePackWarnings::handle);
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageSyncGunPack.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
+        ClientPlayNetworking.registerGlobalReceiver(ServerMessageBulletHitBlock.Incendiary.TYPE,
+                (p, ctx) -> ServerMessageBulletHitBlock.handle(p.hit(), ctx, true));
+        ClientPlayNetworking.registerGlobalReceiver(ServerMessageBulletHitBlock.TYPE, ServerMessageBulletHitBlock::handle);
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunDraw.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunFire.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
+        ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunActionPost.TYPE, (msg, ctx) -> msg.handle(ctx.player()));
+        ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunUnload.TYPE, ServerMessageGunUnload::handle);
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunFireSelect.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunMelee.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageGunReload.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));

@@ -1,0 +1,29 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/copper",
+      "count": 16
+    },
+    {
+      "item": "#c:gems/amethyst",
+      "count": 6
+    },
+    {
+      "item": "#c:dusts/redstone",
+      "count": 16
+    },
+    {
+      "item": "minecraft:soul_lantern",
+      "count": 12
+    },
+    {
+      "item": "minecraft:shroomlight",
+      "count": 6
+    }
+  ],
+  "result": {
+    "type": "attachment",
+    "id": "tacz:scope_reap_ir"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

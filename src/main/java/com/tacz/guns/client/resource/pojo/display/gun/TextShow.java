@@ -2,10 +2,16 @@ package com.tacz.guns.client.resource.pojo.display.gun;
 
 import com.google.gson.annotations.SerializedName;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 public class TextShow {
     @SerializedName("scale")
     private float scale = 1.0f;
+
+    @SerializedName("rangefinder")
+    private Rangefinder rangefinder;
+
+    public @Nullable Rangefinder getRangefinder() { return rangefinder; }
 
     @SerializedName("align")
     private Align align = Align.CENTER;

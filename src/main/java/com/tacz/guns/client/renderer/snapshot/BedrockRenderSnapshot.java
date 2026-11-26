@@ -11,6 +11,7 @@ import com.tacz.guns.client.model.bedrock.BedrockCube;
 import com.tacz.guns.client.model.bedrock.BedrockModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import net.minecraft.world.item.ItemDisplayContext;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
@@ -110,8 +111,31 @@ public final class BedrockRenderSnapshot {
         return this.functionalTasks;
     }
 
+    /** Screen-space bounds for the lens optics only. Coverage is still tested from the two
+     * actual depth copies; a bounding rectangle never authorizes a lens pixel.
+     * <p>逐字移植自 donor 26.1.2；本线的 {@link DrawCommand} 没有 unshaded 位（墨/发光的
+     * 拆分在本线走 {@link #writeFiltered} 的立方体谓词），故不涉及。</p> */
+    public void extendOcularBounds(org.joml.Matrix4fc clip, float[] bounds) {
+        var v = new org.joml.Vector4f();
+        for (var draw : drawCommands) for (var cube : draw.cubes()) for (var face : cube.getPolygons()) {
+            if (face == null || !face.isPresent()) continue;
+            for (var corner : face.vertices) {
+                v.set(corner.pos, 16).mul(draw.pose()).mul(clip);
+                if (v.w <= 1.0e-5f) continue;
+                float x = v.x / v.w, y = v.y / v.w;
+                bounds[0] = Math.min(bounds[0], x); bounds[1] = Math.min(bounds[1], y);
+                bounds[2] = Math.max(bounds[2], x); bounds[3] = Math.max(bounds[3], y);
+            }
+        }
+    }
+
     public void write(VertexConsumer consumer) {
         writeFiltered(consumer, cube -> true);
+    }
+
+    /** Explicit reticle replay with conservative raster bounds (subpixel quad coverage). */
+    public void writeFilteredReticle(VertexConsumer consumer, @Nullable org.joml.Matrix4fc clip, int width, int height) {
+        ReticleCoverage.write(drawCommands, consumer, clip, width, height);
     }
 
     /** Writes only geometry accepted by {@code cubeFilter}; used to remove large division blackout panels. */

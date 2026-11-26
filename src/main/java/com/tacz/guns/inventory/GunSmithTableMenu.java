@@ -1,17 +1,13 @@
 package com.tacz.guns.inventory;
 
-import com.tacz.guns.api.DefaultAssets;
-import com.tacz.guns.api.TimelessAPI;
-import com.tacz.guns.config.sync.SyncConfig;
+import com.tacz.guns.crafting.MaterialAllocation;
 import com.tacz.guns.crafting.GunSmithTableIngredient;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.ServerMessageCraft;
 import com.tacz.guns.resource.CommonAssetsManager;
-import com.tacz.guns.resource.filter.RecipeFilter;
-import com.tacz.guns.resource.index.CommonBlockIndex;
 import com.tacz.guns.resource.pojo.data.recipe.TableRecipe;
-import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
@@ -27,19 +23,19 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 public class GunSmithTableMenu extends AbstractContainerMenu {
-    // 1.21.11 / FAPI 0.141: ExtendedScreenHandlerType（26.1 把它改名为 ExtendedMenuType）
-    // 配合 StreamCodec 传递 Identifier 数据；构造器形状两版一致。
+    // 1.21.11: 使用 ExtendedScreenHandlerType 配合 StreamCodec 传递 Identifier 数据
     public static final ExtendedScreenHandlerType<GunSmithTableMenu, Identifier> TYPE = new ExtendedScreenHandlerType<>(
             (windowId, inv, data) -> new GunSmithTableMenu(windowId, inv, data),
             Identifier.STREAM_CODEC);
 
     private final Identifier blockId;
-    private final RecipeFilter filter;
+    private final boolean clientSide;
+    @Nullable private Identifier requestedRecipe;
 
     public GunSmithTableMenu(int id, Inventory inventory, @Nullable Identifier resourceLocation) {
         super(TYPE, id);
         this.blockId = resourceLocation;
-        this.filter = TimelessAPI.getCommonBlockIndex(getBlockId()).map(CommonBlockIndex::getFilter).orElse(null);
+        this.clientSide = inventory.player.level().isClientSide();
     }
 
     @Nullable
@@ -86,13 +82,14 @@ public class GunSmithTableMenu extends AbstractContainerMenu {
      */
     @Nullable
     private GunSmithTableRecipe getRecipe(Identifier recipeId) {
-        if (!DefaultAssets.DEFAULT_BLOCK_ID.equals(getBlockId()) || SyncConfig.ENABLE_TABLE_FILTER.get()) {
-            if (filter != null && !filter.contains(recipeId)) {
-                return null;
-            }
-        }
+        // Re-resolve the table, not just the recipe: /reload can change a filter while a menu is open.
+        if (blockId == null || recipeId == null) return null;
+        var resources = clientSide ? com.tacz.guns.resource.network.CommonNetworkCache.INSTANCE : CommonAssetsManager.get();
+        var table = resources.getBlockIndex(blockId);
+        if (table == null) return null;
+        if (!table.allowsRecipe(blockId, recipeId)) return null;
 
-        TableRecipe pojo = CommonAssetsManager.get().getTableRecipe(recipeId);
+        TableRecipe pojo = resources.getTableRecipe(recipeId);
         if (pojo == null || pojo.getResult() == null) {
             return null;
         }
@@ -102,16 +99,22 @@ public class GunSmithTableMenu extends AbstractContainerMenu {
         // 少了这一步 getTab() 恒为 null，下面的页签校验必然失败。
         gunSmithTableRecipe.init();
 
-        boolean flag = TimelessAPI.getCommonBlockIndex(getBlockId()).map(blockIndex -> {
-            return blockIndex.getData().getTabs().stream().noneMatch(tab -> tab.id().equals(gunSmithTableRecipe.getTab()));
-        }).orElse(true);
-        if (DefaultAssets.DEFAULT_BLOCK_ID.equals(getBlockId()) && !SyncConfig.ENABLE_TABLE_FILTER.get()) {
-            flag = false;
-        }
-        if (flag) {
-            return null;
-        }
-        return gunSmithTableRecipe;
+        var tabs = table.recipeTabs(blockId);
+        return tabs.stream().anyMatch(tab -> tab.id().equals(gunSmithTableRecipe.getTab())) ? gunSmithTableRecipe : null;
+    }
+
+    /** A viewer transfer is navigation only. A probe cannot queue a selection or send a craft packet. */
+    public boolean selectFromViewer(Identifier id, boolean commitSelection) {
+        if (getRecipe(id) == null) return false;
+        if (commitSelection) requestedRecipe = id;
+        return true;
+    }
+
+    @Nullable
+    public Identifier consumeRecipeSelection() {
+        var id = requestedRecipe;
+        requestedRecipe = null;
+        return id;
     }
 
     public void doCraft(Identifier recipeId, Player player) {
@@ -128,44 +131,22 @@ public class GunSmithTableMenu extends AbstractContainerMenu {
         player.tacz$getItemHandler(null).ifPresent(handler -> {
             // 是创造模式，就不扣材料
             if (!player.isCreative()) {
-                Int2IntArrayMap recordCount = new Int2IntArrayMap();
-                List<GunSmithTableIngredient> ingredients = recipe.getInputs();
-
-                for (GunSmithTableIngredient ingredient : ingredients) {
-                    int count = 0;
-                    // 第 14 轮：材料延迟解析。若解析不出来（tag 缺失等），
-                    // 必须<b>拒绝合成</b>而不是跳过该材料 —— 否则玩家能白嫖成品。
-                    net.minecraft.world.item.crafting.Ingredient resolved = ingredient.getIngredient();
-                    if (resolved == null) {
-                        return;
-                    }
-                    for (int slotIndex = 0; slotIndex < handler.getSlots(); slotIndex++) {
-                        ItemStack stack = handler.getStackInSlot(slotIndex);
-                        int stackCount = stack.getCount();
-                        if (!stack.isEmpty() && resolved.test(stack)) {
-                            count = count + stackCount;
-                            // 记录扣除的 slot 和数量
-                            if (count <= ingredient.getCount()) {
-                                // 如果数量不足，全扣
-                                recordCount.put(slotIndex, stackCount);
-                            } else {
-                                //  数量够了，只扣需要的数量
-                                int remaining = count - ingredient.getCount();
-                                recordCount.put(slotIndex, stackCount - remaining);
-                                break;
-                            }
-                        }
-                    }
-                    // 数量不够，不执行后续逻辑，合成失败
-                    if (count < ingredient.getCount()) {
-                        return;
-                    }
+                List<GunSmithTableIngredient> inputs = recipe.getInputs();
+                if (inputs == null) return;
+                int[] demand = new int[inputs.size()], stock = new int[handler.getSlots()];
+                Ingredient[] resolved = new Ingredient[demand.length];
+                for (int i = 0; i < inputs.size(); i++) {
+                    demand[i] = inputs.get(i).getCount();
+                    resolved[i] = inputs.get(i).getIngredient();
+                    if (resolved[i] == null) return;
                 }
-
-                // 开始扣材料
-                for (int slotIndex : recordCount.keySet()) {
-                    handler.extractItem(slotIndex, recordCount.get(slotIndex), false);
+                for (int s = 0; s < stock.length; s++) stock[s] = handler.getStackInSlot(s).getCount();
+                int[] plan = MaterialAllocation.plan(demand, stock, (i, s) -> resolved[i].test(handler.getStackInSlot(s)));
+                if (plan == null) return;
+                for (int s = 0; s < plan.length; s++) {
+                    if (plan[s] > 0 && handler.extractItem(s, plan[s], true).getCount() != plan[s]) return;
                 }
+                for (int s = 0; s < plan.length; s++) if (plan[s] > 0) handler.extractItem(s, plan[s], false);
             }
 
             // 给玩家对应的物品

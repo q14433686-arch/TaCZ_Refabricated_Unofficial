@@ -1,0 +1,21 @@
+{
+  "materials": [
+    {
+      "item": "#c:ingots/iron",
+      "count": 40
+    },
+    {
+      "item": "#c:gems/lapis",
+      "count": 8
+    },
+    {
+      "item": "#minecraft:logs",
+      "count": 12
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:sks_tactical"
+  },
+  "type": "tacz:gun_smith_table_crafting"
+}

@@ -4,6 +4,29 @@ import com.tacz.guns.client.renderer.crosshair.CrosshairType;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 public class RenderConfig {
+    public static final int DEFAULT_DROPPED_GUN_SPRITE_DISTANCE = 8;
+    public static ForgeConfigSpec.IntValue DROPPED_GUN_SPRITE_DISTANCE;
+    public static ForgeConfigSpec.BooleanValue HIT_PARTICLE_ENABLE;
+    public static ForgeConfigSpec.BooleanValue HIT_EXTRA_PARTICLE_ENABLE;
+    public static ForgeConfigSpec.IntValue HIT_PARTICLE_MAX_DISTANCE;
+    public static ForgeConfigSpec.BooleanValue RENDER_CREATIVE_PACK_SIDEBAR;
+    public static ForgeConfigSpec.BooleanValue ILLUMINATED_REAL_SKY;
+    /** 枪口烟独立于火光渲染（donor 26.1.2 {@code RenderMuzzleSmoke}）。 */
+    public static ForgeConfigSpec.BooleanValue RENDER_MUZZLE_SMOKE;
+    /** 枪口/爆炸/旧式曝光三类面光源开关（donor 26.1.2 同名三键）。 */
+    public static ForgeConfigSpec.BooleanValue MUZZLE_SURFACE_LIGHT, LEGACY_MUZZLE_LIGHT, EXPLOSION_SURFACE_LIGHT;
+    /** 给目镜孔径套上当前 display 的镜头（原生渲染器；donor 26.1.2 {@code EnableExperimentalScopeLens}）。 */
+    public static ForgeConfigSpec.BooleanValue EXPERIMENTAL_SCOPE_LENS;
+    /**
+     * 热成像镜头：捕获可见热源。donor 26.1.2 {@code EnableScopeThermal}。
+     * <b>注意：</b>1.21.11 线的热成像渲染（ScopeThermalCapture 等）尚未移植，
+     * 本键当前只被 {@code ScopeLensFrame#needsHeat} 读取 —— 见 docs/lineage/PORT_GAP_MATRIX_1211.md。
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_THERMAL_ENABLE;
+    /** YSM（Yes Steve Model）兼容：被请求时才让位第一人称枪械渲染（donor 26.1.2 {@code YsmCompat}）。 */
+    public static ForgeConfigSpec.BooleanValue YSM_COMPAT;
+    /** 调试：整体关闭枪口火光（donor 26.1.2 {@code DebugDisableMuzzleFlash}）。 */
+    public static ForgeConfigSpec.BooleanValue DEBUG_DISABLE_MUZZLE_FLASH;
     public static ForgeConfigSpec.BooleanValue ENABLE_LASER_FADE_OUT;
     public static ForgeConfigSpec.IntValue GUN_LOD_RENDER_DISTANCE;
     public static ForgeConfigSpec.IntValue BULLET_HOLE_PARTICLE_LIFE;
@@ -138,6 +161,43 @@ public class RenderConfig {
 
         builder.comment("How far to display the lod model, 0 means always display");
         GUN_LOD_RENDER_DISTANCE = builder.defineInRange("GunLodRenderDistance", 0, 0, Integer.MAX_VALUE);
+
+        builder.comment("Without a usable pack LOD, draw dropped guns as their slot icon from this distance (blocks).",
+                "-1 means never.");
+        DROPPED_GUN_SPRITE_DISTANCE = builder.defineInRange("DroppedGunSpriteDistance", DEFAULT_DROPPED_GUN_SPRITE_DISTANCE, -1, Integer.MAX_VALUE);
+
+        builder.comment("Show block impact particles");
+        HIT_PARTICLE_ENABLE = builder.define("HitParticleEnable", true);
+
+        builder.comment("Show extra impact particles for special surfaces");
+        HIT_EXTRA_PARTICLE_ENABLE = builder.define("HitExtraParticleEnable", true);
+
+        builder.comment("Maximum impact-particle distance (0: unlimited)");
+        HIT_PARTICLE_MAX_DISTANCE = builder.defineInRange("HitParticleMaxDistance", 64, 0, Integer.MAX_VALUE);
+
+        builder.comment("Display a pack sidebar in TaCZ creative tabs. Disabling restores the full current tab.");
+        RENDER_CREATIVE_PACK_SIDEBAR = builder.define("RenderCreativePackSidebar", true);
+
+        builder.comment("Under shader packs, give illuminated parts the real sky light column instead of full bright.",
+                "Prevents emissive parts from inheriting sky brightness at night.");
+        ILLUMINATED_REAL_SKY = builder.define("IlluminatedRealSky", true);
+
+        // ---- 以下五组键随 f26 渲染接线一并引入，定义逐字取自 donor 26.1.2（bc05ca6） ----
+        builder.comment("Render detached renew muzzle smoke independently of flash");
+        RENDER_MUZZLE_SMOKE = builder.define("RenderMuzzleSmoke", true);
+        builder.comment("Briefly light nearby terrain, world entities and displayed objects on a successful shot (client visual only).");
+        MUZZLE_SURFACE_LIGHT = builder.define("MuzzleSurfaceLight", true);
+        builder.comment("Estimate shot exposure for old textured flashes and explosive launchers that omit the flash. Never enables disabled renew effects.");
+        LEGACY_MUZZLE_LIGHT = builder.define("LegacyMuzzleLight", true);
+        builder.comment("Project a short-range pulse for standard explosion notifications (including TNT) and tracked LR stun bursts.");
+        EXPLOSION_SURFACE_LIGHT = builder.define("ExplosionSurfaceLight", true);
+        builder.comment("Apply the active display's lens to its masked aperture (native renderer).");
+        EXPERIMENTAL_SCOPE_LENS = builder.define("EnableExperimentalScopeLens", true);
+        builder.comment("Capture visible heat sources for thermal lenses; otherwise use their optics. (Thermal capture itself is not yet ported to 1.21.11.)");
+        SCOPE_THERMAL_ENABLE = builder.define("EnableScopeThermal", true);
+        builder.comment("Yield the first-person gun render only if the installed Yes Steve Model requests it this tick.");
+        YSM_COMPAT = builder.define("YsmCompat", true);
+        DEBUG_DISABLE_MUZZLE_FLASH = builder.define("DebugDisableMuzzleFlash", false);
 
         builder.comment("The existence time of bullet hole particles, in tick");
         BULLET_HOLE_PARTICLE_LIFE = builder.defineInRange("BulletHoleParticleLife", 400, 0, Integer.MAX_VALUE);

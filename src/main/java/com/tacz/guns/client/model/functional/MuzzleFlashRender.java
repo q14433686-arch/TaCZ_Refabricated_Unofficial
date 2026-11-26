@@ -1,5 +1,6 @@
 package com.tacz.guns.client.model.functional;
 
+import com.tacz.guns.util.time.GunTime;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.tacz.guns.api.TimelessAPI;
@@ -37,7 +38,7 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
 
     public static void onShoot() {
         // 记录开火时间戳
-        shootTimeStamp = System.currentTimeMillis();
+        shootTimeStamp = GunTime.nowMillis();
         // 记录枪口火焰启动标记
         muzzleFlashStartMark = true;
         // 随机给予枪口火焰的旋转
@@ -50,7 +51,7 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
         if (IrisCompat.isRenderShadow() || !isSelf) {
             return;
         }
-        long time = System.currentTimeMillis() - shootTimeStamp;
+        long time = GunTime.nowMillis() - shootTimeStamp;
         if (time < 0 || time > TIME_RANGE) {
             return;
         }
@@ -125,4 +126,9 @@ public class MuzzleFlashRender implements IFunctionalSubmitter {
         });
     }
 
+    public static void resetTimestamps() {
+        shootTimeStamp = -1;
+        muzzleFlashStartMark = false;
+        isSelf = false;
+    }
 }

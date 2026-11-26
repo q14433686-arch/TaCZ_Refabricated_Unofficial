@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "IBI",
+    "BTB",
+    "IBI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "B": "minecraft:iron_bars",
+    "T": "minecraft:iron_trapdoor"
+  },
+  "result": {
+    "id": "tacz:gun_pegboard",
+    "count": 9
+  }
+}

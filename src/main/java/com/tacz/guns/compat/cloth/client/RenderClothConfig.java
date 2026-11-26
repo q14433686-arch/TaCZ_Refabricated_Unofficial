@@ -2,6 +2,7 @@ package com.tacz.guns.compat.cloth.client;
 
 import cn.sh1rocu.tacz.compat.meshloader.config.MeshyConfig;
 import com.tacz.guns.client.renderer.crosshair.CrosshairType;
+import com.tacz.guns.client.tuning.TuningProfiles;
 import com.tacz.guns.compat.cloth.widget.CrosshairDropdown;
 import com.tacz.guns.config.client.RenderConfig;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
@@ -35,11 +36,18 @@ public class RenderClothConfig {
                 .setMin(0).setMax(1).setDefaultValue(0.98).setTooltip(Component.translatable("config.tacz.client.render.bullet_hole_particle_fade_threshold.desc"))
                 .setSaveConsumer(RenderConfig.BULLET_HOLE_PARTICLE_FADE_THRESHOLD::set).build());
 
+        var tuningOwner = TuningProfiles.account();
         render.addEntry(entryBuilder.startDropdownMenu(Component.translatable("config.tacz.client.render.crosshair_type"),
-                        CrosshairDropdown.of(RenderConfig.CROSSHAIR_TYPE.get()), CrosshairDropdown.of())
+                        CrosshairDropdown.of(TuningProfiles.current().base().get(RenderConfig.CROSSHAIR_TYPE)), CrosshairDropdown.of())
                 .setSelections(Arrays.stream(CrosshairType.values()).sorted().sorted(Comparator.comparing(CrosshairType::name)).collect(Collectors.toCollection(LinkedHashSet::new)))
                 .setDefaultValue(CrosshairType.DOT_1).setTooltip(Component.translatable("config.tacz.client.render.crosshair_type.desc"))
-                .setSaveConsumer(RenderConfig.CROSSHAIR_TYPE::set).build());
+                .setSaveConsumer(value -> {
+                    if (!tuningOwner.equals(TuningProfiles.account())) return;
+                    var profile = TuningProfiles.current().copy();
+                    if (value == profile.base().get(RenderConfig.CROSSHAIR_TYPE)) return;
+                    profile.base().set(RenderConfig.CROSSHAIR_TYPE, value);
+                    TuningProfiles.save(tuningOwner, profile);
+                }).build());
 
         render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.hit_market_start_position"), RenderConfig.HIT_MARKET_START_POSITION.get())
                 .setMin(-1024).setMax(1024).setDefaultValue(4).setTooltip(Component.translatable("config.tacz.client.render.hit_market_start_position.desc"))

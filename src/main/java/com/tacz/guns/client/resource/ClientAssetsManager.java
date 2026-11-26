@@ -19,6 +19,8 @@ import com.tacz.guns.client.resource.pojo.animation.bedrock.SoundEffectKeyframes
 import com.tacz.guns.client.resource.pojo.display.ammo.AmmoDisplay;
 import com.tacz.guns.client.resource.pojo.display.attachment.AttachmentDisplay;
 import com.tacz.guns.client.resource.pojo.display.block.BlockDisplay;
+import com.tacz.guns.client.resource.pojo.display.SoundData;
+import com.tacz.guns.client.resource.pojo.display.gun.AdsPreset;
 import com.tacz.guns.client.resource.pojo.display.gun.GunDisplay;
 import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
 import com.tacz.guns.client.resource.pojo.model.CubesItem;
@@ -27,6 +29,7 @@ import com.tacz.guns.client.resource.serialize.ItemStackSerializer;
 import com.tacz.guns.client.resource.serialize.SoundEffectKeyframesSerializer;
 import com.tacz.guns.client.resource.serialize.Vector3fSerializer;
 import com.tacz.guns.resource.CommonAssetsManager;
+import com.tacz.guns.resource.manager.JsonDataManager;
 import com.tacz.guns.resource.serialize.IdentifierSerializer;
 import com.tacz.guns.resource.manager.LazyJsonDataManager;
 import com.tacz.guns.resource.manager.ScriptManager;
@@ -67,6 +70,9 @@ public enum ClientAssetsManager {
             .registerTypeAdapter(ItemStack.class, new ItemStackSerializer())
             .registerTypeAdapter(AnimationKeyframes.class, new AnimationKeyframesSerializer())
             .registerTypeAdapter(SoundEffectKeyframes.class, new SoundEffectKeyframesSerializer())
+            .registerTypeAdapter(SoundData.class, new SoundData.Deserializer())
+            .registerTypeAdapter(com.tacz.guns.client.resource.pojo.animation.bedrock.ParticleEffectKeyframes.class,
+                    new com.tacz.guns.client.resource.serialize.ParticleEffectKeyframesSerializer())
             .create();
 
     // 枪械展示数据
@@ -76,6 +82,8 @@ public enum ClientAssetsManager {
     // 配件展示数据
     private DisplayManager<AttachmentDisplay> attachmentDisplay;
     // 方块展示数据
+    private DisplayManager<AttachmentDisplay> attachmentVariantDisplay;
+    private DisplayManager<AttachmentDisplay> slotAdapterDisplay;
     private DisplayManager<BlockDisplay> blockDisplay;
     // 原始基岩版模型
     private LazyJsonDataManager<BedrockModelPOJO> bedrockModel;
@@ -83,6 +91,8 @@ public enum ClientAssetsManager {
     private LazyJsonDataManager<BedrockAnimationFile> bedrockAnimation;
     // gltf 动画
     private GltfManager gltfAnimation;
+    // 瞄准预设
+    private JsonDataManager<AdsPreset> adsPresets;
     // 客户端脚本
     private final List<LuaLibrary> libList = List.of(new LuaAnimationConstant(), new LuaGunAnimationConstant());
     private ScriptManager scriptManager;
@@ -98,6 +108,8 @@ public enum ClientAssetsManager {
             gunDisplay = register(new DisplayManager<>(GunDisplay.class, GSON, "display/guns", "GunDisplayLoader"));
             ammoDisplay = register(new DisplayManager<>(AmmoDisplay.class, GSON, "display/ammo", "AmmoDisplayLoader"));
             attachmentDisplay = register(new DisplayManager<>(AttachmentDisplay.class, GSON, "display/attachments", "AttachmentDisplayLoader"));
+            attachmentVariantDisplay = register(new DisplayManager<>(AttachmentDisplay.class, GSON, "display/attachment_variants", "AttachmentVariantDisplayLoader"));
+            slotAdapterDisplay = register(new DisplayManager<>(AttachmentDisplay.class, GSON, "display/slot_adapters", "SlotAdapterDisplayLoader"));
             blockDisplay = register(new DisplayManager<>(BlockDisplay.class, GSON, "display/blocks", "BlockDisplayLoader"));
 
             bedrockModel = register(new LazyJsonDataManager<>(BedrockModelPOJO.class, GSON, "geo_models", "BedrockModelLoader",
@@ -105,6 +117,8 @@ public enum ClientAssetsManager {
             bedrockAnimation = register(new LazyJsonDataManager<>(BedrockAnimationFile.class, GSON, new FileToIdConverter("animations", ".animation.json"),
                     "BedrockAnimationLoader", id -> GunMod.MOD_ID.equals(id.getNamespace())));
             gltfAnimation = register(new GltfManager());
+            adsPresets = register(new JsonDataManager<>(AdsPreset.class, GSON, "ads_presets", "AdsPresetLoader"));
+            register(com.tacz.guns.client.particle.bedrock.particle.resource.ParticleDefinitionLoader.getInstance());
             scriptManager = register(new ScriptManager(new FileToIdConverter("scripts", ".lua"), libList));
             packInfo = register(new PackInfoManager());
             register(new IdentifiableResourceReloadListener() {
@@ -117,7 +131,13 @@ public enum ClientAssetsManager {
 
                 @Override
                 public CompletableFuture<Void> reload(SharedState sharedState, Executor backgroundExecutor, PreparationBarrier barrier, Executor gameExecutor) {
-                    return barrier.wait(null).thenRunAsync(ClientIndexManager::reload, gameExecutor);
+                    return barrier.wait(null).thenRunAsync(() -> {
+                        ClientIndexManager.reload();
+                        com.tacz.guns.client.particle.NativeMuzzleEffects.clear();
+                        com.tacz.guns.client.render.scope.ScopeLensFrame.clear();
+                        com.tacz.guns.client.model.bedrock.IlluminatedMaterials.clearTextures();
+                        com.tacz.guns.client.render.FlashMaterials.clearTextures();
+                    }, gameExecutor);
                 }
             });
         }
@@ -153,6 +173,12 @@ public enum ClientAssetsManager {
     }
 
     @Nullable
+    public AttachmentDisplay getAttachmentVariantDisplay(Identifier id) { return attachmentVariantDisplay.getData(id); }
+
+    @Nullable
+    public AttachmentDisplay getSlotAdapterDisplay(Identifier id) { return slotAdapterDisplay.getData(id); }
+
+    @Nullable
     public BlockDisplay getBlockDisplay(Identifier id) {
         return blockDisplay.getData(id);
     }
@@ -178,8 +204,17 @@ public enum ClientAssetsManager {
     }
 
     @Nullable
+    public AdsPreset getAdsPreset(Identifier id) {
+        return adsPresets.getData(id);
+    }
+
+    @Nullable
     public PackInfo getPackInfo(String namespace) {
         return packInfo.getData(namespace);
+    }
+
+    public long getPackInfoReloadVersion() {
+        return packInfo == null ? 0 : packInfo.getReloadVersion();
     }
 
     @Nullable

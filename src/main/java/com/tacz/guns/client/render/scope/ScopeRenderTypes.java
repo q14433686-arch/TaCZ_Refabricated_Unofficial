@@ -40,6 +40,10 @@ public final class ScopeRenderTypes {
     private static final Map<Identifier, RenderType> FINAL_ETCHED_RETICLES = new HashMap<>();
     private static final Map<Identifier, RenderType> FINAL_VISIBLE_RETICLES = new HashMap<>();
     private static final Map<Identifier, RenderType> FINAL_OCULAR_RINGS = new HashMap<>();
+    /** 1.2.0 rangefinder impact marker: unmasked full-bright cutout (see {@link #emissive}). */
+    private static final Map<Identifier, RenderType> EMISSIVE_TYPES = new HashMap<>();
+    /** Post-composite procedural readout (rangefinder impact box), donor 26.1.2 {@code FINAL_READOUTS}. */
+    private static final Map<Identifier, RenderType> FINAL_READOUTS = new HashMap<>();
     private static final Map<Identifier, RenderType> VIEWMODEL_CUTOUT_TYPES = new HashMap<>();
     private static final Map<Identifier, RenderType> FLASH_TRANSLUCENT_TYPES = new HashMap<>();
     private static final Map<Identifier, RenderType> FLASH_SWIRL_TYPES = new HashMap<>();
@@ -107,6 +111,9 @@ public final class ScopeRenderTypes {
      */
     private static final RenderPipeline VISIBLE_RETICLE_PIPELINE = createVisibleReticlePipeline();
 
+    /** Full-bright, unmasked cutout for the 1.2.0 rangefinder impact marker (see {@link #emissive}). */
+    private static final RenderPipeline EMISSIVE_PIPELINE = createEmissivePipeline();
+
     /**
      * R9 Iris-only foreground versions. They are submitted after world transparency, so their near
      * depth is safe and prevents post-processing fog from treating reticle pixels as distant world.
@@ -128,6 +135,12 @@ public final class ScopeRenderTypes {
     private static final RenderPipeline FINAL_ETCHED_RETICLE_PIPELINE = createFinalEtchedReticlePipeline();
     private static final RenderPipeline FINAL_VISIBLE_RETICLE_PIPELINE = createFinalVisibleReticlePipeline();
     private static final RenderPipeline FINAL_OCULAR_RING_PIPELINE = createFinalOcularRingPipeline();
+    // A generated quad has no Bedrock face-coverage coordinates. Keep the exact aperture,
+    // but sample its texture normally, with self-lit vertex colour and no final depth write.
+    // 26.1.2 donor built this from ENTITY_SNIPPET + core/scope_reticle_final + EMISSIVE/
+    // NO_CARDINAL_LIGHTING + translucent + no cull + ALWAYS_PASS/no depth write; 1.21.11 侧
+    // 用同族的 ENTITY_TRANSLUCENT_EMISSIVE 逐状态克隆重建（见 createFinalReadoutPipeline）。
+    private static final RenderPipeline FINAL_READOUT_PIPELINE = createFinalReadoutPipeline();
 
     /**
      * Masked <b>text</b> pipeline for in-scope glyphs (ammo counters etc.).
@@ -280,6 +293,23 @@ public final class ScopeRenderTypes {
         return FINAL_VISIBLE_RETICLES.computeIfAbsent(texture, ScopeRenderTypes::createFinalVisibleReticleType);
     }
 
+    /**
+     * 1.2.0 rangefinder impact marker readout: generated quad, no Bedrock face-coverage
+     * coordinates, drawn after every shader-pack composite/final pass (donor 26.1.2
+     * {@code finalReadout}); queued through {@code ScopeFinalOverlayState#queueReadout}.
+     */
+    public static RenderType finalReadout(Identifier texture) {
+        return FINAL_READOUTS.computeIfAbsent(texture, tex -> {
+            RenderSetup setup = RenderSetup.builder(FINAL_READOUT_PIPELINE).withTexture("Sampler0", tex)
+                    .withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, tex)
+                    .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, tex)
+                    .useLightmap().useOverlay().createRenderSetup();
+            return new DepthCopyRenderType("tacz_scope_final_readout",
+                    RenderType.create("tacz_scope_final_readout_base", setup),
+                    ScopeDepthCopyState.Operation.MASK);
+        });
+    }
+
     /** Final post-composite physical rim, emitted after final reticle geometry. */
     public static RenderType finalOcularRing(Identifier texture) {
         return FINAL_OCULAR_RINGS.computeIfAbsent(texture, ScopeRenderTypes::createFinalOcularRingType);
@@ -299,6 +329,64 @@ public final class ScopeRenderTypes {
             return FLASH_TRANSLUCENT_TYPES.computeIfAbsent(texture, ScopeRenderTypes::createFlashTranslucentType);
         }
         return VIEWMODEL_CUTOUT_TYPES.computeIfAbsent(texture, ScopeRenderTypes::createViewmodelCutoutType);
+    }
+
+    /**
+     * 1.21.11 版 26.2 {@code ScopeBodyRenderTypes#emissive}：<b>不</b>参与目镜遮罩的全亮
+     * cutout 材质，供测距仪落点预测框（{@link com.tacz.guns.client.model.functional.ImpactMarkerRender}）
+     * 这种"镜内镜外都要画、且不能被方向光染色"的几何使用。
+     *
+     * <p>26.2 那里是自建管线（{@code ENTITY_SNIPPET} + {@code ALPHA_CUTOUT} + {@code EMISSIVE}
+     * + {@code NO_CARDINAL_LIGHTING} + 自写 {@code core/scope_body} 着色器）。本线不需要复制那套
+     * 着色器：1.21.11 的 {@code ENTITY_CUTOUT} 管线加同样的两个 define 就是逐状态等价的东西，
+     * 且它没有任何掩码采样器绑定，故不包 {@code DepthCopyRenderType}（不参与 depth-copy 边界）。</p>
+     */
+    public static RenderType emissive(Identifier texture) {
+        return EMISSIVE_TYPES.computeIfAbsent(texture, ScopeRenderTypes::createEmissiveType);
+    }
+
+    private static RenderType createEmissiveType(Identifier texture) {
+        RenderSetup setup = RenderSetup.builder(EMISSIVE_PIPELINE)
+                .withTexture("Sampler0", texture)
+                .useLightmap()
+                .useOverlay()
+                .createRenderSetup();
+        return RenderType.create("tacz_scope_emissive", setup);
+    }
+
+    private static RenderPipeline createEmissivePipeline() {
+        RenderPipeline.Builder builder = clonePipeline(
+                RenderPipelines.ENTITY_CUTOUT,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_emissive"));
+        // 与 26.2 自建管线同一组 define：满亮、跳过方向光。ENTITY_CUTOUT 自带 ALPHA_CUTOUT 0.1。
+        builder.withShaderDefine("EMISSIVE");
+        builder.withShaderDefine("NO_CARDINAL_LIGHTING");
+        return RenderPipelines.register(builder.build());
+    }
+
+    /** Material extension point for the depth-based 1.21.11 ocular mask. */
+    public static void addOutsideApertureShader(RenderPipeline.Builder builder) {
+        builder.withFragmentShader(Identifier.parse("tacz:core/scope_flash_clip"))
+                .withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM)
+                .withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
+    }
+
+    public static void addApertureBindings(RenderSetup.RenderSetupBuilder setup, Identifier placeholder) {
+        // The encoder replaces these placeholders with the live frame's depth textures.
+        setup.withTexture(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM, placeholder)
+                .withTexture(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM, placeholder);
+    }
+
+    public static RenderType outsideAperture(RenderType base) {
+        return new DepthCopyRenderType("tacz_scope_material_outside", base, ScopeDepthCopyState.Operation.MASK_OUTSIDE);
+    }
+
+    public static RenderType unwrapDepthCopy(RenderType type) {
+        return type instanceof DepthCopyRenderType wrapped ? wrapped.wrapped : type;
+    }
+
+    public static boolean isClippedBody(RenderType original, Identifier texture) {
+        return original == VIEWMODEL_CUTOUT_TYPES.get(texture) || original == FLASH_TRANSLUCENT_TYPES.get(texture);
     }
 
     /** Muzzle-flash background quad: retain vanilla appearance outside the ocular, discard inside. */
@@ -784,6 +872,31 @@ public final class ScopeRenderTypes {
         return pipeline;
     }
 
+    private static RenderPipeline createFinalReadoutPipeline() {
+        // Donor 26.1.2: ENTITY_SNIPPET + core/scope_reticle_final + EMISSIVE/NO_CARDINAL_LIGHTING
+        // defines + translucent blend + no cull + ALWAYS_PASS depth test, no depth write.
+        // 1.21.11 等价重建：克隆同族的 ENTITY_TRANSLUCENT_EMISSIVE（自带 translucent 混合与
+        // EMISSIVE 光照族），换上最终 reticle 片元，补两个 define 与两个深度掩码采样器；
+        // 深度状态与 final reticle 相同 —— NO_DEPTH_TEST + 不写深度，真正画的边界由
+        // encoder mixin 按 FORCE_ALWAYS_DEPTH_PIPELINES 强制 GL_ALWAYS。
+        RenderPipeline.Builder builder = clonePipeline(
+                RenderPipelines.ENTITY_TRANSLUCENT_EMISSIVE,
+                Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "pipeline/scope_final_readout"));
+        builder.withFragmentShader(Identifier.fromNamespaceAndPath(
+                GunMod.MOD_ID, "core/scope_reticle_final"));
+        builder.withShaderDefine("EMISSIVE");
+        builder.withShaderDefine("NO_CARDINAL_LIGHTING");
+        builder.withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM);
+        builder.withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM);
+        builder.withCull(false);
+        builder.withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST);
+        builder.withDepthWrite(false);
+
+        RenderPipeline pipeline = RenderPipelines.register(builder.build());
+        FORCE_ALWAYS_DEPTH_PIPELINES.add(pipeline);
+        return pipeline;
+    }
+
     private static RenderPipeline createViewmodelCutoutPipeline() {
         RenderPipeline.Builder builder = clonePipeline(
                 RenderPipelines.ENTITY_CUTOUT,
@@ -856,7 +969,7 @@ public final class ScopeRenderTypes {
         return pipeline;
     }
 
-    private static RenderPipeline.Builder clonePipeline(RenderPipeline source, Identifier location) {
+    public static RenderPipeline.Builder clonePipeline(RenderPipeline source, Identifier location) {
         RenderPipeline.Builder builder = RenderPipeline.builder()
                 .withLocation(location)
                 .withVertexShader(source.getVertexShader())

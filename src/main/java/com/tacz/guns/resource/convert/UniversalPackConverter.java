@@ -265,7 +265,7 @@ public final class UniversalPackConverter {
             } else if (segments[2].equals("loot_tables") || segments[2].equals("tacz_loot_injectors")) {
                 convertOldPredicates(converted, "$", plan);
                 convertLoot(converted, null, "$", plan);
-                LootSchema26.table(converted.getAsJsonObject());
+                TargetLootSchema.table(converted.getAsJsonObject());
                 ConversionValidation.validate(LootTable.DIRECT_CODEC, items.ops(), converted, plan, "$");
             } else if (segments[2].equals("tags")) {
                 if (local.startsWith("tags/items/")) convertTagFile(converted.getAsJsonObject(), plan);
@@ -278,11 +278,11 @@ public final class UniversalPackConverter {
                     plan.converted("$.display.icon", "upgrade_item_stack");
                 }
                 convertOldPredicates(converted, "$", plan);
-                LootSchema26.advancement(advancement);
+                TargetLootSchema.advancement(advancement);
                 ConversionValidation.validate(Advancement.CODEC, items.ops(), converted, plan, "$");
             } else if (segments[2].equals("predicates")) {
                 convertOldPredicates(converted, "$", plan);
-                converted = LootSchema26.condition(converted);
+                converted = TargetLootSchema.condition(converted);
                 ConversionValidation.validate(LootItemCondition.DIRECT_CODEC, items.ops(), converted, plan, "$");
             } else if (segments[2].equals("item_modifiers")) {
                 convertOldPredicates(converted, "$", plan);
@@ -291,7 +291,7 @@ public final class UniversalPackConverter {
                 if (!converted.isJsonArray()) functions.add(converted);
                 wrapper.add("functions", functions);
                 convertLoot(wrapper, null, "$", plan);
-                converted = LootSchema26.modifiers(wrapper.getAsJsonArray("functions"));
+                converted = TargetLootSchema.modifiers(wrapper.getAsJsonArray("functions"));
                 ConversionValidation.validate(LootItemFunctions.ROOT_CODEC, items.ops(), converted, plan, "$");
             }
             if (converted.isJsonObject()) {
@@ -611,12 +611,7 @@ public final class UniversalPackConverter {
                         convertCondition(child.getAsJsonObject(), path + ".values", plan);
             }
             case "true" -> condition.addProperty("condition", "fabric:true");
-            case "false" -> {
-                condition.addProperty("condition", "fabric:not");
-                JsonObject truth = new JsonObject();
-                truth.addProperty("condition", "fabric:true");
-                condition.add("value", truth);
-            }
+            case "false" -> alwaysFalse().entrySet().forEach(e -> condition.add(e.getKey(), e.getValue()));
         }
     }
 
@@ -670,16 +665,23 @@ public final class UniversalPackConverter {
         return item;
     }
 
+    // Fabric API 0.141.6 has true and not, but no registered fabric:false type.
+    private static JsonObject alwaysFalse() {
+        JsonObject yes = new JsonObject();
+        yes.addProperty("condition", "fabric:true");
+        JsonObject no = new JsonObject();
+        no.addProperty("condition", "fabric:not");
+        no.add("value", yes);
+        return no;
+    }
+
     private static void skipRecipe(Map<String, byte[]> generated, PackConversionPlan plan, String name, String path, String code, String reason) {
         plan.skipRecipe(name, path, code, reason);
         // The 1.21.11 loader also exposes legacy recipes/. Shadow the remapped ID: don't reactivate an
         // unsupported base recipe (or make the world's dynamic recipe registry fail to load).
-        // Encode the receiver's registered condition instead of guessing a fabric:false ID.
-        // Fabric API 0.141.6 has true/not but no false condition.
-        JsonObject disabled = new JsonObject();
-        disabled.add(FABRIC_KEY, ResourceCondition.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE,
-                ResourceConditions.not(ResourceConditions.alwaysTrue())).getOrThrow());
-        putGenerated(generated, targetPath(name), GSON.toJson(disabled).getBytes(StandardCharsets.UTF_8));
+        JsonObject mask = new JsonObject();
+        mask.add(FABRIC_KEY, alwaysFalse());
+        putGenerated(generated, targetPath(name), GSON.toJson(mask).getBytes(StandardCharsets.UTF_8));
     }
 
     private static boolean isLegacyRecipe(String name) {

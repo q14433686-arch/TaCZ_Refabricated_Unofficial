@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tacz_server_checks:transfer_transactions_and_component_identity",
+  "structure": "fabric-gametest-api-v1:empty",
+  "max_ticks": 40,
+  "setup_ticks": 1,
+  "required": true
+}

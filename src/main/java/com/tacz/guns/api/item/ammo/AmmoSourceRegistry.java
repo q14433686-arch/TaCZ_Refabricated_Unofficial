@@ -51,6 +51,14 @@ public final class AmmoSourceRegistry {
         }
     };
 
+    /** Empty only for the standard inventory; a custom source accepting zero is not a fallback. */
+    public static java.util.OptionalInt returnToCustomSource(LivingEntity shooter, ItemStack gun, int offered) {
+        var source = EVENT.invoker().findAmmoSource(shooter, gun);
+        if (source == null) return java.util.OptionalInt.empty();
+        int accepted = offered <= 0 ? 0 : Math.max(0, Math.min(offered, source.returnAmmo(shooter, gun, offered)));
+        return java.util.OptionalInt.of(accepted);
+    }
+
     private AmmoSourceRegistry() {
     }
 

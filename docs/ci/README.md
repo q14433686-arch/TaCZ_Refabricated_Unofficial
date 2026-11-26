@@ -16,7 +16,11 @@ permission`（整个 push 一起失败，不是只忽略那个文件）。所以
 > `.github/workflows/build.yml`，并同步回本目录的同名镜像（逐字一致）。下面 2026-08-31 的「推不动」是当时那个会话的
 > 实测结论，保留不删，仍适用于没有 `workflows` 权限的会话；两边不一致时**以 `.github/workflows/` 的正式件为准**。
 
-## 当前清单（2026-08-31，R3）
+## 2026-11-26：1.21.11 接收线验收接线
+
+本会话已成功推送正式 workflow，`build.yml` / `compile-check.yml` 与此目录镜像同步。新增 Java 21 的 main/test/gametest 编译、JUnit、remap 成品结构审计、专服 GameTest 与 Xvfb 普通客户端导出重载测试；失败会在 Checks 摘出关键错误，测试报告/日志作 artifact 保留。实际运行状态及边界见[执行账本](../lineage/PORT_1_2_TO_1_21_11_20261126.md)。这些开发环境测试不能代替 remap 成品的独立服 TCP 与可选模组矩阵。
+
+## 当前清单（2026-08-31，R3；以下表格为历史状态）
 
 | 文件 | 状态 | 内容 |
 |---|---|---|

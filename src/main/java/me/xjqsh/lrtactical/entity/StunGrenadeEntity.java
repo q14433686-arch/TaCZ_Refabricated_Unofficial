@@ -56,6 +56,9 @@ import org.jetbrains.annotations.Nullable;
  * </ul>
  */
 public class StunGrenadeEntity extends ThrowableItemEntity {
+    /** 爆闪一次发送的 FLASH 粒子数；客户端 SurfaceLights 用它区分爆闪与枪口火光包（donor/PR#126 同名常量）。 */
+    public static final int FLASH_PARTICLES = 12;
+
     public static final ResourceKey<EntityType<?>> KEY = ResourceKey.create(
             Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(EquipmentMod.MOD_ID, "stun_grenade"));
 
@@ -103,7 +106,7 @@ public class StunGrenadeEntity extends ThrowableItemEntity {
             Vec3 pos = this.position();
             ParticleUtil.sendParticle(serverLevel,
                     ColorParticleOption.create(ParticleTypes.FLASH, 0xFFFFFF),
-                    pos.x(), pos.y() + 0.5, pos.z(), 12, 0.2, 0.2, 0.2, 8, true);
+                    pos.x(), pos.y() + 0.5, pos.z(), FLASH_PARTICLES, 0.2, 0.2, 0.2, 8, true);
         }
         super.onDeath(hitResult);
     }

@@ -12,11 +12,6 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 
 @Environment(EnvType.CLIENT)
 public class CommonNetworkCacheEvent {
-    /** Retire any task discarded during voluntary teardown before the next server can send data. */
-    public static void onConnectionInit(ClientPacketListener handler, Minecraft client) {
-        onLocalLogout(handler.getConnection());
-    }
-
     /** Transport close (possibly off-thread). Never clear the snapshot of a newer server. */
     public static void onDisconnect(ClientPacketListener handler, Minecraft client) {
         // Packet application, viewer state and the chunk receiver are game-thread owned.
@@ -31,6 +26,7 @@ public class CommonNetworkCacheEvent {
      * server's indexes. A memory connection shares CommonAssetsManager with its server. */
     public static void onLocalLogout(net.minecraft.network.Connection connection) {
         if (connection == null) return;
+        com.tacz.guns.util.ItemNbtUtils.clearRegistries(true);
         ServerMessageSyncGunPackPart.clearPendingSync();
         RecipeViewerReloadBridge.clear();
         if (connection.isMemoryConnection()) {

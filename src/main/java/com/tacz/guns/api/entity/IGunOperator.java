@@ -79,6 +79,8 @@ public interface IGunOperator {
      */
     void reload();
 
+    default void unloadAmmo() {} // Existing third-party implementations need not support this optional action.
+
     /**
      * 服务端取消换弹逻辑
      */

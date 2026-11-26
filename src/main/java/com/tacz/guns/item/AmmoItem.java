@@ -109,7 +109,7 @@ public class AmmoItem extends Item implements AmmoItemDataAccessor, IItem {
     }
 
     private static Comparator<Map.Entry<Identifier, CommonAmmoIndex>> idNameSort() {
-        return Comparator.comparingInt(m -> m.getValue().getSort());
+        return com.tacz.guns.util.ContentPackOrder.byPackThenSort(CommonAmmoIndex::getSort);
     }
 
     public static NonNullList<ItemStack> fillItemCategory() {

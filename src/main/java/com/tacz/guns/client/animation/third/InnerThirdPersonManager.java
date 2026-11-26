@@ -18,26 +18,20 @@ public class InnerThirdPersonManager {
         if (Minecraft.getInstance().isPaused()) {
             return;
         }
+        if (PlayerAnimatorCompat.updatePlayerLayers(entityIn)) return;
         if (entityIn instanceof IGunOperator operator) {
             ItemStack mainHandItem = entityIn.getMainHandItem();
             IGun iGun = IGun.getIGunOrNull(mainHandItem);
             if (iGun == null) {
-                PlayerAnimatorCompat.stopAllAnimation(entityIn);
                 return;
             }
             // 睡觉、爬梯、游泳、鞘翅飞行不播放第三人称动画
             if (entityIn.getPose() == Pose.SLEEPING || entityIn.onClimbable() || entityIn.isSwimming() || entityIn.getPose() == Pose.FALL_FLYING) {
-                PlayerAnimatorCompat.stopAllAnimation(entityIn);
                 return;
             }
 
-            TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display -> {
-                if (PlayerAnimatorCompat.hasPlayerAnimator3rd(entityIn, display)) {
-                    PlayerAnimatorCompat.playAnimation(entityIn, display, limbSwingAmount);
-                } else {
-                    playVanillaAnimation(entityIn, rightArm, leftArm, body, head, operator, display);
-                }
-            });
+            TimelessAPI.getGunDisplay(mainHandItem).ifPresent(display ->
+                    playVanillaAnimation(entityIn, rightArm, leftArm, body, head, operator, display));
         }
     }
 

@@ -13,6 +13,7 @@ import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.animation.screen.RefitTransform;
 import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
 import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
+import com.tacz.guns.client.render.ViewmodelFlash;
 import com.tacz.guns.client.event.CameraSetupEvent;
 import com.tacz.guns.client.event.FirstPersonRenderGunEvent;
 import com.tacz.guns.client.model.BedrockGunModel;
@@ -79,6 +80,34 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
 
     public static void copyHandCameraRotation(Matrix3f dst) {
         dst.set(handCameraRotation);
+    }
+
+    /** Convert an extracted hand locator to a detached world emitter, normalizing the hand
+     * pass base once. Do not use global ModelView, whose contract differs under Iris.
+     * <p>本线的入口基座字段是 {@link #handBasePose}（donor/PR#126 侧叫 handBasePoseEntry，
+     * 语义相同：渲染线程写入的完整入口矩阵）。 */
+    public static Matrix4f muzzleWorldPose(Matrix4f locator) {
+        var mc = Minecraft.getInstance();
+        var camera = mc.gameRenderer.getMainCamera();
+        Matrix4f local = new Matrix4f(handBasePose).invert().mul(locator);
+        double ratio = Math.tan(Math.toRadians(CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get()) / 2)
+                / Math.tan(Math.toRadians(CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2);
+        if (Double.isFinite(ratio) && ratio > 0) local.m32((float)(local.m32()*ratio));
+        var pos = camera.position();
+        return new Matrix4f().translation((float)pos.x,(float)pos.y,(float)pos.z).rotate(camera.rotation()).mul(local);
+    }
+
+    /** Camera-relative muzzle transform. Include the attachment offset in the same hand/world basis. */
+    public static Matrix4f surfaceLocator(Matrix4f locator, boolean first) {
+        if (!first) return new Matrix4f(locator);
+        return new Matrix4f().rotation(Minecraft.getInstance().gameRenderer.getMainCamera().rotation())
+                .scale(1, 1, 1 / muzzleWorldScale()).mul(new Matrix4f(handBasePose).invert()).mul(locator);
+    }
+
+    public static float muzzleWorldScale() {
+        double ratio = Math.tan(Math.toRadians(CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2)
+                / Math.tan(Math.toRadians(CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get()) / 2);
+        return Double.isFinite(ratio) && ratio > 0 ? (float)ratio : 1f;
     }
 
     /**
@@ -278,8 +307,10 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             RenderType renderType = display.enablesTransparency()
                     ? RenderTypes.entityTranslucent(display.getModelTexture())
                     : RenderTypes.entityCutout(display.getModelTexture());
-            gunModel.submit(poseStack, stack, ctx, collector, renderType,
-                    display.getModelTexture(), light, OverlayTexture.NO_OVERLAY);
+            // 26.1.2: ViewmodelFlash adjusts the hand-pass light for muzzle/scope flash effects.
+            ViewmodelFlash.submit(stack, light, baseLight ->
+                    gunModel.submit(poseStack, stack, ctx, collector, renderType,
+                            display.getModelTexture(), baseLight, OverlayTexture.NO_OVERLAY));
             // 缓存枪口位置，为第一人称曳光弹渲染作准备
             cacheMuzzlePosition(poseStack, gunModel);
             // 恢复手臂渲染

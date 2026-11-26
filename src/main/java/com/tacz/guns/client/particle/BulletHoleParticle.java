@@ -238,6 +238,14 @@ public class BulletHoleParticle extends SingleQuadParticle {
 
         @Override
         public BulletHoleParticle createParticle(@NotNull BulletHoleOption option, @NotNull ClientLevel world, double x, double y, double z, double pXSpeed, double pYSpeed, double pZSpeed, RandomSource random) {
+            // 26.1.2: surface-specific impact particles (block dust / custom pack effects).
+            var a = com.tacz.guns.api.TimelessAPI.getClientAmmoIndex(
+                    net.minecraft.resources.Identifier.tryParse(option.getAmmoId())).orElse(null);
+            var gId = net.minecraft.resources.Identifier.tryParse(option.getGunId());
+            var dId = net.minecraft.resources.Identifier.tryParse(option.getGunDisplayId());
+            var g = gId == null ? null : com.tacz.guns.api.TimelessAPI.getGunDisplay(dId, gId).orElse(null);
+            HitSurfaceParticleSpawner.spawn(world, new net.minecraft.world.phys.Vec3(x, y, z),
+                    option.getDirection(), world.getBlockState(option.getPos()), a, g, option.isIncendiary());
             return new BulletHoleParticle(world, x, y, z, option.getDirection(), option.getPos(), option.getAmmoId(), option.getGunId(), option.getGunDisplayId());
         }
     }

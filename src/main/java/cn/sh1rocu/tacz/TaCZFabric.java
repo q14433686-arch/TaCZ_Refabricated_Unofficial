@@ -137,11 +137,16 @@ public class TaCZFabric implements ModInitializer {
 
         LivingKnockBackEvent.CALLBACK.register(KnockbackChange::onKnockback);
 
+        com.tacz.guns.api.event.common.GunFirePostEvent.EVENT.register(com.tacz.guns.event.GunSoundAngerEvent::onGunFire);
+
         ModConfigEvents.loading(GunMod.MOD_ID).register(LoadingConfigEvent::onLoadingConfig);
         ModConfigEvents.reloading(GunMod.MOD_ID).register(LoadingConfigEvent::onReloadingConfig);
 
         ServerPlayerEvents.AFTER_RESPAWN.register(PlayerRespawnEvent::onPlayerRespawn);
 
+        net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.register(com.tacz.guns.event.AmmoStorageInteractionEvent::onRightClickBlock);
+        net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.register(com.tacz.guns.event.DisplayRackInteractions::use);
+        AttackBlockCallback.EVENT.register(com.tacz.guns.event.DisplayRackInteractions::attack);
         AttackBlockCallback.EVENT.register(PreventGunClick::onLeftClickBlock);
 
         ServerTickEvents.START_SERVER_TICK.register(ServerTickEvent::onServerTick);

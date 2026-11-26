@@ -34,6 +34,20 @@ public interface IAttachmentModifier<T, K> {
     }
 
     /**
+     * {@link #getOptionalFields()} 的列表形式（donor 26.1.2）：资源加载时用它判断
+     * 这个修改器还接受哪些额外 json 字段。
+     *
+     * @return 可选字段名列表；没有配置时为空列表
+     */
+    default List<String> getOptionalFieldList() {
+        String optionalField = getOptionalFields();
+        if (StringUtils.isEmpty(optionalField)) {
+            return Collections.emptyList();
+        }
+        return Collections.singletonList(optionalField);
+    }
+
+    /**
      * 从 Json 读取数据
      *
      * @param json 输入的 json 字符串

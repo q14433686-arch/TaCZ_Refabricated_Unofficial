@@ -94,7 +94,6 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
         return handler != null && handler.getConnection() == connection && connection.isConnected();
     }
 
-
     public Map<DataType, Map<Identifier, String>> getCache() {
         return cache;
     }
@@ -112,9 +111,6 @@ public class ServerMessageSyncGunPack implements CustomPacketPayload {
                 WorkbenchRecipeCounts.inTaczNamespace(CommonNetworkCache.INSTANCE.tableRecipe.keySet()), CommonNetworkCache.INSTANCE.getAllBlocks().size());
         // 通知客户端重新构建ClientIndex
         ClientIndexManager.reload();
-        // JEI/REI may already have completed their initial recipe registration before this
-        // server-authoritative cache arrives. Queue their coalesced lightweight refresh so
-        // categories and BlockId-sensitive workbench catalysts are rebuilt from this exact data.
         RecipeViewerReloadBridge.requestReload();
     }
 }
