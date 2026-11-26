@@ -551,5 +551,7 @@
   "tooltip.tacz.attachment.thermal_imaging.white_hot": "+ White Hot Thermal Imaging",
   "tooltip.tacz.attachment.thermal_imaging.black_hot": "+ Black Hot Thermal Imaging",
   "tooltip.tacz.attachment.thermal_imaging.ironbow": "+ Ironbow Thermal Imaging",
-  "tooltip.tacz.attachment.ammo_counter": "+ Ammo Counter"
+  "tooltip.tacz.attachment.ammo_counter": "+ Ammo Counter",
+  "config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render": "Disable Third-Person Offhand and Hotbar Gun Rendering",
+  "config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render.desc": "Hide guns in the offhand and unselected hotbar slots in third person. Main-hand guns render normally. Disabled by default."
 }

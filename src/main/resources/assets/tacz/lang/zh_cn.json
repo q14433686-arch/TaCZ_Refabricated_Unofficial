@@ -551,5 +551,7 @@
   "tooltip.tacz.attachment.thermal_imaging.white_hot": "+ 白热成像",
   "tooltip.tacz.attachment.thermal_imaging.black_hot": "+ 黑热成像",
   "tooltip.tacz.attachment.thermal_imaging.ironbow": "+ 铁红热成像",
-  "tooltip.tacz.attachment.ammo_counter": "+ 弹容计数"
+  "tooltip.tacz.attachment.ammo_counter": "+ 弹容计数",
+  "config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render": "关闭副手与快捷栏武器第三人称渲染",
+  "config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render.desc": "开启后隐藏第三人称下副手和快捷栏未选中槽位中的武器，主手武器正常渲染。默认关闭。"
 }

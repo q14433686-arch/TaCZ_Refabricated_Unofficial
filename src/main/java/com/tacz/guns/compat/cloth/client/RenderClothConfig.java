@@ -19,6 +19,10 @@ public class RenderClothConfig {
     public static void init(ConfigBuilder root, ConfigEntryBuilder entryBuilder) {
         ConfigCategory render = root.getOrCreateCategory(Component.translatable("config.tacz.client.render"));
 
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render"), RenderConfig.DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER.get())
+                .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render.desc"))
+                .setSaveConsumer(RenderConfig.DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER::set).build());
+
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.ocular_inflate_enable"), RenderConfig.ENABLE_OCULAR_INFLATE.get())
                 .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.ocular_inflate_enable.desc"))
                 .setSaveConsumer(RenderConfig.ENABLE_OCULAR_INFLATE::set).build());

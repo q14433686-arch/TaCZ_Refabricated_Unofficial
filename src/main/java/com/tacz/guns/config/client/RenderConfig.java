@@ -154,8 +154,13 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.BooleanValue SCOPE_PIP_DEBUG_PAINT_LENS;
 
+    public static ForgeConfigSpec.BooleanValue DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER;
+
     public static void init(ForgeConfigSpec.Builder builder) {
         builder.push("render");
+
+        DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER = builder.comment("Hide third-person offhand and unselected hotbar guns; keep main hand visible")
+                .define("DisableThirdPersonOffhandAndHotbarGunRender", false);
 
         ENABLE_OCULAR_INFLATE = builder.comment("Expand only attachment ocular cubes when baking. Reload resources to apply.")
                 .define("EnableOcularInflate", true);

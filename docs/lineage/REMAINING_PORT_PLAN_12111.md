@@ -265,3 +265,7 @@ R6 仍 ACTIVE，不发版、不改版本；新消费者、开发三世界稳定�
 完整开发45770219489再次初次worldBuilder.create超时，不能宣称稳定性通过。独立50秒观察确实取得phase3617，后续tick诊断phase4409，registered3/arrived2；相位仍推进，因此不是停死在单个Phaser相位的证据。Render线程独立样本在native framebuffer blit，Test线程在Fabric waitTick，Netty闲等；仍不能仅凭采样认定产品根因。CI reporter把6条长stack拼进3.8KB一条annotation，实际丢失后面的Server样本；本批改为独立phase/Server/Render/Test各一条优先annotation，并保留10-error上限，新Python正反例验证长stack末尾未丢。观察器优先这3线程+1Netty，另在正常client tick只读server primitive readiness/tick/pause标志，继续不触碰Phaser/Semaphore、不重试、不放宽1200tick门禁。
 
 共享方法差异复核又确认两个尚漏的render配置：GunHurtBobMultiplier（默认0.1；普通持枪受伤倾斜；不能动gun-hit专用路径、方向旋转或死亡roll）与DisableThirdPersonOffhandAndHotbarGunRender（默认false；只隐藏背负/副手与非选中快捷栏，不隐藏主手）。先给native API探针补本版GameRenderer.bobHurt字节码，取得1.21.11真实调用/切片后再写注入，绝不复制26.x OptionsRenderState字段目标。TargetMinecart的档案创建是既有TargetOwnerProfiles原生unresolved缓存替代，不是需要照搬新的resolver；命名/清名/改名仍需补目标测试。headshot Gizmos与SmokeCloud getLightColor等为本版原生API替代，不按方法名缺失恢复错代API。
+
+52e76e0e分发最终回执：45770219504 **SUCCESS 14/14**，optics-iris job139740801014亦SUCCESS；同一JAR SHA-256 `1b1fb2c3f02b3d77dcb755e58d5d988be768a2d131381d856e7b97eb85dc1bfd`。原生及Iris均记录PORT_BODY_MATERIAL与PORT_OCULAR_BAKE实际提交/顶点验证（Iris 1.10.8/Sodium0.8.14/Complementary r5.8.1固定哈希，不外推别的组合）。这不覆盖随后audio/tooltip改动，也不消除dev完整测试进世界超时。
+
+下一增量：恢复DisableThirdPersonOffhandAndHotbarGunRender默认false、Cloth与en/zh，门控只在HumanoidOffhandRender入口，不碰主手层。PlatformCarriedGuns使用真实玩家/AvatarRenderState/枪械item-model解析捕获native submissions，分别测副手、未选中槽位、运行时隐藏与selected槽不重复提交；恢复玩家/显示数据/config；强制platform及platform-zoomify回执。待编译与runtime，不能据此关闭R6。
