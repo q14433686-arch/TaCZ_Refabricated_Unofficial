@@ -15,6 +15,7 @@ import com.tacz.guns.client.resource.pojo.PackInfo;
 import com.tacz.guns.inventory.tooltip.AttachmentItemTooltip;
 import com.tacz.guns.resource.pojo.data.attachment.AttachmentData;
 import net.minecraft.client.Minecraft;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -157,6 +158,9 @@ public class ClientAttachmentItemTooltip implements ClientTooltipComponent {
     }
 
     private void addText(AttachmentType type) {
+        if (com.tacz.guns.util.VirtualOemAttachment.isBuiltinAttachment(attachmentId)) {
+            components.add(Component.translatable("tooltip.tacz.attachment.builtin"));
+        }
         TimelessAPI.getClientAttachmentIndex(attachmentId).ifPresent(index -> {
             AttachmentData data = index.getData();
 
@@ -165,10 +169,25 @@ public class ClientAttachmentItemTooltip implements ClientTooltipComponent {
                 // 纯查表，不能走 I18n.get：tooltipKey 允许是枪包内联的显示串（含 % 就被
                 // String.format 当格式说明符解析 → "Format error: ..."），而下面立刻按行
                 // Component.literal(...)，本来就不需要任何格式化。（同一形的问题 26.2 在
-                // ec51f556 只修了 text_show 那一处，这两处是 1.21.11 侧一并补的。）
+                // ec51f556 只修了 text_show 那一处；这里对齐 1.21.11 的 c9b8ba1 三处一起收。）
                 String text = Language.getInstance().getOrDefault(tooltipKey);
                 String[] split = text.split("\n");
                 Arrays.stream(split).forEach(s -> components.add(Component.literal(s).withStyle(style -> style.withColor(0xAAAAAA))));
+            }
+
+            if (data.hasFlashHider()) {
+                if (data.getFlashHider() < 1.0f) {
+                    components.add(Component.translatable("tooltip.tacz.attachment.flash_hider.decrease").withStyle(ChatFormatting.GREEN));
+                } else if (data.getFlashHider() > 1.0f) {
+                    components.add(Component.translatable("tooltip.tacz.attachment.flash_hider.increase").withStyle(ChatFormatting.RED));
+                }
+            }
+            if (data.hasSmokeHider()) {
+                if (data.getSmokeHider() < 1.0f) {
+                    components.add(Component.translatable("tooltip.tacz.attachment.smoke_hider.decrease").withStyle(ChatFormatting.GREEN));
+                } else if (data.getSmokeHider() > 1.0f) {
+                    components.add(Component.translatable("tooltip.tacz.attachment.smoke_hider.increase").withStyle(ChatFormatting.RED));
+                }
             }
 
             if (attachment.getItem() instanceof IAttachment iAttachment) {
@@ -184,6 +203,8 @@ public class ClientAttachmentItemTooltip implements ClientTooltipComponent {
             }
 
             if (type == AttachmentType.SCOPE) {
+                String sensor = index.getScopeLens().getVisionMode().tooltip();
+                if (sensor != null) components.add(Component.translatable(sensor).withStyle(net.minecraft.ChatFormatting.AQUA));
                 float[] zoom = index.getZoom();
                 if (zoom != null) {
                     String[] zoomText = new String[zoom.length];
@@ -193,6 +214,17 @@ public class ClientAttachmentItemTooltip implements ClientTooltipComponent {
                     String zoomJoinText = StringUtils.join(zoomText, ", ");
                     components.add(Component.translatable("tooltip.tacz.attachment.zoom", zoomJoinText).withStyle(style -> style.withColor(0xFFAA00)));
                 }
+            }
+
+            if (index.hasRangefinder()) {
+                components.add(Component.translatable("tooltip.tacz.attachment.rangefinder").withStyle(ChatFormatting.AQUA));
+            }
+            if (index.hasImpactPrediction()) {
+                components.add(Component.translatable("tooltip.tacz.attachment.fire_control").withStyle(ChatFormatting.AQUA));
+            }
+
+            if (type == AttachmentType.SCOPE && index.hasAmmoCounter()) {
+                components.add(Component.translatable("tooltip.tacz.attachment.ammo_counter").withStyle(ChatFormatting.AQUA));
             }
 
             if (type == AttachmentType.EXTENDED_MAG) {

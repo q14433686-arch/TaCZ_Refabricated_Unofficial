@@ -253,3 +253,7 @@ R6 仍 ACTIVE，不发版、不改版本；新消费者、开发三世界稳定�
 音频实际入口改消费SoundData（gun/attachment的字符串与对象都保留兼容getter），在播放前解析volume/pitch/random；native sound-event回退不再强行重定向到tacz_sounds，直接OGG仍优先，旧构造签名继续委托兼容。保留本版缺失reload/inspect aggregate静默让动画片段接管的行为；本地普通/动画声音按tracking选项选择listener-relative或entity-bound，显式3P射击/命中策略不被覆盖；空owner提前返回。
 
 新增2项JUnit及原生/Zoomify的PORT_PLATFORM_SOUND_DATA强制marker：实际SoundManager解析的volume/pitch/random、原生harp event与包内真实svd_dry_fire.ogg路径、本地tracking正反、实际draw consumer元数据、可选aggregate不误报、attachment双JSON形式。尚未编译或目标运行，不借旧R5的耳鸣音量矩阵证明这个新消费者。52e76e0e仍在验证前一批body/ocular，音频未混入该SHA。
+
+### R6 attachment tooltip消费者接续（待编译/实机）
+
+补回builtin、显式flash/smoke正反倍率、thermal sensor、rangefinder、impact prediction与scope-only ammo counter的真实tooltip消费者；ClientAttachmentIndex从当前display的text_show读能力，ammo marker在查询时走当前Language而非缓存翻译。补11个原先缺失的中英标题键。新增PORT_PLATFORM_ATTACHMENT_TIPS，原生/Zoomify都实际构造ClientAttachmentItemTooltip，检查正反/neutral/非scope/changed-display、builtin开关及加载后的翻译，而非只测试几个helper布尔值。与此同时unshaded world material按供体进入Iris EMISSIVE_ENTITIES，保留shadow原材质与HAND/HAND_TRANSLUCENT分类。新改动仍待目标回执；52e76e0e的结果不包含它们。

@@ -85,6 +85,7 @@ public final class PlatformSmoke extends PlayerProbe {
             PlatformRecoil.verify(ctx,world);
             PlatformAds.verify(ctx);
             PlatformModifiers.verify(ctx);
+            PlatformAttachmentTips.verify(ctx);
             PlatformTracer.verify(ctx);
             PlatformMeshBudget.verify(ctx);
         } finally {

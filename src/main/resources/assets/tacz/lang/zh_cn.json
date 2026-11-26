@@ -540,5 +540,16 @@
   "config.tacz.client.render.ocular_inflate_enable": "启用目镜方块膨胀",
   "config.tacz.client.render.ocular_inflate_enable.desc": "如果开镜时出现闪烁的黑斑，可以尝试开启此项。\n加载第一人称配件模型时会膨胀目镜方块以填补细缝。修改后需重载客户端资源。",
   "config.tacz.client.render.ocular_inflate": "目镜方块膨胀量",
-  "config.tacz.client.render.ocular_inflate.desc": "在原有 inflate 上追加的膨胀量，使用 Bedrock 模型单位。需启用目镜方块膨胀，修改后需重载客户端资源。"
+  "config.tacz.client.render.ocular_inflate.desc": "在原有 inflate 上追加的膨胀量，使用 Bedrock 模型单位。需启用目镜方块膨胀，修改后需重载客户端资源。",
+  "tooltip.tacz.attachment.builtin": "§9内置原厂配件",
+  "tooltip.tacz.attachment.flash_hider.decrease": "+ 减少枪口火光",
+  "tooltip.tacz.attachment.flash_hider.increase": "- 增加枪口火光",
+  "tooltip.tacz.attachment.smoke_hider.decrease": "+ 减少枪口烟雾",
+  "tooltip.tacz.attachment.smoke_hider.increase": "- 增加枪口烟雾",
+  "tooltip.tacz.attachment.rangefinder": "+ 测距",
+  "tooltip.tacz.attachment.fire_control": "+ 火控",
+  "tooltip.tacz.attachment.thermal_imaging.white_hot": "+ 白热成像",
+  "tooltip.tacz.attachment.thermal_imaging.black_hot": "+ 黑热成像",
+  "tooltip.tacz.attachment.thermal_imaging.ironbow": "+ 铁红热成像",
+  "tooltip.tacz.attachment.ammo_counter": "+ 弹容计数"
 }

@@ -93,7 +93,7 @@ public final class IlluminatedMaterials {
         if (pass.clipped()) ScopeRenderTypes.addOutsideApertureShader(builder);
         var result = builder.build();
         IrisCompat.assignPipelineToIris(result,
-                pass.hand ? (pass.translucent() ? "HAND_TRANSLUCENT" : "HAND") : "ENTITIES", name);
+                pass.hand ? (pass.translucent() ? "HAND_TRANSLUCENT" : "HAND") : "EMISSIVE_ENTITIES", name);
 
         return result;
     }
