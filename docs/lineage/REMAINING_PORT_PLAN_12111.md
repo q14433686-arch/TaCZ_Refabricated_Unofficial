@@ -235,3 +235,13 @@ R6 仍 ACTIVE，不发版、不改版本；新消费者、开发三世界稳定�
 补充同批接线：BedrockAttachmentModel 的非ADS与有序ADS housing也消费上述材质划分；APERTURE_COPY包装在识别材质之后添加，depth-copy周期每次BACKUP只允许一次aperture尝试（包括失败），防止第二个body材质批次把自身深度误当目镜。仍是本版原生depth aperture，不移植stencil；必须重新跑两环境完整光学矩阵。新增合约同时检查包装后的材质身份。两项本地verify脚本因缺少named MC缓存均未运行成功，不能写成通过；无本地JDK，目标编译/混淆运行交CI验证。
 
 进一步音频审计发现SoundData解析器/元数据已有，但SoundPlayManager实际入口仍主要取Identifier、丢弃authored volume/pitch/random参数，且GunSoundInstance缺少非tacz_sounds的原生event回退；这不在已关闭的R5耳鸣volume/input矩阵覆盖范围内，作为R6真实后续缺口保留。
+
+### R6 本体材质编译拦截与 ocular 烘焙接续
+
+`864f87bf` 的编译45768902651、全构建45768902685及发行45768902627均因新增测试替身的`order(int)`返回类型不兼容失败，尚未进入目标材质实测。1.21.11 `SubmitNodeStorage.order`是具体`SubmitNodeCollection`返回类型，不能以26.x的宽接口override；`14ec0094`改从SubmitNodeCollector接口代理捕获延迟任务。合并机器编译报告后的`1dfffa89`正在重验（compile45769237044 / full45769237322 / distribution45769237041），不把失败记成成功。
+
+补录`461cc6fc`发行45767016376最终 **14/14 success**；编译/全构建也success，mesh预算已闭环。它不证明后续材质SHA通过。
+
+工作区下一批ocular烘焙链：保留原生深度孔径，对NEW/LEGACY loader增加只作用于attachment ocular和后代的额外cube inflate，默认开启/0.0005模型单位；轮廓环和分划不扩大。新增TOML/Cloth/中英键、config-loaded保护、非有限值/损坏parent链保护。JUnit覆盖三种精确命名、编号、后代、负例与环；PORT_OCULAR_BAKE成品门禁实际构造两代attachment模型，对禁用/0/启用、authored inflate相加、box/per-face与旋转cube逐分支读真实顶点。既有原版/Iris完整PIP/热像/分划像素门禁仍强制，不用包围盒代替孔径裁剪。**尚未编译/实机验收**，不关闭R6。
+
+剩余共享消费者审计新增确认：attachment SoundData字段也仍是旧Identifier map；rangefinder/impact/ammo-counter tooltip capability消费者仍缺失。mesh attachment的hi/LOD加载并非缺失，由本版ClientAttachmentIndexMixin分别接线，不能为同路径差异重复加第二个loader。后续仍需核实这些消费者，不将同名文件或供体回执视作验收。

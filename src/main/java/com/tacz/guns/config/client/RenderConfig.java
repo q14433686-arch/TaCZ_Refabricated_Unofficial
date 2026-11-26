@@ -4,6 +4,8 @@ import com.tacz.guns.client.renderer.crosshair.CrosshairType;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 public class RenderConfig {
+    public static ForgeConfigSpec.BooleanValue ENABLE_OCULAR_INFLATE;
+    public static ForgeConfigSpec.DoubleValue OCULAR_INFLATE;
     public static final int DEFAULT_DROPPED_GUN_SPRITE_DISTANCE = 8;
     public static ForgeConfigSpec.IntValue DROPPED_GUN_SPRITE_DISTANCE;
     public static ForgeConfigSpec.BooleanValue HIT_PARTICLE_ENABLE;
@@ -154,6 +156,11 @@ public class RenderConfig {
 
     public static void init(ForgeConfigSpec.Builder builder) {
         builder.push("render");
+
+        ENABLE_OCULAR_INFLATE = builder.comment("Expand only attachment ocular cubes when baking. Reload resources to apply.")
+                .define("EnableOcularInflate", true);
+        OCULAR_INFLATE = builder.comment("Additional inflate in Bedrock model units (not screen-space mask padding).")
+                .defineInRange("OcularInflate", 0.0005, 0.0, (double) Float.MAX_VALUE);
 
         builder.comment("Whether or not apply fadeout effect on the laser beam. Close this may improve laser performance under some shaders.");
         ENABLE_LASER_FADE_OUT = builder.define("EnableLaserFadeOut", true);

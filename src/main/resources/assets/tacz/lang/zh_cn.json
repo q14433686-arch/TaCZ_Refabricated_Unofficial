@@ -536,5 +536,9 @@
   "config.tacz.common.ammo.enable_bullet_damage_ignore_list": "启用子弹伤害免疫实体列表",
   "config.tacz.common.ammo.enable_bullet_damage_ignore_list.desc": "开启后，子弹穿过列表中的实体且不消耗穿透次数，也不会点燃这些实体；弹药爆炸不会对它们造成伤害或击退。默认关闭，由服务端配置决定。",
   "config.tacz.common.ammo.bullet_damage_ignore_list": "子弹伤害免疫实体列表",
-  "config.tacz.common.ammo.bullet_damage_ignore_list.desc": "填写实体类型 ID，仅在列表开关开启时生效。默认包含原版的画、展示框和荧光展示框。"
+  "config.tacz.common.ammo.bullet_damage_ignore_list.desc": "填写实体类型 ID，仅在列表开关开启时生效。默认包含原版的画、展示框和荧光展示框。",
+  "config.tacz.client.render.ocular_inflate_enable": "启用目镜方块膨胀",
+  "config.tacz.client.render.ocular_inflate_enable.desc": "如果开镜时出现闪烁的黑斑，可以尝试开启此项。\n加载第一人称配件模型时会膨胀目镜方块以填补细缝。修改后需重载客户端资源。",
+  "config.tacz.client.render.ocular_inflate": "目镜方块膨胀量",
+  "config.tacz.client.render.ocular_inflate.desc": "在原有 inflate 上追加的膨胀量，使用 Bedrock 模型单位。需启用目镜方块膨胀，修改后需重载客户端资源。"
 }

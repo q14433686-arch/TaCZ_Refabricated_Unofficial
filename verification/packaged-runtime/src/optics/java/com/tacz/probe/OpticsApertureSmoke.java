@@ -33,6 +33,7 @@ public final class OpticsApertureSmoke extends PlayerProbe {
         ctx.runOnClient(mc -> {
             com.tacz.guns.client.render.scope.ReticleContractSmoke.verify();
             com.tacz.guns.client.render.scope.BodyMaterialContractSmoke.verify();
+            com.tacz.guns.client.model.OcularBakeContractSmoke.verify();
             ReticleGroups.verify();
             int program = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL20.GL_CURRENT_PROGRAM);
             try {

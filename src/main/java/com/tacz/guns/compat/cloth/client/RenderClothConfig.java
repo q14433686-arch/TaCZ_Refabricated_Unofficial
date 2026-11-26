@@ -19,6 +19,15 @@ public class RenderClothConfig {
     public static void init(ConfigBuilder root, ConfigEntryBuilder entryBuilder) {
         ConfigCategory render = root.getOrCreateCategory(Component.translatable("config.tacz.client.render"));
 
+        render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.ocular_inflate_enable"), RenderConfig.ENABLE_OCULAR_INFLATE.get())
+                .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.ocular_inflate_enable.desc"))
+                .setSaveConsumer(RenderConfig.ENABLE_OCULAR_INFLATE::set).build());
+
+        render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.ocular_inflate"), RenderConfig.OCULAR_INFLATE.get())
+                .setMin(0.0).setMax((double) Float.MAX_VALUE).setDefaultValue(0.0005)
+                .setTooltip(Component.translatable("config.tacz.client.render.ocular_inflate.desc"))
+                .setSaveConsumer(RenderConfig.OCULAR_INFLATE::set).build());
+
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.laser_fadeout"), RenderConfig.ENABLE_LASER_FADE_OUT.get())
                 .setDefaultValue(true).setTooltip(Component.translatable("config.tacz.client.render.laser_fadeout.desc"))
                 .setSaveConsumer(RenderConfig.ENABLE_LASER_FADE_OUT::set).build());

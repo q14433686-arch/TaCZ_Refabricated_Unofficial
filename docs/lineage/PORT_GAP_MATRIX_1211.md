@@ -78,3 +78,7 @@ GunInputHandler（统一物理输入）与 LevelRendererReceiverLightMixin（本
 ### R6 预算验收、本体材质接续
 
 `461cc6fc` 编译45767016402与完整开发45767016448成功，三fresh-world门禁本轮通过，历史间歇超时未根治；发行platform/Zoomify强制12marker与独立mesh bake额度通过，最终发行状态见活动计划。补录c157发行14/14成功。本轮接通body illuminated/real-sky/反射、即时双buffer与preview材质保留，新增两环境强制PORT_BODY_MATERIAL；这些新改动尚待编译/实机，不借前一SHA结果验收。ocular inflate及剩余共享审计仍未关闭。
+
+### R6 后续验收边界
+
+461cc6fc全构建/编译/发行14/14已成功。本体材质864f87bf被新增测试的native collector返回类型拦下，14ec0094修测试、1dfffa89重验中；ocular bake下一批已接线，尚未编译/运行。音频SoundData consumer、原生sound-event fallback和attachment tooltip能力仍是已确认后续缺口，整体状态仍OPEN。
