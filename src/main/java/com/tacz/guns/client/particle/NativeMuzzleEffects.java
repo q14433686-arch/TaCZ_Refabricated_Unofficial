@@ -87,14 +87,11 @@ public final class NativeMuzzleEffects {
             var state = context.worldState();
             var camera = state.cameraRenderState;
             SubmitNodeCollector collector = context.commandQueue();
-            // 26.2 的 LevelRenderer#submitFeatures 窗口在本线的落点：先把本帧枪口/爆炸面光源
-            // 写进各 RenderState#lightCoords（提交前生效），再交同样的 collector 提交自己的几何。
-            WorldFlashFrame.beginWorld(state);
+            // Terrain/smoke geometry uses the same frozen main-pass source as the two
+            // exception-safe native receiver submit windows, without extending their scope.
             submitSmoke(collector, camera.pos);
-            SurfaceLights.submit(collector, camera.pos);
+            SurfaceLights.submit(collector, camera.pos, WorldFlashFrame.mainPass(state));
         });
-        // 提交已经发生（lightCoords 已被抄进 SubmitNode），此处只负责还原提取状态。
-        WorldRenderEvents.AFTER_ENTITIES.register(context -> WorldFlashFrame.endWorld());
     }
     public static void extracted(Entity entity, EntityRenderState state) {
         if (state != null) state.setData(OWNER, entity.getId());

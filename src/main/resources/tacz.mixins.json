@@ -21,6 +21,7 @@
     "client.ForgeConfigSpecAccessor",
     "client.GameRendererProjectionAccessor",
     "client.LevelRendererAccessor",
+    "client.LevelRendererReceiverLightMixin",
     "client.LevelRendererAllChangedScopePassMixin",
     "client.GlCommandEncoderScopeDepthCopyMixin",
     "client.ItemInHandLayerMixin",

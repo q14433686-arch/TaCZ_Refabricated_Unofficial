@@ -20,10 +20,6 @@ import java.util.List;
 public final class WorldFlashFrame {
     record Source(SpillField field, float strength, int rgb) {}
     private static final ThreadLocal<WorldFlashFrame> ACTIVE = new ThreadLocal<>();
-    /** 本帧写入的 lightCoords 还原动作（{@link #beginWorld}/{@link #endWorld} 成对使用）。 */
-    private static final ThreadLocal<List<Runnable>> RESTORE = new ThreadLocal<>();
-    /** 嵌套窗口（例如光影窄遍）里被我们盖住的上一层帧。 */
-    private static final ThreadLocal<WorldFlashFrame> PREVIOUS = new ThreadLocal<>();
     final ClientLevel level;
     final List<Source> sources;
     final List<SurfaceLights.Draw> draws;
@@ -34,55 +30,44 @@ public final class WorldFlashFrame {
     }
     public static @Nullable WorldFlashFrame current() { return ACTIVE.get(); }
 
-    /**
-     * 1.21.11 版提交窗口（替代 26.2 的 {@code LevelRenderer#submitFeatures} mixin）。
-     *
-     * <p>26.2 用 {@code @WrapMethod(LevelRenderer#submitFeatures)} 把"应用光照 → 原样提交 →
-     * 还原"包成一个同步窗口。1.21.11 <b>没有</b> {@code submitFeatures}：实体的提交发生在
-     * {@code addMainPass} 里的 lambda（{@code method_62214}）中，编译期名字是合成名，
-     * 本分支明令禁止 mixin 挂合成名（AGENTS.md §3）。因此这里改用接收端自己的公开事件：
-     * Fabric API 的 {@code WorldRenderEvents.BEFORE_ENTITIES}（主 pass 内、所有实体/方块实体
-     * 提交<b>之前</b>）与 {@code AFTER_ENTITIES}（本批绘制完成之后）。</p>
-     *
-     * <p>时序上等价：光照写进 {@code EntityRenderState#lightCoords} 后，提交会把它抄进
-     * {@code SubmitNodeStorage.ModelSubmit}，所以"提交后立刻还原"不影响本帧画出来的亮度
-     * —— 26.2 的窗口语义同样只保证"提交那一刻生效"。</p>
-     */
-    public static void beginWorld(LevelRenderState state) {
-        var frame = SurfaceLights.prepare(state.cameraRenderState.pos);
+    private static WorldFlashFrame cached;
+    private static int preparedAt = -1;
+    public static void clear() { cached = null; preparedAt = -1; }
+
+    /** Cache one clock/budget for terrain and both native receiver submission windows. */
+    public static @Nullable WorldFlashFrame mainPass(LevelRenderState state) {
+        if (com.tacz.guns.client.render.scope.ScopePipRerender.isInsideScopeLevelRender()
+                || com.tacz.guns.compat.iris.IrisCompat.isRenderShadow()) return null;
+        int number = com.tacz.guns.client.render.scope.ScopeDepthCopyState.frameNumber();
+        if (preparedAt != number) { cached = SurfaceLights.prepare(state.cameraRenderState.pos); preparedAt = number; }
+        return cached;
+    }
+
+    /** 1.21.11 HAS stable submitEntities/submitBlockEntities methods (target-JAR audited).
+     * Bound only that receiver kind, restore even on exceptions, and mask an outer context
+     * during excluded nested/shadow passes. No Java 25 ScopedValue or synthetic lambda targets. */
+    public static void submitWorld(LevelRenderState state, boolean entities, Runnable original) {
+        var frame = mainPass(state);
         var previous = ACTIVE.get();
-        if (frame == null) {
-            if (previous != null) ACTIVE.remove();
-            RESTORE.remove();
-            return;
-        }
-        if (previous != null) PREVIOUS.set(previous);
-        ACTIVE.set(frame);
+        if (frame == null && previous == null) { original.run(); return; }
         var restore = new ArrayList<Runnable>();
-        RESTORE.set(restore);
-        // 二次渲染/光影窄遍会复用同一批提取状态，退出时逐条还原。
-        frame.applyLights(state, restore);
-    }
-
-    public static void endWorld() {
-        var restore = RESTORE.get();
-        RESTORE.remove();
-        if (restore != null) {
-            for (var undo : restore) undo.run();
+        ACTIVE.set(frame);
+        try {
+            if (frame != null) frame.applyLights(state, entities, restore);
+            original.run();
+        } finally {
+            for (int i=restore.size()-1;i>=0;i--) restore.get(i).run();
+            if (previous == null) ACTIVE.remove(); else ACTIVE.set(previous);
         }
-        var previous = PREVIOUS.get();
-        PREVIOUS.remove();
-        if (previous == null) ACTIVE.remove();
-        else ACTIVE.set(previous);
     }
 
-    private void applyLights(LevelRenderState state, List<Runnable> restore) {
-        for (EntityRenderState e : state.entityRenderStates) {
+    private void applyLights(LevelRenderState state, boolean entities, List<Runnable> restore) {
+        if (entities) for (EntityRenderState e : state.entityRenderStates) {
             int old = e.lightCoords;
             int lit = light(old, e.x, e.y + .55 * e.boundingBoxHeight, e.z, null, null);
             if (lit != old) { restore.add(() -> e.lightCoords = old); e.lightCoords = lit; }
         }
-        for (BlockEntityRenderState b : state.blockEntityRenderStates) {
+        else for (BlockEntityRenderState b : state.blockEntityRenderStates) {
             if (b instanceof DisplayRackRenderer.State) continue; // each rack face has its own probe
             var pos = b.blockPos;
             int old = b.lightCoords;

@@ -6,6 +6,10 @@ import com.tacz.guns.block.GunDisplayCaseBlock;
 import com.tacz.guns.block.GunDisplayCaseSlotHelper;
 import com.tacz.guns.block.GunPegboardSlotHelper;
 import com.tacz.guns.block.entity.DisplayRackBlockEntity;
+import com.tacz.guns.block.entity.GunPegboardBlockEntity;
+import com.tacz.guns.client.render.light.RackSurfaceLight;
+import com.tacz.guns.client.render.light.WorldFlashFrame;
+import net.minecraft.world.level.block.state.BlockState;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.config.util.GunPegboardItemConfigRead;
 import com.tacz.guns.item.GunPegboardItem;
@@ -36,6 +40,8 @@ public class DisplayRackRenderer<T extends DisplayRackBlockEntity> implements Bl
     public static class State extends BlockEntityRenderState {
         private final List<Slot> slots = new ArrayList<>();
         private boolean glowing;
+        private BlockState modelState;
+        private int dye;
     }
     @Override public State createRenderState() { return new State(); }
 
@@ -43,6 +49,8 @@ public class DisplayRackRenderer<T extends DisplayRackBlockEntity> implements Bl
         BlockEntityRenderState.extractBase(rack, state, overlay);
         state.slots.clear();
         state.glowing = rack.isGlowing();
+        state.modelState = rack.getBlockState();
+        state.dye = rack instanceof GunPegboardBlockEntity board ? board.getColor() : -1;
         var level = rack.getLevel();
         if (level == null) return;
         var mc = Minecraft.getInstance();
@@ -77,8 +85,15 @@ public class DisplayRackRenderer<T extends DisplayRackBlockEntity> implements Bl
     }
 
     @Override public void submit(State state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
-        int light = state.glowing ? 15728880 : state.lightCoords;
+        int light = state.lightCoords;
+        var flash = WorldFlashFrame.current();
+        if (flash != null) RackSurfaceLight.submit(flash, state.modelState, state.blockPos, state.dye, camera.pos, pose, collector);
+        Direction previous = null;
         for (var slot : state.slots) {
+            if (slot.facing != previous) {
+                light = slotLight(state, flash, slot.facing);
+                previous = slot.facing;
+            }
             pose.pushPose();
             pose.translate(0.5, 0.5, 0.5);
             pose.mulPose(Axis.YP.rotationDegrees(180 - slot.facing.get2DDataValue() * 90));
@@ -88,6 +103,12 @@ public class DisplayRackRenderer<T extends DisplayRackBlockEntity> implements Bl
             slot.item.submit(pose, slot.preview ? RackPreviewCollector.wrap(collector) : collector, light, OverlayTexture.NO_OVERLAY, 0);
             pose.popPose();
         }
+    }
+
+    /** Deliberately glowing contents retain fullbright; only ordinary slots receive spill. */
+    private static int slotLight(State state, WorldFlashFrame flash, Direction face) {
+        return state.glowing ? net.minecraft.client.renderer.LightTexture.FULL_BRIGHT : flash == null
+                ? state.lightCoords : flash.rackSlotLight(state.lightCoords, state.blockPos, face);
     }
 
     @Override public int getViewDistance() { return RenderConfig.TARGET_RENDER_DISTANCE.get(); }
