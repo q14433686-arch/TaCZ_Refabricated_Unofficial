@@ -6,7 +6,7 @@ import java.util.concurrent.CompletableFuture;
 
 /** Test-mod-only access to the real production attachment; no production debug API. */
 public final class ThermalReadback {
-    public record Pixels(int width, int height, int hot, int centralHot) {}
+    public record Pixels(int width, int height, int hot, int centralHot, String capture) {}
     public static Pixels read(ClientGameTestContext ctx) {
         var future = new CompletableFuture<Pixels>();
         ctx.runOnClient(mc -> {
@@ -22,7 +22,7 @@ public final class ThermalReadback {
                         hot++;
                         if (x>w/3 && x<2*w/3 && y>h/3 && y<2*h/3) central++;
                     }
-                    future.complete(new Pixels(w,h,hot,central));
+                    future.complete(new Pixels(w,h,hot,central,captureState()));
                 } catch (Throwable e) { future.completeExceptionally(e); }
             });
         });
@@ -44,7 +44,7 @@ public final class ThermalReadback {
     private static String captureState() {
         var state = new StringBuilder();
         try {
-            for (String name : new String[]{"active", "recording", "ready", "failed", "shaderPack"}) {
+            for (String name : new String[]{"active", "recording", "ready", "failed", "shaderPack", "submittedModels", "texturedModels"}) {
                 var field = ScopeThermalCapture.class.getDeclaredField(name);
                 field.setAccessible(true);
                 state.append(name).append('=').append(field.get(null)).append(' ');

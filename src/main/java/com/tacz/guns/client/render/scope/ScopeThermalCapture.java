@@ -39,6 +39,11 @@ public final class ScopeThermalCapture {
     private static boolean active, recording, ready, failed, shaderPack;
     private static TextureTarget mask;
     private static ByteBufferBuilder bytes;
+    private static final Matrix4f worldView = new Matrix4f();
+    // Retain counts after releasing the node list, for diagnostics without retaining model states.
+    private static int submittedModels, texturedModels;
+    public static void worldView(Matrix4f view) { worldView.set(view); }
+    public static void finishWorld(RenderTarget scene) { finish(scene, worldView); }
     private record Body(ModelSubmit<?> model, RenderType type, boolean shifted) {}
     private ScopeThermalCapture() {}
 
@@ -48,6 +53,7 @@ public final class ScopeThermalCapture {
     static void beginFrame(boolean enabled) {
         active = enabled && !failed;
         hot.clear(); draws.clear(); recording = ready = false;
+        submittedModels = texturedModels = 0;
         shaderPack = active && IrisCompat.isUsingRenderPack();
     }
     public static void extracted(Entity entity, EntityRenderState state) {
@@ -64,9 +70,11 @@ public final class ScopeThermalCapture {
     public static void endEntity(boolean previous) { recording = previous; }
     public static void record(RenderType original, ModelSubmit<?> model) {
         if (!recording) return;
+        submittedModels++;
         if (original.pipeline().getDepthTestFunction() == DepthTestFunction.NO_DEPTH_TEST) return;
         var texture = ScopeThermalMaterial.texture(original);
         if (texture == null) return;
+        texturedModels++;
         if (shaderPack && model.state() instanceof EntityRenderState state &&
                 (state.entityType == EntityType.CHICKEN || state.entityType == EntityType.SLIME))
             draws.add(new Body(model, ScopeThermalMaterial.Depth.SHIFTED.forTexture(texture), true));

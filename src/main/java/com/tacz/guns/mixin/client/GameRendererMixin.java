@@ -177,6 +177,7 @@ public abstract class GameRendererMixin {
         // try/finally：世界渲染中途抛异常也不能把标志卡在 true。
         GunSpread.setWorldProjectionY(projectionMatrix.m11());
         PolyMeshGpuRenderer.setLevelRenderActive(true);
+        com.tacz.guns.client.render.scope.ScopeThermalCapture.worldView(viewMatrix);
         try {
             ScopePipRerender.renderScopeView(levelRenderer, allocator, deltaTracker, blockOutline,
                     camera, viewMatrix, projectionMatrix, cullingMatrix, fogBuffer, fogColor, renderSky);
