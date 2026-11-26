@@ -1,0 +1,8 @@
+{
+  "name": "overlay",
+  "display": "tacz_lang_probe:overlay",
+  "data": "tacz_lang_probe:overlay",
+  "targets": [
+    "tacz:scope_acog_ta31"
+  ]
+}

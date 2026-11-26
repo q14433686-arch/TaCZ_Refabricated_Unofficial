@@ -8,6 +8,7 @@ import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
 import com.tacz.guns.client.model.SlotModel;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
+import com.tacz.guns.client.resource.index.ClientAttachmentVariantIndex;
 import com.tacz.guns.util.RenderDistance;
 import cn.sh1rocu.tacz.compat.fabric.BuiltinItemRendererRegistry;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -62,7 +63,7 @@ public class AttachmentItemRenderer implements BuiltinItemRendererRegistry.Dynam
                 if (transformType == ItemDisplayContext.FIXED) {
                     poseStack.mulPose(Axis.YN.rotationDegrees(90f));
                 }
-                this.renderDefaultAttachment(transformType, poseStack, collector, pPackedLight, pPackedOverlay, attachmentIndex);
+                this.renderDefaultAttachment(transformType, poseStack, collector, pPackedLight, pPackedOverlay, attachmentIndex, TimelessAPI.getClientAttachmentVariantIndex(stack).orElse(null));
             }, () -> {
                 // 没有这个 attachmentId，渲染黑紫材质以提醒
                 poseStack.translate(0.5, 1.5, 0.5);
@@ -81,15 +82,20 @@ public class AttachmentItemRenderer implements BuiltinItemRendererRegistry.Dynam
         }
     }
 
-    private void renderDefaultAttachment(@NotNull ItemDisplayContext transformType, @NotNull PoseStack poseStack, @NotNull SubmitNodeCollector collector, int pPackedLight, int pPackedOverlay, ClientAttachmentIndex attachmentIndex) {
+    private void renderDefaultAttachment(@NotNull ItemDisplayContext transformType, @NotNull PoseStack poseStack, @NotNull SubmitNodeCollector collector, int pPackedLight, int pPackedOverlay, ClientAttachmentIndex attachmentIndex, ClientAttachmentVariantIndex variant) {
         BedrockAttachmentModel model = attachmentIndex.getAttachmentModel();
         Identifier texture = attachmentIndex.getModelTexture();
+        boolean replaced = variant != null && variant.isReplaceMode() && variant.getAttachmentModel() != null && variant.getModelTexture() != null;
+        if (replaced) {
+            model = variant.getAttachmentModel();
+            texture = variant.getModelTexture();
+        }
         // 有模型？正常渲染
         if (model != null && texture != null) {
             // 调用低模
             Pair<BedrockAttachmentModel, Identifier> lodModel = attachmentIndex.getLodModel();
             // 有低模、在高模渲染范围外、不是第一人称
-            if (lodModel != null && !RenderDistance.inRenderHighPolyModelDistance(poseStack) && !transformType.firstPerson()) {
+            if (!replaced && lodModel != null && !RenderDistance.inRenderHighPolyModelDistance(poseStack) && !transformType.firstPerson()) {
                 model = lodModel.getLeft();
                 texture = lodModel.getRight();
             }
@@ -112,6 +118,10 @@ public class AttachmentItemRenderer implements BuiltinItemRendererRegistry.Dynam
                 tacz$snapshotPose.last().normal().set(pose.normal());
                 SLOT_ATTACHMENT_MODEL.renderToBuffer(tacz$snapshotPose, buffer, pPackedLight, pPackedOverlay, 1.0F, 1.0F, 1.0F, 1.0F);
             });
+        }
+        if (variant != null && variant.isOverlayMode() && variant.getAttachmentModel() != null && variant.getModelTexture() != null) {
+            variant.getAttachmentModel().submit(null, ItemStack.EMPTY, poseStack, transformType, collector,
+                    RenderTypes.entityCutout(variant.getModelTexture()), pPackedLight, pPackedOverlay);
         }
     }
 }

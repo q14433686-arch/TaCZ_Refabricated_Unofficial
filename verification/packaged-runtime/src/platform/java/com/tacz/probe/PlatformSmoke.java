@@ -93,6 +93,8 @@ public final class PlatformSmoke extends PlayerProbe {
             PlatformSmithFilter.verify(ctx);
             PlatformLanguages.verify(ctx);
             PlatformLegacyPaths.verify(ctx);
+            PlatformRangefinderText.verify(ctx);
+            PlatformLooseVariants.verify(ctx);
         } finally {
             ctx.runOnClient(mc -> { mc.setScreen(null);saved.forEach(PlatformSmoke::bind);KeyConfig.AUTO_RELOAD.set(auto); });
         }

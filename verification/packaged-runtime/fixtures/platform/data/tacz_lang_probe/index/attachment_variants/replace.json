@@ -1,0 +1,8 @@
+{
+  "name": "replace",
+  "display": "tacz_lang_probe:replace",
+  "data": "tacz_lang_probe:replace",
+  "targets": [
+    "tacz:scope_acog_ta31"
+  ]
+}

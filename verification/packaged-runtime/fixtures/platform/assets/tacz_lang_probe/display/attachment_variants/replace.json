@@ -1,0 +1,5 @@
+{
+  "model": "tacz_lang_probe:attachment/variant",
+  "texture": "minecraft:block/gold_block",
+  "mode": "replace"
+}
