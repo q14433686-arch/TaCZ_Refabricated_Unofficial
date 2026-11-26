@@ -241,30 +241,12 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         this.reticleNodes = resolveReticleNodes();
     }
 
-    /**
-     * 扫描模型树，把准星节点分成「发光」与「蚀刻」两类。
-     *
-     * <h2>为什么必须单独扫描，而不能复用 divisionNodePaths</h2>
-     * 上面那段初始化把 {@code division} 整个 {@code setHidden(true)} 了，
-     * 而实测（默认枪包 33 个瞄具）发现 <b>{@code division_illuminated} 是
-     * {@code division} 的子节点</b>：
-     * <pre>
-     *   scope_acog_ta31:  division(5 cubes)  ← 黑色蚀刻线 + 遮光板
-     *                     └─ division_illuminated(1 cube)  ← 发光竖线
-     *   sight_exp3:       division(0 cubes)
-     *                     └─ division_illuminated(1 cube)  ← 全息红点
-     * </pre>
-     * 而快照遍历器 {@code BedrockRenderSnapshot#capturePart} 遇到
-     * {@code visible == false} 会<b>直接 return、连子节点都不遍历</b>。
-     * 于是父级一被隐藏，发光准星也跟着永远画不出来 ——
-     * 这正是「镜片掏空后什么都看不见」的直接原因。
-     *
-     * <p>因此这里<b>绕过父子关系</b>，直接把发光节点单独收集出来，
-     * 由 {@code IlluminatedReticleRenderer} 在 submit 阶段临时置为可见并单独提交。</p>
-     */
+    /** Use authored division roots, not their common grouping parent. Exclude luminous
+     * housing decorations from the independent fallback reticle list. */
     private ScopeNodeSet resolveReticleNodes() {
         List<BedrockPart> illuminated = new ArrayList<>();
-        List<BedrockPart> etched = new ArrayList<>();
+        List<BedrockPart> etched = new ArrayList<>(divisionByIndex.values());
+        var housing = modelMap.get("scope_body");
         for (Map.Entry<String, ModelRendererWrapper> entry : modelMap.entrySet()) {
             String name = entry.getKey();
             if (name == null) {
@@ -274,9 +256,13 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             if (part == null) {
                 continue;
             }
-            if (RETICLE_ILLUMINATED_PATTERN.matcher(name).matches()) {
+            if (RETICLE_ILLUMINATED_PATTERN.matcher(name).matches()
+                    && (divisionByIndex.isEmpty() || housing == null || !hasAncestor(part, housing.getModelRenderer())
+                    || divisionByIndex.values().stream().anyMatch(root -> hasAncestor(part, root)))) {
+                // E.g. TA31 also has red_illuminated on the *housing*. Replaying it here
+                // would punch it straight back through the aperture as a fake reticle.
                 illuminated.add(part);
-            } else if (RETICLE_ETCHED_PATTERN.matcher(name).matches()) {
+            } else if (divisionByIndex.isEmpty() && RETICLE_ETCHED_PATTERN.matcher(name).matches()) {
                 etched.add(part);
             }
         }
@@ -743,9 +729,9 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             ScopeNodeSet active = filterReticleByActiveView(reticleNodes);
             IReticleRenderer reticle = ReticleRendererRegistry.select(active);
             if (reticle != null && !active.isEmpty()) {
-                boolean etchedOnly = active.hasEtched() && !active.hasIlluminated() && texture != null;
+                boolean maskedReticle = apertureActive && texture != null && !ocularSnapshots.isEmpty();
                 RenderType baseReticleType;
-                if (etchedOnly) {
+                if (maskedReticle) {
                     if (deferReticleToIrisFinalOverlay) {
                         baseReticleType = ScopeRenderTypes.finalEtchedReticle(texture);
                     } else if (deferReticleToIrisTranslucent) {
@@ -757,8 +743,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                     baseReticleType = renderType;
                 }
                 RenderType baseIlluminatedType;
-                if (texture == null) {
-                    baseIlluminatedType = renderType;
+                if (!maskedReticle) {
+                    baseIlluminatedType = texture == null ? renderType : ScopeRenderTypes.emissive(texture);
                 } else if (deferReticleToIrisFinalOverlay) {
                     baseIlluminatedType = ScopeRenderTypes.finalVisibleReticle(texture);
                 } else if (deferReticleToIrisTranslucent) {
@@ -767,13 +753,13 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                     baseIlluminatedType = ScopeRenderTypes.visibleReticle(texture);
                 }
 
-                // Pure etched trees are CPU-filtered to retain thin marks and discard large blackout panels.
-                // Both renderers sample world/aperture depth per pixel and only retain the ocular interior.
+                // Both ink and luminous layers use the depth aperture, including hybrid scopes.
+                // Only the no-aperture luminous fallback is size-filtered during extraction.
                 reticle.submitReticle(new IReticleRenderer.Context(
                         poseStack, collector.order(SCOPE_RETICLE_ORDER),
                         transformType, baseReticleType, baseIlluminatedType,
-                        light, overlay, currentAimingProgress(), etchedOnly,
-                        deferReticleToIrisTranslucent, deferReticleToIrisFinalOverlay), active);
+                        light, overlay, currentAimingProgress(), maskedReticle,
+                        maskedReticle && deferReticleToIrisTranslucent, maskedReticle && deferReticleToIrisFinalOverlay), active);
             }
         }
 

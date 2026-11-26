@@ -132,7 +132,7 @@ public final class ScopeLateReticleState {
         // Snapshot matrices already include the original solid-pass model transform. Submit from
         // identity so neither the late hand pass nor its current PoseStack can apply it a second time.
         collector.submitCustomGeometry(new PoseStack(), renderType,
-                (entryPose, consumer) -> snapshot.writeFiltered(consumer, ReticleMarkFilter::isThinMark));
+                (entryPose, consumer) -> snapshot.write(consumer));
     }
 
     private record ReticleDraw(BedrockRenderSnapshot snapshot, RenderType renderType) {

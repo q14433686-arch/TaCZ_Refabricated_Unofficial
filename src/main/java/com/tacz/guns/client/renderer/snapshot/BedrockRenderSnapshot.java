@@ -53,7 +53,7 @@ public final class BedrockRenderSnapshot {
         PoseStack working = copyOf(rootPose);
         Builder builder = new Builder(displayContext, overlay, red, green, blue, alpha);
         for (BedrockPart part : model.getShouldRender()) {
-            builder.capturePart(part, working, light);
+            builder.capturePart(part, working, light, false);
         }
         return new BedrockRenderSnapshot(builder.commands, builder.functionalTasks, builder.skippedFunctionalNodes);
     }
@@ -78,8 +78,28 @@ public final class BedrockRenderSnapshot {
                                                        float alpha) {
         PoseStack working = copyOf(rootPose);
         Builder builder = new Builder(displayContext, overlay, red, green, blue, alpha);
-        builder.captureGeometry(root, working, light);
+        builder.captureGeometry(root, working, light, root.illuminated);
         return new BedrockRenderSnapshot(builder.commands, builder.functionalTasks, builder.skippedFunctionalNodes);
+    }
+
+    /** Partition authored ink and luminous geometry without inferring material from packed light.
+     * Sunlit ink may have the same light value as an emitter. No mutable model nodes escape. */
+    public void submitLayers(java.util.function.BiConsumer<BedrockRenderSnapshot, Boolean> submit) {
+        var ink = drawCommands.stream().filter(d -> !d.unshaded()).toList();
+        var luminous = drawCommands.stream().filter(DrawCommand::unshaded).toList();
+        if (!ink.isEmpty()) submit.accept(new BedrockRenderSnapshot(ink, List.of(), 0), false);
+        if (!luminous.isEmpty()) submit.accept(new BedrockRenderSnapshot(luminous, List.of(), 0), true);
+    }
+
+    /** Freeze a safe fallback before queuing it; deferred paths must not filter differently. */
+    public BedrockRenderSnapshot filterCubes(Predicate<BedrockCube> keep) {
+        var filtered = new ArrayList<DrawCommand>();
+        for (var d : drawCommands) {
+            var cubes = d.cubes().stream().filter(keep).toList();
+            if (!cubes.isEmpty()) filtered.add(new DrawCommand(d.pose(), d.normal(), cubes, d.light(),
+                    d.overlay(), d.red(), d.green(), d.blue(), d.alpha(), d.unshaded()));
+        }
+        return new BedrockRenderSnapshot(filtered, List.of(), 0);
     }
 
     public boolean isEmpty() {
@@ -113,8 +133,7 @@ public final class BedrockRenderSnapshot {
 
     /** Screen-space bounds for the lens optics only. Coverage is still tested from the two
      * actual depth copies; a bounding rectangle never authorizes a lens pixel.
-     * <p>逐字移植自 donor 26.1.2；本线的 {@link DrawCommand} 没有 unshaded 位（墨/发光的
-     * 拆分在本线走 {@link #writeFiltered} 的立方体谓词），故不涉及。</p> */
+     * Material partitioning has no effect on these diagnostic bounds. */
     public void extendOcularBounds(org.joml.Matrix4fc clip, float[] bounds) {
         var v = new org.joml.Vector4f();
         for (var draw : drawCommands) for (var cube : draw.cubes()) for (var face : cube.getPolygons()) {
@@ -169,7 +188,12 @@ public final class BedrockRenderSnapshot {
                               float red,
                               float green,
                               float blue,
-                              float alpha) {
+                              float alpha,
+                              boolean unshaded) {
+        public DrawCommand(Matrix4f pose, Matrix3f normal, List<BedrockCube> cubes, int light,
+                           int overlay, float red, float green, float blue, float alpha) {
+            this(pose, normal, cubes, light, overlay, red, green, blue, alpha, false);
+        }
         public DrawCommand {
             pose = new Matrix4f(pose);
             normal = new Matrix3f(normal);
@@ -207,24 +231,26 @@ public final class BedrockRenderSnapshot {
          * 与 capturePart 的区别：不对 part 自身再套一次 translateAndRotateAndScale
          * （调用点已经套过），仅对子节点递归时套用。
          */
-        private void captureGeometry(BedrockPart part, PoseStack poseStack, int inheritedLight) {
+        private void captureGeometry(BedrockPart part, PoseStack poseStack, int inheritedLight, boolean inheritedUnshaded) {
             if (!part.visible) {
                 return;
             }
             int partLight = part.illuminated ? 15728880 : inheritedLight;
+            boolean unshaded = inheritedUnshaded || part.illuminated;
             if (!part.cubes.isEmpty()) {
                 PoseStack.Pose current = poseStack.last();
                 this.commands.add(new DrawCommand(
                         current.pose(), current.normal(), part.cubes,
-                        partLight, this.overlay, this.red, this.green, this.blue, this.alpha));
+                        partLight, this.overlay, this.red, this.green, this.blue, this.alpha, unshaded));
             }
             for (BedrockPart child : part.children) {
-                capturePart(child, poseStack, partLight);
+                capturePart(child, poseStack, partLight, unshaded);
             }
         }
 
-        private void capturePart(BedrockPart part, PoseStack poseStack, int inheritedLight) {
+        private void capturePart(BedrockPart part, PoseStack poseStack, int inheritedLight, boolean inheritedUnshaded) {
             int partLight = part.illuminated ? 15728880 : inheritedLight;
+            boolean unshaded = inheritedUnshaded || part.illuminated;
 
             // FunctionalBedrockPart always evaluates its provider, even if visible is false. Providers
             // returning null are visibility/state hooks and can be snapshotted normally. Providers
@@ -253,10 +279,10 @@ public final class BedrockRenderSnapshot {
                     // 用于 additional_magazine：枪身上那一个弹匣与跟手的那一个共用同一份网格。
                     // 走这条路径可与枪身共用 RenderType / DrawCommand 批次，保证材质与顺序正确。
                     if (part.visible) {
-                        captureGeometry(part, poseStack, partLight);
+                        captureGeometry(part, poseStack, partLight, unshaded);
                         BedrockPart mirrored = mirror.getMirroredPart();
                         if (mirrored != null && mirrored.visible) {
-                            captureGeometry(mirrored, poseStack, partLight);
+                            captureGeometry(mirrored, poseStack, partLight, unshaded);
                         }
                     }
                     poseStack.popPose();
@@ -280,11 +306,12 @@ public final class BedrockRenderSnapshot {
                             this.red,
                             this.green,
                             this.blue,
-                            this.alpha
+                            this.alpha,
+                            unshaded
                     ));
                 }
                 for (BedrockPart child : part.children) {
-                    capturePart(child, poseStack, partLight);
+                    capturePart(child, poseStack, partLight, unshaded);
                 }
             }
 

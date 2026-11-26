@@ -205,7 +205,7 @@ public final class ScopeFinalOverlayState {
             OrderedSubmitNodeCollector reticleCollector = submitNodes.order(FINAL_RETICLE_ORDER);
             for (ReticleDraw draw : reticles) {
                 reticleCollector.submitCustomGeometry(new PoseStack(), draw.renderType(),
-                        (entryPose, consumer) -> draw.snapshot().writeFiltered(consumer, ReticleMarkFilter::isThinMark));
+                        (entryPose, consumer) -> draw.snapshot().write(consumer));
             }
 
             OrderedSubmitNodeCollector ringCollector = submitNodes.order(FINAL_OCULAR_RING_ORDER);

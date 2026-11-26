@@ -30,6 +30,22 @@ public final class OpticsApertureSmoke extends PlayerProbe {
     }
 
     @Override void exercise(ClientGameTestContext ctx, TestSingleplayerContext world) {
+        ctx.runOnClient(mc -> {
+            com.tacz.guns.client.render.scope.ReticleContractSmoke.verify();
+            int program = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL20.GL_CURRENT_PROGRAM);
+            try {
+                org.lwjgl.opengl.GL20.glUseProgram(0);
+                ScopeDepthCopyState.begin(ScopeDepthCopyState.Operation.MASK);
+                if (ScopeDepthCopyState.beforeDraw()) throw new AssertionError("Unsafe interior draw without mask program");
+                ScopeDepthCopyState.end();
+                ScopeDepthCopyState.begin(ScopeDepthCopyState.Operation.MASK_OUTSIDE);
+                if (!ScopeDepthCopyState.beforeDraw()) throw new AssertionError("Outside FX lost their unmasked fallback");
+            } finally {
+                ScopeDepthCopyState.end();
+                org.lwjgl.opengl.GL20.glUseProgram(program);
+            }
+        });
+        System.out.println("PORT_RETICLE_CONTRACT: hybrid materials, inherited light, dedup, frozen pose, visibility, ADS, fallback and draw veto passed in intermediary");
         var optic = Identifier.parse("tacz:scope_standard_8x");
         var server = world.getServer();
         var base = server.computeOnServer(s -> {
@@ -60,6 +76,7 @@ public final class OpticsApertureSmoke extends PlayerProbe {
             ctx.waitFor(mc -> IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(0) > .999f);
             ctx.waitTicks(6);
             var steady = sample(ctx, "steady");
+            ReticleFrames.verify(ctx, optic);
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
             ctx.waitFor(mc -> IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(0) < .001f);
             ctx.waitTicks(6);

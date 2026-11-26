@@ -479,17 +479,18 @@ public final class ScopeDepthCopyState {
 
     /**
      * Steps 6-8: bind the world-depth backup and the ocular aperture copy, then enable the mask
-     * branch. When anything is missing the draw falls back to the previous unmasked behavior
-     * (mode stays 0), which never produces stale or garbage masking.
+     * branch. Interior geometry may include authored blackout panels: missing uniforms,
+     * stale copies or a mismatched FBO MUST veto that draw. Outside-mask viewmodel FX
+     * retain their ordinary unmasked fallback. Small no-aperture reticles use Operation.NONE.
      */
     private static boolean prepareMaskDraw(int program, int maskMode) {
         if (program <= 0) {
-            return true;
+            return maskMode != 1;
         }
         int maskLocation = GL20.glGetUniformLocation(program, MASK_MODE_UNIFORM);
         if (maskLocation < 0) {
-            // The active program has no mask branch (not a reticle shader); draw it untouched.
-            return true;
+            // An interior draw without a mask branch is unsafe; ordinary outside FX may continue.
+            return maskMode != 1;
         }
         int finalOverlayLocation = GL20.glGetUniformLocation(program, FINAL_OVERLAY_UNIFORM);
         boolean finalOverlay = finalOverlayLocation >= 0;
@@ -501,7 +502,7 @@ public final class ScopeDepthCopyState {
             if (finalOverlay) {
                 GL20.glUniform1i(finalOverlayLocation, 0);
             }
-            return true;
+            return maskMode != 1;
         }
 
         // Final-overlay geometry samples only the two immutable private depth copies. It does not
@@ -519,7 +520,7 @@ public final class ScopeDepthCopyState {
                 GL20.glUniform1i(maskLocation, 0);
                 logFailure("scope mask target does not match the aperture copy surface (depth "
                         + currentDepth + " vs copied " + apertureDepthIdentity + ")");
-                return true;
+                return maskMode != 1;
             }
         }
 
@@ -530,7 +531,7 @@ public final class ScopeDepthCopyState {
         if (apertureLocation < 0) {
             GL20.glUniform1i(maskLocation, 0);
             logFailure("reticle shader has no ocular aperture sampler");
-            return true;
+            return maskMode != 1;
         }
         boolean irisWorld = !finalOverlay && useIrisPreHandDepth && irisWorldLocation >= 0;
         // The vanilla branch and final overlay may only bind a world-depth sampler when this cycle
@@ -538,7 +539,7 @@ public final class ScopeDepthCopyState {
         if (!irisWorld && (worldLocation < 0 || WORLD_TARGET.texture() == 0)) {
             GL20.glUniform1i(maskLocation, 0);
             logFailure("reticle shader has no usable world-depth source for the ocular mask");
-            return true;
+            return maskMode != 1;
         }
 
         // The ocular copy occupies the highest unit; the vanilla world backup sits one below it.

@@ -88,8 +88,8 @@ def test(product, work, evidence, suite):
         'display': {'PORT_INK:': 1, 'PORT_OUTLINE:': 1, 'PORT_RACK_PREVIEW:': 5, 'PORT_CASE_HINT:': 1},
         'controller': {'PORT_CONTROLLER:': 1},
         'pal': {'PORT_PAL:': 2},
-        'optics': {'PORT_OPTIC:': 3},
-        'optics-iris': {'PORT_OPTIC:': 3, 'PORT_IRIS:': 1},
+        'optics': {'PORT_OPTIC:': 3, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_RETICLE_PIXELS:': 1},
+        'optics-iris': {'PORT_OPTIC:': 3, 'PORT_IRIS:': 1, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_RETICLE_PIXELS:': 1},
     }[suite]
     text = log.read_text(errors='replace')
     for marker, count in {**markers, 'PORT_PLAYER:': 1}.items():
@@ -99,6 +99,8 @@ def test(product, work, evidence, suite):
     frames = {'optics': ['optic_raise', 'optic_steady', 'optic_hip'], 'optics-iris': ['optic_raise', 'optic_steady', 'optic_hip'], 'pal': ['pal_remote_rifle', 'pal_remote_pistol'], 'controller': [], 'display': [
         f'{scene}_{state}' for scene in ['rack', 'case', 'corner', 'vanilla_quad', 'mesh'] for state in ['empty', 'ghost', 'placed']
     ] + [f'case_hint_{s}' for s in ['gun_hover','gun_interact','empty_hover','look_away','tick_39','tick_40_held','sneak_unlock','unlocked']]}[suite]
+    if suite.startswith('optics'):
+        frames += ['reticle_full', 'reticle_luminous_only', 'reticle_none', 'reticle_restored']
     for frame in frames:
         if not any((instance/'screenshots').glob(f'*tacz_{frame}.png')): raise AssertionError(f'Missing raw frame: {frame}')
     with product.open('rb') as f: digest = hashlib.file_digest(f, 'sha256').hexdigest()

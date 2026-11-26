@@ -136,6 +136,8 @@ repositories {
     }
 }
 
+// Run the same reticle extraction contract in JUnit and the intermediary client harness.
+sourceSets.test.java.srcDir 'verification/packaged-runtime/src/reticle-contract/java'
 test { useJUnitPlatform() }
 
 dependencies {
