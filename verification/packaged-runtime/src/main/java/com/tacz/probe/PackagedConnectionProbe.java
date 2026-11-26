@@ -38,7 +38,7 @@ public final class PackagedConnectionProbe implements FabricClientGameTest {
             }
             connect(ctx);
             expect(ctx, FIRST, 111, SECOND);
-            ctx.runOnClient(mc -> checkIndexes());
+            ctx.runOnClient(mc -> { checkIndexes(); checkServerStanceConfig(); });
             var ready = Path.of(System.getProperty("tacz.probe.ready"));
             if (ctx.computeOnClient(mc -> table("shells") != null)) throw new AssertionError("Stale converted recipe before reload");
             ctx.waitFor(mc -> mc.getConnection().hasClientLoaded() && mc.screen == null, 1200);
@@ -92,7 +92,8 @@ public final class PackagedConnectionProbe implements FabricClientGameTest {
             }
             connect(ctx);
             expect(ctx, SECOND, 222, FIRST);
-            ctx.runOnClient(mc -> { checkConvertedTable(); checkIndexes(); });
+            ctx.runOnClient(mc -> { checkConvertedTable(); checkIndexes(); checkServerStanceConfig(); });
+            System.out.println("PORT_SERVER_CONFIG: actual FCAP TCP sync applied server-only CrawlMaxUpAngle=12/CrawlMaxDownAngle=7/UseHipFireInaccuracyWhileAirborne=true on both joins; no test payload or local client mutation");
             observeViewer(ctx, viewer, SECOND, FIRST);
             ctx.waitFor(mc -> DedicatedCrafting.recipeBookHasTable(mc) && DedicatedCrafting.shells(mc) == 10
                     && DedicatedCrafting.inventory(mc, com.tacz.guns.init.ModItems.GUN_SMITH_TABLE) == 2
@@ -108,6 +109,13 @@ public final class PackagedConnectionProbe implements FabricClientGameTest {
             if (stock != null) checkPausedClock(ctx);
             System.out.println("PORT_TCP: directory winner on join, ZIP winner after reload, retired index absent, cache cleared and fresh on rejoin");
         } catch (IOException e) { throw new UncheckedIOException(e); }
+    }
+
+    private static void checkServerStanceConfig() {
+        if (com.tacz.guns.config.sync.SyncConfig.CRAWL_MAX_UP_ANGLE.get() != 12d
+                || com.tacz.guns.config.sync.SyncConfig.CRAWL_MAX_DOWN_ANGLE.get() != 7d
+                || !com.tacz.guns.config.sync.SyncConfig.USE_HIP_FIRE_INACCURACY_WHILE_AIRBORNE.get())
+            throw new AssertionError("Client did not receive nondefault server stance config through FCAP");
     }
 
     private static void checkPausedClock(ClientGameTestContext ctx) {

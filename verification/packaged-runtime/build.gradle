@@ -121,7 +121,7 @@ dependencies {
     if (client || checks) {
         // Both probe sets reference the LuaTable return type; production already embeds this library.
         compileOnly('com.github.FiguraMC.luaj:luaj-core:3.0.8-figura') { transitive = false }
-        if (checks || presentation != null || playerSuite != null) modCompileOnly "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${forge_config_api_port}"
+        modCompileOnly "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${forge_config_api_port}"
         modCompileOnly files(product)
         modCompileOnly "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
         def tests = fabricApi.module(checks ? 'fabric-gametest-api-v1' : 'fabric-client-gametest-api-v1', fabric_version)

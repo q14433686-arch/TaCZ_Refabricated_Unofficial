@@ -98,6 +98,9 @@ def test(product, work, evidence, viewer):
     if viewer == 'none': shutil.copytree(PROJECT/'fixtures/refit', seed/'tacz/refit')
     _, previous, old_fingerprint = seed_previous_default(seed/'tacz')
     port = seed_loopback_server(seed)
+    defaults = seed/'defaultconfigs'
+    defaults.mkdir()
+    (defaults/'tacz-server.toml').write_text('[misc]\nCrawlMaxUpAngle = 12.0\nCrawlMaxDownAngle = 7.0\nUseHipFireInaccuracyWhileAirborne = true\n')
     ready = work/'directory-received'
 
     def gradle(side, *args): return runtime_command(work, side, product, viewer, *args)
@@ -165,8 +168,9 @@ def test(product, work, evidence, viewer):
             parts = re.findall(r'Prepared gun pack sync: \d+ bytes -> \d+ compressed bytes, (\d+) part\(s\)', log.read_text())
             if len(parts) < 2 or min(int(n) for n in parts[-2:]) < 2:
                 raise AssertionError(f'expected multi-part transfers at startup and reload, saw {parts}')
-        receipts = [l[l.index('PORT_'):] for l in (evidence/'client.log').read_text(errors='replace').splitlines() if any(tag in l for tag in ('PORT_CRAFT:', 'PORT_VIEWER:', 'PORT_INVENTORY:', 'PORT_PERSIST:', 'PORT_CLOCK:'))]
+        receipts = [l[l.index('PORT_'):] for l in (evidence/'client.log').read_text(errors='replace').splitlines() if any(tag in l for tag in ('PORT_CRAFT:', 'PORT_VIEWER:', 'PORT_INVENTORY:', 'PORT_PERSIST:', 'PORT_CLOCK:', 'PORT_SERVER_CONFIG:'))]
         if not any(l.startswith('PORT_CRAFT: ' + viewer) for l in receipts): raise AssertionError('Missing survival craft receipt')
+        if sum(l.startswith('PORT_SERVER_CONFIG:') for l in receipts) != 1: raise AssertionError('Missing or duplicate actual TCP server config receipt')
         if viewer == 'none':
             for tag in ('PORT_INVENTORY:', 'PORT_PERSIST:', 'PORT_CLOCK:'):
                 if sum(l.startswith(tag) for l in receipts) != 1: raise AssertionError(f'Missing or duplicate {tag} receipt')

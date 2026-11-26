@@ -92,6 +92,7 @@ public final class PlatformSmoke extends PlayerProbe {
             PlatformHurtTilt.verify(ctx);
             PlatformSmithFilter.verify(ctx);
             PlatformLanguages.verify(ctx);
+            PlatformLanguages.verifyUiLabels(ctx);
             PlatformLegacyPaths.verify(ctx);
             PlatformRangefinderText.verify(ctx);
             PlatformLooseVariants.verify(ctx);

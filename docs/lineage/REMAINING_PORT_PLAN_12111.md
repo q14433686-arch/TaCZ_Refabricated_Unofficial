@@ -334,3 +334,11 @@ PlatformStance新增强制marker：真实client/server实体的2开关×2落地�
 491f0f3d的分批notice实机已显示此前被Checks隐藏的详细回执：native Snowstorm三组rootIdentity均true；centerError分别0、9.902267E-7、5.840039E-7。支持保留当前world提交变换，不往hand路径混入无根据的world矩阵。该轮compile45828158644/full45828158699均SUCCESS，分发最终待记录；不覆盖上述新stance源改动。
 
 491f0f3d分发45828158652最终 **SUCCESS 14/14**（含optics-iris）；与5ce0b94f相同本体SHA-256 `be842ad3732a02442bca79ab65dee03181d6cbb0171758081560467ed599c2a9`。分批Checks notice在两platform均成功，保留全量门禁，不再丢后半回执。
+
+### R6 成品UI语言及真实TCP配置验收接续（待编译/目标）
+
+资源键复核发现主mod语言缺51个donor已有键：48个advancement标题/说明（含6个兼容旧ID）及3个creative sidebar文本。实际默认23项advancement中有42个标题/说明缺失，之前catalog解码/触发通过不等于显示语言正确。补两语言原文，不改默认包数据；新增离线默认23项/46component+3sidebar全键检查；PlatformLanguages从实际产品JAR读23个display.title/description，再走native I18n验证49个键非空/非原key，强制PORT_PLATFORM_UI_LABELS。静态全源码Component.translatable/I18n.get直写tacz/lrtactical键复核无其它缺项（两个动态key前缀不算漏项）。donor剩余7个未合入键仅未使用的旧VBO/Sable面板及旧thermal提示，不为不存在的本版UI硬加空功能。
+
+为避免仅静态声明或测试端直接set误称“服务器同步”，TCP夹具在独立server-seed/defaultconfigs/tacz-server.toml设置12/7/true三个非默认值，client不写这三个配置、不发测试payload；真实FCAP连接后读值，两次join均必须满足，none套件还跨原有服务端保存/停机/从world复制重启。新强制PORT_SERVER_CONFIG，none/JEI/REI均执行；probe项目只增加FCAP compileOnly以读取已有产品配置类型，不给生产新增依赖。该增量待下一目标编译与真实TCP，不能借PlatformStance直接设内存的matrix声称已通过远程同步。
+
+3d2da078当前compile45830221409/full45830221413 SUCCESS；两个platform（139944733982/139944733875）均已实际PASS新增STANCE，分发最终仍待最后Iris optics。Python22项PASS、diff-check PASS；UI/TCP新增量不在该轮SHA内。
