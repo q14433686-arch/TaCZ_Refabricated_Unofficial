@@ -49,6 +49,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Receiver static regressions
+        run: |
+          python3 -m unittest discover -s tests -p 'test_audit_12111_jar.py' -v
+          python3 scripts/verify_263_sync_baseline.py
+          python3 scripts/verify_recipe_viewer_reload.py
+          python3 scripts/verify_bullet_hole_orientation.py
+
       - name: Mixin config integrity (json 里列的类必须真实存在)
         run: |
           python3 - <<'EOF'
@@ -159,6 +166,17 @@ jobs:
         run: |
           set -o pipefail
           ./gradlew build --console=plain --stacktrace --no-daemon 2>&1 | tee "$RUNNER_TEMP/build.log"
+
+      - name: Audit remapped production JAR
+        run: |
+          jars=(build/libs/*.jar)
+          found=0
+          for jar in "${jars[@]}"; do
+            case "$jar" in *-sources.jar|*-dev.jar|*-test*.jar) continue;; esac
+            python3 scripts/audit_12111_jar.py "$jar"
+            found=$((found + 1))
+          done
+          test "$found" -eq 1
 
       - name: Dedicated receiver GameTests
         run: |

@@ -19,6 +19,10 @@ public record ServerMessagePackWarnings(List<String> packs) implements CustomPac
     @Override public Type<? extends CustomPacketPayload> type(){return TYPE;}
     @Environment(EnvType.CLIENT)
     public static void handle(ServerMessagePackWarnings p,ClientPlayNetworking.Context ctx){
-        ctx.client().execute(()->com.tacz.guns.client.event.PackCompatibilityNotice.accept(p.packs));
+        var connection = ctx.player().connection.getConnection();
+        ctx.client().execute(() -> {
+            if (ServerMessageSyncGunPack.isCurrent(connection))
+                com.tacz.guns.client.event.PackCompatibilityNotice.accept(p.packs);
+        });
     }
 }
