@@ -155,9 +155,13 @@ public class RenderConfig {
     public static ForgeConfigSpec.BooleanValue SCOPE_PIP_DEBUG_PAINT_LENS;
 
     public static ForgeConfigSpec.BooleanValue DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER;
+    public static ForgeConfigSpec.DoubleValue GUN_HURT_BOB_MULTIPLIER;
 
     public static void init(ForgeConfigSpec.Builder builder) {
         builder.push("render");
+
+        GUN_HURT_BOB_MULTIPLIER = builder.comment("First-person ordinary hurt tilt while holding a gun; front/back hits are additionally halved")
+                .defineInRange("GunHurtBobMultiplier", 0.1, 0, 1);
 
         DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER = builder.comment("Hide third-person offhand and unselected hotbar guns; keep main hand visible")
                 .define("DisableThirdPersonOffhandAndHotbarGunRender", false);

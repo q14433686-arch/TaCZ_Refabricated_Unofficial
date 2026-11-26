@@ -17,6 +17,8 @@ import com.tacz.guns.client.render.scope.ScopePipRenderState;
 import com.tacz.guns.client.render.scope.ScopePipRerender;
 import com.tacz.guns.client.renderer.other.GunHurtBobTweak;
 import com.tacz.guns.compat.iris.IrisCompat;
+import com.tacz.guns.config.client.RenderConfig;
+import com.tacz.guns.api.item.gun.AbstractGunItem;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -32,6 +34,8 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** 1.21.11 bob / hand-pass hooks. */
@@ -129,6 +133,21 @@ public abstract class GameRendererMixin {
                 ci.cancel();
             }
         }
+    }
+
+    // Native 1.21.11 bytecode: Options.damageTiltStrength() is at offset 154, after
+    // the death roll and initial Y rotation; only the next Z rotation (offset 176) is modified.
+    // Do not use the donor's 26.x OptionsRenderState field or a global axis ordinal.
+    @ModifyArg(method = "bobHurt", slice = @Slice(from = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/Options;damageTiltStrength()Lnet/minecraft/client/OptionInstance;")),
+            at = @At(value = "INVOKE", target = "Lcom/mojang/math/Axis;rotationDegrees(F)Lorg/joml/Quaternionf;", ordinal = 0), index = 0)
+    private float tacz$heldGunHurtTilt(float angle) {
+        LocalPlayer player = minecraft.player;
+        if (player != null && minecraft.getCameraEntity() == player && minecraft.options.getCameraType().isFirstPerson()
+                && !player.isDeadOrDying() && player.getMainHandItem().getItem() instanceof AbstractGunItem) {
+            return GunHurtBobTweak.heldGunTilt(angle, player.getHurtDir(), RenderConfig.GUN_HURT_BOB_MULTIPLIER.get());
+        }
+        return angle;
     }
 
     @Inject(method = "bobView", at = @At("HEAD"), cancellable = true)

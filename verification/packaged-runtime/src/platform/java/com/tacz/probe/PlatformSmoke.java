@@ -89,6 +89,7 @@ public final class PlatformSmoke extends PlayerProbe {
             PlatformTracer.verify(ctx);
             PlatformMeshBudget.verify(ctx);
             PlatformCarriedGuns.verify(ctx);
+            PlatformHurtTilt.verify(ctx);
         } finally {
             ctx.runOnClient(mc -> { mc.setScreen(null);saved.forEach(PlatformSmoke::bind);KeyConfig.AUTO_RELOAD.set(auto); });
         }

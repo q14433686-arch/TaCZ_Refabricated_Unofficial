@@ -12,7 +12,7 @@ public class GunHurtBobTweak {
 
     public static boolean onHurtBobTweak(LocalPlayer player, PoseStack matrixStack, float partialTicks) {
         // 原版受伤的时长是 500 ms，所以如果大于 500 ms，那么说明不是子弹造成的伤害了
-        if (GunTime.nowMillis() - hurtByGunTimeStamp > 500) {
+        if (!GunTime.isWithin(hurtByGunTimeStamp, 500)) {
             // 返回 false，让程序调用原版受伤晃动
             return false;
         }
@@ -31,6 +31,11 @@ public class GunHurtBobTweak {
         matrixStack.mulPose(Axis.XP.rotationDegrees(-zRot * 14.0F));
         matrixStack.mulPose(Axis.YP.rotationDegrees(yRot));
         return true;
+    }
+
+    /** Ordinary damage only. Gun-hit-specific bob keeps its separate event path above. */
+    public static float heldGunTilt(float angle, float hurtDirection, double multiplier) {
+        return angle * (float) multiplier * (1f - .5f * Math.abs(Mth.sin(hurtDirection * Mth.DEG_TO_RAD)));
     }
 
     public static void markTimestamp(float tweakMultiplier) {

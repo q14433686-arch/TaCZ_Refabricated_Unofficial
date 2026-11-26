@@ -19,6 +19,10 @@ public class RenderClothConfig {
     public static void init(ConfigBuilder root, ConfigEntryBuilder entryBuilder) {
         ConfigCategory render = root.getOrCreateCategory(Component.translatable("config.tacz.client.render"));
 
+        render.addEntry(entryBuilder.startDoubleField(Component.translatable("config.tacz.client.render.gun_hurt_bob_multiplier"), RenderConfig.GUN_HURT_BOB_MULTIPLIER.get())
+                .setMin(0).setMax(1).setDefaultValue(0.1).setTooltip(Component.translatable("config.tacz.client.render.gun_hurt_bob_multiplier.desc"))
+                .setSaveConsumer(RenderConfig.GUN_HURT_BOB_MULTIPLIER::set).build());
+
         render.addEntry(entryBuilder.startBooleanToggle(Component.translatable("config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render"), RenderConfig.DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER.get())
                 .setDefaultValue(false).setTooltip(Component.translatable("config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render.desc"))
                 .setSaveConsumer(RenderConfig.DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER::set).build());

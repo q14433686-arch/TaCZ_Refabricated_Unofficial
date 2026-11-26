@@ -553,5 +553,7 @@
   "tooltip.tacz.attachment.thermal_imaging.ironbow": "+ Ironbow Thermal Imaging",
   "tooltip.tacz.attachment.ammo_counter": "+ Ammo Counter",
   "config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render": "Disable Third-Person Offhand and Hotbar Gun Rendering",
-  "config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render.desc": "Hide guns in the offhand and unselected hotbar slots in third person. Main-hand guns render normally. Disabled by default."
+  "config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render.desc": "Hide guns in the offhand and unselected hotbar slots in third person. Main-hand guns render normally. Disabled by default.",
+  "config.tacz.client.render.gun_hurt_bob_multiplier": "Held Gun Hurt Tilt Multiplier",
+  "config.tacz.client.render.gun_hurt_bob_multiplier.desc": "First-person vanilla hurt tilt multiplier with a gun in the main hand. 0 disables it, 1 preserves vanilla side-hit strength; default 0.1. Front/back hits use half this multiplier, with smooth transitions for diagonal hits. Multiplies vanilla Damage Tilt. Gunshot-specific hurt effects still use gun data settings."
 }

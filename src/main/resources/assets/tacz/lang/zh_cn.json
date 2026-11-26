@@ -553,5 +553,7 @@
   "tooltip.tacz.attachment.thermal_imaging.ironbow": "+ 铁红热成像",
   "tooltip.tacz.attachment.ammo_counter": "+ 弹容计数",
   "config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render": "关闭副手与快捷栏武器第三人称渲染",
-  "config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render.desc": "开启后隐藏第三人称下副手和快捷栏未选中槽位中的武器，主手武器正常渲染。默认关闭。"
+  "config.tacz.client.render.disable_third_person_offhand_and_hotbar_gun_render.desc": "开启后隐藏第三人称下副手和快捷栏未选中槽位中的武器，主手武器正常渲染。默认关闭。",
+  "config.tacz.client.render.gun_hurt_bob_multiplier": "持枪受伤倾斜倍率",
+  "config.tacz.client.render.gun_hurt_bob_multiplier.desc": "主手持枪时第一人称原版受伤倾斜的倍率。0 为关闭，1 为原版侧面受击幅度，默认 0.1。正面和背面受击再减半，斜向平滑过渡。与原版伤害倾斜设置相乘；枪弹命中的专用晃动仍使用枪械数据配置。"
 }
