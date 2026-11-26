@@ -21,22 +21,16 @@ public class RefitKey {
             TaCZKeyCategory.TACZ);
 
     public static void onRefitPress(InputEvent.Key event) {
-        if (event.getAction() == GLFW.GLFW_PRESS && REFIT_KEY.matches(new net.minecraft.client.input.KeyEvent(event.getKey(), event.getScanCode(), event.getModifiers()))) {
-            LocalPlayer player = Minecraft.getInstance().player;
-            if (player == null || player.isSpectator()) {
-                return;
-            }
-            if (isInGame()) {
-                if (IGun.mainHandHoldGun(player) && Minecraft.getInstance().screen == null) {
-                    IGun iGun = IGun.getIGunOrNull(player.getMainHandItem());
-                    if (iGun != null && iGun.hasAttachmentLock(player.getMainHandItem())) {
-                        return;
-                    }
-                    Minecraft.getInstance().setScreen(new GunRefitScreen());
-                }
-            } else if (Minecraft.getInstance().screen instanceof GunRefitScreen refitScreen) {
-                refitScreen.onClose();
-            }
-        }
+        if (event.getAction() == GLFW.GLFW_PRESS && REFIT_KEY.matches(new net.minecraft.client.input.KeyEvent(event.getKey(), event.getScanCode(), event.getModifiers()))) onRefitPress();
+    }
+
+    public static void onRefitPress() {
+        var mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (player == null || player.isSpectator()) return;
+        if (isInGame() && IGun.mainHandHoldGun(player)) {
+            IGun gun = IGun.getIGunOrNull(player.getMainHandItem());
+            if (gun != null && !gun.hasAttachmentLock(player.getMainHandItem())) mc.setScreen(new GunRefitScreen());
+        } else if (mc.screen instanceof GunRefitScreen screen) screen.onClose();
     }
 }

@@ -29,8 +29,11 @@ public class ConfigKey {
             TaCZKeyCategory.TACZ);
 
     public static void onOpenConfig(InputEvent.Key event) {
-        if (isInGame() && event.getAction() == GLFW.GLFW_PRESS
-                && OPEN_CONFIG_KEY.matches(new net.minecraft.client.input.KeyEvent(event.getKey(), event.getScanCode(), event.getModifiers()))) {
+        if (event.getAction() == GLFW.GLFW_PRESS && OPEN_CONFIG_KEY.matches(new net.minecraft.client.input.KeyEvent(event.getKey(), event.getScanCode(), event.getModifiers()))) onOpenConfig();
+    }
+
+    public static void onOpenConfig() {
+        if (isInGame()) {
             LocalPlayer player = Minecraft.getInstance().player;
             if (player == null || player.isSpectator()) {
                 return;
