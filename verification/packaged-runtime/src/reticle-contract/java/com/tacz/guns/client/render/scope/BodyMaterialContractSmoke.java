@@ -7,7 +7,7 @@ import com.tacz.guns.client.render.ViewmodelFlash;
 import com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.compat.iris.IrisCompat;
-import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -29,7 +29,11 @@ public final class BodyMaterialContractSmoke {
     }
     private static final class Collector extends SubmitNodeStorage {
         final List<RenderType> types=new ArrayList<>();final List<Runnable> tasks=new ArrayList<>();
-        @Override public OrderedSubmitNodeCollector order(int order){return this;}
+        // Storage.order has a concrete covariant return type in 1.21.11. Intercept the
+        // collector interface instead of overriding it with the wider 26.x return type.
+        final SubmitNodeCollector proxy=(SubmitNodeCollector)java.lang.reflect.Proxy.newProxyInstance(
+                SubmitNodeCollector.class.getClassLoader(),new Class<?>[]{SubmitNodeCollector.class},
+                (target,method,args)->method.getName().equals("order")?target:method.invoke(this,args));
         @Override public void submitCustomGeometry(PoseStack pose,RenderType type,CustomGeometryRenderer draw){types.add(type);var frozen=pose.last().copy();tasks.add(()->draw.render(frozen,null));}
         void flush(){tasks.forEach(Runnable::run);}
     }
@@ -47,21 +51,21 @@ public final class BodyMaterialContractSmoke {
             var texture=Identifier.parse("tacz:textures/entity/default_bullet.png");
             var body=RenderTypes.entityCutout(texture);var illuminated=IlluminatedMaterials.forBody(body,true);
             require(illuminated!=body,"Known body material did not acquire an unshaded variant");
-            var collector=new Collector();snapshot.submitGeometry(collector,body,true);
+            var collector=new Collector();snapshot.submitGeometry(collector.proxy,body,true);
             root.visible=false;glow.illuminated=false;collector.flush(); // all decisions had to freeze before this mutation
             require(collector.types.equals(List.of(body,illuminated,body)),"Body/illuminated material ranges were lost or reordered");
-            var scoped=new Collector();snapshot.submitMaterials(scoped,body,true,ScopeRenderTypes::apertureCopy);
+            var scoped=new Collector();snapshot.submitMaterials(scoped.proxy,body,true,ScopeRenderTypes::apertureCopy);
             require(scoped.types.stream().map(ScopeRenderTypes::unwrapDepthCopy).toList().equals(List.of(body,illuminated,body)),
                     "Scope aperture wrapper hid material identity before the illuminated partition");
             int expected=IrisCompat.isUsingRenderPack()?((3<<20)|(15<<4)):15728880;
             require(seen.size()==4 && seen.get(0).light==ambient && seen.get(1).light==expected && seen.get(2).light==expected && seen.get(3).light==ambient,
                     "Frozen illuminated subtree did not preserve real-sky UV2 or polluted ordinary body light: "+seen);
-            var unknown=new Collector();var swirl=RenderTypes.energySwirl(texture,0,0);snapshot.submitMaterials(unknown,swirl,true);
+            var unknown=new Collector();var swirl=RenderTypes.energySwirl(texture,0,0);snapshot.submitMaterials(unknown.proxy,swirl,true);
             require(unknown.types.equals(List.of(swirl)),"Specialized material was replaced by guessing its albedo");
             var field=ViewmodelFlash.class.getDeclaredField("GAIN");field.setAccessible(true);
             var gain=(ThreadLocal<Float>)field.get(null);Float saved=gain.get();
             try {
-                gain.set(.5f);seen.clear();var reflected=new Collector();snapshot.submitGeometry(reflected,body,true);
+                gain.set(.5f);seen.clear();var reflected=new Collector();snapshot.submitGeometry(reflected.proxy,body,true);
                 gain.set(0f);reflected.flush();
                 require(reflected.types.size()==4,"Viewmodel reflection did not add exactly one neutral replay");
                 var extra=seen.subList(4,seen.size());
