@@ -18,11 +18,14 @@ for name in [
     'net.minecraft.client.renderer.texture.AbstractTexture',
     'com.mojang.blaze3d.pipeline.RenderPipeline$Builder',
     'net.minecraft.client.renderer.PlayerSkinRenderCache',
+    'net.minecraft.client.renderer.LevelRenderer',
+    'net.minecraft.client.renderer.state.LevelRenderState',
 ]:
     subprocess.run(['javap', '-classpath', jar, '-p', name], check=True)
 
 # Keep selected method bytecode, not whole classes (the CI log is deliberately bounded).
 for name, methods in {
+    'net.minecraft.client.renderer.LevelRenderer': ['submitEntities(', 'submitBlockEntities(', 'lambda$addMainPass$'],
     'com.mojang.blaze3d.pipeline.RenderTarget': ['copyDepthFrom('],
     'net.minecraft.client.renderer.GameRenderer': ['renderItemInHand('],
     'net.minecraft.client.renderer.CachedPerspectiveProjectionMatrixBuffer': ['getBuffer(', 'createProjectionMatrix('],

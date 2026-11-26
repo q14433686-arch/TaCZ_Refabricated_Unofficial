@@ -14,8 +14,8 @@
 |---|---|---|---|
 | R1 | 混合镜内分划 | 活动 division 统一提交；墨线/发光分层；父子根去重；共享可见性与矩阵恢复；无孔径保守 fallback；失效孔径不泄漏大面；原版/Iris 成品专项测试及现有矩阵回归 | **DONE — `3515cf98`** |
 | R2 | 热像 | posed model 捕获、纹理 cutout、材质与场景深度、黑白名单、关闭/切世界清理；原版与 Iris 中遮挡/透明面/降级的像素正反例 | **DONE — `ab452920` + `f1b800d8` 专项** |
-| R3 | PIP 运动、镜片与近场 | 对齐供体 ADS/运动/切视图行为；真实帧比较、孔径边界与遮挡；不能仅重跑静态孔径测试 | **ACTIVE** |
-| R4 | 动态光 receiver 与材质 | 核对 1.21.11 entity/block submit 时序、世界表面响应、发光材质不重复受光；正反实帧 | QUEUED |
+| R3 | PIP 运动、镜片与近场 | 对齐供体 ADS/运动/切视图行为；真实帧比较、孔径边界与遮挡；不能仅重跑静态孔径测试 | **DONE — `b2ad0276` 光学；近场散射归 R4** |
+| R4 | 动态光 receiver 与材质 | 核对 1.21.11 entity/block submit 时序、世界表面响应、发光材质不重复受光；正反实帧 | **ACTIVE** |
 | R5 | 输入与平台小差异 | 键/鼠/scancode/卸弹冲突、可选 Zoomify 装/不装、名字皮肤异步/失败、LRT GUI/音量；逐项证明本版替代或移植并实测 | QUEUED |
 | R6 | 全量收尾 | 对全部共享代码做行为差异复核，关闭非同路径表里的每个真实缺口；全构建、成品双端/旧档/查看器/光影回归；记录已知外部限制与许可，不冒称第三方协议已修复 | QUEUED |
 
@@ -104,3 +104,12 @@ R1 的专项测试必须增加自己的分划断言，原有 `PORT_OPTIC` 孔径
 - 新增 ScopeZoom JUnit 验证 5 种倍率 × 4 种 world share × 101 个 progress 的乘积恒等式，以及端点/clamp。真实测试按供体 `AdsTransitionSmoke` 适配：使用实际 aim key/插值/模型，仅把耗时固定为每 tick .05 的测试夹具；同一帧读 lens 前、lens 后、ink 后，逐像素检查移动 ocular、90% 合法 UV 颜色匹配、tile 换色仍可见、孔径外改写必须 0；另测 missing mask、用户 reveal floor、half world share 收镜和经典 tint。
 - `2cf04dd9` [编译45749118956](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45749118956) / [全构建45749118992](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45749118992) success；上一轮开发 PackClientSmoke 建世界超时没有再现。但独立实机探针编译发现本版 gametest input 没有供体的 lookAt API；不是产品渲染通过。
 - `b2ad0276` 改为本版现有 player yaw/pitch 夹具；进一步接入供体 WideSceneSmoke，分别在 narrow ADS / released 下改动镜外 panel、真实 slime、day/night sky，证明窄遍没有烧掉主遍状态。Iris private depth copy 的需求同时覆盖 reveal floor 之前的 foreground ownership，不将“暂不贴 picture”误解为“不需要 reticle 深度”。当前跑 [45749621489](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45749621489)，不提前关闭 R3。
+
+
+### R3 实机收口，R4 ACTIVE
+
+`b2ad0276` 编译 [45749621496](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45749621496) success；[成品45749621489](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45749621489) **10/10 success**。原版 [139674101005](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45749621489/job/139674101005)、Iris [139674100742](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45749621489/job/139674100742) 各 16 组运动同帧测试通过，全部 outside=0，missing mask/hip/below floor 的 changed=0；实际 ocular 起点与稳态相差约 160 像素。原版合法 UV 匹配 raise4898/4898、steady11464/11464、half-share lower5948/5948；Iris4620/4620、11376/11376、5357/5357。不是只读矩阵或固定孔径。
+
+WideScene 两环境 narrow/released 均保留真实宽遍：原版换色 panel11557、slime1659、day-night sky20000/20000；Iris panel11543/11539、slime1659/1660、sky20000/20000。R2 的18组热像、三色盘及全部生命周期回归仍通过；同帧 pre/lens/final 共48张运动 PNG 与镜外场景均保留。
+
+本体 SHA-256 `2a6be490f038a6f7834e7f42ff1a1142932d547192a70d07f0c3924d81d68706`。`2cf04dd9` 的完整 build/JUnit 曾 success；`b2ad0276` 完成 build/JUnit/JAR 与服务端测试后，开发 PackClientSmoke **再次**建世界超时，不能泛称本 SHA 全构建绿；已作为 R6 必查回归保留，不用放宽光学断言掩盖。当前关闭的是 R3 的实际光学闭环（编译/数值测试/原版及 Iris 成品光学矩阵），近场散射/receiver 光照顺序立即进入 R4；其他光影、Voxy 未实测，版本不变。
