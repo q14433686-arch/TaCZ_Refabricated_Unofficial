@@ -56,6 +56,8 @@ public final class PlatformSmoke extends PlayerProbe {
             });
             ctx.waitTick();
             ctx.runOnClient(mc -> {
+                ((NativeMouse)mc.mouseHandler).platform$mouse(mc.getWindow().handle()+1,new MouseButtonInfo(5,0),GLFW.GLFW_PRESS);
+                if(!(mc.screen instanceof GunRefitScreen)) throw new AssertionError("Foreign-window mouse callback closed refit");
                 mouse(mc,5,GLFW.GLFW_PRESS,0);mouse(mc,5,GLFW.GLFW_RELEASE,0);
                 if(mc.screen!=null) throw new AssertionError("Refit mouse close failed or reopened through post callback");
             });
