@@ -13,8 +13,8 @@
 | 顺序 | 项目 | 关闭条件 | 状态 |
 |---|---|---|---|
 | R1 | 混合镜内分划 | 活动 division 统一提交；墨线/发光分层；父子根去重；共享可见性与矩阵恢复；无孔径保守 fallback；失效孔径不泄漏大面；原版/Iris 成品专项测试及现有矩阵回归 | **DONE — `3515cf98`** |
-| R2 | 热像 | posed model 捕获、纹理 cutout、材质与场景深度、黑白名单、关闭/切世界清理；原版与 Iris 中遮挡/透明面/降级的像素正反例 | **ACTIVE** |
-| R3 | PIP 运动、镜片与近场 | 对齐供体 ADS/运动/切视图行为；真实帧比较、孔径边界与遮挡；不能仅重跑静态孔径测试 | QUEUED |
+| R2 | 热像 | posed model 捕获、纹理 cutout、材质与场景深度、黑白名单、关闭/切世界清理；原版与 Iris 中遮挡/透明面/降级的像素正反例 | **DONE — `ab452920` + `f1b800d8` 专项** |
+| R3 | PIP 运动、镜片与近场 | 对齐供体 ADS/运动/切视图行为；真实帧比较、孔径边界与遮挡；不能仅重跑静态孔径测试 | **ACTIVE** |
 | R4 | 动态光 receiver 与材质 | 核对 1.21.11 entity/block submit 时序、世界表面响应、发光材质不重复受光；正反实帧 | QUEUED |
 | R5 | 输入与平台小差异 | 键/鼠/scancode/卸弹冲突、可选 Zoomify 装/不装、名字皮肤异步/失败、LRT GUI/音量；逐项证明本版替代或移植并实测 | QUEUED |
 | R6 | 全量收尾 | 对全部共享代码做行为差异复核，关闭非同路径表里的每个真实缺口；全构建、成品双端/旧档/查看器/光影回归；记录已知外部限制与许可，不冒称第三方协议已修复 | QUEUED |
@@ -84,3 +84,15 @@ R1 的专项测试必须增加自己的分划断言，原有 `PORT_OPTIC` 孔径
 - `53d55a39` [编译 45743966970](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45743966970)、[全构建 45743966863](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45743966863)、原版 [139655528198](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45743966870/job/139655528198) 与 Iris [139655528194](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45743966870/job/139655528194) 专项均 **success**。新增空场光学参考与蓝背景，独立绿色可见实体轮廓须 ≥83% 白热填充（不是从热图反推轮廓）；原版 **992/992**，empty=0 / heat=1122 / finalWhite=1122 / opaque=0 / glass=841 / chicken=348 / invisible=0 / blacklist=0 / whitelist=392。Iris 同一断言通过，但其后半 notice 被 GitHub 单 step 展示上限截掉，未伪造具体计数；原始日志与 PNG 在 [15082407868](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45743966870/artifacts/15082407868)。R1 Iris 消融仍通过（ink=95 / restored=95 / luminous=29 / noise=0）。该轮整矩阵因接续提交取消部分未完作业，不声称 10/10。
 - 此产品 JAR 本体 SHA-256：`c0151ba799eb017a6a81e8fdac13f5591f1ff389dd9cb64577093a787148aaed`。未发版本；R2 仍 ACTIVE。
 - `c1f38fb2` 紧接增加实际 extracted LivingEntityRenderState.bodyRot 的测试观察点，覆盖 **16/36 格 × 0/45/90° × classic/PIP/narrow = 18 组**。每组同背景空场/光学/热像/实墙原帧、独立 ≥83% 可见轮廓覆盖、heat 正例与 wall 零热负例；测试 whitelist 同时放 armor_stand，验证 blacklist 优先。聚合 notice 避免 18 组回执被单 step 上限截断。该组尚待运行，不提前标绿。
+
+
+## R2 收口 / R3 接续（2026-11-26）
+
+`c1f38fb2` 的范围测试确实拦住了一处生产回归，而不是改测试躲过去：经典 authored lens 被错误当作 PIP，抑制了正常 ADS 世界倍率。`ab452920` 恢复供体规则：**只有 PIP 接管世界 FOV；classic 的 1:1 镜片保留原 ADS FOV**。其 [编译 45745251692](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45745251692)、[全构建 45745251694](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45745251694)、[成品 10/10 45745251695](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45745251695) 均 success。
+
+- 原版 [139659709847](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45745251695/job/139659709847)、Iris [139659709627](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45745251695/job/139659709627)：各 18 组 body yaw/range/classic-PIP-narrow 全通过。每组 wall mask=0；不是只测轮廓中心。classic/narrow 的 16 格热源 18392，重投影源 1122；36 格分别 4290 / 210，真实倍率来源有区别。
+- 接续测试 `f1b800d8` 不改产品字节；[编译 45746441228](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45746441228) 与 [发行 10/10 45746441247](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45746441247) success。原版 [139663546169](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45746441247/job/139663546169)：white body14743/14743、black14743/14743、ironbow14733/14743；Iris [139663546220](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45746441247/job/139663546220)：white14400/14420、black14420/14420、ironbow14356/14420。两者 opaque mask/white=0、invisible=0、blacklist 优先于 whitelist=0；glass/chicken/minecart 正例、禁用恢复、失败热源实际光学 fallback、三人称清理/第一人称恢复、附件销毁/重新分配全通过。
+- 该测试轮 build 的开发 `PackClientSmoke` 在创建世界时超时（[139663545765](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45746441248/job/139663545765)），不是把失败写成 success；`gh run rerun --failed` 被 API 拒绝。产品与 `ab452920` 全构建成功的 JAR 散列相同，下一次 R3 push 继续执行该开发回归。
+- [R2 JAR artifact15082847326](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45745251694/artifacts/15082847326)，本体 SHA-256 **`a43e1d7cf22cdbd08d6b4ce006e1f721c6a954f460cea422e5161ed060c44180`**。
+
+**R2 本项闭环完成，当前 R3 ACTIVE**。这不表示所有光影包都支持，只覆盖精确钉住的发行组合；不改版本、不发 Release。R3 继续修接收树仍残留的 0.35 硬阈/分段倍率、镜片移动 UV、经典镜片 foreground 顺序及同帧实像验收；近场散射的 receiver 验证与 R4 合并观察，但不跳过该行为。
