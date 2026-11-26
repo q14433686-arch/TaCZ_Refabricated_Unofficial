@@ -245,3 +245,5 @@ R6 仍 ACTIVE，不发版、不改版本；新消费者、开发三世界稳定�
 工作区下一批ocular烘焙链：保留原生深度孔径，对NEW/LEGACY loader增加只作用于attachment ocular和后代的额外cube inflate，默认开启/0.0005模型单位；轮廓环和分划不扩大。新增TOML/Cloth/中英键、config-loaded保护、非有限值/损坏parent链保护。JUnit覆盖三种精确命名、编号、后代、负例与环；PORT_OCULAR_BAKE成品门禁实际构造两代attachment模型，对禁用/0/启用、authored inflate相加、box/per-face与旋转cube逐分支读真实顶点。既有原版/Iris完整PIP/热像/分划像素门禁仍强制，不用包围盒代替孔径裁剪。**尚未编译/实机验收**，不关闭R6。
 
 剩余共享消费者审计新增确认：attachment SoundData字段也仍是旧Identifier map；rangefinder/impact/ammo-counter tooltip capability消费者仍缺失。mesh attachment的hi/LOD加载并非缺失，由本版ClientAttachmentIndexMixin分别接线，不能为同路径差异重复加第二个loader。后续仍需核实这些消费者，不将同名文件或供体回执视作验收。
+
+`1dfffa89`编译45769237044、完整开发45769237322已success；发行原版/Iris在新增reflection合约中失败（optics139737590532 / optics-iris139737590754）。已定位另一处测试替身错误：代理比较反射method.getName()=="order"，字符串不会随Loom改为intermediary名，导致order(1)重放落入未观察的原生storage。现改为参数/返回接口签名判定，不使用映射名字符串，保留4次材质提交/6次cube写入的严格断言；不放宽产品判据，不把两环境失败记成通过。后续目标重验包含独立ocular marker。

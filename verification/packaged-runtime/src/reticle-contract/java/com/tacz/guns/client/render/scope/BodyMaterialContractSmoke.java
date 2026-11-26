@@ -33,7 +33,9 @@ public final class BodyMaterialContractSmoke {
         // collector interface instead of overriding it with the wider 26.x return type.
         final SubmitNodeCollector proxy=(SubmitNodeCollector)java.lang.reflect.Proxy.newProxyInstance(
                 SubmitNodeCollector.class.getClassLoader(),new Class<?>[]{SubmitNodeCollector.class},
-                (target,method,args)->method.getName().equals("order")?target:method.invoke(this,args));
+                (target,method,args)->method.getParameterCount()==1 && method.getParameterTypes()[0]==int.class
+                        && net.minecraft.client.renderer.OrderedSubmitNodeCollector.class.isAssignableFrom(method.getReturnType())
+                        ?target:method.invoke(this,args));
         @Override public void submitCustomGeometry(PoseStack pose,RenderType type,CustomGeometryRenderer draw){types.add(type);var frozen=pose.last().copy();tasks.add(()->draw.render(frozen,null));}
         void flush(){tasks.forEach(Runnable::run);}
     }
