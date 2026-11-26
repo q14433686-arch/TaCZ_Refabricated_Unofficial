@@ -59,7 +59,38 @@ public class RackChecks {
         CatalogChecks.require(moved.getRotation(0) == 1 && ItemStack.isSameItemSameComponents(moved.getItem(0), held), "Lost display components/rotation on restore");
         level.removeBlock(pos, false);
         CatalogChecks.require(level.getEntitiesOfClass(ItemEntity.class, area).stream().filter(e -> ItemStack.isSameItemSameComponents(e.getItem(), held)).mapToInt(e -> e.getItem().getCount()).sum() == 1, "Normal removal did not drop exactly the displayed item");
+        statueAndRotation(helper);
         helper.succeed();
+    }
+
+    private static void statueAndRotation(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var pos = helper.absolutePos(new BlockPos(5, 0, 0));
+        for (var block : new Block[]{ModBlocks.STATUE, ModBlocks.TARGET, ModBlocks.GUN_SMITH_TABLE}) {
+            var facing = net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING;
+            var state = block.defaultBlockState().setValue(facing, Direction.NORTH);
+            CatalogChecks.require(state.rotate(net.minecraft.world.level.block.Rotation.CLOCKWISE_90).getValue(facing) == Direction.EAST,
+                    "Native structure rotation did not rotate " + block);
+        }
+        level.setBlock(pos, ModBlocks.STATUE.defaultBlockState(), Block.UPDATE_ALL);
+        var be = (com.tacz.guns.block.entity.StatueBlockEntity)level.getBlockEntity(pos);
+        var original = sample().copyWithCount(7);
+        be.setGun(original);
+        CatalogChecks.require(original.getCount() == 7 && be.getGunItem().getCount() == 1,
+                "Statue copied a stack instead of one physical display item or mutated the caller");
+        var saved = be.saveWithoutMetadata(level.registryAccess());
+        CatalogChecks.require(saved.equals(be.getUpdateTag(level.registryAccess())), "Statue update packet lost registry-aware data");
+        var restored = new com.tacz.guns.block.entity.StatueBlockEntity(pos, be.getBlockState());
+        restored.loadAdditional(TagValueInput.create(ProblemReporter.DISCARDING, level.registryAccess(), saved));
+        CatalogChecks.require(restored.getGunItem().getCount() == 1 && ItemStack.isSameItemSameComponents(original, restored.getGunItem()),
+                "Statue disk/network round trip lost named components");
+        be.setGun(sample()); // exactly one replaced item, then exactly one explicit removal
+        be.dropItem();
+        be.dropItem();
+        var drops = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(2)).stream()
+                .filter(e -> ItemStack.isSameItemSameComponents(original, e.getItem())).mapToInt(e -> e.getItem().getCount()).sum();
+        CatalogChecks.require(drops == 2 && be.getGunItem().isEmpty(), "Statue replacement/removal duplicated or lost contents: " + drops);
+        System.out.println("PORT_STATUE: one-count copy, component disk/update tag roundtrip, replacement + repeated drop, three native facing rotations passed");
     }
 
 }
