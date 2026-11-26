@@ -100,6 +100,7 @@ public final class PlatformSmoke extends PlayerProbe {
             com.tacz.guns.client.renderer.item.SpriteTransformProbe.verify(ctx);
             PlatformIndexLifecycle.verify(ctx);
             PlatformSnowstormSpace.verify(ctx);
+            PlatformStance.verify(ctx,world);
         } finally {
             ctx.runOnClient(mc -> { mc.setScreen(null);saved.forEach(PlatformSmoke::bind);KeyConfig.AUTO_RELOAD.set(auto); });
         }

@@ -34,6 +34,9 @@ public class SyncConfig {
     // 禁用趴下战术动作
     public static ForgeConfigSpec.BooleanValue ENABLE_CRAWL;
     public static ForgeConfigSpec.BooleanValue ENABLE_CRAWL_WITHOUT_GUN;
+    public static ForgeConfigSpec.DoubleValue CRAWL_MAX_UP_ANGLE;
+    public static ForgeConfigSpec.DoubleValue CRAWL_MAX_DOWN_ANGLE;
+    public static ForgeConfigSpec.BooleanValue USE_HIP_FIRE_INACCURACY_WHILE_AIRBORNE;
 
     public static void init(ForgeConfigSpec.Builder builder) {
         interactKey(builder);
@@ -100,6 +103,12 @@ public class SyncConfig {
         ENABLE_CRAWL = builder.define("EnableCrawl", true);
         ENABLE_CRAWL_WITHOUT_GUN = builder.comment("Allow players to crawl without a gun. Requires EnableCrawl")
                 .define("EnableCrawlWithoutGun", true);
+        CRAWL_MAX_UP_ANGLE = builder.comment("Maximum upward look angle in degrees while crawling with a gun. Set both limits to 90 for vanilla pitch range")
+                .defineInRange("CrawlMaxUpAngle", 45.0D, 0.0D, 90.0D);
+        CRAWL_MAX_DOWN_ANGLE = builder.comment("Maximum downward look angle in degrees while crawling with a gun")
+                .defineInRange("CrawlMaxDownAngle", 30.0D, 0.0D, 90.0D);
+        USE_HIP_FIRE_INACCURACY_WHILE_AIRBORNE = builder.comment("Use only move or stand hip-fire inaccuracy while airborne, ignoring aiming, prone and sneaking")
+                .define("UseHipFireInaccuracyWhileAirborne", false);
 
         builder.comment("Enable the recipe limit of default gunsmith table or not");
         ENABLE_TABLE_FILTER = builder.define("EnableDefaultGunSmithTableFilter", true);

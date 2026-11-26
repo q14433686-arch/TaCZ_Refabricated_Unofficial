@@ -50,6 +50,9 @@ public enum InaccuracyType {
 
     /** Same stance priority on both sides; the HUD has local tick displacement, not the server's hitbox history. */
     public static InaccuracyType getInaccuracyType(LivingEntity livingEntity, DoubleSupplier displacement) {
+        if (!livingEntity.onGround() && com.tacz.guns.config.sync.SyncConfig.USE_HIP_FIRE_INACCURACY_WHILE_AIRBORNE.get()) {
+            return displacement.getAsDouble() > 0.05f ? MOVE : STAND;
+        }
         float aimingProgress = IGunOperator.fromLivingEntity(livingEntity).getSynAimingProgress();
         // 瞄准优先级最高
         if (aimingProgress == 1.0f) {
