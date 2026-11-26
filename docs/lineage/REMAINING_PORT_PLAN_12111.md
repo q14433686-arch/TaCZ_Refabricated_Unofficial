@@ -332,3 +332,5 @@ MouseHandler也仍走旧scope索引手拆zoom，没有消费已恢复的variant�
 PlatformStance新增强制marker：真实client/server实体的2开关×2落地×3pose×2ADS×3移动阈值=每侧72组合；实际经mixin合并的mouse wrapper在4组limits/9个pitch/2个方向共72组合，续调真实LocalPlayer.turn，另测游泳/无枪豁免及真实安装tagged variant、ZoomNumber=-1选择8倍的灵敏度。按参数类型/返回类型查找handler，不依赖remap方法名字符串；这是merged-handler/原生turn测试，不声称物理cursor callback。恢复entity/config/手持/同步ADS及插值旋转字段。测试包zoom只改独立fixture，不改默认枪包。新实现仍待编译/目标运行。
 
 491f0f3d的分批notice实机已显示此前被Checks隐藏的详细回执：native Snowstorm三组rootIdentity均true；centerError分别0、9.902267E-7、5.840039E-7。支持保留当前world提交变换，不往hand路径混入无根据的world矩阵。该轮compile45828158644/full45828158699均SUCCESS，分发最终待记录；不覆盖上述新stance源改动。
+
+491f0f3d分发45828158652最终 **SUCCESS 14/14**（含optics-iris）；与5ce0b94f相同本体SHA-256 `be842ad3732a02442bca79ab65dee03181d6cbb0171758081560467ed599c2a9`。分批Checks notice在两platform均成功，保留全量门禁，不再丢后半回执。
