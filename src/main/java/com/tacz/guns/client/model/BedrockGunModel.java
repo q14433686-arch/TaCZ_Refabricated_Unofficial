@@ -338,6 +338,9 @@ public class BedrockGunModel extends BedrockAnimatedModel {
                 : ScopeRenderTypes.clipForViewmodel(renderType, gunTexture,
                         transformType != null && transformType.firstPerson());
         super.submit(poseStack, transformType, collector, bodyType, light, overlay);
+        // Resolve animation keyframes against the posed rig now; the same boundary updates
+        // attached emitter anchors even when this frame has no new keyframes.
+        com.tacz.guns.client.particle.AnimationParticleDispatcher.submit(gunItem, this, poseStack, transformType, collector, light);
         // 26.1.2: rangefinder impact-marker prediction line in first-person.
         if (impactMarker != null && transformType != null && transformType.firstPerson())
             impactMarker.submit(gunItem, poseStack, collector, ImpactMarkerRender.Layer.MODEL, overlay);

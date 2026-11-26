@@ -61,7 +61,7 @@ WRITE_CALL = re.compile(
     r"\.(?:putString|putInt|putBoolean|putFloat|putLong|putDouble|putUUID|store)\(\s*([^,]+),"
 )
 READ_CALL = re.compile(
-    r"\.(?:getStringOr|getIntOr|getBooleanOr|getFloatOr|getLongOr|getDoubleOr|read)\(\s*([^,]+),"
+    r"\.(?:getStringOr|getIntOr|getBooleanOr|getFloatOr|getLongOr|getDoubleOr|getString|getInt|getBoolean|getFloat|getLong|getDouble|read)\(\s*([^,)]+)[,)]"
 )
 GATE = re.compile(r'(?:getStringOr|getIntOr)\(\s*([^,]+),\s*(?:""|0)\s*\)\s*(?:\.isEmpty\(\)|> 0|== 0)')
 CONST = re.compile(r'static\s+final\s+String\s+([A-Za-z0-9_]+)\s*=\s*"([^"]*)"')
@@ -134,7 +134,15 @@ def check_block_entity(path: Path) -> None:
             )
         for key in sorted(written - read):
             errors.append(f"[B] {name}: saveAdditional 写了 `{key}` 却从不读回（死数据，或读取处漏了）")
-        for key in sorted(read - written):
+        # An explicit one-way migration is not dead data: the old key is read, then
+        # subsequent saves use a different canonical key. Both ends must exist; a
+        # marker cannot excuse a missing writer or a never-read legacy alias.
+        migrations = re.findall(r'tacz:read-only-key:([^\s]+)->([^\s]+)', text)
+        migrated = {old for old, new in migrations if old in read and new in written}
+        for old, new in migrations:
+            if old not in read or new not in written:
+                errors.append(f"[B] {name}: invalid key migration {old}->{new}: missing read or canonical write")
+        for key in sorted(read - written - migrated):
             errors.append(f"[B] {name}: loadAdditional 读 `{key}` 却从不写入（永远读不到默认值之外的内容）")
 
     # C. 持有物品的方块实体必须在移除时处理内容物

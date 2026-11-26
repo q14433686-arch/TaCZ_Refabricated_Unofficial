@@ -21,6 +21,8 @@ public final class ServerChecks implements ModInitializer {
         test("ammo_block_policies", AmmoPolicySmoke::blockPolicies);
         test("ammo_entity_policies", AmmoPolicySmoke::entityPolicies);
         test("fire_callback_phases", EventPhaseSmoke::fireCallbackPhases);
+        test("target_profile_roundtrip", com.tacz.guns.block.entity.TargetIdentitySmoke::explicitSkinAndIncompleteIdentityRoundTrip);
+        test("target_identity_generations", com.tacz.guns.block.entity.TargetIdentitySmoke::lateProfileLookupCannotReplaceChangedOwner);
         test("connected_case_locks_and_survival_contents", RackChecks::connectedCaseLocksAndSurvivalContents);
         test("oem_is_not_an_inventory_item", RefitChecks::oemIsNotAnInventoryItem);
         test("refit_options_persist_and_reject_incompatible_transitions", RefitChecks::refitOptionsPersistAndRejectIncompatibleTransitions);

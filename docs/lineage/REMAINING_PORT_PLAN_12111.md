@@ -195,3 +195,19 @@ R4 实机正例必须为真实 stock AK 按键射击并确认服务端少一发�
 接续模型补丁（待编译/目标实机）：世界/FIXED/ground 从独立 external high/LOD 的 revision-aware DisplayBake 获取，不再等待 loader 或借用可动画 hand rig；GunRigBaker 统一 hi/LOD/mesh 分派，移除旧 mesh 尾注入避免重复加载；reload 退役已创建 GPU 模型，geo parse 换代 map 防止旧 worker 回写；shell override 走 native extraction，shell event 只投递给 ready 外部 rig。新增五项 DisplayBake JUnit 与真实 display probe 的独立 rig 断言。继续保留 Java21 / intermediary / native aperture，版本不变。
 
 仍未完成：Target owner 的 profile/UUID/patch/legacy migration 与受 generation 保护异步身份（先从本版 javap 取证，不照搬26.x resolver）；native muzzle effects/materials/定位器的实际消费者；posed-rig animation particle 复核；共享文件审计与全矩阵最终验收。
+
+### R6 模型/策略实机结果与下一批原生消费者
+
+`c54ab282` 编译 [45763696040](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45763696040) success；全构建 [45763695988](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45763695988) 的 build/JUnit、产物审计、原专服 GameTests 步骤 success，但开发客户端第一次建世界再次超时。成品 [45763696078](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45763696078) 仍未整体通过；display 已实际验证独立 external rig，platform / Zoomify、receiver / Iris、原版 optics 等通过。产品 SHA256 `3326d7c833def042fb2e5696c55b431b715c23b8c5de1fca50203968c4ec9ecc`。
+
+none 的 entity policy 已通过真实最近命中/穿透命中/队友伤害开关/实体忽略/爆炸正反例；block policy 已越过首次加载断言及破坏/硬度/开关检查，失败在射线 pass-through 夹具穿出很小的原生测试室、碰到周围实体边界块。本轮把正反射线端点都放在待测方块内部，另直接断言 tag 已绑定；不改产品 ray traversal。新一轮仍需通过，不能把19/20记为20/20。
+
+开发超时栈这次捕获到 server=WAITING `ThreadingImpl.enterPhase(PHASE_SERVER_TASKS)` / `MinecraftServer.preRunTasks`、其它worker空闲，integratedTicks=0。属于已定位到 Fabric client-test barrier 的证据，不足以宣布产品无问题或框架有bug；只追加 phase/parties/arrived/serverTasks 只读诊断，保持三世界门禁、原超时、零重试。
+
+下一批（待目标编译/实机）：
+- 目标 JAR javap 已证实 ResolvableProfile CODEC/Dynamic/skinPatch 与 Services.profileResolver。标靶接回原生 profile、OwnerProfile alias、旧 Owner 复合/flat UUID/name、自定义名JSON迁移；服务端 lookup异步完成后仍须 owner/level/generation/removal 一致，保留动态UUID给客户端皮肤cache。新增两个成品专服测试，身份服务回复受控，不声称外网账号服务验证。
+- MuzzleFlashRender 接上 NativeMuzzleEffects、MuzzleAttachment、SurfaceLights.muzzleLocator、FlashMaterials；继续使用本版 shouldClipViewmodel 的 native depth aperture，不引入26.x stencil/mask。新增真实物理射击 → posed locator 的 flash/smoke 独立开关对照，并检查 canceled client-pre 不发出两层效果。
+- BedrockGunModel.submit 补回 AnimationParticleDispatcher 调用，不能只让类存在；新增实际 held-gun controller 上的原生粒子关键帧、真实posed-submit消费、只发一次与missing locator无替代的对照。
+- 持久化静态检查识别 ValueInput.getString Optional 形式；仅允许显式 `tacz:read-only-key:old->new` 且有真实旧read/新write的迁移，不全类豁免。四个Python回归保护 Optional/合法迁移/无目标写入/未标注不对称；本地13unit+2baseline+4recipe和严格持久化检查通过。
+
+R6 仍 ACTIVE，不发版、不改版本；新消费者、开发三世界稳定性与完整共享行为验收尚未完成。

@@ -24,6 +24,16 @@ public final class PackClientSmoke implements FabricClientGameTest {
                     +" overlay="+(mc.getOverlay()==null ? "none" : mc.getOverlay().getClass().getName())
                     +" level="+(mc.level!=null)+" player="+(mc.player!=null)+" integratedTicks="+(server==null ? -1 : server.getTickCount()));
             if (ticks[0] == 1001 && server != null && server.getTickCount() == 0) {
+                // The observed server is waiting in Fabric's phase barrier, not a pack worker.
+                // Record its party/accounting state without mutating or bypassing the barrier.
+                try {
+                    var threading = Class.forName("net.fabricmc.fabric.impl.client.gametest.threading.ThreadingImpl");
+                    var phaser = (java.util.concurrent.Phaser)threading.getField("PHASER").get(null);
+                    System.out.println("PORT_WORLD_STALL: FabricPhase phase="+phaser.getPhase()+" registered="+phaser.getRegisteredParties()
+                            +" arrived="+phaser.getArrivedParties()+" unarrived="+phaser.getUnarrivedParties()
+                            +" serverRunning="+threading.getField("isServerRunning").get(null)
+                            +" serverTasks="+threading.getField("serverCanAcceptTasks").get(null));
+                } catch (ReflectiveOperationException ex) { System.out.println("PORT_WORLD_STALL: FabricPhase diagnostic unavailable: "+ex); }
                 Thread.getAllStackTraces().entrySet().stream()
                         .filter(e -> e.getKey().getName().equals("Server thread") || e.getKey().getName().contains("Worker") || e.getKey().getName().contains("ForkJoinPool"))
                         .sorted(java.util.Comparator.comparing(e -> e.getKey().getName().equals("Server thread") ? "" : e.getKey().getName()))

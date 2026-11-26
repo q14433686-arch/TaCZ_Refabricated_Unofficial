@@ -33,6 +33,7 @@ final class PlatformRecoil {
             ctx.waitFor(mc->mc.player.getMainHandItem().getItem() instanceof IGun gun && gun.getCurrentAmmoCount(mc.player.getMainHandItem())==8);
             ctx.waitTicks(40);
             ctx.waitFor(mc->IGunOperator.fromLivingEntity(mc.player).getSynDrawCoolDown()==0 && IClientPlayerGunOperator.fromLocalPlayer(mc.player).getDataHolder().clientBaseTimestamp>=0);
+            var muzzleBefore=ctx.computeOnClient(mc->com.tacz.guns.client.particle.NativeMuzzleEffects.diagnostics());
             ctx.runOnClient(mc->{timestamp(CameraSetupEvent.class,-1L);timestamp(FirstPersonRenderGunEvent.class,-1L);attempts=successes=0;active=cancel=true;});
             ctx.getInput().holdKey(ShootKey.SHOOT_KEY);
             try {ctx.waitFor(mc->attempts>0,80);}finally{ctx.getInput().releaseKey(ShootKey.SHOOT_KEY);}
@@ -40,6 +41,9 @@ final class PlatformRecoil {
             ctx.runOnClient(mc->{
                 if(successes!=0 || timestamp(CameraSetupEvent.class,null)!=-1 || timestamp(FirstPersonRenderGunEvent.class,null)!=-1)
                     throw new AssertionError("A canceled final pre callback created recoil/muzzle success");
+                var after=com.tacz.guns.client.particle.NativeMuzzleEffects.diagnostics();
+                if(PlatformMuzzle.flashes(after)!=PlatformMuzzle.flashes(muzzleBefore) || PlatformMuzzle.smoke(after)!=PlatformMuzzle.smoke(muzzleBefore))
+                    throw new AssertionError("A canceled final client-pre callback emitted native flash/smoke");
             });
             // This is the CLIENT visual veto, after the request packet. It must not pretend to
             // veto the independent server event: the server still settles its legitimate shot.
@@ -51,6 +55,8 @@ final class PlatformRecoil {
             ctx.runOnClient(mc->{if(successes!=1 || timestamp(CameraSetupEvent.class,null)<0 || timestamp(FirstPersonRenderGunEvent.class,null)<0)
                 throw new AssertionError("Successful actual shot did not start both recoil consumers once");});
             System.out.println("PORT_PLATFORM_RECOIL: last client-pre veto kept both recoil clocks idle while server independently settled ammo=7; successful visual shot started both once and server ammo=6");
+            PlatformMuzzle.verify(ctx,world,muzzleBefore);
+            PlatformParticles.verify(ctx);
         } finally {
             ctx.getInput().releaseKey(ShootKey.SHOOT_KEY);ctx.runOnClient(mc->{active=cancel=false;});
             world.getServer().runOnServer(s->{var p=s.getPlayerList().getPlayers().getFirst();p.setItemInHand(InteractionHand.MAIN_HAND,old);p.inventoryMenu.broadcastChanges();});

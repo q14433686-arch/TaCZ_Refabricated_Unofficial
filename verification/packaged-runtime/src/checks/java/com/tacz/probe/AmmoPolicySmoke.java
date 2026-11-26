@@ -48,7 +48,10 @@ public final class AmmoPolicySmoke {
             AmmoConfig.DESTROY_GLASS.set(false);level.setBlockAndUpdate(pos,Blocks.STONE.defaultBlockState());hit(level,pos,bullet);
             h.assertTrue(level.getBlockState(pos).is(Blocks.STONE),"Master destroy switch ignored");
             level.setBlockAndUpdate(pos,Blocks.OAK_PLANKS.defaultBlockState());
-            var from=Vec3.atCenterOf(pos).add(-2,0,0);var to=from.add(4,0,0);
+            // Stay inside this block: the tiny native GameTest chamber has solid boundary
+            // blocks outside it, which are not part of the pass-through policy under test.
+            h.assertTrue(AmmoBlockConfigRead.canPassThrough(level.getBlockState(pos)), "Configured planks tag did not bind");
+            var from=Vec3.atCenterOf(pos).add(-.49,0,0);var to=from.add(.98,0,0);
             var context=new ClipContext(from,to,ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,bullet);
             h.assertTrue(BlockRayTrace.rayTraceBlocks(level,context).getType()==HitResult.Type.MISS,"Configured block tag not pass-through");
             AmmoConfig.PASS_THROUGH_BLOCKS.set(List.of());AmmoBlockConfigRead.init();
