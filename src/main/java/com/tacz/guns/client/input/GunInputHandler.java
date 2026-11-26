@@ -21,9 +21,9 @@ public final class GunInputHandler {
             new Binding(CrawlKey.CRAWL_KEY, () -> CrawlKey.onCrawlControllerPress(true)),
             new Binding(ReloadKey.RELOAD_KEY, () -> ReloadKey.onReloadControllerPress(true)),
             new Binding(InspectKey.INSPECT_KEY, () -> InspectKey.onInspectControllerPress(true)),
-            new Binding(FireSelectKey.FIRE_SELECT_KEY, FireSelectKey::doFireSelectLogic),
-            new Binding(MeleeKey.MELEE_KEY, MeleeKey::doMeleeLogic),
-            new Binding(ZoomKey.ZOOM_KEY, ZoomKey::doZoomLogic),
+            new Binding(FireSelectKey.FIRE_SELECT_KEY, () -> FireSelectKey.onFireSelectControllerPress(true)),
+            new Binding(MeleeKey.MELEE_KEY, () -> MeleeKey.onMeleeControllerPress(true)),
+            new Binding(ZoomKey.ZOOM_KEY, () -> ZoomKey.onZoomControllerPress(true)),
             new Binding(InteractKey.INTERACT_KEY, () -> InteractKey.doInteractLogic(false)),
             new Binding(RefitKey.REFIT_KEY, RefitKey::onRefitPress),
             new Binding(ConfigKey.OPEN_CONFIG_KEY, ConfigKey::onOpenConfig));
