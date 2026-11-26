@@ -39,12 +39,13 @@ public final class ThermalReadback {
             var shifted = field.get(ScopeThermalMaterial.Depth.SHIFTED);
             try {
                 StringBuilder result = new StringBuilder();
-                for (boolean noDepth : new boolean[]{false, true}) {
+                for (int mode : new int[]{0, 1, 2}) {
                     ctx.runOnClient(mc -> {
                         try {
                             var original = (com.mojang.blaze3d.pipeline.RenderPipeline) field.get(ScopeThermalMaterial.Depth.NATIVE);
-                            var builder = ScopeRenderTypes.clonePipeline(original, net.minecraft.resources.Identifier.parse("tacz_probe:thermal_" + noDepth));
-                            if (noDepth) builder.withDepthTestFunction(com.mojang.blaze3d.platform.DepthTestFunction.NO_DEPTH_TEST).withDepthWrite(false);
+                            var builder = ScopeRenderTypes.clonePipeline(original, net.minecraft.resources.Identifier.parse("tacz_probe:thermal_" + mode));
+                            if (mode > 0) builder.withDepthTestFunction(com.mojang.blaze3d.platform.DepthTestFunction.NO_DEPTH_TEST).withDepthWrite(false);
+                            if (mode == 2) builder.withFragmentShader(net.minecraft.resources.Identifier.parse("tacz_probe:core/thermal_depth"));
                             var diagnostic = builder.build();
                             field.set(ScopeThermalMaterial.Depth.SCENE, diagnostic);
                             field.set(ScopeThermalMaterial.Depth.SHIFTED, diagnostic);
@@ -52,7 +53,8 @@ public final class ThermalReadback {
                         } catch (ReflectiveOperationException e) { throw new AssertionError(e); }
                     });
                     ctx.waitTicks(5);
-                    result.append(noDepth ? " noDepth=" : " ordinaryDepth=").append(read(ctx));
+                    if (mode == 2) result.append(" windowDepth=").append(readDepth(ctx));
+                    else result.append(mode == 1 ? " noDepth=" : " ordinaryDepth=").append(read(ctx));
                 }
                 return result.toString();
             } finally {
@@ -65,6 +67,39 @@ public final class ThermalReadback {
                 });
             }
         } catch (ReflectiveOperationException e) { throw new AssertionError(e); }
+    }
+    private static String readDepth(ClientGameTestContext ctx) {
+        var future = new CompletableFuture<String>();
+        ctx.runOnClient(mc -> {
+            var target = ScopeThermalCapture.current();
+            if (target == null) throw new AssertionError("No diagnostic depth target");
+            float[] mask = depth(target.getDepthTexture(), target.width, target.height);
+            var main = mc.getMainRenderTarget();
+            float[] scene = depth(main.getDepthTexture(), main.width, main.height);
+            int mid = target.height / 2 * target.width + target.width / 2;
+            Screenshot.takeScreenshot(target, pixels -> {
+                try (pixels) {
+                    int rgb = pixels.getPixel(pixels.getWidth()/2,pixels.getHeight()/2);
+                    double z = ((rgb>>16)&255)/255d + ((rgb>>8)&255)/65025d + (rgb&255)/16581375d;
+                    future.complete("replay="+z+" rgb="+Integer.toHexString(rgb)+" private="+mask[mid]+" mainAfterHand="+scene[mid]);
+                } catch (Throwable e) { future.completeExceptionally(e); }
+            });
+        });
+        ctx.waitFor(mc -> future.isDone());
+        return future.join();
+    }
+    private static float[] depth(com.mojang.blaze3d.textures.GpuTexture texture,int w,int h) {
+        int[] keys = {org.lwjgl.opengl.GL45C.GL_PACK_SKIP_PIXELS,org.lwjgl.opengl.GL45C.GL_PACK_SKIP_ROWS,
+                org.lwjgl.opengl.GL45C.GL_PACK_ROW_LENGTH,org.lwjgl.opengl.GL45C.GL_PACK_ALIGNMENT};
+        int[] old = java.util.Arrays.stream(keys).map(org.lwjgl.opengl.GL45C::glGetInteger).toArray();
+        try {
+            int id = (Integer) texture.getClass().getMethod("iris$getGlId").invoke(texture);
+            for(int i=0;i<keys.length;i++) org.lwjgl.opengl.GL45C.glPixelStorei(keys[i],i==3?4:0);
+            float[] pixels = new float[w*h];
+            org.lwjgl.opengl.GL45C.glGetTextureImage(id,0,org.lwjgl.opengl.GL45C.GL_DEPTH_COMPONENT,org.lwjgl.opengl.GL45C.GL_FLOAT,pixels);
+            return pixels;
+        } catch(ReflectiveOperationException e){throw new AssertionError(e);}
+        finally { for(int i=0;i<keys.length;i++)org.lwjgl.opengl.GL45C.glPixelStorei(keys[i],old[i]); }
     }
     public static void releaseAndVerify() {
         var target = ScopeThermalCapture.current();
