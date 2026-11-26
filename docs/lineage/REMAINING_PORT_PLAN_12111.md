@@ -96,3 +96,11 @@ R1 的专项测试必须增加自己的分划断言，原有 `PORT_OPTIC` 孔径
 - [R2 JAR artifact15082847326](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45745251694/artifacts/15082847326)，本体 SHA-256 **`a43e1d7cf22cdbd08d6b4ce006e1f721c6a954f460cea422e5161ed060c44180`**。
 
 **R2 本项闭环完成，当前 R3 ACTIVE**。这不表示所有光影包都支持，只覆盖精确钉住的发行组合；不改版本、不发 Release。R3 继续修接收树仍残留的 0.35 硬阈/分段倍率、镜片移动 UV、经典镜片 foreground 顺序及同帧实像验收；近场散射的 receiver 验证与 R4 合并观察，但不跳过该行为。
+
+
+## R3 施工（进行中，尚未实机通过）
+
+- `2cf04dd9` 按供体接回同一帧的 picture progress：去掉接收树残留的 0.35 隐含阈与十档倍率；重投影按本帧 `totalZoom / worldZoom`，窄遍直接按本帧 ADS 进度改变源 FOV；经典 authored lens 的 reticle/rim 也延迟到 lens 之后；Iris 移动中打开 source footprint guard，不能抽到枪体/镜环。
+- 新增 ScopeZoom JUnit 验证 5 种倍率 × 4 种 world share × 101 个 progress 的乘积恒等式，以及端点/clamp。真实测试按供体 `AdsTransitionSmoke` 适配：使用实际 aim key/插值/模型，仅把耗时固定为每 tick .05 的测试夹具；同一帧读 lens 前、lens 后、ink 后，逐像素检查移动 ocular、90% 合法 UV 颜色匹配、tile 换色仍可见、孔径外改写必须 0；另测 missing mask、用户 reveal floor、half world share 收镜和经典 tint。
+- `2cf04dd9` [编译45749118956](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45749118956) / [全构建45749118992](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45749118992) success；上一轮开发 PackClientSmoke 建世界超时没有再现。但独立实机探针编译发现本版 gametest input 没有供体的 lookAt API；不是产品渲染通过。
+- `b2ad0276` 改为本版现有 player yaw/pitch 夹具；进一步接入供体 WideSceneSmoke，分别在 narrow ADS / released 下改动镜外 panel、真实 slime、day/night sky，证明窄遍没有烧掉主遍状态。Iris private depth copy 的需求同时覆盖 reveal floor 之前的 foreground ownership，不将“暂不贴 picture”误解为“不需要 reticle 深度”。当前跑 [45749621489](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45749621489)，不提前关闭 R3。
