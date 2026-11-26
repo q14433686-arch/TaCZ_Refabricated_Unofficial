@@ -73,3 +73,8 @@ GunInputHandler（统一物理输入）与 LevelRendererReceiverLightMixin（本
 ### R6 消费者校验接续：`c1570e66`
 
 编译45765549810成功；成品none的22/22专服GameTests（含弹药policy与target原生profile迁移/异步代数），platform/Zoomify实际muzzle与animation-particle consumer通过。完整发行45765549848的最终结果以活动计划为准；开发全构建45765549899仍因建世界超时失败，不宣布稳定性已修复。接续独立GPU bake budget待验证；body illuminated/真实sky/reflection重放及ocular inflate链仍属真实共享行为缺口，R6 ACTIVE。
+
+
+### R6 预算验收、本体材质接续
+
+`461cc6fc` 编译45767016402与完整开发45767016448成功，三fresh-world门禁本轮通过，历史间歇超时未根治；发行platform/Zoomify强制12marker与独立mesh bake额度通过，最终发行状态见活动计划。补录c157发行14/14成功。本轮接通body illuminated/real-sky/反射、即时双buffer与preview材质保留，新增两环境强制PORT_BODY_MATERIAL；这些新改动尚待编译/实机，不借前一SHA结果验收。ocular inflate及剩余共享审计仍未关闭。

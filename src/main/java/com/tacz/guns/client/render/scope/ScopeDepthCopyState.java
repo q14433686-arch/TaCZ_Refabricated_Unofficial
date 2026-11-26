@@ -190,6 +190,9 @@ public final class ScopeDepthCopyState {
     private static @javax.annotation.Nullable DepthIdentity apertureDepthIdentity;
     private static boolean backupValid;
     private static boolean maskValid;
+    /** A split body must not recopy its own depth into the ocular footprint. Failed copies
+     * also consume the attempt: later housing is never a valid replacement for the aperture. */
+    private static boolean apertureCopyAttempted;
     /**
      * 帧计数（{@link #onClientFrameStart()} 递增）与最近一次成功掩码周期的帧戳。
      * 初值 MIN_VALUE：任何「本帧/上一帧」查询在第一个周期完成前都为假（fail-closed）。
@@ -231,6 +234,7 @@ public final class ScopeDepthCopyState {
             case BACKUP -> {
                 disableScopeBranches(program);
                 maskValid = false;
+                apertureCopyAttempted = false;
                 maskWorldValid = false;
                 // Recorded on BOTH the Iris and vanilla paths: this is the surface the ocular draw
                 // is about to write near depth into, and step 3 must copy exactly this surface.
@@ -275,9 +279,10 @@ public final class ScopeDepthCopyState {
                 // Step 3 runs at the body draw boundary: nothing but the ocular draw at order -3 has
                 // written depth since the world backup, so this copy isolates the ocular footprint.
                 disableScopeBranches(program);
-                maskValid = copyApertureDepth() && maskWorldValid;
-                if (maskValid) {
-                    maskCycleFrame = frameCounter;
+                if (!apertureCopyAttempted) {
+                    apertureCopyAttempted = true;
+                    maskValid = copyApertureDepth() && maskWorldValid;
+                    if (maskValid) maskCycleFrame = frameCounter;
                 }
                 yield true;
             }

@@ -30,7 +30,8 @@ public class RackPreviewCollector extends SubmitNodeStorage {
     static RenderType material(RenderType original) {
         var setup = ((PreviewRenderTypeAccessor)(Object)original).tacz$previewSetup();
         var sampler = ((PreviewRenderSetupAccessor)(Object)setup).tacz$previewTextures().get("Sampler0");
-        return sampler instanceof PreviewTextureBindingAccessor t ? RenderTypes.entityTranslucent(t.tacz$previewTexture()) : original;
+        return sampler instanceof PreviewTextureBindingAccessor t
+                ? com.tacz.guns.client.model.bedrock.IlluminatedMaterials.preview(original, t.tacz$previewTexture()) : original;
     }
     @Override public void submitCustomGeometry(PoseStack pose, RenderType type, CustomGeometryRenderer draw) {
         output.submitCustomGeometry(pose, material(type), (entry, out) -> draw.render(entry, new PreviewVertices(out)));

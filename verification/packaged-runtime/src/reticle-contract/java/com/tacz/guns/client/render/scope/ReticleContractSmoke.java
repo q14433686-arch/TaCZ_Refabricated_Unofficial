@@ -66,7 +66,7 @@ public final class ReticleContractSmoke {
         seen.clear();
         var dark = extract(pose, nodes, true, .675f, 0);
         dark.forEach(layer -> layer.snapshot.write(null));
-        require(seen.getFirst().light == 0 && seen.get(1).light == 15728880 && seen.get(2).light == 15728880,
+        require(seen.getFirst().light == 0 && seen.get(1).light == com.tacz.guns.util.IlluminatedLights.resolve(0) && seen.get(2).light == com.tacz.guns.util.IlluminatedLights.resolve(0),
                 "Mixed material light inheritance lost");
         require(Math.abs(seen.getFirst().alpha - .5f) < .0001f, "ADS alpha changed");
         // Nested division roots must also be captured only once.

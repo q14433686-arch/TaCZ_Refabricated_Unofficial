@@ -653,9 +653,10 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             // differences) into the mask texture, and only then does the ordinary scope body draw.
             // Body fragments behind the invisible ocular still fail their normal depth test, so
             // neither stencil nor framebuffer attachment changes are involved.
-            RenderType bodyWithApertureCopy = ScopeRenderTypes.apertureCopy(renderType);
-            collector.order(SCOPE_BODY_ORDER).submitCustomGeometry(identity, bodyWithApertureCopy,
-                    (entryPose, consumer) -> bodySnapshot.write(consumer));
+            // Partition before adding the boundary wrapper, so illuminated scope housing keeps
+            // its unshaded material. APERTURE_COPY freezes once per BACKUP, before ANY body batch.
+            bodySnapshot.submitMaterials(collector.order(SCOPE_BODY_ORDER), renderType, true,
+                    ScopeRenderTypes::apertureCopy);
 
             // Restore the aperture pixels from the exact pre-ocular world-depth backup. Iris renders water,
             // fog, particles and volumetric clouds after its solid-hand pass and needs the original depth.
@@ -712,11 +713,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                         (entryPose, consumer) -> ocularRingSnapshot.write(consumer));
             }
         } else {
-            if (!bodySnapshot.isEmpty()) {
-                PoseStack identity = new PoseStack();
-                collector.submitCustomGeometry(identity, renderType,
-                        (entryPose, consumer) -> bodySnapshot.write(consumer));
-            }
+            bodySnapshot.submitGeometry(collector, renderType, transformType != null && transformType.firstPerson());
             // 非镜内序列（腰射 / 非第一人称 / 没给孔径贴图）同样不能丢任务：文字工厂在未开镜时
             // 返回 null（见 setTextShowList 的 TEXT_SHOW_AIM_START 门禁），所以这里通常是空的；
             // 带文字但没有 ocular 骨骼的第三方瞄具靠这一句兜住。

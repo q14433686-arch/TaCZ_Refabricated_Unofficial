@@ -34,6 +34,7 @@ public class FunctionalBedrockPart extends BedrockPart {
         this.offsetY = part.offsetY;
         this.offsetZ = part.offsetZ;
         this.visible = part.visible;
+        this.illuminated = part.illuminated;
         this.mirror = part.mirror;
         this.setInitRotationAngle(part.getInitRotX(), part.getInitRotY(), part.getInitRotZ());
         this.xScale = part.xScale;
@@ -43,35 +44,22 @@ public class FunctionalBedrockPart extends BedrockPart {
     }
 
     @Override
-    public void render(PoseStack poseStack, ItemDisplayContext transformType, VertexConsumer consumer, int light, int overlay, float red, float green, float blue, float alpha) {
+    public void render(PoseStack poseStack, ItemDisplayContext transformType, VertexConsumer consumer, VertexConsumer unshadedConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
         int cubePackedLight = light;
         if (illuminated) {
-            // IlluminatedLights: full bright without shaders, real sky column under shader packs.
+            // 最大亮度
             cubePackedLight = com.tacz.guns.util.IlluminatedLights.resolve(light);
+            consumer = unshadedConsumer;
         }
 
         poseStack.pushPose();
         this.translateAndRotateAndScale(poseStack);
 
-        if (functionalRenderer != null) {
-            @Nullable IFunctionalRenderer renderer = functionalRenderer.apply(this);
-            if (renderer != null) {
-                renderer.render(poseStack, consumer, transformType, cubePackedLight, overlay);
-            } else {
-                if (this.visible) {
-                    super.compile(poseStack.last(), consumer, cubePackedLight, overlay, red, green, blue, alpha);
-                    for (BedrockPart part : this.children) {
-                        part.render(poseStack, transformType, consumer, cubePackedLight, overlay, red, green, blue, alpha);
-                    }
-                }
-            }
-        } else {
-            if (this.visible) {
-                super.compile(poseStack.last(), consumer, cubePackedLight, overlay, red, green, blue, alpha);
-                for (BedrockPart part : this.children) {
-                    part.render(poseStack, transformType, consumer, cubePackedLight, overlay, red, green, blue, alpha);
-                }
-            }
+        IFunctionalRenderer renderer = functionalRenderer == null ? null : functionalRenderer.apply(this);
+        if (renderer != null) {
+            renderer.render(poseStack, consumer, transformType, cubePackedLight, overlay);
+        } else if (visible) {
+            renderGeometry(poseStack, transformType, consumer, unshadedConsumer, cubePackedLight, overlay, red, green, blue, alpha);
         }
         poseStack.popPose();
     }

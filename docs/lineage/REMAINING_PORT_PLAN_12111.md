@@ -222,3 +222,16 @@ R6 仍 ACTIVE，不发版、不改版本；新消费者、开发三世界稳定�
 接续还发现供体 `MeshGpuBakeBudgetPerFrame` 被漏掉，现有实现误把LRU缓存容量当每帧烘焙额度。本轮补独立1–64/默认4配置、Cloth与中英键及实际tryReserveBake消费者，保留旧带int签名为同一闸门的兼容入口；新增真实门禁在LRU1/16×budget1/2/7的精确计数对照。**该接续尚未编译/实机验收**，19项mesh TOML/Cloth/语言键静态齐平通过。
 
 共享审计尚不能收尾：BedrockModel/BedrockRenderSnapshot 还没有消费已有 IlluminatedMaterials 的body材质划分与 ViewmodelFlash.gain 的中性反射重放；快照发光light还硬编码fullbright，未消费ILLUMINATED_REAL_SKY。另有ocular inflate配置/装配链缺口需要与已验收native depth aperture/reticle互测，不能用供体整文件替换已验收R1–R3实现。上述是已确认待办，不记为平台替代或已实现。
+
+
+### R6 `461cc6fc` 回执与本体材质接续
+
+- 编译 [45767016402](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45767016402) success；完整开发 build [45767016448](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45767016448) success，包含三次独立 fresh-world 门禁。本轮未复现旧超时，**不等于已找到并修复间歇原因**；独立只读 watchdog 保留。
+- 发行 [45767016376](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45767016376) 原生 platform [139730236106](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45767016376/job/139730236106) / Zoomify [139730236198](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45767016376/job/139730236198) 均 success，12种强制marker含独立 MESH_BUDGET；LRU容量1/16 × bake额度1/2/7已由真实consumer通过。其余最终状态待记录。本体 SHA256 `71d00bc3c07eff82613e54e548c56fd7330c420a5eeb3adc13df39c813f04599`。
+- 补录：上一轮 `c1570e66` 的发行45765549848最终 **14/14 success**，不是仍待定；其开发45765549899失败仍保留。
+
+下一批本体材质实现已接线、**尚待编译及原生/Iris目标实机**：BedrockModel的不可变快照按authored illuminated位保序分批，发光子树与独立captureSubtree均保留祖先发光/real-sky；ViewmodelFlash.gain在extract时冻结，中性反射仅重放非发光body，不替换未知特效材质；rack preview保留unshaded材质。即时路径补双buffer overload及Functional wrapper发光位，另修供体BedrockPart只传递unshadedConsumer却未在发光节点切换consumer的问题。新增PORT_BODY_MATERIAL强制合约在两种成品optics客户端执行真实延迟任务与即时buffer/functional hook正反例；不以这组数值合约代替已有镜片/热像像素矩阵。ocular inflate链与共享音频语义仍需继续审计，R6不关闭、不改版本。
+
+补充同批接线：BedrockAttachmentModel 的非ADS与有序ADS housing也消费上述材质划分；APERTURE_COPY包装在识别材质之后添加，depth-copy周期每次BACKUP只允许一次aperture尝试（包括失败），防止第二个body材质批次把自身深度误当目镜。仍是本版原生depth aperture，不移植stencil；必须重新跑两环境完整光学矩阵。新增合约同时检查包装后的材质身份。两项本地verify脚本因缺少named MC缓存均未运行成功，不能写成通过；无本地JDK，目标编译/混淆运行交CI验证。
+
+进一步音频审计发现SoundData解析器/元数据已有，但SoundPlayManager实际入口仍主要取Identifier、丢弃authored volume/pitch/random参数，且GunSoundInstance缺少非tacz_sounds的原生event回退；这不在已关闭的R5耳鸣volume/input矩阵覆盖范围内，作为R6真实后续缺口保留。

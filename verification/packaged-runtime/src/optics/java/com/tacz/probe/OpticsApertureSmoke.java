@@ -32,6 +32,7 @@ public final class OpticsApertureSmoke extends PlayerProbe {
     @Override void exercise(ClientGameTestContext ctx, TestSingleplayerContext world) {
         ctx.runOnClient(mc -> {
             com.tacz.guns.client.render.scope.ReticleContractSmoke.verify();
+            com.tacz.guns.client.render.scope.BodyMaterialContractSmoke.verify();
             ReticleGroups.verify();
             int program = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL20.GL_CURRENT_PROGRAM);
             try {
