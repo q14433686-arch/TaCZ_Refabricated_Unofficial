@@ -13,7 +13,8 @@ public final class ThermalReadback {
             var target = ScopeThermalCapture.current();
             if (target == null) throw new AssertionError("Thermal attachment not ready: expected=" + ScopeLensFrame.expected
                     + " current=" + ScopeLensFrame.current() + " bounds=" + java.util.Arrays.toString(ScopeLensFrame.currentBounds())
-                    + " projection=" + ScopeProjection.current() + " state=" + captureState());
+                    + " projection=" + ScopeProjection.current() + " aim=" + com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(0)
+                    + " state=" + captureState());
             Screenshot.takeScreenshot(target, pixels -> {
                 try (pixels) {
                     int w = pixels.getWidth(), h = pixels.getHeight(), hot = 0, central = 0;

@@ -78,6 +78,12 @@ public final class OpticsApertureSmoke extends PlayerProbe {
             ctx.waitTicks(6);
             var steady = sample(ctx, "steady");
             ReticleFrames.verify(ctx, optic);
+            // Minecraft releases key mappings when the paused material-ablation screen opens.
+            // Establish a fresh real ADS state; never interpret a hip frame as missing heat.
+            ctx.getInput().releaseKey(AimKey.AIM_KEY);
+            ctx.waitFor(mc -> IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(0) < .001f);
+            ctx.getInput().holdKey(AimKey.AIM_KEY);
+            ctx.waitFor(mc -> IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(0) > .999f);
             ThermalFrames.verify(ctx, world, base, optic);
             ctx.getInput().releaseKey(AimKey.AIM_KEY);
             ctx.waitFor(mc -> IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(0) < .001f);
