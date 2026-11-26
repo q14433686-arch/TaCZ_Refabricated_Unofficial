@@ -102,6 +102,7 @@ final class ThermalFrames {
                     +" opaque="+covered.hot()+" opaqueWhite="+white(behind)+" glass="+glass.centralHot()+" chicken="+chicken.centralHot()
                     +" invisible="+invisible.hot()+" blacklist="+blacklisted.hot()+" whitelist="+whitelisted.centralHot()
                     +" opticalBody="+coverage[1]+"/"+coverage[0]+" optical fallback and recovery passed");
+            ThermalPoseFrames.verify(ctx,world,base);
         } finally {
             kill(ctx,world);
             wall(ctx,world,base,0);
@@ -116,15 +117,15 @@ final class ThermalFrames {
             });
         }
     }
-    private static void summon(ClientGameTestContext ctx,TestSingleplayerContext world,BlockPos base,String type,String nbt) {
+    static void summon(ClientGameTestContext ctx,TestSingleplayerContext world,BlockPos base,String type,String nbt) {
         world.getServer().runCommand("summon minecraft:"+type+" "+(base.getX()+.5)+" "+(base.getY()+1.2)+" "+(base.getZ()+16.5)+" {Tags:[\"thermal_probe\"],"+nbt+"}");
         ctx.waitTicks(12);
     }
-    private static void kill(ClientGameTestContext ctx,TestSingleplayerContext world) {
+    static void kill(ClientGameTestContext ctx,TestSingleplayerContext world) {
         world.getServer().runCommand("kill @e[tag=thermal_probe]");
         ctx.waitTicks(25); // living death animation must be gone, not an occluding corpse
     }
-    private static void wall(ClientGameTestContext ctx,TestSingleplayerContext world,BlockPos base,int mode) {
+    static void wall(ClientGameTestContext ctx,TestSingleplayerContext world,BlockPos base,int mode) {
         var block=mode==0?Blocks.AIR:mode==1?Blocks.STONE:Blocks.GLASS;
         var mid=base.south(8);
         world.getServer().runOnServer(s->{var level=s.getPlayerList().getPlayers().getFirst().level();
@@ -140,7 +141,7 @@ final class ThermalFrames {
         });
         ctx.waitTicks(6); world.getClientWorld().waitForChunksRender(); ctx.waitTicks(4);
     }
-    private static int[] coverage(BufferedImage optical,BufferedImage empty,BufferedImage heat) {
+    static int[] coverage(BufferedImage optical,BufferedImage empty,BufferedImage heat) {
         int w=optical.getWidth(),h=optical.getHeight(),r=h/7,visible=0,filled=0;
         for(int y=h/2-r;y<h/2+r;y++) for(int x=w/2-r;x<w/2+r;x++) {
             if (!greenDelta(optical,empty,x,y) || !greenDelta(optical,empty,x-1,y) || !greenDelta(optical,empty,x+1,y)
@@ -158,12 +159,12 @@ final class ThermalFrames {
         int r=p>>16&255,g=p>>8&255,b=p&255;
         return Math.min(r,Math.min(g,b))>180 && Math.max(r,Math.max(g,b))-Math.min(r,Math.min(g,b))<15;
     }
-    private static BufferedImage frame(ClientGameTestContext ctx,String name) {
+    static BufferedImage frame(ClientGameTestContext ctx,String name) {
         ctx.waitTicks(4);
         try { return ImageIO.read(ctx.takeScreenshot("tacz_"+name).toFile()); }
         catch(IOException e){throw new UncheckedIOException(e);}
     }
-    private static int white(BufferedImage frame) {
+    static int white(BufferedImage frame) {
         int w=frame.getWidth(),h=frame.getHeight(),r=h/14,n=0;
         for(int y=h/2-r;y<h/2+r;y++) for(int x=w/2-r;x<w/2+r;x++) {
             int p=frame.getRGB(x,y),red=p>>16&255,g=p>>8&255,b=p&255;

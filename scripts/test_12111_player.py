@@ -119,20 +119,22 @@ def test(product, work, evidence, suite):
         'display': {'PORT_INK:': 1, 'PORT_OUTLINE:': 1, 'PORT_RACK_PREVIEW:': 5, 'PORT_CASE_HINT:': 1},
         'controller': {'PORT_CONTROLLER:': 1},
         'pal': {'PORT_PAL:': 2},
-        'optics': {'PORT_OPTIC:': 3, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_RETICLE_PIXELS:': 1, 'PORT_THERMAL_PIXELS:': 1},
-        'optics-iris': {'PORT_OPTIC:': 3, 'PORT_IRIS:': 1, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_RETICLE_PIXELS:': 1, 'PORT_THERMAL_PIXELS:': 1},
+        'optics': {'PORT_THERMAL_PIXELS:': 1, 'PORT_THERMAL_POSE:': 18, 'PORT_OPTIC:': 3, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_RETICLE_PIXELS:': 1},
+        'optics-iris': {'PORT_THERMAL_PIXELS:': 1, 'PORT_THERMAL_POSE:': 18, 'PORT_OPTIC:': 3, 'PORT_IRIS:': 1, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_RETICLE_PIXELS:': 1},
     }[suite]
     text = log.read_text(errors='replace')
     for marker, count in {**markers, 'PORT_PLAYER:': 1}.items():
         rows = [row.split(marker, 1)[1].strip() for row in text.splitlines() if marker in row]
         if len(rows) != count: raise AssertionError(f'{suite}: expected {count} {marker} receipts, got {rows}')
-        for row in rows: print(f'::notice::{marker} {row}', flush=True)
+        print(f'::notice::{marker} ' + ' | '.join(rows), flush=True)
     frames = {'optics': ['optic_raise', 'optic_steady', 'optic_hip'], 'optics-iris': ['optic_raise', 'optic_steady', 'optic_hip'], 'pal': ['pal_remote_rifle', 'pal_remote_pistol'], 'controller': [], 'display': [
         f'{scene}_{state}' for scene in ['rack', 'case', 'corner', 'vanilla_quad', 'mesh'] for state in ['empty', 'ghost', 'placed']
     ] + [f'case_hint_{s}' for s in ['gun_hover','gun_interact','empty_hover','look_away','tick_39','tick_40_held','sneak_unlock','unlocked']]}[suite]
     if suite.startswith('optics'):
         frames += ['reticle_full', 'reticle_control', 'reticle_luminous_only', 'reticle_none', 'reticle_restored',
                    'thermal_empty_optical', 'thermal_exposed', 'thermal_occluded', 'thermal_glass', 'thermal_disabled']
+        frames += [f'thermal_{mode}_{range}_{kind}' for mode in ['classic','pip','narrow'] for range in [16,36]
+                   for kind in ['empty'] + [f'{stage}_{yaw}' for stage in ['optical','heat','wall'] for yaw in [0,45,90]]]
     for frame in frames:
         if not any((instance/'screenshots').glob(f'*tacz_{frame}.png')): raise AssertionError(f'Missing raw frame: {frame}')
     with product.open('rb') as f: digest = hashlib.file_digest(f, 'sha256').hexdigest()

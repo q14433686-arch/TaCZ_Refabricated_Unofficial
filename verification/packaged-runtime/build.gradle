@@ -45,6 +45,7 @@ if (playerSuite != null) {
     processResources.filesMatching('fabric.mod.json') {
         filter { line ->
             if (playerSuite == 'pal') line = line.replace('"environment": "client",', '"environment": "client", "mixins": ["tacz_pal_probe.mixins.json"],')
+            if (playerSuite.startsWith('optics')) line = line.replace('"environment": "client",', '"environment": "client", "mixins": ["tacz_optics_probe.mixins.json"],')
             if (playerSuite == 'display') line = line.replace('"entrypoints": {', '"entrypoints": { "client": ["com.tacz.probe.HintInk"],')
             line.replace('com.tacz.probe.PackagedConnectionProbe', "com.tacz.probe.$entry".toString())
         }
