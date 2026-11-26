@@ -1,4 +1,4 @@
-commit: ceaee475518c844568c100196fe05e9c01f40e97
+commit: 6f472f636611152e775ac95ee1c5b7e202797c67
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
 
@@ -198,104 +198,7 @@ duplicate input class me/shedaniel/rei/api/common/registry/display/DisplayConsum
 duplicate input class me/shedaniel/rei/api/common/registry/display/DisplayConsumer$RecipeManagerConsumer$RecipeFillerBuilder, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
 duplicate input class me/shedaniel/rei/api/common/registry/display/DisplayConsumer$RecipeDisplayConsumer, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
 duplicate input class me/shedaniel/rei/api/common/registry/display/DisplayConsumer$RecipeDisplayConsumer$RecipeFillerBuilder, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-...[truncated 1866 lines total]...
-  public com.mojang.blaze3d.pipeline.RenderTarget getParticlesTarget();
-  public com.mojang.blaze3d.pipeline.RenderTarget getWeatherTarget();
-  public com.mojang.blaze3d.pipeline.RenderTarget getCloudsTarget();
-  public it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.client.renderer.chunk.SectionRenderDispatcher$RenderSection> getVisibleSections();
-  public net.minecraft.client.renderer.SectionOcclusionGraph getSectionOcclusionGraph();
-  public net.minecraft.client.renderer.culling.Frustum getCapturedFrustum();
-  public net.minecraft.client.renderer.CloudRenderer getCloudRenderer();
-  public net.minecraft.gizmos.Gizmos$TemporaryCollection collectPerFrameGizmos();
-  private void finalizeGizmoCollection();
-  private static java.util.SortedSet method_22988(long);
-  private static void method_62215(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.SkyRenderState, net.minecraft.client.renderer.SkyRenderer);
-  private static void method_72156(int, com.mojang.blaze3d.buffers.GpuBufferSlice[], com.mojang.blaze3d.systems.RenderPass$UniformUploader);
-  private void method_75413(com.mojang.blaze3d.buffers.GpuBufferSlice, com.mojang.blaze3d.resource.ResourceHandle, net.minecraft.client.renderer.state.CameraRenderState, org.joml.Matrix4f);
-  private void method_62216(com.mojang.blaze3d.buffers.GpuBufferSlice, int, float);
-  private void method_62205(int, net.minecraft.client.CloudStatus, float, net.minecraft.world.phys.Vec3, long, float);
-  private void method_62213(com.mojang.blaze3d.buffers.GpuBufferSlice, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle);
-  private void method_62214(com.mojang.blaze3d.buffers.GpuBufferSlice, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.util.profiling.ProfilerFiller, org.joml.Matrix4f, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle, boolean, com.mojang.blaze3d.resource.ResourceHandle, com.mojang.blaze3d.resource.ResourceHandle);
-  private void method_62218(org.joml.Vector4f);
-  static {};
-}
-Compiled from "LevelRenderState.java"
-public class net.minecraft.client.renderer.state.LevelRenderState {
-  public net.minecraft.client.renderer.state.CameraRenderState cameraRenderState;
-  public final java.util.List<net.minecraft.client.renderer.entity.state.EntityRenderState> entityRenderStates;
-  public final java.util.List<net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState> blockEntityRenderStates;
-  public boolean haveGlowingEntities;
-  public net.minecraft.client.renderer.state.BlockOutlineRenderState blockOutlineRenderState;
-  public final java.util.List<net.minecraft.client.renderer.state.BlockBreakingRenderState> blockBreakingRenderStates;
-  public final net.minecraft.client.renderer.state.WeatherRenderState weatherRenderState;
-  public final net.minecraft.client.renderer.state.WorldBorderRenderState worldBorderRenderState;
-  public final net.minecraft.client.renderer.state.SkyRenderState skyRenderState;
-  public long gameTime;
-  public net.minecraft.client.renderer.state.LevelRenderState();
-  public void reset();
-}
-PORT_RENDER_BYTECODE: net.minecraft.client.renderer.LevelRenderer
-  private void submitEntities(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.client.renderer.SubmitNodeCollector);
-    Code:
-       0: aload_2
-       1: getfield      #1178               // Field net/minecraft/client/renderer/state/LevelRenderState.cameraRenderState:Lnet/minecraft/client/renderer/state/CameraRenderState;
-       4: getfield      #1183               // Field net/minecraft/client/renderer/state/CameraRenderState.pos:Lnet/minecraft/world/phys/Vec3;
-       7: astore        4
-       9: aload         4
-      11: invokevirtual #700                // Method net/minecraft/world/phys/Vec3.x:()D
-      14: dstore        5
-      16: aload         4
-      18: invokevirtual #707                // Method net/minecraft/world/phys/Vec3.y:()D
-      21: dstore        7
-      23: aload         4
-      25: invokevirtual #710                // Method net/minecraft/world/phys/Vec3.z:()D
-      28: dstore        9
-      30: aload_2
-      31: getfield      #656                // Field net/minecraft/client/renderer/state/LevelRenderState.entityRenderStates:Ljava/util/List;
-      34: invokeinterface #1396,  1         // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
-      39: astore        11
-      41: aload         11
-      43: invokeinterface #634,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
-      48: ifeq          118
-      51: aload         11
-      53: invokeinterface #637,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
-      58: checkcast     #1384               // class net/minecraft/client/renderer/entity/state/EntityRenderState
-      61: astore        12
-      63: aload_2
-      64: getfield      #1109               // Field net/minecraft/client/renderer/state/LevelRenderState.haveGlowingEntities:Z
-      67: ifne          76
-      70: aload         12
-      72: iconst_0
-      73: putfield      #1401               // Field net/minecraft/client/renderer/entity/state/EntityRenderState.outlineColor:I
-      76: aload_0
-      77: getfield      #298                // Field entityRenderDispatcher:Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;
-      80: aload         12
-      82: aload_2
-      83: getfield      #1178               // Field net/minecraft/client/renderer/state/LevelRenderState.cameraRenderState:Lnet/minecraft/client/renderer/state/CameraRenderState;
-      86: aload         12
-      88: getfield      #1402               // Field net/minecraft/client/renderer/entity/state/EntityRenderState.x:D
-      91: dload         5
-      93: dsub
-      94: aload         12
-      96: getfield      #1403               // Field net/minecraft/client/renderer/entity/state/EntityRenderState.y:D
-      99: dload         7
-     101: dsub
-     102: aload         12
-     104: getfield      #1404               // Field net/minecraft/client/renderer/entity/state/EntityRenderState.z:D
-     107: dload         9
-     109: dsub
-     110: aload_1
-     111: aload_3
-     112: invokevirtual #1408               // Method net/minecraft/client/renderer/entity/EntityRenderDispatcher.submit:(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lnet/minecraft/client/renderer/state/CameraRenderState;DDDLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;)V
-     115: goto          41
-     118: return
-
-  private void submitBlockEntities(com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.state.LevelRenderState, net.minecraft.client.renderer.SubmitNodeStorage);
-    Code:
-       0: aload_2
-       1: getfield      #1178               // Field net/minecraft/client/renderer/state/LevelRenderState.cameraRenderState:Lnet/minecraft/client/renderer/state/CameraRenderState;
-       4: getfield      #1183               // Field net/minecraft/client/renderer/state/CameraRenderState.pos:Lnet/minecraft/world/phys/Vec3;
-       7: astore        4
+...[truncated 1963 lines total]...
        9: aload         4
       11: invokevirtual #700                // Method net/minecraft/world/phys/Vec3.x:()D
       14: dstore        5
@@ -999,5 +902,102 @@ PORT_RENDER_BYTECODE: com.mojang.blaze3d.systems.RenderSystem
        3: getstatic     #351                // Field projectionMatrixBuffer:Lcom/mojang/blaze3d/buffers/GpuBufferSlice;
        6: areturn
 
+PORT_PLATFORM_API: net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo
+Compiled from "PlayerSkinRenderCache.java"
+public final class net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo {
+  private final com.mojang.authlib.GameProfile gameProfile;
+  private final net.minecraft.world.entity.player.PlayerSkin playerSkin;
+  private net.minecraft.client.renderer.rendertype.RenderType itemRenderType;
+  private com.mojang.blaze3d.textures.GpuTextureView textureView;
+  private net.minecraft.client.gui.font.GlyphRenderTypes glyphRenderTypes;
+  final net.minecraft.client.renderer.PlayerSkinRenderCache field_62481;
+  public net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo(net.minecraft.client.renderer.PlayerSkinRenderCache, com.mojang.authlib.GameProfile, net.minecraft.world.entity.player.PlayerSkin, net.minecraft.world.entity.player.PlayerSkin$Patch);
+  public com.mojang.authlib.GameProfile gameProfile();
+  public net.minecraft.world.entity.player.PlayerSkin playerSkin();
+  public net.minecraft.client.renderer.rendertype.RenderType renderType();
+  public com.mojang.blaze3d.textures.GpuTextureView textureView();
+  public net.minecraft.client.gui.font.GlyphRenderTypes glyphRenderTypes();
+  public boolean equals(java.lang.Object);
+  public int hashCode();
+}
+PORT_PLATFORM_API: net.minecraft.client.sounds.SoundManager
+Compiled from "SoundManager.java"
+public class net.minecraft.client.sounds.SoundManager extends net.minecraft.server.packs.resources.SimplePreparableReloadListener<net.minecraft.client.sounds.SoundManager$Preparations> {
+  public static final net.minecraft.resources.Identifier EMPTY_SOUND_LOCATION;
+  public static final net.minecraft.client.resources.sounds.Sound EMPTY_SOUND;
+  public static final net.minecraft.resources.Identifier INTENTIONALLY_EMPTY_SOUND_LOCATION;
+  public static final net.minecraft.client.sounds.WeighedSoundEvents INTENTIONALLY_EMPTY_SOUND_EVENT;
+  public static final net.minecraft.client.resources.sounds.Sound INTENTIONALLY_EMPTY_SOUND;
+  static final org.slf4j.Logger LOGGER;
+  private static final java.lang.String SOUNDS_PATH;
+  private static final com.google.gson.Gson GSON;
+  private static final com.google.gson.reflect.TypeToken<java.util.Map<java.lang.String, net.minecraft.client.resources.sounds.SoundEventRegistration>> SOUND_EVENT_REGISTRATION_TYPE;
+  private final java.util.Map<net.minecraft.resources.Identifier, net.minecraft.client.sounds.WeighedSoundEvents> registry;
+  private final net.minecraft.client.sounds.SoundEngine soundEngine;
+  private final java.util.Map<net.minecraft.resources.Identifier, net.minecraft.server.packs.resources.Resource> soundCache;
+  public net.minecraft.client.sounds.SoundManager(net.minecraft.client.Options);
+  protected net.minecraft.client.sounds.SoundManager$Preparations prepare(net.minecraft.server.packs.resources.ResourceManager, net.minecraft.util.profiling.ProfilerFiller);
+  protected void apply(net.minecraft.client.sounds.SoundManager$Preparations, net.minecraft.server.packs.resources.ResourceManager, net.minecraft.util.profiling.ProfilerFiller);
+  public java.util.List<java.lang.String> getAvailableSoundDevices();
+  public com.mojang.blaze3d.audio.ListenerTransform getListenerTransform();
+  static boolean validateSoundResource(net.minecraft.client.resources.sounds.Sound, net.minecraft.resources.Identifier, net.minecraft.server.packs.resources.ResourceProvider);
+  public net.minecraft.client.sounds.WeighedSoundEvents getSoundEvent(net.minecraft.resources.Identifier);
+  public java.util.Collection<net.minecraft.resources.Identifier> getAvailableSounds();
+  public void queueTickingSound(net.minecraft.client.resources.sounds.TickableSoundInstance);
+  public net.minecraft.client.sounds.SoundEngine$PlayResult play(net.minecraft.client.resources.sounds.SoundInstance);
+  public void playDelayed(net.minecraft.client.resources.sounds.SoundInstance, int);
+  public void updateSource(net.minecraft.client.Camera);
+  public void pauseAllExcept(net.minecraft.sounds.SoundSource...);
+  public void stop();
+  public void destroy();
+  public void emergencyShutdown();
+  public void tick(boolean);
+  public void resume();
+  public void refreshCategoryVolume(net.minecraft.sounds.SoundSource);
+  public void stop(net.minecraft.client.resources.sounds.SoundInstance);
+  public void updateCategoryVolume(net.minecraft.sounds.SoundSource, float);
+  public boolean isActive(net.minecraft.client.resources.sounds.SoundInstance);
+  public void addListener(net.minecraft.client.sounds.SoundEventListener);
+  public void removeListener(net.minecraft.client.sounds.SoundEventListener);
+  public void stop(net.minecraft.resources.Identifier, net.minecraft.sounds.SoundSource);
+  public java.lang.String getDebugString();
+  public void reload();
+  protected void apply(java.lang.Object, net.minecraft.server.packs.resources.ResourceManager, net.minecraft.util.profiling.ProfilerFiller);
+  protected java.lang.Object prepare(net.minecraft.server.packs.resources.ResourceManager, net.minecraft.util.profiling.ProfilerFiller);
+  static {};
+}
+PORT_PLATFORM_API: net.minecraft.client.resources.sounds.AbstractSoundInstance
+Compiled from "AbstractSoundInstance.java"
+public abstract class net.minecraft.client.resources.sounds.AbstractSoundInstance implements net.minecraft.client.resources.sounds.SoundInstance {
+  protected net.minecraft.client.resources.sounds.Sound sound;
+  protected final net.minecraft.sounds.SoundSource source;
+  protected final net.minecraft.resources.Identifier identifier;
+  protected float volume;
+  protected float pitch;
+  protected double x;
+  protected double y;
+  protected double z;
+  protected boolean looping;
+  protected int delay;
+  protected net.minecraft.client.resources.sounds.SoundInstance$Attenuation attenuation;
+  protected boolean relative;
+  protected net.minecraft.util.RandomSource random;
+  protected net.minecraft.client.resources.sounds.AbstractSoundInstance(net.minecraft.sounds.SoundEvent, net.minecraft.sounds.SoundSource, net.minecraft.util.RandomSource);
+  protected net.minecraft.client.resources.sounds.AbstractSoundInstance(net.minecraft.resources.Identifier, net.minecraft.sounds.SoundSource, net.minecraft.util.RandomSource);
+  public net.minecraft.resources.Identifier getIdentifier();
+  public net.minecraft.client.sounds.WeighedSoundEvents resolve(net.minecraft.client.sounds.SoundManager);
+  public net.minecraft.client.resources.sounds.Sound getSound();
+  public net.minecraft.sounds.SoundSource getSource();
+  public boolean isLooping();
+  public int getDelay();
+  public float getVolume();
+  public float getPitch();
+  public double getX();
+  public double getY();
+  public double getZ();
+  public net.minecraft.client.resources.sounds.SoundInstance$Attenuation getAttenuation();
+  public boolean isRelative();
+  public java.lang.String toString();
+}
 
 == job status: success ==
