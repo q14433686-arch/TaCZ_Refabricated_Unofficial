@@ -45,7 +45,7 @@ public final class ThermalReadback {
                             var original = (com.mojang.blaze3d.pipeline.RenderPipeline) field.get(ScopeThermalMaterial.Depth.NATIVE);
                             var builder = ScopeRenderTypes.clonePipeline(original, net.minecraft.resources.Identifier.parse("tacz_probe:thermal_" + noDepth));
                             if (noDepth) builder.withDepthTestFunction(com.mojang.blaze3d.platform.DepthTestFunction.NO_DEPTH_TEST).withDepthWrite(false);
-                            var diagnostic = net.minecraft.client.renderer.RenderPipelines.register(builder.build());
+                            var diagnostic = builder.build();
                             field.set(ScopeThermalMaterial.Depth.SCENE, diagnostic);
                             field.set(ScopeThermalMaterial.Depth.SHIFTED, diagnostic);
                             ScopeThermalMaterial.clear();
