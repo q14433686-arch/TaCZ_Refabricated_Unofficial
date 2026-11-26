@@ -23,6 +23,8 @@ for path in files:
     for i, line in enumerate(lines):
         if 'PORT_' in line:
             markers[line[line.find('PORT_'):][:300]] = None
+        if 'PORT_WORLD_STALL:' in line:
+            diagnostics[line[line.find('PORT_WORLD_STALL:'):][:3600]] = None
         if re.search(r'error:|AssertionError|GameTestAssertException|Test .* failed|Exception in thread|Caused by:|^Description:|^java\.lang\.|^\* What went wrong:', line):
             if any(s in line for s in ('flite', 'MinecraftClientHttpException', 'InvalidCredentialsException')):
                 continue

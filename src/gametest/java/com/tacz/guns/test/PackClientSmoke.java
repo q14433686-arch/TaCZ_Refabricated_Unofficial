@@ -23,6 +23,13 @@ public final class PackClientSmoke implements FabricClientGameTest {
                     +" screen="+(mc.screen==null ? "none" : mc.screen.getClass().getName()+":"+mc.screen.getTitle().getString())
                     +" overlay="+(mc.getOverlay()==null ? "none" : mc.getOverlay().getClass().getName())
                     +" level="+(mc.level!=null)+" player="+(mc.player!=null)+" integratedTicks="+(server==null ? -1 : server.getTickCount()));
+            if (ticks[0] == 1001 && server != null && server.getTickCount() == 0) {
+                Thread.getAllStackTraces().entrySet().stream()
+                        .filter(e -> e.getKey().getName().equals("Server thread") || e.getKey().getName().contains("Worker") || e.getKey().getName().contains("ForkJoinPool"))
+                        .sorted(java.util.Comparator.comparing(e -> e.getKey().getName().equals("Server thread") ? "" : e.getKey().getName()))
+                        .limit(12).forEach(e -> System.out.println("PORT_WORLD_STALL: "+e.getKey().getName()+" "+e.getKey().getState()+" "
+                                +java.util.Arrays.stream(e.getValue()).limit(18).map(Object::toString).collect(java.util.stream.Collectors.joining(" <- "))));
+            }
         });
         try (var world = context.worldBuilder().create()) {
             loading.set(false);

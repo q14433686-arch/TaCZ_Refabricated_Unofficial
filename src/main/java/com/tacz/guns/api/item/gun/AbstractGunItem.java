@@ -299,8 +299,9 @@ public abstract class AbstractGunItem extends Item implements IGun, IAnimationIt
     public Component getName(@Nonnull ItemStack stack) {
         Identifier gunId = this.getGunId(stack);
         Optional<CommonGunIndex> gunIndex = TimelessAPI.getCommonGunIndex(gunId);
-        if (gunIndex.isPresent() && gunIndex.get().getPojo().getName() != null) {
-            return Component.translatable(gunIndex.get().getPojo().getName());
+        if (gunIndex.isPresent() && gunIndex.get().getPojo() != null) {
+            String name = gunIndex.get().getPojo().getName();
+            return Component.translatable(org.apache.commons.lang3.StringUtils.isBlank(name) ? "custom.tacz.error.no_name" : name);
         }
         return super.getName(stack);
     }

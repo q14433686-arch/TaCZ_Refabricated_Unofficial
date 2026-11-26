@@ -12,6 +12,7 @@ public class LoadingConfigEvent {
      */
     public static void onLoadingConfig(ModConfig config) {
         String fileName = config.getFileName();
+        if ("tacz-common.toml".equals(fileName)) com.tacz.guns.config.util.AmmoBlockConfigRead.init();
         if (CONFIG_NAME.equals(fileName)) {
             HeadShotAABBConfigRead.init();
             InteractKeyConfigRead.init();
@@ -24,6 +25,7 @@ public class LoadingConfigEvent {
      */
     public static void onReloadingConfig(ModConfig config) {
         String fileName = config.getFileName();
+        if ("tacz-common.toml".equals(fileName)) com.tacz.guns.config.util.AmmoBlockConfigRead.init();
         if (CONFIG_NAME.equals(fileName)) {
             HeadShotAABBConfigRead.init();
             InteractKeyConfigRead.init();

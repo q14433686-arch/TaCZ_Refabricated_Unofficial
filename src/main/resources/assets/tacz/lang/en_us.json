@@ -524,5 +524,15 @@
   "gui.tacz.view_tuning.preview_shot": "Preview shot",
   "gui.tacz.view_tuning.geometry_range": "Drag or type %s to %s GUI pixels (up to 2 decimals).",
   "gui.tacz.view_tuning.int_range": "Drag or type a whole number from %s to %s.",
-  "gui.tacz.view_tuning.invalid": "Check the red field"
+  "gui.tacz.view_tuning.invalid": "Check the red field",
+  "config.tacz.common.ammo.destroy_blocks": "Destroy Blocks",
+  "config.tacz.common.ammo.destroy_blocks.desc": "Blocks that bullets can destroy when Destroy Glass is enabled, subject to the hardness threshold.\n Accepts block IDs and tags prefixed with #. ",
+  "config.tacz.common.ammo.destroy_block_hardness_threshold": "Block Destruction Hardness Threshold",
+  "config.tacz.common.ammo.destroy_block_hardness_threshold.desc": "Maximum hardness for direct bullet destruction, including blocks in Destroy Blocks.\n Blocks above this value or with negative hardness (unbreakable) are protected.",
+  "config.tacz.common.ammo.ignore_team_friendly_fire": "Pass Through Team Members",
+  "config.tacz.common.ammo.ignore_team_friendly_fire.desc": "Bullets pass through members of the shooter's scoreboard team without consuming pierce count when friendly fire is disabled. Explosion area damage is unchanged.",
+  "config.tacz.common.ammo.enable_bullet_damage_ignore_list": "Enable Bullet Damage Ignore List",
+  "config.tacz.common.ammo.enable_bullet_damage_ignore_list.desc": "Bullets pass through listed entities without consuming pierce count or igniting them. Ammo explosions cause no damage or knockback to them. Disabled by default; uses the server's configuration.",
+  "config.tacz.common.ammo.bullet_damage_ignore_list": "Bullet Damage Ignore List",
+  "config.tacz.common.ammo.bullet_damage_ignore_list.desc": "Entity type IDs protected when the ignore list is enabled. Defaults to vanilla paintings, item frames and glow item frames."
 }

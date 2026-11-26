@@ -4,29 +4,33 @@
 
 参照：`26.1.2@d12a3f22943cc50632f9f5455306f0b71d00650e`；接收基线 `aac343a`；已整合的同版本适配来源 `bb12ad2`。完整执行与本分支验收见 [执行账本](PORT_1_2_TO_1_21_11_20261126.md)。
 
-## 非同路径盘点（R2 施工中剩 13 个 Java 路径）
+## 当前状态：R1–R5 已闭环，R6 ACTIVE
 
-**同路径缺失不等于功能缺失；反之，同名也不等于行为相同。** 以下列出供体有而接收树没有的路径，避免再用旧的文件缺口数字衡量进度。
+专项回执以[剩余阶段计划](REMAINING_PORT_PLAN_12111.md)最新小节为准；本页后半保留历史调查，不能把历史 ACTIVE 当成当前状态。R6 新发现的共享同名类缺口仍 OPEN，不宣称全量等价。
 
-| 供体路径（相对 `src/main/java/`） | 接收情况与需要核对的边界 |
+## 非同路径盘点（当前11个 Java 路径）
+
+**同路径缺失不等于功能缺失；同名也不等于行为相同。** 按 `git diff --no-renames d12a3f22 -- src/main/java` 的删除路径盘点。
+
+| 供体路径（相对 `src/main/java/`） | 1.21.11 对应与验收边界 |
 |---|---|
-| `cn/sh1rocu/tacz/mixin/accessor/MinecraftAccessor.java` | 平台/映射差异；需按调用者核对，不引入 26.x 字段 accessor。 |
-| `cn/sh1rocu/tacz/mixin/common/ShapedRecipeMixin.java` | 有本版 `LegacyGunPackRecipeMigrator` 与 aggregate 边界兼容；普通工作台必须经原版配方注册表与真实菜单验收。 |
-| `cn/sh1rocu/tacz/util/GunPackLangCompat.java` | 文档明确是 26.3 语言加载异常链路的过滤器；本版保留原生失败兜底，不照搬改变语言资源原字节。 |
-| `cn/sh1rocu/tacz/util/RecipeCompat.java` | 本版 `PathPackResources` / `LegacyGunPackRecipeMigrator` / `UniversalPackConverter`，不能未经 codec 验证复制新版本 schema。 |
-| `com/tacz/guns/client/input/GunInputHandler.java` | 本版按各键类派发，使用本版 `KeyEvent` / `MouseButtonEvent`，含独立卸弹键和 Alt+Reload；输入边界仍需实机矩阵。 |
-| `com/tacz/guns/client/renderer/TargetSkinResolver.java` | 本版 `renderer/other/TargetOwnerSkins`；仍需核对按名字异步加载与失败默认皮肤，不能把有替代类视为已实测。 |
-| `com/tacz/guns/compat/iris/IrisScopeFragment.java` | 本版使用独立的深度孔径与 late/final overlay 路径；需在目标 Iris 上测真实片元与时序，不搬 26.x 掩码实现。 |
-| `com/tacz/guns/mixin/client/LevelRendererReceiverLightMixin.java` | 粒子/动态光已有本版消费者；receiver light 的 exact 行为尚未关闭。 |
-| `com/tacz/guns/mixin/client/ThermalRenderSetupAccessor.java` | 已按 named 1.21.11 JAR 核对；复用 `RenderSetupTextureAccessor`，热像消费者已接入，专项运行仍在修复。 |
-| `com/tacz/guns/mixin/client/ThermalRenderTypeAccessor.java` | 已核对本版字段并复用 `RenderTypeStateAccessor` / `TextureBindingAccessor`，不重复注入同字段；专项运行待通过。 |
-| `com/tacz/guns/mixin/client/ThermalTextureBindingAccessor.java` | 已核对本版字段并复用 `RenderTypeStateAccessor` / `TextureBindingAccessor`，不重复注入同字段；专项运行待通过。 |
-| `me/xjqsh/lrtactical/mixin/client/GuiGraphicsExtractorMixin.java` | 本版有 `GuiGraphicsMixin`，GUI API 不同；需保持本版 Render/Submit 时序。 |
-| `me/xjqsh/lrtactical/mixin/client/SoundInstanceVolumeMixin.java` | 音频 API/调用者需单独复核，不能仅移除 Mixin 来声称等价。 |
+| `cn/sh1rocu/tacz/mixin/accessor/MinecraftAccessor.java` | 供体只暴露 pausePartialTick、无调用者；本版 DeltaTracker 原生暂停时间，成品 pause/resume clock 专项；不引入26.x字段。 |
+| `cn/sh1rocu/tacz/mixin/common/ShapedRecipeMixin.java` | 本版 LegacyGunPackRecipeMigrator + aggregate compatibility；成品独立专服普通3x3/配方书/两档工作台与重连覆盖。 |
+| `cn/sh1rocu/tacz/util/GunPackLangCompat.java` | 供体26.3语言异常过滤器；保留本版原生语言资源兜底与原字节，不为文件齐全修改语义。 |
+| `cn/sh1rocu/tacz/util/RecipeCompat.java` | PathPackResources / LegacyGunPackRecipeMigrator / UniversalPackConverter 经本版 codec、真实reload与成品专服合成验证；不是复制新版本schema。 |
+| `com/tacz/guns/client/renderer/TargetSkinResolver.java` | TargetOwnerProfiles / renderer/other/TargetOwnerSkins；R5原生异步ready/失败回退已通过，外部账户服务未测。 |
+| `com/tacz/guns/compat/iris/IrisScopeFragment.java` | 原生深度孔径与late/final overlay；R1–R3真实原版/Iris分划/热像/移动像素矩阵已通过，不移植26.x mask。 |
+| `com/tacz/guns/mixin/client/ThermalRenderSetupAccessor.java` | 复用 RenderSetupTextureAccessor，R2热像专项已通过。 |
+| `com/tacz/guns/mixin/client/ThermalRenderTypeAccessor.java` | 复用 RenderTypeStateAccessor，R2热像专项已通过。 |
+| `com/tacz/guns/mixin/client/ThermalTextureBindingAccessor.java` | 复用 TextureBindingAccessor，R2热像专项已通过。 |
+| `me/xjqsh/lrtactical/mixin/client/GuiGraphicsExtractorMixin.java` | GuiGraphicsMixin；R5真实私有cooldown绘制TAIL，半进度512/1024及类别/到期零像素已通过。 |
+| `me/xjqsh/lrtactical/mixin/client/SoundInstanceVolumeMixin.java` | SoundEngineMixin；R5实际SoundEngine最终gain/source分类/到期与豁免已通过。 |
+
+GunInputHandler（统一物理输入）与 LevelRendererReceiverLightMixin（本版稳定native submit wrapper）现为同路径，R5/R4分别已有实际运行回执。11条是有依据的平台替代/无需引入，并不证明其余共享源码完全等价。
 
 ## 不能从现有矩阵推断的行为
 
-- `optics` / `optics-iris` 保留孔径深度测试，并在 R1 后新增混合分划 contract、活动组与暂停帧逐材质消融测试（已通过）。这仍不证明热像、PIP 运动重投影、全部镜片像素和近场预设对齐。
+- `optics` / `optics-iris` 保留孔径深度测试，并在 R1 后新增混合分划 contract、活动组与暂停帧逐材质消融测试（已通过）。R2–R4另有热像、PIP运动及receiver真实帧回执；这些测试仍不等于所有第三方内容实测。
 - Iris 测试安装的是脚本里钉住的发行组合；不代表所有 Iris/Sodium、Unbound 光影或开发依赖组合受支持。
 - 控制器夹具使用 SDL2 虚拟手柄，不是实体设备手感/驱动测试。
 - REI 给物测试有意分别刻画仅客户端安装、双端安装与显式 vanilla 命令；JSON 往返改变 NBT 数字类型等已知差异不能说成严格全组件相等。
@@ -36,7 +40,7 @@
 
 同版本来源中的 `ItemNbtUtils.updateRegistries` 没有调用点。本次已接入双侧 `TAGS_LOADED`，在 recipe 初始化前绑定世界动态注册表；退出/停止清理。原有带附魔的实体配件安装、往返、停服重开断言全部保留，另加入开发 GameTest，禁止测试自己手工绑定注册表掩盖漏接事件。`faebdb47` 已在本分支 10 组成品矩阵及完整 build 通过，含 17/17 服务端 GameTest 和换 JVM 存档恢复；这是本分支实测，不是继承来源分支回执。
 
-后续补充：已按 26.1.2 结构将 Zoomify 可选类型隔离到 `ZoomifyCompatInner`，并给成品字节审计增加基线入口不得直接链接可选类的正反例。安装 Zoomify 后的实际缩放 API 矩阵仍未关闭。
+后续补充：已按 26.1.2 结构将 Zoomify 可选类型隔离到 `ZoomifyCompatInner`，并给成品字节审计增加基线入口不得直接链接可选类的正反例。安装/不装 Zoomify 的实际缩放 API 矩阵已在 R5 关闭，固定组合见阶段计划。
 
 ## R1 已独立关闭
 

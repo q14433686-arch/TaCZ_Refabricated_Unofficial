@@ -524,5 +524,15 @@
   "gui.tacz.view_tuning.preview_shot": "试播开火",
   "gui.tacz.view_tuning.geometry_range": "可拖动或输入 %s 到 %s 个界面像素，最多两位小数。",
   "gui.tacz.view_tuning.int_range": "可拖动或输入 %s 到 %s 之间的整数。",
-  "gui.tacz.view_tuning.invalid": "请检查红色输入框"
+  "gui.tacz.view_tuning.invalid": "请检查红色输入框",
+  "config.tacz.common.ammo.destroy_blocks": "可破坏方块列表",
+  "config.tacz.common.ammo.destroy_blocks.desc": "破坏玻璃开启时，子弹可以摧毁的方块，仍受硬度阈值限制。支持方块 ID 和以 # 开头的标签。",
+  "config.tacz.common.ammo.destroy_block_hardness_threshold": "方块破坏硬度阈值",
+  "config.tacz.common.ammo.destroy_block_hardness_threshold.desc": "子弹直接破坏方块的最大硬度，对可破坏方块列表同样生效。硬度高于此值或小于 0（不可破坏）的方块不会被破坏。",
+  "config.tacz.common.ammo.ignore_team_friendly_fire": "子弹穿过队伍友军",
+  "config.tacz.common.ammo.ignore_team_friendly_fire.desc": "队伍关闭友伤时，子弹穿过同队成员且不消耗穿透次数。爆炸范围伤害保持原规则。",
+  "config.tacz.common.ammo.enable_bullet_damage_ignore_list": "启用子弹伤害免疫实体列表",
+  "config.tacz.common.ammo.enable_bullet_damage_ignore_list.desc": "开启后，子弹穿过列表中的实体且不消耗穿透次数，也不会点燃这些实体；弹药爆炸不会对它们造成伤害或击退。默认关闭，由服务端配置决定。",
+  "config.tacz.common.ammo.bullet_damage_ignore_list": "子弹伤害免疫实体列表",
+  "config.tacz.common.ammo.bullet_damage_ignore_list.desc": "填写实体类型 ID，仅在列表开关开启时生效。默认包含原版的画、展示框和荧光展示框。"
 }

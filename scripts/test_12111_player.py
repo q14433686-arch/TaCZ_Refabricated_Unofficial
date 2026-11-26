@@ -43,6 +43,11 @@ def prepare_zoomify_seed(work, evidence):
     target.mkdir(parents=True, exist_ok=True)
     versions = modrinth('/project/zoomify/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%221.21.11%22%5D')
     root = next(v for v in versions if v['version_number'] == '2.15.2+1.21.11')
+    hashes = {
+        '2.15.2+1.21.11': '642b498a6802ad3ed7f37e25556139f5f3cb6ee634927695cec70c7c3fa20312',
+        '1.13.8+kotlin.2.3.0': '760953d8d3d1fa32a353593d744e2917d8a91ca8923ae9518b5ef2676a631002',
+        '3.8.2+1.21.11-fabric': '49c279bc28c80ca17d6c21c3dd299ec1c115b892272f21b3f034ed782829babd',
+    }
     queue, seen, receipt = [root], set(), []
     while queue:
         version = queue.pop(0)
@@ -51,6 +56,8 @@ def prepare_zoomify_seed(work, evidence):
         if len(seen)>12: raise AssertionError('Unexpected Zoomify dependency closure')
         file = next((f for f in version['files'] if f.get('primary')), version['files'][0])
         sha = download_checked(file['url'], file['hashes']['sha1'], target/file['filename'])
+        if hashes.get(version['version_number']) != sha:
+            raise AssertionError(f"Unaudited Zoomify combination: {version['version_number']} / {sha}")
         receipt.append({'id': version['id'], 'project': version['project_id'], 'version': version['version_number'], 'file': file['filename'], 'sha256': sha})
         print(f"::notice::PORT_ZOOMIFY_MOD: {version['version_number']} {file['filename']} SHA-256 {sha}", flush=True)
         for dep in version['dependencies']:

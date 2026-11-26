@@ -70,11 +70,21 @@ public final class PackagedConnectionProbe implements FabricClientGameTest {
                     throw new AssertionError("Missing server-derived unload capability, or client received executable Lua");
                 stock.deposit(ctx);
             }
+            var exiting = ctx.computeOnClient(mc -> {
+                var machine = new com.tacz.guns.api.client.animation.statemachine.AnimationStateMachine<>(
+                        new com.tacz.guns.api.client.animation.AnimationController(List.of(), (node, type) -> null));
+                machine.setExitingTime(60_000);
+                if (machine.getExitingTime() <= com.tacz.guns.util.time.GunTime.nowMillis())
+                    throw new AssertionError("New animation exit deadline was not active");
+                return machine;
+            });
             long oldEpoch = com.tacz.guns.util.time.GunTime.epoch();
             var previous = ctx.computeOnClient(mc -> CACHE.getGunIndex(SECOND));
             disconnect(ctx);
             ctx.waitFor(mc -> CACHE.getGunIndex(SECOND) == null && TimelessAPI.getClientGunIndex(SECOND).isEmpty());
             if (com.tacz.guns.util.time.GunTime.epoch() <= oldEpoch) throw new AssertionError("Left play but did not invalidate pending game timers");
+            if (ctx.computeOnClient(mc -> exiting.getExitingTime()) != -1) throw new AssertionError("Disconnected animation retained an exit deadline");
+            System.out.println("PORT_CLOCK_EPOCH: real disconnect invalidated the pending animation exit deadline");
             if (mode.equals("rei")) System.out.println("PORT_REI: first connection closed; starting rejoin");
             if (stock != null) {
                 Files.createFile(ready.resolveSibling("restart-requested"));

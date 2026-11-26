@@ -16,8 +16,8 @@
 | R2 | 热像 | posed model 捕获、纹理 cutout、材质与场景深度、黑白名单、关闭/切世界清理；原版与 Iris 中遮挡/透明面/降级的像素正反例 | **DONE — `ab452920` + `f1b800d8` 专项** |
 | R3 | PIP 运动、镜片与近场 | 对齐供体 ADS/运动/切视图行为；真实帧比较、孔径边界与遮挡；不能仅重跑静态孔径测试 | **DONE — `b2ad0276` 光学；近场散射归 R4** |
 | R4 | 动态光 receiver 与材质 | 核对 1.21.11 entity/block submit 时序、世界表面响应、发光材质不重复受光；正反实帧 | **DONE — `574e6506` + `ac2e76f3` 双环境实帧** |
-| R5 | 输入与平台小差异 | 键/鼠/scancode/卸弹冲突、可选 Zoomify 装/不装、名字皮肤异步/失败、LRT GUI/音量；逐项证明本版替代或移植并实测 | **ACTIVE** |
-| R6 | 全量收尾 | 对全部共享代码做行为差异复核，关闭非同路径表里的每个真实缺口；全构建、成品双端/旧档/查看器/光影回归；记录已知外部限制与许可，不冒称第三方协议已修复 | QUEUED |
+| R5 | 输入与平台小差异 | 键/鼠/scancode/卸弹冲突、可选 Zoomify 装/不装、名字皮肤异步/失败、LRT GUI/音量；逐项证明本版替代或移植并实测 | **DONE — `65010ffc` 双平台实机** |
+| R6 | 全量收尾 | 对全部共享代码做行为差异复核，关闭非同路径表里的每个真实缺口；全构建、成品双端/旧档/查看器/光影回归；记录已知外部限制与许可，不冒称第三方协议已修复 | **ACTIVE — 共享行为复核与最终矩阵** |
 
 R1 的专项测试必须增加自己的分划断言，原有 `PORT_OPTIC` 孔径回执不能单独作为 R1 通过证明。每项结果继续写入本文件与主执行账本，供后续会话从唯一 ACTIVE 项继续。
 
@@ -152,3 +152,22 @@ R4 实机正例必须为真实 stock AK 按键射击并确认服务端少一发�
 `6f472f63` 新增独立 platform / platform-zoomify 成品启动，矩阵14项。原版首次已实际通过 native KeyboardHandler/MouseHandler 的 scancode、mouse inspect、repeat/release 不触发、GUI veto、refit鼠标开/关、卸弹冲突与ALT优先，以及原版 getOrDefault 上受控异步 future 的 pending/ready/空结果/异常回退（不冒称实测外网账号服务）。其后音量夹具绕过了正常 resolve 前置步骤而 NPE，已补；Zoomify 首次被误选的最新 Kotlin helper（需 loader>=0.19.5）拦在 loader，改钉 Zoomify 2.15.2 本身 tag 的 FLK1.13.8+kotlin2.3.0（需 loader>=0.16.9），不改产品 loader0.19.3。
 
 新音量专项走实际 SoundEngine.calculateVolume，GUI专项走真实私有 renderItemCooldown + LRT TAIL 注入并存三帧；这两项仍待通过。开发 `PackClientSmoke` 在 `ceaee475` 全构建再次 worldBuilder.create 超时，保留失败；本次只加 pre-context tick/screen/overlay/level/player/集成服tick 与墙钟诊断，不重试、不改 Fabric1200tick 限制，用于 R6 定位。
+
+
+### R5 实机收口，R6 ACTIVE
+
+`2e96c14b` 的 platform / platform-zoomify 均通过；`65010ffc` 再补原生 MouseHandler Pre 的窗口句柄防护，专项发送外窗口按键确认不能关闭 refit。最终 [编译45759114248](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45759114248) / [全构建45759114240](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45759114240) success；发行 [45759114325](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45759114325) 的原版 [139704770795](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45759114325/job/139704770795)、Zoomify [139704770601](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45759114325/job/139704770601) 均 success。本体 SHA-256 `9e76482c2093f73c00cff5a0497bbd9f28e32e82be7b7af06470e5c7d47f6b65`。
+
+- INPUT：native keyboard/scancode/mouse press、repeat/release、screen veto、refit 开/关/外窗口隔离、卸弹冲突、ALT 优先。
+- SKIN：名字/空名、pending 非阻塞、异步 ready 切换、空结果/异常回退；仅受控 future，不冒称外部账号服务可用性。
+- AUDIO：真实 SoundEngine PLAYERS/BLOCKS=1%、半到期50.5%，UI/music/master/ringing 豁免、移除后恢复且不双乘。
+- GUI：真实 LRT cooldown TAIL 半进度512/1024像素，独立类别/到期0。
+- ZOOM：不装时无可选类链接且 FOV 恒等；安装 Zoomify2.15.2+1.21.11 时真实物理键/public divisor/主投影/松开恢复全通过。测试依赖固定 FLK1.13.8+kotlin2.3.0 / YACL3.8.2，接续另钉已验收 SHA256，拒绝默默换组合。
+
+### R6 第一轮共享行为审计（进行中，尚未验收）
+
+- 不沿用旧表“缺13个文件”：当前 donor 同路径实际缺11个，GunInputHandler 与 LevelRendererReceiverLightMixin 已出现；平台替代详见差异表。
+- 共享源码复核发现额外真实缺口：AmmoConfig 的硬度/忽略队友/忽略实体项缺失；AmmoBlockConfigRead 只有定义无 loading/reload 调用；DestroyGlassBlock 仍按玻璃类判断；BlockRayTrace 未消费 tag policy，bullet/explosion 未消费实体忽略；已接实际调用链及 Cloth 面板/中英键，新增两项成品专服正反测试，未提前记通过。
+- 同批补 GunFireEvent 的 Fabric 优先级阶段、动画 exit deadline 的世界 epoch 失效、公共枪名 blank fallback；新增原生事件逆序注册验证、真实 TCP disconnect 后 deadline 失效断言。
+- 继续待核实：CameraSetupEvent 未消费已有 AdsFov authored 通道、配件 variant FOV；第一人称 tracer 的出生帧 offset/quaternion 冻结；modifier UI 的 RPM/弹速/射程/小数精度与可选字段消费者。文件同名不代表这些已对齐，后续必须逐项接完与实测。
+- 开发建世界超时在 `65010ffc` 全构建没有重现，但不宣布已修复。前轮实际诊断 integratedTicks=0 持续约60秒；本轮增加失败前 server/worker thread stacks 与 Checks 长诊断，不重试、不放宽1200tick限制。根因尚未定位。

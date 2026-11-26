@@ -18,6 +18,9 @@ public final class ServerChecks implements ModInitializer {
         test("transfer_transactions_and_component_identity", AmmoStorageSmoke::transferTransactionsAndComponentIdentity);
         test("block_loot_and_both_crafting_upgrades_retain_stock", AmmoStorageSmoke::blockLootAndBothCraftingUpgradesRetainStock);
         test("loaded_catalog", CatalogChecks::loadedCatalog);
+        test("ammo_block_policies", AmmoPolicySmoke::blockPolicies);
+        test("ammo_entity_policies", AmmoPolicySmoke::entityPolicies);
+        test("fire_callback_phases", EventPhaseSmoke::fireCallbackPhases);
         test("connected_case_locks_and_survival_contents", RackChecks::connectedCaseLocksAndSurvivalContents);
         test("oem_is_not_an_inventory_item", RefitChecks::oemIsNotAnInventoryItem);
         test("refit_options_persist_and_reject_incompatible_transitions", RefitChecks::refitOptionsPersistAndRejectIncompatibleTransitions);
