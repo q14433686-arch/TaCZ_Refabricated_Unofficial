@@ -4,6 +4,7 @@ import argparse
 import hashlib
 from pathlib import Path
 import shutil
+import subprocess
 import tempfile
 import urllib.request
 
@@ -34,7 +35,7 @@ def download_checked(url, sha1, target):
     return hashlib.sha256(data).hexdigest()
 
 
-def prepare_iris_seed(work):
+def prepare_iris_seed(work, evidence):
     """Shader pack + the Iris/Sodium pair that Modrinth's 1.21.11 Iris release requires.
 
     The pinned CurseForge pair in gradle.properties (Iris 1.10.7 / Sodium 0.8.13) is rejected by the loader:
@@ -53,7 +54,7 @@ def prepare_iris_seed(work):
     (seed/'config/iris.properties').write_text('enableShaders=true\nshaderPack=' + IRIS_SEED['name'] + '\n')
     versions = modrinth('/project/iris/version?loaders=%5B%22fabric%22%5D&game_versions=%5B%221.21.11%22%5D')
     if not versions: raise AssertionError('No Iris release for 1.21.11 on Modrinth')
-    iris = versions[0]
+    iris = next(v for v in versions if v["version_number"] == "1.10.8+1.21.11-fabric")
     sodium_id = modrinth('/project/sodium')['id']
     edge = [d for d in iris['dependencies'] if d.get('project_id') == sodium_id and d.get('dependency_type') == 'required']
     if not edge: raise AssertionError('Iris release has no required Sodium edge')
@@ -65,14 +66,44 @@ def prepare_iris_seed(work):
         file = next(f for f in version['files'] if f.get('primary')) if any(f.get('primary') for f in version['files']) else version['files'][0]
         jar = seed/'mods'/file['filename']
         sha256 = download_checked(file['url'], file['hashes']['sha1'], jar)
+        if label == 'iris':
+            if sha256 != '5b6b5124c74407ffe4945f8da61491731cbf697f0bba4b14257e0ff977dac087':
+                raise AssertionError(f'Unaudited Iris bytes: {sha256}')
+            audit_iris_hooks(jar, evidence)
         print(f"::notice::PORT_IRIS_MOD: {label} {version['version_number']} {file['filename']} SHA-256 {sha256}", flush=True)
     print(f"::notice::PORT_IRIS_PACK: {IRIS_SEED['name']} commit {IRIS_SEED['commit'][:7]} archive SHA-256 {digest}", flush=True)
 
 
+def audit_iris_hooks(jar, evidence):
+    """Audit the actual intermediary runtime JAR, not a source branch or a dev dependency."""
+    chosen = {}
+    for name, methods in {
+        'net.irisshaders.iris.pipeline.IrisRenderingPipeline': ['beginHand(', 'finalizeLevelRendering('],
+        'net.irisshaders.iris.pathways.HandRenderer': ['renderSolid(', 'renderTranslucent('],
+    }.items():
+        text = subprocess.check_output(['javap', '-p', '-c', '-classpath', str(jar), name], text=True)
+        selected = None
+        for line in text.splitlines():
+            if line.startswith('  ') and not line.startswith('    ') and '(' in line:
+                selected = next((method for method in methods if method in line), None)
+                if selected: chosen[selected] = []
+            if selected: chosen[selected].append(line)
+    chosen = {key: '\n'.join(lines) for key, lines in chosen.items()}
+    final = chosen['finalizeLevelRendering(']
+    order = [final.index(token) for token in ['iconst_0', 'isRenderingWorld', 'renderAll', 'renderFinalPass']]
+    if order != sorted(order): raise AssertionError('Iris final overlay boundary moved')
+    if 'copyPreHandDepth' not in chosen['beginHand(']: raise AssertionError('Iris pre-hand depth boundary moved')
+    for method in ['renderSolid(', 'renderTranslucent(']:
+        if 'iris$renderHandsWithCustomRenderer' not in chosen[method] or 'restoreProjectionMatrix' not in chosen[method]:
+            raise AssertionError('Iris hand flush contract moved: ' + method)
+    (evidence/'iris-runtime-hooks.txt').write_text('\n\n'.join(chosen.values()))
+    print('::notice::PORT_IRIS_API: hash-pinned 1.10.8 runtime bytecode: pre-hand depth and post-world final overlay boundaries verified', flush=True)
+
+
 def test(product, work, evidence, suite):
     copy_project(work, 'client')
-    if suite == 'optics-iris': prepare_iris_seed(work)
     evidence.mkdir(parents=True, exist_ok=True)
+    if suite == 'optics-iris': prepare_iris_seed(work, evidence)
     instance = work/'client/build/instance'
     log = evidence/'client.log'
     args = runtime_command(work, 'client', product, 'none', '-PprobeClient', f'-PplayerSuite={suite}', 'probeClient')
@@ -101,7 +132,7 @@ def test(product, work, evidence, suite):
     ] + [f'case_hint_{s}' for s in ['gun_hover','gun_interact','empty_hover','look_away','tick_39','tick_40_held','sneak_unlock','unlocked']]}[suite]
     if suite.startswith('optics'):
         frames += ['reticle_full', 'reticle_control', 'reticle_luminous_only', 'reticle_none', 'reticle_restored',
-                   'thermal_exposed', 'thermal_occluded', 'thermal_glass', 'thermal_disabled']
+                   'thermal_empty_optical', 'thermal_exposed', 'thermal_occluded', 'thermal_glass', 'thermal_disabled']
     for frame in frames:
         if not any((instance/'screenshots').glob(f'*tacz_{frame}.png')): raise AssertionError(f'Missing raw frame: {frame}')
     with product.open('rb') as f: digest = hashlib.file_digest(f, 'sha256').hexdigest()

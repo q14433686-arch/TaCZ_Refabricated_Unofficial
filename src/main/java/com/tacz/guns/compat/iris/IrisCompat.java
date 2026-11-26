@@ -182,13 +182,14 @@ public final class IrisCompat {
     }
 
     /**
-     * The post-composite overlay hook is bytecode-audited specifically against Iris 1.10.7 for
-     * Minecraft 1.21.11. Other Iris lines retain the HAND_TRANSLUCENT fallback instead of risking
-     * an invisible reticle when internal final-render timing changes.
+     * The target 1.10.7 / 1.10.8 hooks finish the world composite before this overlay.
+     * The packaged 1.10.8 probe also records and checks beginHand/finalizeLevelRendering bytecode
+     * from the actual hash-pinned runtime JAR. Unknown Iris lines retain HAND_TRANSLUCENT.
      */
     public static boolean supportsFinalScopeOverlay() {
         return FabricLoader.getInstance().getModContainer(CompatRegistry.IRIS)
-                .map(container -> container.getMetadata().getVersion().getFriendlyString().startsWith("1.10.7"))
+                .map(container -> java.util.Set.of("1.10.7", "1.10.8").contains(
+                        container.getMetadata().getVersion().getFriendlyString().split("\\+", 2)[0]))
                 .orElse(false);
     }
 

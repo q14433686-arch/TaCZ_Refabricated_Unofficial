@@ -44,7 +44,12 @@ final class ThermalFrames {
                 RenderConfig.SCOPE_PIP_ENABLE.set(false);
                 RenderConfig.SCOPE_PIP_RERENDER.set(false);
             });
+            backdrop(ctx,world,base,false);
             ctx.waitTicks(8);
+            ctx.runOnClient(mc -> RenderConfig.SCOPE_THERMAL_ENABLE.set(false));
+            var emptyOptical = frame(ctx,"thermal_empty_optical");
+            ctx.runOnClient(mc -> RenderConfig.SCOPE_THERMAL_ENABLE.set(true));
+            ctx.waitTicks(6);
             var empty = ThermalReadback.read(ctx);
             if (empty.hot() != 0) throw new AssertionError("Empty thermal lane has heat: " + empty);
             summon(ctx, world, base, "slime", "Size:2,NoAI:1b,NoGravity:1b,Silent:1b");
@@ -66,6 +71,9 @@ final class ThermalFrames {
             ctx.runOnClient(mc -> ThermalReadback.assertCleared());
             var optical = frame(ctx,"thermal_disabled");
             if (white(optical) >= white(hot)/2) throw new AssertionError("Disabling heat did not restore the optical lens");
+            int[] coverage = coverage(optical, emptyOptical, hot);
+            if (coverage[0] < 20 || coverage[1] < .83*coverage[0])
+                throw new AssertionError("Heat did not fill the independently visible optical body: " + coverage[1] + "/" + coverage[0]);
             ctx.runOnClient(mc -> RenderConfig.SCOPE_THERMAL_ENABLE.set(true));
             ctx.waitTicks(6);
             if (ThermalReadback.read(ctx).centralHot() < 20) throw new AssertionError("Heat did not recover after disable");
@@ -92,10 +100,12 @@ final class ThermalFrames {
             if (ThermalReadback.read(ctx).centralHot()<3) throw new AssertionError("Heat failed to reallocate after resource cleanup");
             System.out.println("PORT_THERMAL_PIXELS: empty="+empty.hot()+" exposed="+exposed.centralHot()+" sensorWhite="+white(hot)
                     +" opaque="+covered.hot()+" opaqueWhite="+white(behind)+" glass="+glass.centralHot()+" chicken="+chicken.centralHot()
-                    +" invisible="+invisible.hot()+" blacklist="+blacklisted.hot()+" whitelist="+whitelisted.centralHot()+" optical fallback and recovery passed");
+                    +" invisible="+invisible.hot()+" blacklist="+blacklisted.hot()+" whitelist="+whitelisted.centralHot()
+                    +" opticalBody="+coverage[1]+"/"+coverage[0]+" optical fallback and recovery passed");
         } finally {
             kill(ctx,world);
             wall(ctx,world,base,0);
+            backdrop(ctx,world,base,true);
             ctx.runOnClient(mc -> {
                 TimelessAPI.getClientAttachmentIndex(optic).orElseThrow().getAttachmentModel().setScopeLens(original);
                 RenderConfig.EXPERIMENTAL_SCOPE_LENS.set(experimental);
@@ -122,6 +132,31 @@ final class ThermalFrames {
         });
         ctx.waitFor(mc->mc.level.getBlockState(mid).is(block));
         world.getClientWorld().waitForChunksRender(); ctx.waitTicks(6);
+    }
+    private static void backdrop(ClientGameTestContext ctx,TestSingleplayerContext world,BlockPos base,boolean restore) {
+        world.getServer().runOnServer(s->{var level=s.getPlayerList().getPlayers().getFirst().level();
+            for(int y=-8;y<=8;y++) for(int x=-8;x<=8;x++) level.setBlock(base.offset(x,y,40),
+                    (restore && (x+y)%2==0 ? Blocks.ORANGE_CONCRETE : Blocks.LIGHT_BLUE_CONCRETE).defaultBlockState(),Block.UPDATE_ALL);
+        });
+        ctx.waitTicks(6); world.getClientWorld().waitForChunksRender(); ctx.waitTicks(4);
+    }
+    private static int[] coverage(BufferedImage optical,BufferedImage empty,BufferedImage heat) {
+        int w=optical.getWidth(),h=optical.getHeight(),r=h/7,visible=0,filled=0;
+        for(int y=h/2-r;y<h/2+r;y++) for(int x=w/2-r;x<w/2+r;x++) {
+            if (!greenDelta(optical,empty,x,y) || !greenDelta(optical,empty,x-1,y) || !greenDelta(optical,empty,x+1,y)
+                    || !greenDelta(optical,empty,x,y-1) || !greenDelta(optical,empty,x,y+1)) continue;
+            visible++;
+            if (isWhite(heat.getRGB(x,y))) filled++;
+        }
+        return new int[]{visible,filled};
+    }
+    private static boolean greenDelta(BufferedImage target,BufferedImage empty,int x,int y) {
+        int a=target.getRGB(x,y),b=empty.getRGB(x,y);
+        return ((a>>8&255)-(a&255))-((b>>8&255)-(b&255))>35;
+    }
+    private static boolean isWhite(int p) {
+        int r=p>>16&255,g=p>>8&255,b=p&255;
+        return Math.min(r,Math.min(g,b))>180 && Math.max(r,Math.max(g,b))-Math.min(r,Math.min(g,b))<15;
     }
     private static BufferedImage frame(ClientGameTestContext ctx,String name) {
         ctx.waitTicks(4);
