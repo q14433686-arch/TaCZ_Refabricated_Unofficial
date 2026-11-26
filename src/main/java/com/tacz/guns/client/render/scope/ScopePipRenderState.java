@@ -350,8 +350,9 @@ public final class ScopePipRenderState {
         }
         float progress = currentAimingProgress(mc,
                 Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
-        // Match the interpolated user reveal floor; preserve a private copy before Iris final.
-        return pictureProgress(progress);
+        // FOV/foreground ownership starts before the configurable picture reveal floor.
+        // Reticle/rim draws still need exact depth below that floor, even on a bare-rim frame.
+        return progress > 0.0f;
     }
 
     /**

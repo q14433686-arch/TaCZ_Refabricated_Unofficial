@@ -158,7 +158,7 @@ public final class AdsTransitionSmoke {
         ctx.waitFor(mc -> mc.player.onGround() && mc.player.blockPosition().equals(base) && mc.player.getMainHandItem().getItem() instanceof IGun gun
                 && optic.equals(gun.getAttachmentId(mc.player.getMainHandItem(),AttachmentType.SCOPE)));
         // Face south; the PIP gallery uses its own unchanged northern wall and camera.
-        ctx.getInput().lookAt(0,0); world.getClientWorld().waitForChunksRender(); ctx.waitTicks(30);
+        PlayerProbe.turn(ctx,0,0); world.getClientWorld().waitForChunksRender(); ctx.waitTicks(30);
         var old=ctx.computeOnClient(mc -> new boolean[]{RenderConfig.SCOPE_PIP_ENABLE.get(),RenderConfig.SCOPE_PIP_RERENDER.get(),
                 RenderConfig.SCOPE_PIP_ALLOW_SHADER_PACKS.get(),RenderConfig.EXPERIMENTAL_SCOPE_LENS.get(),mc.options.bobView().get(), RenderConfig.SCOPE_MASK_ENABLE.get()});
         double floor=ctx.computeOnClient(mc -> RenderConfig.SCOPE_PIP_MIN_AIMING_PROGRESS.get());
