@@ -15,8 +15,8 @@
 | R1 | 混合镜内分划 | 活动 division 统一提交；墨线/发光分层；父子根去重；共享可见性与矩阵恢复；无孔径保守 fallback；失效孔径不泄漏大面；原版/Iris 成品专项测试及现有矩阵回归 | **DONE — `3515cf98`** |
 | R2 | 热像 | posed model 捕获、纹理 cutout、材质与场景深度、黑白名单、关闭/切世界清理；原版与 Iris 中遮挡/透明面/降级的像素正反例 | **DONE — `ab452920` + `f1b800d8` 专项** |
 | R3 | PIP 运动、镜片与近场 | 对齐供体 ADS/运动/切视图行为；真实帧比较、孔径边界与遮挡；不能仅重跑静态孔径测试 | **DONE — `b2ad0276` 光学；近场散射归 R4** |
-| R4 | 动态光 receiver 与材质 | 核对 1.21.11 entity/block submit 时序、世界表面响应、发光材质不重复受光；正反实帧 | **ACTIVE** |
-| R5 | 输入与平台小差异 | 键/鼠/scancode/卸弹冲突、可选 Zoomify 装/不装、名字皮肤异步/失败、LRT GUI/音量；逐项证明本版替代或移植并实测 | QUEUED |
+| R4 | 动态光 receiver 与材质 | 核对 1.21.11 entity/block submit 时序、世界表面响应、发光材质不重复受光；正反实帧 | **DONE — `574e6506` + `ac2e76f3` 双环境实帧** |
+| R5 | 输入与平台小差异 | 键/鼠/scancode/卸弹冲突、可选 Zoomify 装/不装、名字皮肤异步/失败、LRT GUI/音量；逐项证明本版替代或移植并实测 | **ACTIVE** |
 | R6 | 全量收尾 | 对全部共享代码做行为差异复核，关闭非同路径表里的每个真实缺口；全构建、成品双端/旧档/查看器/光影回归；记录已知外部限制与许可，不冒称第三方协议已修复 | QUEUED |
 
 R1 的专项测试必须增加自己的分划断言，原有 `PORT_OPTIC` 孔径回执不能单独作为 R1 通过证明。每项结果继续写入本文件与主执行账本，供后续会话从唯一 ACTIVE 项继续。
@@ -122,3 +122,24 @@ WideScene 两环境 narrow/released 均保留真实宽遍：原版换色 panel11
 `1834fc62` [编译45751652189](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45751652189) / [全构建45751652128](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45751652128) success；成品原版到达 receiver 夹具后被正常 whitelist 拒绝 emerald，不能算光照通过。`4df18f54` 仅在测试模组添加同显示专项已有的 emerald 白名单 tag（不改默认包），并补近墙/地面、嵌套提交主动抛异常后的字段/context 还原检查。
 
 R4 实机正例必须为真实 stock AK 按键射击并确认服务端少一发；readback 取第一次对应主遍完成帧，读取实际提交的 cow/stand/item/statue/pegboard slot/fullbright case UV2 与真实表面像素。对照为开关、到期、发射者被石墙挡住（仅此负例可用 synthetic event）。新增测试随现有原版/Iris 发行客户端运行，因累积专项增大仅把外层进程预算 720→1200 秒，未改像素/深度/UV2 判据。当前仍待运行，不将 R4 标绿；R5/R6 尚未开始。
+
+
+### R4 实机收口，R5 ACTIVE
+
+生产 `574e6506` 编译 [45755359924](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45755359924) / 全构建 [45755359933](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45755359933) success。增加明/暗双材质测试的 `ac2e76f3` 编译 [45756198267](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45756198267) success；原版 [139695362232](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45756198346/job/139695362232)、Iris [139695362160](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45756198346/job/139695362160) **receiver 实机均 success**。当前整矩阵仍在运行，不借此报全绿。
+
+除 receiver 作用域和 rack 真实模型接线，还修了两个实帧才暴露的缺口：引用的 `surface_white.png` 根本没入库（80 个 terrain patches 真提交但采到 missing texture 黑色），已按供体原字节恢复并给发行 JAR 钉 SHA；展示柜在本版全块是 TRANSLUCENT，其不透明背板会覆盖 entity 阶段反光，现只延迟该真实 rack atlas/pose 快照到 Fabric END_MAIN、原生最后 endBatch 之前，保留深度测试。事件的 native pose 现显式传递；目标 bytecode 证明通常为 identity，先前“需要补 view rotation”的猜测不成立，未额外旋转世界。
+
+两环境真实 stock AK 扳机均确认服务端各少一发，第一主遍 UV2 OFF `[0,0,0,0,0,15728880]` → ON `[112,144,144,80,112,15728880]`；sky 不变，expiry/隔墙与 OFF 相同，原提交字段归还，嵌套原调用主动抛异常后 Java21 context 与输入均归还。
+
+| 接收部位 ON−OFF 红/绿通道均值 | 原版 | Iris |
+|---|---:|---:|
+| cow / stand / helmet | 21 / 75 / 78 | 17 / 73 / 73 |
+| statue / pegboard | 33 / 54 | 21 / 21 |
+| case dark back / lower frame | 23 / 90 | 6 / 37 |
+| ordinary rack item / fullbright case item | 55 / 1 | 38 / 0 |
+| near wall / near floor | 64 / 47 | 31 / 34 |
+
+所有到期/隔墙残差绝对值≤1。Iris 暗背板上一轮是 4→9（+5），并非无响应；新增独立明亮框架固定≥6 判据，暗背板另需≥2倍底色、≥4 code 且≥4倍实测 control noise，负例噪声≤2；没有把旧的完全无反应当通过。最终两环境暗背板也分别 +23/+6。各六张原始 PNG；receiver 拆为独立原版/Iris 启动，**原有光学全部断言仍保留在独立 optics / optics-iris**，发行矩阵现12项。
+
+本体 SHA-256 **`767e1c68b79653873f622731410c73159bbb448c6592a0a2900981a11392668c`**，文件名/version 未改，未发 Release。R4 四步闭环完成，继续 R5（统一物理输入、Zoomify 装/不装、异步皮肤/失败、LRT GUI/音量）。R6 仍保留开发建世界间歇超时、最终全矩阵与全共享代码复核；其他光影/Voxy不冒称实测。
