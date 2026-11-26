@@ -59,10 +59,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * <h2>适用范围（刻意不覆盖的部分）</h2>
  * 只有 <b>CLIENT 与 COMMON</b> —— 面板编辑的就是这两份。<b>SERVER</b> 配置（{@code ServerConfig.init()}
- * 里的 {@code SyncConfig} 那一族，含 {@code /tacz config} 改的三条键）不进本类：它的落盘与"首次进世界时
- * 拷贝到 {@code <world>/serverconfigs/}"由 FCAP 自己管，我们只钉了 client/common 两个名字，按 {@code config/}
- * 下的路径去写会写到那份将被覆盖的副本上。所以 {@link #record} 的 {@code default} 分支什么都不做，
- * {@code ConfigCommand} 也不"顺手"调 {@link #saveAll()}（对本命令无作用，纯假动作）。</p>
+ * 里的 {@code SyncConfig} 那一族，含 {@code /tacz config} 改的三条键）不进本类。
+ * FCAP 21.11.1 默认从 {@code config/} 加载 SERVER 配置；只有已存在于
+ * {@code <world>/serverconfig/}（单数）的同名文件才覆盖它，不会自动复制到世界目录。
+ * SERVER 的实际加载路径及生命周期由 FCAP 所有；此处只记录 CLIENT/COMMON，不能假定
+ * SERVER 的固定路径或对远程同步的内存配置写盘。{@link #record} 的 default 分支不处理它，
+ * {@code ConfigCommand} 也不调用对 SERVER 无作用的 {@link #saveAll()}。</p>
  *
  * <h2>为什么这个修法对两种架构都成立</h2>
  * {@code childConfig instanceof FileConfig}（旧架构；本仓 {@code PreLoadConfig} 正是这一路）⇒ 交回

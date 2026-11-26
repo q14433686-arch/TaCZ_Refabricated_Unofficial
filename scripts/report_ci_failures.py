@@ -30,6 +30,9 @@ for path in files:
             state = line[line.find('PORT_WORLD_STALL:'):][:3600]
             key = next((key for key in ('cycle=', 'Server thread ', 'Render thread ', 'Test thread ')
                         if f'PORT_WORLD_STALL: ASYNC {key}' in state), None)
+            if key is None:
+                key = next((key for key in ('ConfigurationState client=', 'ConfigurationState server=')
+                            if f'PORT_WORLD_STALL: {key}' in state), None)
             if key is not None:
                 world_snapshot[key] = state
             else:
@@ -53,7 +56,7 @@ for path in Path('build/test-results/test').glob('*.xml'):
                                   + '\n' + '\n'.join(local_frames[:5] or stack[:5]))
 if markers:
     print('::notice::Last target receipts: ' + ' | '.join(list(markers)[-7:]).replace('%', '%25'))
-for key in ('cycle=', 'Server thread ', 'Render thread ', 'Test thread '):
+for key in ('ConfigurationState client=', 'ConfigurationState server=', 'cycle=', 'Server thread ', 'Render thread ', 'Test thread '):
     if key in world_snapshot:
         report(world_snapshot[key])
 if tail:

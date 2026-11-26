@@ -85,6 +85,15 @@ def seed_loopback_server(seed):
     return port
 
 
+def copy_saved_server(instance, saved):
+    # FCAP 21.11.1 loads server configs from instance/config by default; world/serverconfig
+    # (singular) only overrides files explicitly placed there. Preserve both, not just the world.
+    for directory in ('world', 'tacz', 'config'):
+        shutil.copytree(instance/directory, saved/directory)
+    for name in ('eula.txt', 'server.properties'):
+        shutil.copyfile(instance/name, saved/name)
+
+
 def test(product, work, evidence, viewer):
     evidence.mkdir(parents=True, exist_ok=True)
     for side in ('server', 'client'): copy_project(work, side)
@@ -150,9 +159,7 @@ def test(product, work, evidence, viewer):
                     # No in-memory BE, client mirror, new-world seed or first-generation pack survives this boundary.
                     copy_project(work, 'restored')
                     saved = work/'restart-seed'
-                    shutil.copytree(instance/'world', saved/'world')
-                    shutil.copytree(instance/'tacz', saved/'tacz')
-                    for name in ('eula.txt','server.properties'): shutil.copyfile(instance/name, saved/name)
+                    copy_saved_server(instance, saved)
                     server = servers.enter_context(launch(gradle('restored', f'-PprobeSeed={saved}', 'probeServer'), evidence/'restored.log'))
                     new_log = work/'restored/build/instance/logs/latest.log'
                     wait_for(lambda: new_log.is_file() and 'For help, type "help"' in new_log.read_text(errors='replace'), [server, client], 360, 'saved-world dedicated startup')

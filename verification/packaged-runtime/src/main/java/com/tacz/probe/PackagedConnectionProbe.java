@@ -115,7 +115,10 @@ public final class PackagedConnectionProbe implements FabricClientGameTest {
         if (com.tacz.guns.config.sync.SyncConfig.CRAWL_MAX_UP_ANGLE.get() != 12d
                 || com.tacz.guns.config.sync.SyncConfig.CRAWL_MAX_DOWN_ANGLE.get() != 7d
                 || !com.tacz.guns.config.sync.SyncConfig.USE_HIP_FIRE_INACCURACY_WHILE_AIRBORNE.get())
-            throw new AssertionError("Client did not receive nondefault server stance config through FCAP");
+            throw new AssertionError("Client did not receive nondefault server stance config through FCAP: up="
+                    +com.tacz.guns.config.sync.SyncConfig.CRAWL_MAX_UP_ANGLE.get()+" down="
+                    +com.tacz.guns.config.sync.SyncConfig.CRAWL_MAX_DOWN_ANGLE.get()+" airborne="
+                    +com.tacz.guns.config.sync.SyncConfig.USE_HIP_FIRE_INACCURACY_WHILE_AIRBORNE.get());
     }
 
     private static void checkPausedClock(ClientGameTestContext ctx) {

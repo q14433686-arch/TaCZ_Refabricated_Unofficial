@@ -37,7 +37,8 @@ public final class PackClientSmoke implements FabricClientGameTest {
                     System.out.println("PORT_WORLD_STALL: FabricPhase phase="+phaser.getPhase()+" registered="+phaser.getRegisteredParties()
                             +" arrived="+phaser.getArrivedParties()+" unarrived="+phaser.getUnarrivedParties()
                             +" serverRunning="+threading.getField("isServerRunning").get(null)
-                            +" serverTasks="+threading.getField("serverCanAcceptTasks").get(null));
+                            +" serverTasks="+threading.getField("serverCanAcceptTasks").get(null)
+                            +" network="+networkScalars());
                 } catch (ReflectiveOperationException ex) { System.out.println("PORT_WORLD_STALL: FabricPhase diagnostic unavailable: "+ex); }
                 Thread.getAllStackTraces().entrySet().stream()
                         .filter(e -> e.getKey().getName().equals("Server thread") || e.getKey().getName().contains("Worker") || e.getKey().getName().contains("ForkJoinPool"))
@@ -85,12 +86,51 @@ public final class PackClientSmoke implements FabricClientGameTest {
             var connections = listener.getClass().getDeclaredField("connections");connections.setAccessible(true);
             var result = new java.util.ArrayList<String>();
             result.add("pendingClient="+connectionDetails(connection));
+            configurationDetails("client",connection);
             Object list = connections.get(listener);
             if (list instanceof java.util.List<?> values) {
-                synchronized (values) { for (Object value : values) result.add("server="+connectionDetails(value)); }
+                synchronized (values) { for (Object value : values) { result.add("server="+connectionDetails(value));configurationDetails("server",value); } }
             } else result.add("serverConnections="+list);
             return result.toString();
         } catch (ReflectiveOperationException | RuntimeException ex) { return "unavailable:"+ex; }
+    }
+
+    private static void configurationDetails(String side,Object connection) throws ReflectiveOperationException {
+        if(connection==null)return;
+        var field=connection.getClass().getDeclaredField("packetListener");field.setAccessible(true);
+        Object listener=field.get(connection);if(listener==null)return;
+        var result=new java.util.ArrayList<String>();
+        result.add(listener.getClass().getName());
+        for(Class<?> type=listener.getClass();type!=null;type=type.getSuperclass())for(var f:type.getDeclaredFields()) {
+            if(java.lang.reflect.Modifier.isStatic(f.getModifiers()) || !f.getName().toLowerCase(java.util.Locale.ROOT)
+                    .matches(".*(task|registry|registries|pack|pending|finish|config|future).*"))continue;
+            f.setAccessible(true);Object value=f.get(listener);
+            result.add(f.getName()+"="+configurationValue(value));
+        }
+        System.out.println("PORT_WORLD_STALL: ConfigurationState "+side+"="+String.join(", ",result));
+    }
+
+    private static String configurationValue(Object value) {
+        if(value==null)return "none";
+        if(value instanceof java.util.Collection<?> values)return "size:"+values.size()+":"+values.stream().limit(8).map(PackClientSmoke::configurationValue).toList();
+        if(value instanceof java.util.Map<?,?> values)return "size:"+values.size()+":keys="+values.keySet().stream().limit(8).map(String::valueOf).toList();
+        if(value instanceof java.util.concurrent.Future<?> future)return value.getClass().getName()+":done="+future.isDone()+":cancelled="+future.isCancelled();
+        if(value instanceof net.minecraft.server.network.ConfigurationTask task)return value.getClass().getName()+":type="+task.type();
+        if(value instanceof Number || value instanceof Boolean || value instanceof CharSequence || value instanceof Enum<?>)return String.valueOf(value);
+        return value.getClass().getName();
+    }
+
+    private static String networkScalars() throws ReflectiveOperationException {
+        var type=Class.forName("net.fabricmc.fabric.impl.client.gametest.threading.NetworkSynchronizer");
+        var result=new java.util.ArrayList<String>();
+        for(String side:new String[]{"CLIENTBOUND","SERVERBOUND"}) {
+            Object sync=type.getField(side).get(null);
+            for(String name:new String[]{"inFlightPackets","mainThreadPacketHandlers","invalid","isRunningNetworkTasks"}) {
+                var field=type.getDeclaredField(name);field.setAccessible(true);Object value=field.get(sync);
+                result.add(side+"."+name+"="+(value instanceof java.util.Collection<?> values ? values.size() : value));
+            }
+        }
+        return result.toString();
     }
 
     private static String connectionDetails(Object connection) throws ReflectiveOperationException {
