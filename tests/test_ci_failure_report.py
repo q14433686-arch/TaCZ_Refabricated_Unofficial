@@ -25,6 +25,21 @@ class FailureReportTest(unittest.TestCase):
                 self.assertTrue(any(f'ASYNC {name} thread' in line and f'{name}_LAST_FRAME' in line for line in errors), name)
             self.assertIn('ASYNC cycle=1 phase=3617', errors[0])
 
+    def test_junit_failure_retains_test_identity_and_project_source_line(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result_dir = Path(directory) / 'build/test-results/test'
+            result_dir.mkdir(parents=True)
+            (result_dir / 'TEST-Example.xml').write_text('''<testsuite><testcase classname="cn.sh1rocu.tacz.util.ExampleTest" name="validInput()">
+                <failure message="expected: true but was: false">org.opentest4j.AssertionFailedError
+                    at org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:1)
+                    at cn.sh1rocu.tacz.util.ExampleTest.validInput(ExampleTest.java:21)
+                </failure></testcase></testsuite>''')
+            result = subprocess.run([sys.executable, str(SCRIPT)], cwd=directory,
+                                    text=True, capture_output=True, check=True)
+            self.assertIn('JUnit cn.sh1rocu.tacz.util.ExampleTest#validInput()', result.stdout)
+            self.assertIn('ExampleTest.java:21', result.stdout)
+            self.assertIn('expected: true but was: false', result.stdout)
+
     def test_ordinary_failures_are_still_reported(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'build.log'

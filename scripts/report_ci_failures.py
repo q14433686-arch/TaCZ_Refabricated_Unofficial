@@ -40,9 +40,17 @@ for path in files:
             diagnostics[excerpt(lines, i)] = None
     if path.name in ('client.log', 'tacz-client.log', 'latest.log'):
         tail += [l[:300] for l in lines[-18:] if l.strip()]
+junit_failures = []
 for path in Path('build/test-results/test').glob('*.xml'):
-    for failure in ET.parse(path).iter('failure'):
-        diagnostics[failure.get('message', str(path))] = None
+    for case in ET.parse(path).iter('testcase'):
+        for failure in case.findall('failure'):
+            # Message alone (e.g. expected true/false) loses the test identity and source line;
+            # raw Actions logs/artifact downloads are not always reachable from porting sandboxes.
+            identity = f"{case.get('classname', path.stem)}#{case.get('name', '?')}"
+            stack = (failure.text or '').splitlines()
+            local_frames = [line.strip() for line in stack if re.search(r'\bat (?:com\.tacz\.|cn\.sh1rocu\.|me\.xjqsh\.)', line)]
+            junit_failures.append('JUnit ' + identity + ': ' + failure.get('message', '')
+                                  + '\n' + '\n'.join(local_frames[:5] or stack[:5]))
 if markers:
     print('::notice::Last target receipts: ' + ' | '.join(list(markers)[-7:]).replace('%', '%25'))
 for key in ('cycle=', 'Server thread ', 'Render thread ', 'Test thread '):
@@ -50,8 +58,10 @@ for key in ('cycle=', 'Server thread ', 'Render thread ', 'Test thread '):
         report(world_snapshot[key])
 if tail:
     report('Runtime tail:\n' + '\n'.join(tail[-18:]))
+for failure in junit_failures[:3]:
+    report(failure)
 messages = list(diagnostics)
 # Stay within ten error annotations per step, including the independent snapshots and tail.
-limit = 6 * max(0, 10 - len(world_snapshot) - bool(tail))
+limit = 6 * max(0, 10 - len(world_snapshot) - bool(tail) - min(3, len(junit_failures)))
 for i in range(0, min(len(messages), limit), 6):
     report('\n'.join(messages[i:i+6]))
