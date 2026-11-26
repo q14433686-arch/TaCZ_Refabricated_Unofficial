@@ -91,7 +91,7 @@ public final class ScopeThermalCapture {
             var encoder = RenderSystem.getDevice().createCommandEncoder();
             encoder.clearColorTexture(mask.getColorTexture(), 0);
             if (!draws.isEmpty()) {
-                mask.copyDepthFrom(scene);
+                if (!shaderPack) mask.copyDepthFrom(scene);
                 if (bytes == null) bytes = new ByteBufferBuilder(256 * 1024);
                 var out = MultiBufferSource.immediate(bytes);
                 var oldColor = RenderSystem.outputColorTextureOverride;
@@ -99,6 +99,7 @@ public final class ScopeThermalCapture {
                 var mv = RenderSystem.getModelViewStack();
                 mv.pushMatrix();
                 try (var borrowed = shaderPack ? ThermalSceneDepth.borrow(scene) : null) {
+                    if (shaderPack) ThermalSceneDepth.copyCanonical(scene, mask);
                     mv.set(viewRotation);
                     // Keep the bound world projection (including bob or the narrow pass), not HUD FOV.
                     RenderSystem.outputColorTextureOverride = mask.getColorTextureView();
