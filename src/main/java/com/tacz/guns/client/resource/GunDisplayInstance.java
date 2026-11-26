@@ -12,7 +12,6 @@ import com.tacz.guns.api.client.animation.ObjectAnimation;
 import com.tacz.guns.api.client.animation.gltf.AnimationStructure;
 import com.tacz.guns.api.client.animation.statemachine.LuaAnimationStateMachine;
 import com.tacz.guns.api.client.animation.statemachine.LuaStateMachineFactory;
-import com.tacz.guns.api.client.other.GunModelTypeManager;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
 import com.tacz.guns.client.model.BedrockGunModel;
@@ -21,7 +20,6 @@ import com.tacz.guns.client.resource.pojo.display.LaserConfig;
 import com.tacz.guns.client.resource.pojo.display.SoundData;
 import com.tacz.guns.client.resource.pojo.display.ammo.AmmoParticle;
 import com.tacz.guns.client.resource.pojo.display.gun.*;
-import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
 import com.tacz.guns.client.resource.pojo.model.BedrockVersion;
 import com.tacz.guns.client.sound.GunSoundPreload;
 import com.tacz.guns.config.client.ResourceConfig;
@@ -44,7 +42,12 @@ import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.function.BiFunction;
+import java.util.function.Supplier;
+import com.google.common.base.Suppliers;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.FileToIdConverter;
+import com.tacz.guns.client.model.BedrockAmmoModel;
+import cn.sh1rocu.tacz.compat.meshloader.model.TaczPolyMeshGunModel;
 
 /**
  * 经过处理和校验的枪械显示数据
@@ -57,22 +60,26 @@ public class GunDisplayInstance {
 
     // 加载标志位
     private volatile boolean modelLoaded = false;
-    private volatile boolean lodLoaded = false;
     private volatile boolean animationLoaded = false;
 
     // 错误标志位
     private volatile boolean modelLoadFailed = false;
-    private volatile boolean lodLoadFailed = false;
     private volatile boolean animationLoadFailed = false;
 
     // 异步加载任务
     private volatile CompletableFuture<Void> modelWarmUpTask = null;
-    private volatile CompletableFuture<Void> lodWarmUpTask = null;
     private volatile CompletableFuture<Void> animationWarmUpTask = null;
 
     private String thirdPersonAnimation = "empty";
     private BedrockGunModel gunModel;
-    private @Nullable Pair<BedrockGunModel, Identifier> lodModel;
+    private final DisplayBake<Pair<BedrockGunModel, Identifier>> externalHigh;
+    private final DisplayBake<Pair<BedrockGunModel, Identifier>> externalLod;
+
+    // Look up file presence once, on demand, per display revision. Never open a stream, decode
+    // a model on the render thread, or keep a pack resource/texture handle across reloads.
+    private static final FileToIdConverter GEO_FILES = FileToIdConverter.json("geo_models");
+    private record DropAssets(boolean lodFilesPresent, @Nullable Identifier slot) {}
+    private final Supplier<DropAssets> dropAssets = Suppliers.memoize(this::findDropAssets);
 
     private LuaAnimationStateMachine<GunAnimationStateContext> animationStateMachine;
     private @Nullable LuaTable stateMachineParam;
@@ -92,6 +99,7 @@ public class GunDisplayInstance {
     private Identifier hudTexture = MissingTextureAtlasSprite.getLocation();
     private @Nullable Identifier hudEmptyTexture;
 
+    private @Nullable BedrockAmmoModel shellModel;
     private @Nullable ShellEjection shellEjection;
     private @Nullable MuzzleFlash muzzleFlash;
     private boolean omittedMuzzleFlash;
@@ -111,6 +119,9 @@ public class GunDisplayInstance {
     GunDisplayInstance(Identifier displayId, GunDisplay display) {
         this.displayId = displayId;
         this.display = Objects.requireNonNull(display, "display");
+        long revision = ClientIndexManager.revision();
+        externalHigh = externalBake(false, revision);
+        externalLod = externalBake(true, revision);
         initBase(display);
         if (!ResourceConfig.ENABLE_LAZY_CLIENT_ASSET_LOAD.get()) {
             ensureAnimationLoaded();
@@ -138,25 +149,63 @@ public class GunDisplayInstance {
         }
     }
 
+    private DisplayBake<Pair<BedrockGunModel, Identifier>> externalBake(boolean lod, long revision) {
+        return new DisplayBake<>(ClientAssetLoadDispatcher.executor(), () -> revision == ClientIndexManager.revision(),
+                () -> GunRigBaker.bake(display, lod, true),
+                error -> GunMod.LOGGER.warn("Failed to bake external {} rig for {}", lod ? "LOD" : "main", displayId, error));
+    }
+
+    private void bakeShellOverride() {
+        if (shellEjection == null || shellEjection.getModelLocation() == null || shellEjection.getModelTexture() == null) return;
+        var pojo = ClientAssetsManager.INSTANCE.getBedrockModelPOJO(shellEjection.getModelLocation());
+        if (pojo == null) return;
+        if (BedrockVersion.isLegacyVersion(pojo) && pojo.getGeometryModelLegacy() != null)
+            shellModel = new BedrockAmmoModel(pojo, BedrockVersion.LEGACY);
+        else if (BedrockVersion.isNewVersion(pojo) && pojo.getGeometryModelNew() != null)
+            shellModel = new BedrockAmmoModel(pojo, BedrockVersion.NEW);
+    }
+
+    public @Nullable BedrockAmmoModel getShellModel() {
+        ensureModelLoaded();
+        return shellModel;
+    }
+
+    public @Nullable Identifier getShellTextureLocation() {
+        return shellEjection == null ? null : shellEjection.getModelTexture();
+    }
+
+    public @Nullable Pair<BedrockGunModel, Identifier> getExternalModel(boolean preferLod) {
+        return preferLod ? externalLod.preferOver(externalHigh) : externalHigh.preferOver(externalLod);
+    }
+
+    private DropAssets findDropAssets() {
+        var resources = Minecraft.getInstance().getResourceManager();
+        var lod = display.getGunLod();
+        boolean hasLod = lod != null && lod.getModelLocation() != null && lod.getModelTexture() != null
+                && resources.getResource(GEO_FILES.idToFile(lod.getModelLocation())).isPresent()
+                && resources.getResource(lod.getModelTexture()).isPresent();
+        boolean hasSlot = !MissingTextureAtlasSprite.getLocation().equals(slotTexture)
+                && resources.getResource(slotTexture).isPresent();
+        return new DropAssets(hasLod, hasSlot ? slotTexture : null);
+    }
+
+    void retireModels() {
+        if (modelLoaded && gunModel instanceof TaczPolyMeshGunModel mesh) mesh.retire();
+        forEachReadyExternalModel(model -> {
+            if (model instanceof TaczPolyMeshGunModel mesh) mesh.retire();
+        });
+    }
+
+    public void forEachReadyExternalModel(java.util.function.Consumer<BedrockGunModel> action) {
+        var high = externalHigh.ready();
+        var lod = externalLod.ready();
+        if (high != null) action.accept(high.getLeft());
+        if (lod != null) action.accept(lod.getLeft());
+    }
+
     public void warmUpLod() {
-        if (!ResourceConfig.ENABLE_LAZY_CLIENT_ASSET_LOAD.get()) {
-            ensureLodLoaded();
-            return;
-        }
-        if (lodLoaded || lodWarmUpTask != null) {
-            return;
-        }
-        synchronized (loadLock) {
-            if (lodLoaded || lodWarmUpTask != null) {
-                return;
-            }
-            lodWarmUpTask = CompletableFuture.runAsync(this::loadLodIfNecessary, ClientAssetLoadDispatcher.executor());
-            lodWarmUpTask.whenComplete((unused, throwable) -> {
-                if (throwable != null) {
-                    handleLodLoadFailure(throwable);
-                }
-            });
-        }
+        if (ResourceConfig.ENABLE_LAZY_CLIENT_ASSET_LOAD.get()) externalLod.request();
+        else externalLod.loadNow();
     }
 
     public void warmUpRuntime() {
@@ -196,26 +245,6 @@ public class GunDisplayInstance {
         }
     }
 
-    private void ensureLodLoaded() {
-        if (lodLoaded || lodLoadFailed) {
-            return;
-        }
-        CompletableFuture<Void> task = lodWarmUpTask;
-        if (task == null) {
-            try {
-                loadLodIfNecessary();
-            } catch (Throwable throwable) {
-                handleLodLoadFailure(throwable);
-            }
-            return;
-        }
-        try {
-            task.join();
-        } catch (CompletionException exception) {
-            handleLodLoadFailure(exception.getCause() == null ? exception : exception.getCause());
-        }
-    }
-
     private void ensureAnimationLoaded() {
         if (animationLoaded || animationLoadFailed) {
             return;
@@ -252,20 +281,8 @@ public class GunDisplayInstance {
             }
             checkTextureAndModel(display);
             checkTextShow(display);
+            bakeShellOverride();
             modelLoaded = true;
-        }
-    }
-
-    private void loadLodIfNecessary() {
-        if (lodLoaded) {
-            return;
-        }
-        synchronized (loadLock) {
-            if (lodLoaded) {
-                return;
-            }
-            checkLod(display);
-            lodLoaded = true;
         }
     }
 
@@ -331,20 +348,6 @@ public class GunDisplayInstance {
         }
     }
 
-    private void handleLodLoadFailure(Throwable throwable) {
-        boolean shouldLog = false;
-        synchronized (loadLock) {
-            if (!lodLoaded) {
-                shouldLog = !lodLoadFailed;
-                lodWarmUpTask = null;
-                lodLoadFailed = true;
-            }
-        }
-        if (shouldLog) {
-            GunMod.LOGGER.warn("Failed to load gun lod {}", displayId, throwable);
-        }
-    }
-
     private void handleAnimationLoadFailure(Throwable throwable) {
         boolean shouldLog = false;
         synchronized (loadLock) {
@@ -376,7 +379,7 @@ public class GunDisplayInstance {
         checkMuzzleFlash(display);
         checkLayerGunShow(display);
         checkIronZoom(display);
-        checkZoomModelFov(display);
+        zoomModelFov = validFov(display.getZoomModelFov());
         modelFov = validFov(display.getModelFov());
         thirdPersonAnimation = StringUtils.defaultIfBlank(display.getThirdPersonAnimation(), "empty");
         if (display.getPlayerAnimator3rd() != null) {
@@ -398,13 +401,6 @@ public class GunDisplayInstance {
         }
     }
 
-    private void checkZoomModelFov(GunDisplay display) {
-        zoomModelFov = display.getZoomModelFov();
-        if (zoomModelFov > 70) {
-            zoomModelFov = 70;
-        }
-    }
-
     private static float validFov(float fov) {
         // A projection outside (0,180) is not meaningful.
         return Float.isFinite(fov) && fov > 0 && fov < 180 ? fov : 70;
@@ -423,75 +419,9 @@ public class GunDisplayInstance {
     }
 
     private void checkTextureAndModel(GunDisplay display) {
-        //获取模型类型
-        String modelType = display.getModelType();
-        BiFunction<BedrockModelPOJO, BedrockVersion, ? extends BedrockGunModel> constructor = GunModelTypeManager.getModelInstanceConstructor(modelType);
-        // 检查模型
-        Identifier modelLocation = display.getModelLocation();
-        Preconditions.checkArgument(modelLocation != null, "display object missing model field");
-        BedrockModelPOJO modelPOJO = ClientAssetsManager.INSTANCE.getBedrockModelPOJO(modelLocation);
-
-        // FALLBACK: 如果高模不存在，尝试加载 LOD 模型作为替代
-        if (modelPOJO == null) {
-            GunLod gunLod = display.getGunLod();
-            if (gunLod != null && gunLod.getModelLocation() != null) {
-                BedrockModelPOJO lodPOJO = ClientAssetsManager.INSTANCE.getBedrockModelPOJO(gunLod.getModelLocation());
-                if (lodPOJO != null) {
-                    GunMod.LOGGER.warn("High-poly model not found for {}, falling back to LOD model", modelLocation);
-                    modelPOJO = lodPOJO;
-                    // 使用 LOD 模型的材质
-                    if (gunLod.getModelTexture() != null) {
-                        modelTexture = gunLod.getModelTexture();
-                    }
-                }
-            }
-            if (modelPOJO == null) {
-                throw new IllegalArgumentException("there is no corresponding model file: " + modelLocation);
-            }
-        }
-
-        // 检查默认材质是否存在
-        if (modelTexture == null) {
-            Identifier textureLocation = display.getModelTexture();
-            Preconditions.checkArgument(textureLocation != null, "missing default texture");
-            modelTexture = textureLocation;
-        }
-        // 先判断是不是 1.10.0 版本基岩版模型文件
-        if (BedrockVersion.isLegacyVersion(modelPOJO) && modelPOJO.getGeometryModelLegacy() != null) {
-            gunModel = constructor.apply(modelPOJO, BedrockVersion.LEGACY);
-        }
-        // 判定是不是 1.12.0 版本基岩版模型文件
-        if (BedrockVersion.isNewVersion(modelPOJO) && modelPOJO.getGeometryModelNew() != null) {
-            gunModel = constructor.apply(modelPOJO, BedrockVersion.NEW);
-        }
-        Preconditions.checkArgument(gunModel != null, "there is no model data in the model file: " + modelLocation);
-    }
-
-    private void checkLod(GunDisplay display) {
-        GunLod gunLod = display.getGunLod();
-        if (gunLod != null) {
-            Identifier texture = gunLod.getModelTexture();
-            if (gunLod.getModelLocation() == null) {
-                return;
-            }
-            if (texture == null) {
-                return;
-            }
-            BedrockModelPOJO modelPOJO = ClientAssetsManager.INSTANCE.getBedrockModelPOJO(gunLod.getModelLocation());
-            if (modelPOJO == null) {
-                return;
-            }
-            // 先判断是不是 1.10.0 版本基岩版模型文件
-            if (BedrockVersion.isLegacyVersion(modelPOJO) && modelPOJO.getGeometryModelLegacy() != null) {
-                BedrockGunModel model = new BedrockGunModel(modelPOJO, BedrockVersion.LEGACY);
-                lodModel = Pair.of(model, texture);
-            }
-            // 判定是不是 1.12.0 版本基岩版模型文件
-            if (BedrockVersion.isNewVersion(modelPOJO) && modelPOJO.getGeometryModelNew() != null) {
-                BedrockGunModel model = new BedrockGunModel(modelPOJO, BedrockVersion.NEW);
-                lodModel = Pair.of(model, texture);
-            }
-        }
+        var baked = Objects.requireNonNull(GunRigBaker.bake(display, false, false));
+        gunModel = baked.getLeft();
+        modelTexture = baked.getRight();
     }
 
     private void checkAnimation(GunDisplay display) {
@@ -646,7 +576,7 @@ public class GunDisplayInstance {
         if (particle != null) {
             try {
                 String name = particle.getName();
-                if (StringUtils.isNoneBlank()) {
+                if (StringUtils.isNotBlank(name)) {
                     particle.setParticleOptions(ParticleArgument.readParticle(new StringReader(name), RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY)));
                     Preconditions.checkArgument(particle.getCount() > 0, "particle count must be greater than 0");
                     Preconditions.checkArgument(particle.getLifeTime() > 0, "particle life time must be greater than 0");
@@ -693,19 +623,13 @@ public class GunDisplayInstance {
 
     @Nullable
     public Pair<BedrockGunModel, Identifier> getLodModel() {
-        ensureLodLoaded();
-        return lodModel;
+        return externalLod.loadNow();
     }
 
-    /** A declared LOD that's merely waiting on the asset worker still owns the normal 3D path.
-     * 本线的 LOD 走 {@link #lodModel}：加载后仍为空即代表无可用 LOD（未声明或加载失败），
-     * 此时掉落物回退到二维 slot 贴图；有可用 LOD 则返回 null，走正常三维路径。 */
+    /** A pending external LOD still owns the normal 3D path; never join an asset worker here. */
     public @Nullable Identifier getMissingLodDropTexture() {
-        ensureLodLoaded();
-        if (lodModel != null) {
-            return null;
-        }
-        return MissingTextureAtlasSprite.getLocation().equals(slotTexture) ? null : slotTexture;
+        var assets = dropAssets.get();
+        return !assets.lodFilesPresent() || externalLod.completedEmpty() ? assets.slot() : null;
     }
 
     public @Nullable LuaAnimationStateMachine<GunAnimationStateContext> getAnimationStateMachine() {

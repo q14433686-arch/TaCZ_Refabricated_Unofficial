@@ -65,3 +65,7 @@ GunInputHandler（统一物理输入）与 LevelRendererReceiverLightMixin（本
 ### R3 光学闭环；R4 接续
 
 `b2ad0276` 原版/Iris 各16组同帧运动PIP、missing mask/reveal floor与镜外宽遍地形/实体/天空全部通过，发行10/10；开发建世界超时独立保留到R6，不报全构建绿。当前R4：目标JAR已证实稳定submitEntities/submitBlockEntities，`1834fc62`接通同步receiver作用域与此前未接线的rack面/slot光照；编译/全构建成功，实际光照专项仍在修测试夹具资源，未验收通过。详见[阶段计划](REMAINING_PORT_PLAN_12111.md)。
+
+### 最新状态覆盖：R1–R5 已闭环，R6 ACTIVE（2026-11-26）
+
+上文 R3/R4“接续”是历史节点，最新原版/Iris receiver 与平台/Zoomify 输入/音效/GUI均已有目标回执；详见[活动计划](REMAINING_PORT_PLAN_12111.md)。R6 的 `42cbc3b6` 编译成功，ADS/recoil/modifiers/tracer 与 statue/rotation 消费者成品专项通过，但 none 的20项专服中2项失败，三世界开发门禁也暴露 memory-cache 夹具错误，不能称全构建或整体对齐成功。已接续修正首次 FCAP 注册顺序与夹具，并补独立外部高/低模、reload 代数/退役和 shell override，尚待目标验证。Target profile/legacy/异步身份、native muzzle 消费者及完整共享行为审计仍待完成。不改版本、不发布。

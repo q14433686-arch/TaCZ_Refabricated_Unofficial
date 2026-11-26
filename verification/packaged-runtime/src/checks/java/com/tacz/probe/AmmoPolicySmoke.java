@@ -69,6 +69,11 @@ public final class AmmoPolicySmoke {
         var owner=h.spawn(EntityType.ZOMBIE,BlockPos.ZERO);
         var ally=h.spawn(EntityType.COW,new BlockPos(1,3,1));var enemy=h.spawn(EntityType.PIG,new BlockPos(1,3,2));
         ally.setPos(origin);enemy.setPos(origin.add(0,0,1));ally.setNoAi(true);enemy.setNoAi(true);
+        // Stationary shot fixture: HitboxHelper intentionally compensates (pos - oldPos).
+        // Tick-zero teleports must not look like high-speed movement to that real consumer.
+        for (var mob : List.of(ally, enemy)) {
+            mob.xOld=mob.getX();mob.yOld=mob.getY();mob.zOld=mob.getZ();
+        }
         var bullet=new EntityKineticBullet(EntityKineticBullet.TYPE,level);bullet.setOwner(owner);
         var from=origin.add(0,0,-2);var to=origin.add(0,0,3);bullet.setPos(from);bullet.setDeltaMovement(to.subtract(from));
         var list=new ArrayList<>(AmmoConfig.BULLET_DAMAGE_IGNORE_LIST.get());

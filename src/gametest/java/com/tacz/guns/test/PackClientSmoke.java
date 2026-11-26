@@ -41,13 +41,20 @@ public final class PackClientSmoke implements FabricClientGameTest {
         // any failure immediately fails this test. Each keeps Fabric's original 1200-tick limit.
         for (int n = 2; n <= 3; n++) {
             int number = n;
-            context.waitFor(mc -> mc.level == null && CommonNetworkCache.INSTANCE.getGunIndex(id) == null);
+            // An integrated memory connection deliberately shares the common cache with its
+            // server (CommonNetworkCacheEvent.onLocalLogout). Only TCP teardown promises an
+            // empty cache. Require actual disconnect here and a NEW snapshot on the next join,
+            // rather than waiting for a memory-connection invariant that must never hold.
+            context.waitFor(mc -> mc.level == null && mc.getConnection() == null);
+            var previous = context.computeOnClient(mc -> CommonNetworkCache.INSTANCE.getGunIndex(id));
             context.runOnClient(mc -> { ticks[0] = 0; cycle[0] = number; start[0] = System.nanoTime(); loading.set(true); });
             try (var world = context.worldBuilder().create()) {
                 loading.set(false);
-                context.waitFor(mc -> CommonNetworkCache.INSTANCE.getGunIndex(id) != null && TimelessAPI.getClientGunIndex(id).isPresent());
+                context.waitFor(mc -> CommonNetworkCache.INSTANCE.getGunIndex(id) != null
+                        && CommonNetworkCache.INSTANCE.getGunIndex(id) != previous
+                        && TimelessAPI.getClientGunIndex(id).isPresent());
             } finally { loading.set(false); }
         }
-        System.out.println("PORT_WORLD_REPEATED: three independent fresh worlds loaded and cleared synchronized indexes; no retries or timeout changes");
+        System.out.println("PORT_WORLD_REPEATED: three independent fresh worlds loaded, disconnected and replaced synchronized snapshots; no retries or timeout changes");
     }
 }

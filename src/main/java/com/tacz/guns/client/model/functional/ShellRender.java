@@ -160,12 +160,17 @@ public class ShellRender implements IFunctionalSubmitter {
         }
 
         ShellEjection shellEjection = display.getShellEjection();
-        var ammoIndex = TimelessAPI.getClientAmmoIndex(gunData.getAmmoId()).orElse(null);
-        if (ammoIndex == null || ammoIndex.getShellModel() == null || ammoIndex.getShellTextureLocation() == null) {
-            return;
+        BedrockAmmoModel model;
+        Identifier texture;
+        if (shellEjection.getModelLocation() != null && display.getShellModel() != null && display.getShellTextureLocation() != null) {
+            model = display.getShellModel();
+            texture = display.getShellTextureLocation();
+        } else {
+            var ammoIndex = TimelessAPI.getClientAmmoIndex(gunData.getAmmoId()).orElse(null);
+            if (ammoIndex == null || ammoIndex.getShellModel() == null || ammoIndex.getShellTextureLocation() == null) return;
+            model = ammoIndex.getShellModel();
+            texture = ammoIndex.getShellTextureLocation();
         }
-        BedrockAmmoModel model = ammoIndex.getShellModel();
-        Identifier texture = ammoIndex.getShellTextureLocation();
         long lifeTime = (long) (shellEjection.getLivingTime() * 1000);
         checkShellQueue(lifeTime);
 

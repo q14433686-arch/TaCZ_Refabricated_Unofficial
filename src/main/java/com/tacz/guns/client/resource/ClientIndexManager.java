@@ -40,7 +40,12 @@ public class ClientIndexManager {
     public static final Map<Identifier, ClientSlotAdapterIndex> SLOT_ADAPTER_INDEX = Maps.newHashMap();
     public static final Map<Identifier, ClientBlockIndex> BLOCK_INDEX = Maps.newHashMap();
 
+    private static volatile long revision;
+    static long revision() { return revision; }
+
     public static void clear() {
+        GUN_DISPLAY.values().forEach(GunDisplayInstance::retireModels);
+        ++revision;
         GUN_DISPLAY.clear();
         GUN_INDEX.clear();
         AMMO_INDEX.clear();
@@ -225,6 +230,7 @@ public class ClientIndexManager {
         IAttachment attachment = IAttachment.getIAttachmentOrNull(stack);
         if (attachment != null) {
             TimelessAPI.getClientAttachmentIndex(attachment.getAttachmentId(stack)).ifPresent(ClientAttachmentIndex::warmUp);
+            TimelessAPI.getClientAttachmentVariantIndex(stack).ifPresent(ClientAttachmentVariantIndex::warmUp);
             return;
         }
         IAmmo ammo = IAmmo.getIAmmoOrNull(stack);

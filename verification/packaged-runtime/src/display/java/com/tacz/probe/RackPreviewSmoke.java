@@ -129,9 +129,17 @@ final class RackPreviewSmoke {
         ctx.waitFor(mc -> ItemStack.isSameItemSameComponents(item, mc.player.getMainHandItem()));
         int slot = requireSlot(ctx, pos, true, "aimed " + name);
         if (name.equals("mesh")) ctx.waitFor(mc -> {
-            var rig = com.tacz.guns.api.TimelessAPI.getGunDisplay(mc.player.getMainHandItem()).orElseThrow().getLodModel();
+            var rig = com.tacz.guns.api.TimelessAPI.getGunDisplay(mc.player.getMainHandItem()).orElseThrow().getExternalModel(true);
             return rig != null && rig.getLeft() instanceof cn.sh1rocu.tacz.compat.meshloader.model.TaczPolyMeshGunModel poly && poly.hasPolyMesh();
         });
+        if (item.getItem() instanceof IGun) {
+            ctx.waitFor(mc -> com.tacz.guns.api.TimelessAPI.getGunDisplay(mc.player.getMainHandItem()).orElseThrow().getExternalModel(false) != null);
+            ctx.runOnClient(mc -> {
+                var display = com.tacz.guns.api.TimelessAPI.getGunDisplay(mc.player.getMainHandItem()).orElseThrow();
+                if (display.getExternalModel(false).getLeft() == display.getGunModel())
+                    throw new AssertionError("World display borrowed mutable first-person hand rig");
+            });
+        }
         if (name.equals("corner") && slot < DisplayRackBlockEntity.SLOTS_PER_FACE) throw new AssertionError("Wrong corner face: "+slot);
         ctx.waitTicks(10);
         var ghost = ctx.takeScreenshot("tacz_" + name + "_ghost");

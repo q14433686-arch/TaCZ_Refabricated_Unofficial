@@ -478,6 +478,13 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
         worldBakedFormat = null;
     }
 
+    public void retire() {
+        releaseWorldBaked();
+        bakedBones.values().forEach(PolyMeshGpuRenderer::releaseDeferred);
+        bakedBones.clear();
+        gpuBaked = false;
+    }
+
     private void releaseBaked() {
         for (PolyMeshGpuRenderer.BakedBone baked : bakedBones.values()) {
             baked.close();

@@ -54,6 +54,9 @@ for name in [
     'net.minecraft.client.renderer.PlayerSkinRenderCache$RenderInfo',
     'net.minecraft.client.sounds.SoundManager',
     'net.minecraft.client.resources.sounds.AbstractSoundInstance',
+    'net.minecraft.world.item.component.ResolvableProfile',
+    'net.minecraft.world.item.component.ResolvableProfile$Dynamic',
+    'net.minecraft.server.Services',
 ]:
     print('PORT_PLATFORM_API:', name, flush=True)
     subprocess.run(['javap', '-classpath', jar, '-p', name], check=True)

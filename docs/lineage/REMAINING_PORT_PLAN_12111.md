@@ -181,3 +181,17 @@ R4 实机正例必须为真实 stock AK 按键射击并确认服务端少一发�
 另恢复 LazyJsonDataManager 的线程安全命中缓存、lazy parse/reload apply 共用锁与独立 ID 快照，增加阻塞旧worker与reload并发的JUnit对照，不允许旧parse覆盖新generation。开发客户端新增3个独立fresh-world生命周期门禁，任一失败即失败，不是重试、没有放宽Fabric限制；保留失败前线程栈诊断。上述新接续尚待目标编译与实机结果。
 
 后续仍需复核/接完的已知共享差异：第一人称 tracer 的出生帧 offset/quaternion；外部模型高/低精度异步 bake 与reload代数、shell display override；动画粒子在真实posed rig提交的消费者；雕像owner兼容存档/异步身份。不得因非同路径表只剩平台替代就将这些同名类行为漏项标绿。
+
+### R6 2026-11-26 接续：真实回归拦截，不提前关闭
+
+`7442792f` 的编译/全构建/发行均因 `ClientAttachmentIndex.getIdleScopeHeightAdjust` 缺失失败；`003bdda2` 补上 POJO → index → first-person consumer 及空 views 数组防护。该提交编译成功，但全构建与发行被后续 push 取消，不记作通过。
+
+`42cbc3b6` [编译45762450080](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45762450080) success；本体 SHA-256 `1713a402d0e49b7200f6e35bb1ae55060f59ff8786f8d1794ad1311abe212283`。成品 [45762450092](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45762450092) 的 platform / platform-zoomify 均 success：实际注册回调的 ADS 双通道五进度点、第一人称 XYZ/恢复、末位 client-pre veto 与独立服务端 ammo=7/6、modifier 面板精度/倍率/准确度 parser 均通过。两环境实际提交 tracer 顶点跨 live yaw/pitch/roll 与 muzzle 变化保持不动，legacy Euler setter 使 quaternion 失效对照通过。雕像单件副本、disk/update-tag 组件往返、替换/重复 drop 只有两件、三个方块原生 facing rotation 的专服断言也通过。
+
+但 none 专服 **20项中2项失败**，不能宣称通过：common config 首次加载未初始化 block policy；entity policy 控制组因 tick-zero teleport 与真实 HitboxHelper 速度补偿冲突而无命中。本轮把 FCAP loading/reloading 注册移到最早 ConfigRegistry.register 之前（注册时即同步加载），保留首次无手动 init 断言；静止命中夹具初始化 oldPos，不改变产品补偿算法。
+
+全构建 [45762450088](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45762450088) 失败在第一世界成功之后、第二世界之前的 PackClientSmoke:44：测试错误要求 memory connection 清空公共 cache，而生产明确保留与 integrated server 共用的 cache。修正门禁为 native level/connection 真正断开，以及下次 join **必须换成新 index 对象**；仍要求三个独立 fresh-world，不重试、不放宽超时。该失败不同于之前 worldBuilder.create / integratedTicks=0 超时，不能拿来宣布旧问题已修复。
+
+接续模型补丁（待编译/目标实机）：世界/FIXED/ground 从独立 external high/LOD 的 revision-aware DisplayBake 获取，不再等待 loader 或借用可动画 hand rig；GunRigBaker 统一 hi/LOD/mesh 分派，移除旧 mesh 尾注入避免重复加载；reload 退役已创建 GPU 模型，geo parse 换代 map 防止旧 worker 回写；shell override 走 native extraction，shell event 只投递给 ready 外部 rig。新增五项 DisplayBake JUnit 与真实 display probe 的独立 rig 断言。继续保留 Java21 / intermediary / native aperture，版本不变。
+
+仍未完成：Target owner 的 profile/UUID/patch/legacy migration 与受 generation 保护异步身份（先从本版 javap 取证，不照搬26.x resolver）；native muzzle effects/materials/定位器的实际消费者；posed-rig animation particle 复核；共享文件审计与全矩阵最终验收。
