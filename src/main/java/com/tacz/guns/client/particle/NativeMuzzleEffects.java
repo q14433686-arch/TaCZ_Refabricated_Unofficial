@@ -89,8 +89,8 @@ public final class NativeMuzzleEffects {
             SubmitNodeCollector collector = context.commandQueue();
             // Terrain/smoke geometry uses the same frozen main-pass source as the two
             // exception-safe native receiver submit windows, without extending their scope.
-            submitSmoke(collector, camera.pos);
-            SurfaceLights.submit(collector, camera.pos, WorldFlashFrame.mainPass(state));
+            submitSmoke(collector, context.matrices(), camera.pos);
+            SurfaceLights.submit(collector, context.matrices(), camera.pos, WorldFlashFrame.mainPass(state));
         });
     }
     public static void extracted(Entity entity, EntityRenderState state) {
@@ -298,7 +298,7 @@ public final class NativeMuzzleEffects {
         }
         smokeBursts++;
     }
-    private static void submitSmoke(SubmitNodeCollector collector, Vec3 camera) {
+    private static void submitSmoke(SubmitNodeCollector collector, PoseStack worldPose, Vec3 camera) {
         if (!RenderConfig.RENDER_MUZZLE_SMOKE.get()) return;
         long now = GunTime.nowMillis();
         var rotation = Minecraft.getInstance().gameRenderer.getMainCamera().rotation();
@@ -308,6 +308,7 @@ public final class NativeMuzzleEffects {
             double distance = (1 - Math.exp(-1.5*t))/1.5;
             Vec3 pos = puff.origin.add(puff.velocity.scale(distance)).subtract(camera);
             PoseStack pose = new PoseStack();
+            pose.last().set(worldPose.last());
             pose.translate(pos.x,pos.y,pos.z);
             pose.mulPose(rotation);
             pose.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(puff.rotation));

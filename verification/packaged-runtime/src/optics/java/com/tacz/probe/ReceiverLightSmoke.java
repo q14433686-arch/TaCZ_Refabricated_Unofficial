@@ -113,7 +113,7 @@ final class ReceiverLightSmoke {
                     error.append(probe.name).append(Arrays.toString(a)).append(' ');
                 System.out.println("PORT_RECEIVER_PIXEL: "+probe.name+" rest/off/on/expired/blocked-rest/blocked="+Arrays.toString(a)+" delta="+light+"/"+expiry+"/"+wall);
             }
-            if(!error.isEmpty()) throw new AssertionError("Receiver pixels: "+error);
+            if(!error.isEmpty()) throw new AssertionError("Receiver pixels: "+error+" "+LightFrames.sourceDebug+" case quads="+LightFrames.reflectionDebug);
         } finally {
             ctx.getInput().releaseKey(ShootKey.SHOOT_KEY);
             ctx.runOnClient(mc -> { LightFrames.clear();RenderConfig.MUZZLE_SURFACE_LIGHT.set(old[0]);RenderConfig.LEGACY_MUZZLE_LIGHT.set(old[1]);

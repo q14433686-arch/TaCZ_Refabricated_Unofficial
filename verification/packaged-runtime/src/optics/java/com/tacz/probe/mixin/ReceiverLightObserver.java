@@ -22,6 +22,10 @@ abstract class ReceiverLightObserver {
     @Inject(method="submitWorld",at={@At(value="INVOKE",target="Ljava/lang/Runnable;run()V",ordinal=0),
             @At(value="INVOKE",target="Ljava/lang/Runnable;run()V",ordinal=1)},remap=false)
     private static void submitted(LevelRenderState state,boolean entities,Runnable original,CallbackInfo ci) { LightFrames.submitted(state,entities); }
+    @Inject(method="reflectedColor",at=@At("RETURN"),remap=false)
+    private void reflection(net.minecraft.world.phys.Vec3 p,Direction normal,net.minecraft.core.BlockPos pos,float ambient,CallbackInfoReturnable<Integer> cir) {
+        LightFrames.reflected(pos,p,normal,cir.getReturnValue());
+    }
     @Inject(method="submitWorld",at=@At("RETURN"),remap=false)
     private static void end(LevelRenderState state,boolean entities,Runnable original,CallbackInfo ci) { LightFrames.endScope(); }
 }

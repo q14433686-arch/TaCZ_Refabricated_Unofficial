@@ -240,10 +240,12 @@ public final class SurfaceLights {
         return sources.isEmpty() ? null : new WorldFlashFrame(level, sources, draws);
     }
 
-    public static void submit(SubmitNodeCollector out, Vec3 camera, @Nullable WorldFlashFrame frame) {
+    public static void submit(SubmitNodeCollector out, PoseStack worldPose, Vec3 camera, @Nullable WorldFlashFrame frame) {
         if (frame == null || frame.draws.isEmpty()) return;
         var draws = frame.draws;
-        out.submitCustomGeometry(new PoseStack(),FlashMaterials.surface(),(pose,vertices) -> {
+        // Native 1.21.11 collector stores the supplied model-view pose. Camera-relative
+        // vertices still need the main pass view rotation (identity points behind yaw 0).
+        out.submitCustomGeometry(worldPose,FlashMaterials.surface(),(pose,vertices) -> {
             for (var draw:draws) for (var patch:draw.patches) patch.draw(pose,vertices,camera,draw.rgb,draw.strength,draw.bias);
         });
     }

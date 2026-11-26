@@ -33,6 +33,12 @@ public final class LightFrames {
     public static int shots;
     private static boolean faultProbe;
     static int exceptionRestores;
+    static String sourceDebug;
+    static final StringBuilder reflectionDebug=new StringBuilder();
+    public static void reflected(BlockPos pos,Vec3 p,net.minecraft.core.Direction normal,int color) {
+        if(observing() && pending.name.equals("on") && pos.equals(cabinet) && reflectionDebug.length()<2000)
+            reflectionDebug.append(p.subtract(Vec3.atLowerCornerOf(pos))).append('/').append(normal).append('=').append(Integer.toHexString(color)).append(' ');
+    }
     private static final ArrayDeque<IdentityHashMap<Object,Integer>> scopes=new ArrayDeque<>();
     private record View(Vec3 camera,Matrix4f rotation,float fx,float fy) {}
     private static final class Request {
@@ -43,7 +49,7 @@ public final class LightFrames {
         Request(String name,boolean triggered) { this.name=name; this.triggered=triggered; }
     }
     static void setup(Vec3 a,Vec3 b,Vec3 c,BlockPos s,BlockPos normal,BlockPos fullbright) {
-        cow=a;stand=b;drop=c;statue=s;board=normal;cabinet=fullbright;exceptionRestores=0;
+        cow=a;stand=b;drop=c;statue=s;board=normal;cabinet=fullbright;exceptionRestores=0;reflectionDebug.setLength(0);
         if(registered) return; registered=true;
         GunFirePostEvent.EVENT.register(e -> {
             if(e.getLogicalSide().isClient() && e.getShooter()==Minecraft.getInstance().player) {
@@ -79,6 +85,7 @@ public final class LightFrames {
         if(faultProbe || !observing()) return;
         if(entities && pending.name.equals("on") && exceptionRestores==0) exceptionRestore(state);
         pending.submitted=true;
+        if(pending.name.equals("on")) sourceDebug=com.tacz.guns.client.render.light.ReceiverFrameDebug.describe(com.tacz.guns.client.render.light.WorldFlashFrame.current());
         if(entities) for(var e:state.entityRenderStates) {
             int i=e.entityType==EntityType.COW ? 0 : e.entityType==EntityType.ARMOR_STAND ? 1 : e.entityType==EntityType.ITEM ? 2 : -1;
             Vec3 p=i==0?cow:i==1?stand:drop;

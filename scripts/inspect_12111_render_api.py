@@ -25,7 +25,7 @@ for name in [
 
 # Keep selected method bytecode, not whole classes (the CI log is deliberately bounded).
 for name, methods in {
-    'net.minecraft.client.renderer.LevelRenderer': ['submitEntities(', 'submitBlockEntities(', 'lambda$addMainPass$'],
+    'net.minecraft.client.renderer.LevelRenderer': ['submitEntities(', 'submitBlockEntities(', 'method_62214(', 'lambda$addMainPass$'],
     'com.mojang.blaze3d.pipeline.RenderTarget': ['copyDepthFrom('],
     'net.minecraft.client.renderer.GameRenderer': ['renderItemInHand('],
     'net.minecraft.client.renderer.CachedPerspectiveProjectionMatrixBuffer': ['getBuffer(', 'createProjectionMatrix('],
