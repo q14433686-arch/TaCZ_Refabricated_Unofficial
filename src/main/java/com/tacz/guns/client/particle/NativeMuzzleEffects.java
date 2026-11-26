@@ -92,6 +92,7 @@ public final class NativeMuzzleEffects {
             submitSmoke(collector, context.matrices(), camera.pos);
             SurfaceLights.submit(collector, context.matrices(), camera.pos, WorldFlashFrame.mainPass(state));
         });
+        WorldRenderEvents.END_MAIN.register(context -> com.tacz.guns.client.render.light.RackSurfaceLight.flush(context.consumers()));
     }
     public static void extracted(Entity entity, EntityRenderState state) {
         if (state != null) state.setData(OWNER, entity.getId());

@@ -38,6 +38,10 @@ def audit(product):
             if not line.startswith('#'):
                 sha, name = line.split('\t')
                 assert hashlib.sha256(jar.read(name)).hexdigest() == sha, name
+        # Native surface light samples the center of this albedo. Missing-texture black
+        # looked like a valid zero-light result even while 80 terrain patches were submitted.
+        white = 'assets/tacz/textures/effect/surface_white.png'
+        assert hashlib.sha256(jar.read(white)).hexdigest() == '7ac2abfce2be8b46dd9826d597d94edeefc1570b4a992622721b90a1850e3ee9', white
         shader = 'assets/tacz/shaders/core/scope_body.vsh'
         assert jar.read(shader) == (source / shader).read_bytes(), '26.x bundle shadowed the target shader'
     with product.open('rb') as f:

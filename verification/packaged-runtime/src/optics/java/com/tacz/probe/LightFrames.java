@@ -131,6 +131,7 @@ public final class LightFrames {
             if(error!=null) { request.result.completeExceptionally(error);return; }
             try {
                 var file=mc.gameDirectory.toPath().resolve("screenshots/tacz_receiver_"+request.name+".png");
+                java.nio.file.Files.createDirectories(file.getParent());
                 ImageIO.write(image,"png",file.toFile());
                 request.result.complete(new Frame(image,camera,light));
             } catch(Throwable e) { request.result.completeExceptionally(e); }

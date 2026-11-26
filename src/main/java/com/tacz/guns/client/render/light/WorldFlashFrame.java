@@ -32,7 +32,7 @@ public final class WorldFlashFrame {
 
     private static WorldFlashFrame cached;
     private static int preparedAt = -1;
-    public static void clear() { cached = null; preparedAt = -1; }
+    public static void clear() { cached = null; preparedAt = -1; RackSurfaceLight.clear(); }
 
     /** Cache one clock/budget for terrain and both native receiver submission windows. */
     public static @Nullable WorldFlashFrame mainPass(LevelRenderState state) {

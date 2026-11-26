@@ -25,6 +25,23 @@ import java.util.List;
 public final class RackSurfaceLight {
     private static final Direction[] SIDES = Direction.values();
     private record Face(BakedQuad quad, int color) {}
+    private record Late(PoseStack.Pose pose, Identifier atlas, List<Face> faces) {}
+    private static final List<Late> late = new ArrayList<>();
+    private static int lateFrame = -1;
+    public static void clear() { late.clear(); lateFrame = -1; }
+
+    /** 1.21.11 assigns the whole display-case chunk model to TRANSLUCENT, including its
+     * opaque back. Drawing reflection during entity features lets that back overwrite it.
+     * Freeze only that rack's real atlas geometry, then append at Fabric END_MAIN immediately
+     * before vanilla's last buffer flush, AFTER translucent terrain and with normal depth. */
+    public static void flush(net.minecraft.client.renderer.MultiBufferSource consumers) {
+        if (com.tacz.guns.client.render.scope.ScopePipRerender.isInsideScopeLevelRender()
+                || com.tacz.guns.compat.iris.IrisCompat.isRenderShadow()) return;
+        var draws = List.copyOf(late);
+        late.clear();
+        if (lateFrame != com.tacz.guns.client.render.scope.ScopeDepthCopyState.frameNumber()) return;
+        for (var draw : draws) draw(draw.pose, consumers.getBuffer(FlashMaterials.surface(draw.atlas)), draw.faces);
+    }
 
     public static void submit(WorldFlashFrame frame, BlockState state, BlockPos pos, int dye, Vec3 camera,
                               PoseStack pose, SubmitNodeCollector out) {
@@ -52,15 +69,20 @@ public final class RackSurfaceLight {
         }
         for (var batch : batches.entrySet()) {
             var faces = batch.getValue();
-            out.submitCustomGeometry(pose, FlashMaterials.surface(batch.getKey()), (entry, vertices) -> {
-                for (var f : faces) {
-                    var side=f.quad.direction(); var lifted=entry.copy();
-                    lifted.pose().translate(.006f*side.getStepX(), .006f*side.getStepY(), .006f*side.getStepZ());
-                    int c = f.color;
-                    vertices.putBulkData(lifted, f.quad, ARGB.redFloat(c), ARGB.greenFloat(c), ARGB.blueFloat(c),
-                            ARGB.alphaFloat(c), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
-                }
-            });
+            if (state.getBlock() instanceof com.tacz.guns.block.GunDisplayCaseBlock) {
+                int frameNumber = com.tacz.guns.client.render.scope.ScopeDepthCopyState.frameNumber();
+                if (lateFrame != frameNumber) { late.clear(); lateFrame = frameNumber; }
+                late.add(new Late(pose.last().copy(), batch.getKey(), List.copyOf(faces)));
+            } else out.submitCustomGeometry(pose, FlashMaterials.surface(batch.getKey()), (entry, vertices) -> draw(entry, vertices, faces));
+        }
+    }
+    private static void draw(PoseStack.Pose entry, com.mojang.blaze3d.vertex.VertexConsumer vertices, List<Face> faces) {
+        for (var f : faces) {
+            var side=f.quad.direction(); var lifted=entry.copy();
+            lifted.pose().translate(.006f*side.getStepX(), .006f*side.getStepY(), .006f*side.getStepZ());
+            int c = f.color;
+            vertices.putBulkData(lifted, f.quad, ARGB.redFloat(c), ARGB.greenFloat(c), ARGB.blueFloat(c),
+                    ARGB.alphaFloat(c), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
         }
     }
     private RackSurfaceLight() {}
