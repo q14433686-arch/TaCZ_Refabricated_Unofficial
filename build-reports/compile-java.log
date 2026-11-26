@@ -1,4 +1,4 @@
-commit: 69f708a659bc1ed341107af049106ae96e673ebe
+commit: 863219b775bccee98a3788ee9352fd1841da4675
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
 
@@ -432,7 +432,6 @@ Cannot remap lambda$addMainPass$1 because it does not exist in any of the target
 Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addParticlesPass$2 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
-Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
 Cannot remap lambda$addSkyPass$8 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addCloudsPass$3 because it does not exist in any of the targets [net/minecraft/class_761]
@@ -441,6 +440,7 @@ Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the tar
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addWeatherPass$4 because it does not exist in any of the targets [net/minecraft/class_761]
 Cannot remap lambda$addMainPass$1 because it does not exist in any of the targets [net/minecraft/class_761]
+Cannot remap sodium$setActive(Z)V because it does not exist in any of the targets [net/minecraft/class_7764]
 Cannot remap contents because it does not exist in any of the targets [mezz/jei/gui/overlay/IngredientListOverlay] or their parents.
 Cannot remap lambda$reload$3 because it does not exist in any of the targets [net/minecraft/class_1060]
 Cannot remap tick because it does not exist in any of the targets [net/minecraft/class_11890]
@@ -454,9 +454,6 @@ Cannot remap valueFormatter because it does not exist in any of the targets [] o
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/GlCommandEncoderScopeDepthCopyMixin.java:20: warning: Mixin target com.mojang.blaze3d.opengl.GlCommandEncoder is public and should be specified in value
 @Mixin(targets = "com.mojang.blaze3d.opengl.GlCommandEncoder")
 ^
-/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisShadowResolutionMixin.java:32: warning: Mixin target net.irisshaders.iris.shaderpack.properties.PackShadowDirectives is public and should be specified in value
-@Mixin(targets = "net.irisshaders.iris.shaderpack.properties.PackShadowDirectives", remap = false)
-^
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisHandRendererReticlePassMixin.java:22: warning: Mixin target net.irisshaders.iris.pathways.HandRenderer is public and should be specified in value
 @Mixin(targets = "net.irisshaders.iris.pathways.HandRenderer", remap = false)
 ^
@@ -465,6 +462,9 @@ Cannot remap valueFormatter because it does not exist in any of the targets [] o
 ^
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisScopeDimensionMixin.java:24: warning: Mixin target net.irisshaders.iris.Iris is public and should be specified in value
 @Mixin(targets = "net.irisshaders.iris.Iris", remap = false)
+^
+/home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisShadowResolutionMixin.java:32: warning: Mixin target net.irisshaders.iris.shaderpack.properties.PackShadowDirectives is public and should be specified in value
+@Mixin(targets = "net.irisshaders.iris.shaderpack.properties.PackShadowDirectives", remap = false)
 ^
 /home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/src/main/java/com/tacz/guns/mixin/client/iris/IrisDepthRestoreShaderMixin.java:23: warning: Mixin target net.irisshaders.iris.pipeline.programs.ShaderCreator is public and should be specified in value
 @Mixin(targets = "net.irisshaders.iris.pipeline.programs.ShaderCreator", remap = false)
@@ -482,7 +482,7 @@ Note: Recompile with -Xlint:unchecked for details.
 > Task :classes
 > Task :compileTestJava
 > Task :compileGametestJava
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795657442092.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run-1795657722092.json
 
 [Incubating] Problems report is available at: file:///home/runner/work/TaCZ_Refabricated_Unofficial/TaCZ_Refabricated_Unofficial/build/reports/problems/problems-report.html
 
@@ -492,7 +492,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 1m 14s
+BUILD SUCCESSFUL in 1m 28s
 4 actionable tasks: 4 executed
 PORT_RENDER_API: /home/runner/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/minecraft-merged/1.21.11-loom.mappings.1_21_11.layered+hash.2198-v2/minecraft-merged-1.21.11-loom.mappings.1_21_11.layered+hash.2198-v2.jar
 Compiled from "SubmitNodeStorage.java"
