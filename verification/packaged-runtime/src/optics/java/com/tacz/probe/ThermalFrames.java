@@ -27,7 +27,7 @@ final class ThermalFrames {
         var original = ctx.computeOnClient(mc -> {
             try {
                 var model = TimelessAPI.getClientAttachmentIndex(optic).orElseThrow().getAttachmentModel();
-                var field = model.getClass().getDeclaredField("scopeLens");
+                var field = com.tacz.guns.client.model.BedrockAttachmentModel.class.getDeclaredField("scopeLens");
                 field.setAccessible(true);
                 return (ScopeLensConfig) field.get(model);
             } catch (ReflectiveOperationException e) { throw new AssertionError(e); }
