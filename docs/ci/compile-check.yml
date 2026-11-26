@@ -1,10 +1,3 @@
-# 待上线：本文件是 .github/workflows/compile-check.yml 的替换件（v4）。
-# 沙箱凭据（GitHub App）没有 workflows 权限，推不动正式件：
-#   ! [remote rejected] ... refusing to allow a GitHub App to create or update workflow
-#     `.github/workflows/compile-check.yml` without `workflows` permission
-# 所以按 docs/ci/README.md 的约定由维护者粘贴上线。上线前，本分支的 CI 仍是旧版
-# （只有 arena/** 触发、没有 concurrency、主分支/PR 不编译）。
-
 name: compile-check
 
 # 编译验证闭环（1.21.11 分支，v4：对齐 26.2 侧 2026-08-31 的 compile-check v4）。
@@ -57,7 +50,7 @@ jobs:
         run: |
           mkdir -p build-reports
           echo "commit: ${{ github.sha }}" > build-reports/compile-java.log
-          ./gradlew compileJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
+          ./gradlew compileJava compileTestJava compileGametestJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
 
       - name: Push compile log back via contents API
         # 只有 arena/** 回推：主分支的提交历史必须干净

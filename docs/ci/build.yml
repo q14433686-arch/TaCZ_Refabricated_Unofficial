@@ -156,7 +156,40 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Full build
-        run: ./gradlew build --console=plain --stacktrace --no-daemon
+        run: |
+          set -o pipefail
+          ./gradlew build --console=plain --stacktrace --no-daemon 2>&1 | tee "$RUNNER_TEMP/build.log"
+
+      - name: Dedicated receiver GameTests
+        run: |
+          set -o pipefail
+          ./gradlew runGameTest --console=plain --stacktrace --no-daemon 2>&1 | tee "$RUNNER_TEMP/server.log"
+
+      - name: Client pack export, reload and synchronized indexes
+        env:
+          LIBGL_ALWAYS_SOFTWARE: 'true'
+          ALSOFT_DRIVERS: 'null'
+        run: |
+          set -o pipefail
+          xvfb-run -a ./gradlew -PtaczClientSmoke runClientGameTest --console=plain --no-daemon 2>&1 | tee "$RUNNER_TEMP/client.log"
+          grep -F 'exported ZIP loaded through /reload path' build/run/clientGameTest/logs/latest.log
+
+      - name: Receiver failure diagnostics
+        if: failure()
+        run: python3 scripts/report_ci_failures.py "$RUNNER_TEMP/build.log" "$RUNNER_TEMP/server.log" "$RUNNER_TEMP/client.log" build/run/{gameTest,clientGameTest}/logs/latest.log
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: receiver-tests-1.21.11-${{ github.sha }}
+          path: |
+            build/reports/tests/
+            build/test-results/
+            build/run/gameTest/logs/
+            build/run/clientGameTest/logs/
+            build/run/clientGameTest/screenshots/
+          if-no-files-found: warn
 
       - name: Upload jars
         uses: actions/upload-artifact@v4

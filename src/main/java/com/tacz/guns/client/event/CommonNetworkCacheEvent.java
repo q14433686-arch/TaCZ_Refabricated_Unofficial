@@ -12,6 +12,11 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 
 @Environment(EnvType.CLIENT)
 public class CommonNetworkCacheEvent {
+    /** Retire any task discarded during voluntary teardown before the next server can send data. */
+    public static void onConnectionInit(ClientPacketListener handler, Minecraft client) {
+        onLocalLogout(handler.getConnection());
+    }
+
     /** Transport close (possibly off-thread). Never clear the snapshot of a newer server. */
     public static void onDisconnect(ClientPacketListener handler, Minecraft client) {
         // Packet application, viewer state and the chunk receiver are game-thread owned.
