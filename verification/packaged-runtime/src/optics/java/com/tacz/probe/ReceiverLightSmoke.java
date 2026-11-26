@@ -113,7 +113,7 @@ final class ReceiverLightSmoke {
                     error.append(probe.name).append(Arrays.toString(a)).append(' ');
                 System.out.println("PORT_RECEIVER_PIXEL: "+probe.name+" rest/off/on/expired/blocked-rest/blocked="+Arrays.toString(a)+" delta="+light+"/"+expiry+"/"+wall);
             }
-            if(!error.isEmpty()) throw new AssertionError("Receiver pixels: "+error+" "+LightFrames.sourceDebug+" case quads="+LightFrames.reflectionDebug);
+            if(!error.isEmpty()) throw new AssertionError("Receiver pixels: "+error+" "+LightFrames.sourceDebug+" case quads="+LightFrames.reflectionDebug+" grid="+grid(off,on,Vec3.atLowerCornerOf(cabinet).add(0,0,.875)));
         } finally {
             ctx.getInput().releaseKey(ShootKey.SHOOT_KEY);
             ctx.runOnClient(mc -> { LightFrames.clear();RenderConfig.MUZZLE_SURFACE_LIGHT.set(old[0]);RenderConfig.LEGACY_MUZZLE_LIGHT.set(old[1]);
@@ -125,6 +125,13 @@ final class ReceiverLightSmoke {
                 p.setItemInHand(InteractionHand.MAIN_HAND,saved);p.inventoryMenu.broadcastChanges(); });
             server.runCommand("time set 6000");PlayerProbe.turn(ctx,0,0);ctx.waitTicks(20);
         }
+    }
+    private static String grid(LightFrames.Frame off,LightFrames.Frame on,Vec3 corner) {
+        var text=new StringBuilder();
+        for(int y=1;y<=9;y++) { text.append('[');for(int x=1;x<=9;x++) {
+            var p=corner.add(x*.1,y*.1,0);text.append(((on.rgb(p)>>16)&255)-((off.rgb(p)>>16)&255)).append(',');
+        } text.append(']'); }
+        return text.toString();
     }
     private static LightFrames.Frame fire(ClientGameTestContext ctx,TestSingleplayerContext world,boolean enabled) {
         PlayerProbe.turn(ctx,0,0);ctx.waitTicks(12);

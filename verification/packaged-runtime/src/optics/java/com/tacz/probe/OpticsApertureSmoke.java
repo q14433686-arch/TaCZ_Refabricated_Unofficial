@@ -87,7 +87,6 @@ public final class OpticsApertureSmoke extends PlayerProbe {
             ThermalFrames.verify(ctx, world, base, optic);
             AdsTransitionSmoke.run(ctx,world);
             WideSceneSmoke.verify(ctx,world,base);
-            ReceiverLightSmoke.verify(ctx,world,base);
             ctx.getInput().holdKey(AimKey.AIM_KEY);
             ctx.waitFor(mc -> IClientPlayerGunOperator.fromLocalPlayer(mc.player).getClientAimingProgress(0) > .999f);
             ctx.getInput().releaseKey(AimKey.AIM_KEY);

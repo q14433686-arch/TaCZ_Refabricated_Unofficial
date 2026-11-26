@@ -31,9 +31,9 @@ if (presentation != null) {
     }
 }
 if (playerSuite != null) {
-    assert client && presentation == null && viewer == 'none' && playerSuite in ['display', 'pal', 'controller', 'optics', 'optics-iris']
-    sourceSets.main.java.srcDirs('src/player/java', "src/${playerSuite.startsWith('optics') ? 'optics' : playerSuite}/java")
-    if (playerSuite.startsWith('optics')) {
+    assert client && presentation == null && viewer == 'none' && playerSuite in ['display', 'pal', 'controller', 'optics', 'optics-iris', 'receiver', 'receiver-iris']
+    sourceSets.main.java.srcDirs('src/player/java', "src/${(playerSuite.startsWith('optics') || playerSuite.startsWith('receiver')) ? 'optics' : playerSuite}/java")
+    if ((playerSuite.startsWith('optics') || playerSuite.startsWith('receiver'))) {
         sourceSets.main.java.srcDir 'src/reticle-contract/java'
         sourceSets.main.resources.srcDir 'src/optics/resources'
     }
@@ -41,11 +41,11 @@ if (playerSuite != null) {
         sourceSets.main.resources.srcDir 'src/pal/resources'
         loom.mixin { useLegacyMixinAp = true; defaultRefmapName = 'tacz_pal_probe.refmap.json' }
     }
-    def entry = [pal: 'PalRuntimeSmoke', controller: 'ControllerSmoke', display: 'DisplayProbe', optics: 'OpticsApertureSmoke', 'optics-iris': 'OpticsApertureSmoke'][playerSuite]
+    def entry = [pal: 'PalRuntimeSmoke', controller: 'ControllerSmoke', display: 'DisplayProbe', optics: 'OpticsApertureSmoke', 'optics-iris': 'OpticsApertureSmoke', receiver: 'ReceiverLightProbe', 'receiver-iris': 'ReceiverLightProbe'][playerSuite]
     processResources.filesMatching('fabric.mod.json') {
         filter { line ->
             if (playerSuite == 'pal') line = line.replace('"environment": "client",', '"environment": "client", "mixins": ["tacz_pal_probe.mixins.json"],')
-            if (playerSuite.startsWith('optics')) line = line.replace('"environment": "client",', '"environment": "client", "mixins": ["tacz_optics_probe.mixins.json"],')
+            if ((playerSuite.startsWith('optics') || playerSuite.startsWith('receiver'))) line = line.replace('"environment": "client",', '"environment": "client", "mixins": ["tacz_optics_probe.mixins.json"],')
             if (playerSuite == 'display') line = line.replace('"entrypoints": {', '"entrypoints": { "client": ["com.tacz.probe.HintInk"],')
             line.replace('com.tacz.probe.PackagedConnectionProbe', "com.tacz.probe.$entry".toString())
         }
@@ -135,7 +135,7 @@ if (client) {
             jvmArgs.add("-Dtacz.probe.player=$playerSuite".toString())
             if (playerSuite == 'display') doFirst { project.copy { from 'fixtures/display'; into runDir.dir('tacz/display_probe').get().asFile } }
             // The shader pack archive is fetched and hash-checked by scripts/test_12111_player.py before this copy.
-            if (playerSuite == 'optics-iris') doFirst { project.copy { from 'fixtures/optics-iris'; into runDir.get().asFile } }
+            if (playerSuite.endsWith('-iris')) doFirst { project.copy { from 'fixtures/optics-iris'; into runDir.get().asFile } }
             if (playerSuite == 'controller') doFirst {
                 ['controllable-fabric': 'f15f53fce9357a199585b585be1c9364ebaa4218fdce38877a9dc54729f0890e',
                  'framework-fabric': '9f7f5ab840a7d762921641a9ba1db85efca7853b825f787a2ab41f390ec4aa4d'].each { name, expected ->

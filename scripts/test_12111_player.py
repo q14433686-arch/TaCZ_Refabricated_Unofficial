@@ -103,7 +103,7 @@ def audit_iris_hooks(jar, evidence):
 def test(product, work, evidence, suite):
     copy_project(work, 'client')
     evidence.mkdir(parents=True, exist_ok=True)
-    if suite == 'optics-iris': prepare_iris_seed(work, evidence)
+    if suite.endswith('-iris'): prepare_iris_seed(work, evidence)
     instance = work/'client/build/instance'
     log = evidence/'client.log'
     args = runtime_command(work, 'client', product, 'none', '-PprobeClient', f'-PplayerSuite={suite}', 'probeClient')
@@ -119,15 +119,17 @@ def test(product, work, evidence, suite):
         'display': {'PORT_INK:': 1, 'PORT_OUTLINE:': 1, 'PORT_RACK_PREVIEW:': 5, 'PORT_CASE_HINT:': 1},
         'controller': {'PORT_CONTROLLER:': 1},
         'pal': {'PORT_PAL:': 2},
-        'optics': {'PORT_RECEIVER_INPUT:': 1, 'PORT_RECEIVER_PIXEL:': 10, 'PORT_PIP_MOTION:': 16, 'PORT_PIP_WIDE:': 2, 'PORT_THERMAL_PIXELS:': 1, 'PORT_THERMAL_MODE:': 2, 'PORT_THERMAL_POSE:': 18, 'PORT_OPTIC:': 3, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_RETICLE_PIXELS:': 1},
-        'optics-iris': {'PORT_RECEIVER_INPUT:': 1, 'PORT_RECEIVER_PIXEL:': 10, 'PORT_PIP_MOTION:': 16, 'PORT_PIP_WIDE:': 2, 'PORT_THERMAL_PIXELS:': 1, 'PORT_THERMAL_MODE:': 2, 'PORT_THERMAL_POSE:': 18, 'PORT_OPTIC:': 3, 'PORT_IRIS:': 1, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_RETICLE_PIXELS:': 1},
+        'receiver': {'PORT_RECEIVER_INPUT:': 1, 'PORT_RECEIVER_PIXEL:': 10, 'PORT_RECEIVER_PACK:': 1},
+        'receiver-iris': {'PORT_RECEIVER_INPUT:': 1, 'PORT_RECEIVER_PIXEL:': 10, 'PORT_RECEIVER_PACK:': 1},
+        'optics': {'PORT_PIP_MOTION:': 16, 'PORT_PIP_WIDE:': 2, 'PORT_THERMAL_PIXELS:': 1, 'PORT_THERMAL_MODE:': 2, 'PORT_THERMAL_POSE:': 18, 'PORT_OPTIC:': 3, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_RETICLE_PIXELS:': 1},
+        'optics-iris': {'PORT_PIP_MOTION:': 16, 'PORT_PIP_WIDE:': 2, 'PORT_THERMAL_PIXELS:': 1, 'PORT_THERMAL_MODE:': 2, 'PORT_THERMAL_POSE:': 18, 'PORT_OPTIC:': 3, 'PORT_IRIS:': 1, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_RETICLE_PIXELS:': 1},
     }[suite]
     text = log.read_text(errors='replace')
     for marker, count in {**markers, 'PORT_PLAYER:': 1}.items():
         rows = [row.split(marker, 1)[1].strip() for row in text.splitlines() if marker in row]
         if len(rows) != count: raise AssertionError(f'{suite}: expected {count} {marker} receipts, got {rows}')
         print(f'::notice::{marker} ' + ' | '.join(rows), flush=True)
-    frames = {'optics': ['optic_raise', 'optic_steady', 'optic_hip'], 'optics-iris': ['optic_raise', 'optic_steady', 'optic_hip'], 'pal': ['pal_remote_rifle', 'pal_remote_pistol'], 'controller': [], 'display': [
+    frames = {'optics': ['optic_raise', 'optic_steady', 'optic_hip'], 'optics-iris': ['optic_raise', 'optic_steady', 'optic_hip'], 'pal': ['pal_remote_rifle', 'pal_remote_pistol'], 'controller': [], 'receiver': [], 'receiver-iris': [], 'display': [
         f'{scene}_{state}' for scene in ['rack', 'case', 'corner', 'vanilla_quad', 'mesh'] for state in ['empty', 'ghost', 'placed']
     ] + [f'case_hint_{s}' for s in ['gun_hover','gun_interact','empty_hover','look_away','tick_39','tick_40_held','sneak_unlock','unlocked']]}[suite]
     if suite.startswith('optics'):
@@ -137,10 +139,11 @@ def test(product, work, evidence, suite):
                    for kind in ['empty'] + [f'{stage}_{yaw}' for stage in ['optical','heat','wall'] for yaw in [0,45,90]]]
     for frame in frames:
         if not any((instance/'screenshots').glob(f'*tacz_{frame}.png')): raise AssertionError(f'Missing raw frame: {frame}')
-    if suite.startswith('optics'):
+    if suite.startswith('receiver'):
         for name in ['rest','off','on','expired','blocked_rest','blocked']:
             if not (instance/'screenshots'/f'tacz_receiver_{name}.png').is_file():
                 raise AssertionError(f'Missing receiver frame: {name}')
+    if suite.startswith('optics'):
         transition = instance/'screenshots/ads-transition'
         samples = [f'{mode}_{phase}' for mode in ['reproject','narrow']
                    for phase in ['raise','mid','steady','missing_mask','below_floor','lower','hip']] + ['classic_raise','classic_lower']
@@ -155,7 +158,7 @@ def test(product, work, evidence, suite):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--accept-test-eula', required=True, action='store_true')
-    parser.add_argument('--suite', required=True, choices=['display','pal','controller','optics','optics-iris'])
+    parser.add_argument('--suite', required=True, choices=['display','pal','controller','optics','optics-iris','receiver','receiver-iris'])
     parser.add_argument('jar', type=Path)
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='tacz-12111-player-') as tmp:

@@ -25,8 +25,8 @@ abstract class PlayerProbe implements FabricClientGameTest {
         try { PackagedConnectionProbe.requireProduct(); } catch (IOException e) { throw new UncheckedIOException(e); }
         var loader = FabricLoader.getInstance();
         String suite = System.getProperty("tacz.probe.player");
-        boolean iris = suite.equals("optics-iris");
-        String id = switch (suite) { case "pal" -> "player_animation_library"; case "controller" -> "controllable"; case "display", "optics" -> ""; case "optics-iris" -> "iris"; default -> throw new AssertionError(suite); };
+        boolean iris = suite.endsWith("-iris");
+        String id = switch (suite) { case "pal" -> "player_animation_library"; case "controller" -> "controllable"; case "display", "optics", "receiver" -> ""; case "optics-iris", "receiver-iris" -> "iris"; default -> throw new AssertionError(suite); };
         var loaded = Stream.of("iris", "sodium", "jei", "roughlyenoughitems", "player_animation_library", "controllable").filter(loader::isModLoaded).collect(Collectors.toSet());
         var expected = iris ? Set.of("iris", "sodium") : id.isEmpty() ? Set.of() : Set.of(id);
         String version = id.isEmpty() ? "bare" : loader.getModContainer(id).orElseThrow().getMetadata().getVersion().getFriendlyString();
