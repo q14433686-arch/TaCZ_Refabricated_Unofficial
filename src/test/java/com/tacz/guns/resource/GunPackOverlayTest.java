@@ -101,9 +101,18 @@ class GunPackOverlayTest {
             assertTrue(recipe.contains("\"id\""));
             check(resources, PackType.SERVER_DATA, "recipe", "r.json", recipe);
             var lang = read(resources.getResource(PackType.CLIENT_RESOURCES, Identifier.parse("fixture:lang/en_us.json")));
-            assertTrue(lang.contains("kept"));
-            // Resource transport must preserve the native language loader's fallback.
-            assertTrue(lang.contains("bad"));
+            // The aggregate now repairs malformed language values in memory. Check the exact
+            // translation object and get/list parity rather than requiring invalid arrays to leak.
+            var translations = com.google.gson.JsonParser.parseString(lang).getAsJsonObject();
+            assertEquals(1, translations.size());
+            assertEquals("kept", translations.get("ok").getAsString());
+            assertFalse(translations.has("bad"));
+            check(resources, PackType.CLIENT_RESOURCES, "lang", "en_us.json", lang);
+            var rawLayers = GunPackOverlayResolver.open(pack, meta.getName(), selected);
+            try {
+                assertEquals(files.get("late/assets/fixture/lang/en_us.json"),
+                        read(rawLayers.getFirst().getResource(PackType.CLIENT_RESOURCES, Identifier.parse("fixture:lang/en_us.json"))));
+            } finally {rawLayers.forEach(net.minecraft.server.packs.PackResources::close);}
         }
     }
 
