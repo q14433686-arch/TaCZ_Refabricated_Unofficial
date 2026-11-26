@@ -256,6 +256,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             path = getPath(divisionModel);
         }
         // 第 22 轮：解析准星（分划）节点集合，供 IReticleRenderer 策略使用。
+        indexViewOculars();
         this.reticleNodes = resolveReticleNodes();
     }
 
@@ -291,8 +292,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     }
 
     /**
-     * 【第 35 轮】组合镜（both）当前激活的镜组：{@code 1} = 红点/全息分系统，
-     * {@code 2} = 筒镜分系统。非组合镜恒为 {@code 0}（表示"不适用，不做过滤"）。
+     * 组合镜（both）当前激活的 scope_view[_N] 序号，来自 display views[]。
+     * 不同模型的序号与筒镜/红点角色不同；{@code 0} 表示未指定，不做过滤。
      *
      * <p>由 {@code FirstPersonRenderGunEvent} 在计算定位时顺带写入 ——
      * 那里本来就要按 {@code views[zoomNumber]} 选 {@code scope_view} 定位组，
@@ -348,28 +349,39 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         return new ScopeNodeSet(etched, illuminated);
     }
 
-    /**
-     * 当前激活镜组对应的<b>目镜序号</b>。
-     *
-     * <p>{@code activeViewGroup} 取自 display json 的 {@code views[]}，
-     * 约定 {@code 1} = 红点分系统、{@code 2} = 筒镜分系统。这里把它翻译成
-     * 本模型内部的目镜序号 —— 两者<b>不能划等号</b>：
-     * {@code scope_standard_8x} 的筒镜是序号 1（{@code ocular_scope}）、
-     * 红点是序号 2（{@code ocular_sight_2}），与 hamr/vudu 正好相反。
-     * 因此必须查 {@link #ocularIsScopeByIndex} 这张构造时建好的表，
-     * 而不能假设「序号 = views 值」或「前缀 = views 值」。
-     *
-     * @return 匹配的目镜序号；找不到（非组合镜或命名不含分组信息）返回 {@code null}
-     */
+    /** Authored views[] indexes scope_view[_N], not a universal sight/scope role.
+     * Match that optical axis to its rest-pose ocular; the ocular suffix still selects division[_N]. */
     @Nullable
     private Integer activeOcularIndex() {
-        boolean wantScope = activeViewGroup == 2;
-        for (Map.Entry<Integer, Boolean> entry : ocularIsScopeByIndex.entrySet()) {
-            if (entry.getValue() == wantScope) {
-                return entry.getKey();
+        return ocularForView.get(activeViewGroup);
+    }
+
+    /** views[] selects scope_view[_N], not a universal sight/scope role. AMG10 and
+     * standard_8x use view 1 for their scope; HAMR uses view 2. Pair each rest-pose
+     * view axis with the ocular on that axis, retaining ocular suffixes for divisions. */
+    private final Map<Integer, Integer> ocularForView = new java.util.HashMap<>();
+
+    private void indexViewOculars() {
+        for (int view = 0; view < scopeViewPaths.size(); view++) {
+            Matrix4f inverseView = restPose(scopeViewPaths.get(view)).invert();
+            double best = Double.POSITIVE_INFINITY;
+            Integer selected = null;
+            for (var entry : ocularByIndex.entrySet()) {
+                var chain = new java.util.ArrayDeque<BedrockPart>();
+                for (var part = entry.getValue(); part != null; part = part.getParent()) chain.push(part);
+                var centre = restPose(new ArrayList<>(chain)).getTranslation(new org.joml.Vector3f());
+                inverseView.transformPosition(centre);
+                double error = centre.x * centre.x + centre.y * centre.y;
+                if (error < best) { best = error; selected = entry.getKey(); }
             }
+            if (selected != null) ocularForView.put(view + 1, selected);
         }
-        return null;
+    }
+
+    private static Matrix4f restPose(List<BedrockPart> path) {
+        PoseStack pose = new PoseStack();
+        for (var part : path) part.translateAndRotateAndScale(pose);
+        return new Matrix4f(pose.last().pose());
     }
 
     /** {@code part} 自身或其任一祖先是否为 {@code ancestor}。 */
@@ -642,7 +654,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         // lens picture overwrites both. When the PIP composite is active this frame we therefore run
         // the reticle/rim through the post-composite overlay even without Iris; normal vanilla stays
         // in its established immediate solid-pass order.
-        var frameLens = isScope && (!(isScope && isSight) || activeViewGroup == 0 || activeViewGroup == 2) ? scopeLens : null;
+        var frameLens = isScope && activeGroupIsScope() ? scopeLens : null;
         if (orderedScopeSequence) com.tacz.guns.client.render.scope.ScopeLensFrame.observe(frameLens);
         boolean pipDefersReticle = ScopePipRenderState.shouldDeferReticleOverlay();
         boolean deferReticleToIrisFinalOverlay = orderedScopeSequence
@@ -867,6 +879,23 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                     tasks.size(), scopeMaskEnabled);
         }
     }
+
+    private boolean activeGroupIsScope() {
+        if (isSight && !isScope) {
+            return false; // 纯红点/全息：上游 renderSight 从不裁镜身
+        }
+        if (isScope && !isSight) {
+            return true;  // 纯筒镜：目镜无论叫什么名都是物理高倍通道
+        }
+        // 组合镜（hamr/vudu/mk5hd）：views[zoom] 选出当前通道；通道组内没有
+        // 「名符其实」的筒镜目镜（如纯 plain-ocular 命名）时回退 true = 恒裁旧行为。
+        Integer activeIndex = activeViewGroup == 0 ? null : activeOcularIndex();
+        if (activeIndex == null) {
+            return true;
+        }
+        return Boolean.TRUE.equals(ocularIsScopeByIndex.get(activeIndex));
+    }
+
 
     private boolean isOcularInActiveGroup(BedrockPart ocular) {
         if (activeViewGroup == 0 || !(isScope && isSight)) {

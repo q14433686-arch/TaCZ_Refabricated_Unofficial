@@ -184,8 +184,8 @@ public class FirstPersonRenderGunEvent {
                     viewIndex = views[Math.floorMod(zoomNumber, views.length)] - 1;
                     if (attachmentModel != null) {
                         // 【第 35 轮】把"当前用的是哪一组镜"告诉模型，供组合镜过滤准星。
-                        // views[] 里 1 = 红点分系统、2 = 筒镜分系统
-                        // （scope_hamr_display.json: zoom[3.25, 1.25] / views[2, 1]）。
+                        // views[] 是 scope_view[_N] 定位组序号，不是固定的红点/筒镜角色。
+                        // HAMR 高倍用2，而 AMG10 高倍用1；由模型按光轴配对目镜。
                         // 这里是全流程唯一同时知道 zoomNumber 与 views[] 的地方。
                         attachmentModel.setActiveViewGroup(views[Math.floorMod(zoomNumber, views.length)]);
                         List<BedrockPart> scopeViewPath = attachmentModel.getScopeViewPath(currentViewIndex == -1 ? viewIndex : currentViewIndex);
