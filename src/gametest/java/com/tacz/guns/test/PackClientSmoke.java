@@ -53,6 +53,7 @@ public final class PackClientSmoke implements FabricClientGameTest {
                         WorldTracerSmoke.run(context, world);
                         PlayerFeedbackSmoke.run(context, world);
                     }
+                    case "viewtuning" -> ViewTuningSmoke.run(context, world);
                     case "displays" -> {
                         context.waitFor(mc -> mc.player.onGround());
                         context.runOnClient(TargetPoseSmoke::run);

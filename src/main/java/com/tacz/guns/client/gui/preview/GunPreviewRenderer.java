@@ -87,10 +87,17 @@ public class GunPreviewRenderer extends PictureInPictureRenderer<GunPreviewRende
         poseStack.mulPose(Axis.YP.rotationDegrees(state.yaw()));
         // 与 vanilla 26.1.2 的 OversizedItemRenderer#renderToTexture 同一套提交路径：
         // FeatureRenderDispatcher 的 SubmitNodeStorage 就是本帧 GUI 阶段的 SubmitNodeCollector。
-        state.item().submit(poseStack,
-                mc.gameRenderer.getFeatureRenderDispatcher().getSubmitNodeStorage(),
-                15728880, OverlayTexture.NO_OVERLAY, 0);
-        mc.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
+        // Screen-owned draw: the high-poly model is used regardless of GunLodRenderDistance (upstream 1.2.0
+        // ScreenItemVboContext semantics), and world guns rendered while the screen is open keep their LOD.
+        com.tacz.guns.util.RenderDistance.beginScreenItemDraw();
+        try {
+            state.item().submit(poseStack,
+                    mc.gameRenderer.getFeatureRenderDispatcher().getSubmitNodeStorage(),
+                    15728880, OverlayTexture.NO_OVERLAY, 0);
+            mc.gameRenderer.getFeatureRenderDispatcher().renderAllFeatures();
+        } finally {
+            com.tacz.guns.util.RenderDistance.endScreenItemDraw();
+        }
     }
 
     /**

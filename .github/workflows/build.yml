@@ -82,6 +82,16 @@ jobs:
           sys.exit(1 if bad else 0)
           EOF
 
+      - name: "Upstream 1.2.0 text alignment (config comments/defaults + 21 locales vs Sh1roCu 356bdf9)"
+        run: |
+          # 只读校验：上游 1.2.0（Sh1roCu/TACZ-Refabricated 356bdf9）的每个配置键注释/默认值，以及 21 个语言
+          # 文件的每个键，必须与本线一致；有意差异逐条登记在脚本常量与
+          # docs/lineage/UPSTREAM_120_ALIGNMENT_12111.md。按 SHA 取单个提交，不引入上游分支。
+          git fetch -q --no-tags --depth=1 https://github.com/Sh1roCu/TACZ-Refabricated.git \
+            356bdf9d48f2225bac6ceb56adc5576a418517a8
+          python3 scripts/align_config_text.py
+          python3 scripts/port_upstream_lang.py --check
+
       - name: Version consistency (与 consistency.yml 同一脚本，arena 分支也守门)
         run: bash scripts/check_release_consistency.sh --strict
 

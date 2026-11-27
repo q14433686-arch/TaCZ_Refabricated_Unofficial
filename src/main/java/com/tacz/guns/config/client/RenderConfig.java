@@ -178,21 +178,22 @@ public class RenderConfig {
                 .define("YsmCompat", true);
 
         ILLUMINATED_REAL_SKY = builder.define("IlluminatedRealSky", false);
-        EXPERIMENTAL_SCOPE_LENS = builder.comment("Apply the active display's lens to its masked aperture (native renderer).")
+        EXPERIMENTAL_SCOPE_LENS = builder.comment("Enable scope lens effects configured by each attachment display. Uses the existing scope window and keeps the normal aiming magnification.")
                 .define("EnableExperimentalScopeLens", true);
-        SCOPE_THERMAL_ENABLE = builder.comment("Capture visible heat sources for thermal lenses; otherwise use their optics.")
+        SCOPE_THERMAL_ENABLE = builder.comment("Allow thermal imaging for attachments whose display selects a thermal vision mode. Disabling this uses their normal optical lens and skips thermal entity capture. Requires EnableExperimentalScopeLens.")
                 .define("EnableScopeThermal", true);
-        ENABLE_OCULAR_INFLATE = builder.comment("Expand only attachment ocular cubes when baking. Reload resources to apply.")
+        ENABLE_OCULAR_INFLATE = builder.comment("Try enabling this if you see flickering black spots when aiming through a scope. Expands ocular cubes during model baking to close small gaps. Reload client resources after changing this setting.")
                 .define("EnableOcularInflate", true);
-        OCULAR_INFLATE = builder.comment("Additional inflate in Bedrock model units (not screen-space mask padding).")
+        OCULAR_INFLATE = builder.comment("Extra inflate added to ocular cubes in Bedrock model units. Requires EnableOcularInflate. Reload client resources after changing this setting.")
                 .defineInRange("OcularInflate", 0.0005, 0.0, (double) Float.MAX_VALUE);
 
-        DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER = builder.comment("Hide third-person offhand and unselected hotbar guns; keep main hand visible").define("DisableThirdPersonOffhandAndHotbarGunRender", false);
-        GUN_HURT_BOB_MULTIPLIER = builder.comment("First-person ordinary hurt tilt while holding a gun; front/back hits are additionally halved").defineInRange("GunHurtBobMultiplier", 0.1, 0, 1);
+        DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER = builder.comment("Disable third-person rendering of guns stored in the offhand and unselected hotbar slots. Main-hand gun rendering is unaffected.").define("DisableThirdPersonOffhandAndHotbarGunRender", false);
+        GUN_HURT_BOB_MULTIPLIER = builder.comment("First-person vanilla hurt tilt multiplier while holding a gun in the main hand. 0 disables it, 1 preserves vanilla side-hit strength. Front/back hits use half this multiplier, with smooth transitions for diagonal hits. Multiplies the vanilla Damage Tilt setting; gunshot-specific hurt effects keep their gun data settings.")
+                .defineInRange("GunHurtBobMultiplier", 0.1, 0, 1);
         MUZZLE_SURFACE_LIGHT = builder.comment("Briefly light nearby terrain, world entities and displayed objects on a successful shot (client visual only).").define("MuzzleSurfaceLight", true);
         LEGACY_MUZZLE_LIGHT = builder.comment("Estimate shot exposure for old textured flashes and explosive launchers that omit the flash. Never enables disabled renew effects.").define("LegacyMuzzleLight", true);
         EXPLOSION_SURFACE_LIGHT = builder.comment("Project a short-range pulse for standard explosion notifications (including TNT) and tracked LR stun bursts.").define("ExplosionSurfaceLight", true);
-        RENDER_MUZZLE_SMOKE = builder.comment("Render detached renew muzzle smoke independently of flash").define("RenderMuzzleSmoke", true);
+        RENDER_MUZZLE_SMOKE = builder.comment("Whether or not to render the renew (snowstorm particle) muzzle smoke. Disable this if translucent smoke has issues with shaders.").define("RenderMuzzleSmoke", true);
 
         builder.comment("Whether or not apply fadeout effect on the laser beam. Close this may improve laser performance under some shaders.");
         ENABLE_LASER_FADE_OUT = builder.define("EnableLaserFadeOut", true);
@@ -205,8 +206,8 @@ public class RenderConfig {
                 .defineInRange("DroppedGunSpriteDistance", DEFAULT_DROPPED_GUN_SPRITE_DISTANCE, -1, Integer.MAX_VALUE);
 
         HIT_PARTICLE_ENABLE = builder.comment("Show block impact particles").define("HitParticleEnable", true);
-        HIT_EXTRA_PARTICLE_ENABLE = builder.comment("Show gun pack hit_surface_particles in addition to block fragments").define("HitExtraParticleEnable", true);
-        HIT_PARTICLE_MAX_DISTANCE = builder.comment("Maximum impact-particle distance (0: unlimited)").defineInRange("HitParticleMaxDistance", 64, 0, Integer.MAX_VALUE);
+        HIT_EXTRA_PARTICLE_ENABLE = builder.comment("Whether or not to spawn display-configured extra hit particles. Disabling this keeps the basic block hit particles.").define("HitExtraParticleEnable", true);
+        HIT_PARTICLE_MAX_DISTANCE = builder.comment("The farthest distance to spawn extra hit particles, 0 means always spawn").defineInRange("HitParticleMaxDistance", 64, 0, Integer.MAX_VALUE);
 
         builder.comment("The existence time of bullet hole particles, in tick");
         BULLET_HOLE_PARTICLE_LIFE = builder.defineInRange("BulletHoleParticleLife", 400, 0, Integer.MAX_VALUE);
@@ -214,7 +215,7 @@ public class RenderConfig {
         builder.comment("The threshold for fading out when rendering bullet hole particles");
         BULLET_HOLE_PARTICLE_FADE_THRESHOLD = builder.defineInRange("BulletHoleParticleFadeThreshold", 0.98, 0, 1);
 
-        builder.comment("Legacy crosshair preset seed for accounts without a personal view profile.");
+        builder.comment("The crosshair when holding a gun");
         CROSSHAIR_TYPE = builder.defineEnum("CrosshairType", CrosshairType.DOT_1);
 
         builder.comment("The starting position of the hit marker");
@@ -244,7 +245,7 @@ public class RenderConfig {
         builder.comment("Disable the interact hud text in center of the screen");
         DISABLE_INTERACT_HUD_TEXT = builder.define("DisableInteractHudText", false);
 
-        RENDER_CREATIVE_PACK_SIDEBAR = builder.comment("Display a pack sidebar in TaCZ creative tabs. Disabling restores the full current tab.")
+        RENDER_CREATIVE_PACK_SIDEBAR = builder.comment("Whether or not to display the content pack sidebar in TACZ creative tabs. Disabling this also restores all items in the current tab.")
                 .define("RenderCreativePackSidebar", true);
 
         builder.comment("Whether or not to automatically select the gun smith table's held item filter when opening it with a gun, attachment or ammo in main hand");

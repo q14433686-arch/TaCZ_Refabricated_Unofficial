@@ -1,6 +1,7 @@
 package com.tacz.guns.client.input;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.gui.GunRefitScreen;
 import net.fabricmc.api.EnvType;
@@ -25,6 +26,8 @@ public class RefitKey {
         }
         if (isInGame()) {
             if (IGun.mainHandHoldGun(player) && Minecraft.getInstance().screen == null) {
+                // Upstream 1.2.0: never open the refit screen while a charge is being held.
+                if (IClientPlayerGunOperator.fromLocalPlayer(player).isCharging()) return;
                 IGun iGun = IGun.getIGunOrNull(player.getMainHandItem());
                 if (iGun != null && iGun.hasAttachmentLock(player.getMainHandItem())) {
                     return;
