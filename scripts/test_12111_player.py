@@ -132,12 +132,15 @@ def prepare_user_seed(work, evidence):
     query = '?loaders=%5B%22fabric%22%5D&game_versions=%5B%221.21.11%22%5D'
     def pick(project, prefix, q=query):
         versions = modrinth(f'/project/{project}/version{q}')
-        chosen = next((v for v in versions if v['version_number'].startswith(prefix)), None)
+        # Sodium numbers releases as mc1.21.11-0.8.12-fabric, Iris as 1.10.7+1.21.11-fabric.
+        import re
+        exact = re.compile(r'(^|[^0-9.])' + re.escape(prefix) + r'([^0-9.]|$)')
+        chosen = next((v for v in versions if exact.search(v['version_number'])), None)
         if chosen is None:
             raise AssertionError(f'{project} {prefix} not found; available: {[v["version_number"] for v in versions]}')
         return chosen
     receipt = []
-    for project, prefix in (('iris', USER_ENV['iris'] + '+'), ('sodium', USER_ENV['sodium'] + '+')):
+    for project, prefix in (('iris', USER_ENV['iris']), ('sodium', USER_ENV['sodium'])):
         version = pick(project, prefix)
         file = next((f for f in version['files'] if f.get('primary')), version['files'][0])
         jar = seed/'mods'/file['filename']
@@ -210,7 +213,11 @@ def report_receipts(receipts):
 def test(product, work, evidence, suite):
     copy_project(work, 'client')
     evidence.mkdir(parents=True, exist_ok=True)
-    if suite == 'user-unbound-iris': prepare_user_seed(work, evidence)
+    if suite == 'user-unbound-iris':
+        try: prepare_user_seed(work, evidence)
+        except Exception as e:
+            print(f'::error::PORT_USER_SEED: {type(e).__name__}: {str(e)[:3000]}', flush=True)
+            raise
     elif suite.endswith('-iris'): prepare_iris_seed(work, evidence)
     if suite == 'platform-zoomify': prepare_zoomify_seed(work, evidence)
     instance = work/'client/build/instance'
