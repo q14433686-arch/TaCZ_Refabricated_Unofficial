@@ -18,7 +18,9 @@ import net.minecraft.world.InteractionHand;
 import org.joml.Vector3f;
 
 /**
- * C1 回执（26.1.2 没有 26.2/26.3 的 {@code ViewTuningSmoke}，这里新增等价的手部枪口断言）。
+ * C1 回执（26.1.2 的 gametest 源集没有 26.2/26.3 的手部枪口断言，这里新增等价版本）。类名避开
+ * playerTest 的 {@code ViewTuningSmoke}：player 套件会把两个源集合并编译，重名类会让
+ * {@code copy/paste/field/saveHud/fromDisk/setBase} 等辅助静态方法解析失败。
  *
  * <p>上游 1.2.0 {@code FirstPersonRenderMath#muzzleOffset}：缓存的枪口偏移保留视图空间深度，
  * 横纵分量按 {@code tan(worldFov/2)/tan(itemFov/2)} 缩放。旧实现缩放深度，屏幕位置相同但曳光弹
@@ -28,7 +30,7 @@ import org.joml.Vector3f;
  * <p>不经过 ViewTuningScreen 的 UI，直接改写 {@link TuningProfiles#current()} 的基座 XYZ ——
  * {@code TuningValues.visible()} 在编辑器未打开时返回的正是该基座，手部渲染每帧据此重算枪口偏移。
  */
-final class ViewTuningSmoke {
+final class HandMuzzleSmoke {
     private static final String UI = "gui.tacz.view_tuning.";
 
     static void run(ClientGameTestContext ctx, TestSingleplayerContext world) {
@@ -64,8 +66,8 @@ final class ViewTuningSmoke {
             // 从渲染器使用的同一 FOV 动力学读取比例 k（世界已暂停，两者均已稳定）。
             float k = ctx.computeOnClient(mc -> {
                 double item = Math.tan(Math.toRadians(CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get()) / 2);
-                double world = Math.tan(Math.toRadians(CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2);
-                return item > 1.0e-6 ? (float) (world / item) : 1f;
+                double worldTan = Math.tan(Math.toRadians(CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2);
+                return item > 1.0e-6 ? (float) (worldTan / item) : 1f;
             });
             check(Math.abs(delta.x - .237 * k) < .035, "Muzzle X did not scale by fov ratio: delta=" + delta + ", k=" + k);
             check(Math.abs(delta.y + .113 * k) < .035, "Muzzle Y did not scale by fov ratio: delta=" + delta + ", k=" + k);
@@ -90,5 +92,5 @@ final class ViewTuningSmoke {
 
     private static void check(boolean ok, String message) { if (!ok) throw new AssertionError(message); }
 
-    private ViewTuningSmoke() {}
+    private HandMuzzleSmoke() {}
 }
