@@ -115,6 +115,16 @@ reworked a number of APIs, so substantial internal rework was required:
 in the file name and version field of each upload — see the release notes there
 for what that build contains.
 
+## Maintenance status
+
+**This project is no longer actively maintained; updates are irregular.** Only the
+`1.21.11` and `26.3` branches still receive updates. The `26.1.2` and `26.2`
+branches are **archived** — existing files keep working and the issue tracker
+stays open, but no further updates are planned for them. If you want to take the
+port over, forking is explicitly welcome: the code is GPL-3.0, and the bundled
+default gun pack's assets are CC BY-NC-ND 4.0 (see `LICENSES.md` in the repository
+for what that means for redistribution).
+
 ## Configuring
 
 Almost every option is available **in game**: open the mod list (Mod Menu), pick
