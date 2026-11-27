@@ -444,6 +444,7 @@
   "message.tacz.unload.cannot": "Cannot unload right now",
   "message.tacz.unload.unsupported": "This weapon does not support quick ammo unloading",
   "message.tacz.unload.no_ammo": "No ammo to unload",
+  "message.tacz.scope.thermal_unavailable": "Thermal capture failed; this lens is temporarily optical only. See latest.log for the error; reload resources after correcting the renderer or shader setup.",
   "tooltip.tacz.attachment.recoil_push": "+ Recoil Propulsion",
   "key.tacz.unload.desc": "Unload Ammo",
   "key.tacz.view_tuning.desc": "Open gun position & crosshair editor",

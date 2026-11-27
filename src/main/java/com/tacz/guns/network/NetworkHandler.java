@@ -33,6 +33,10 @@ public class NetworkHandler {
     public static void registerPayloads() {
         // C2S (serverbound play)
         PayloadTypeRegistry.playC2S().register(ClientMessageSelectRefitOption.TYPE, ClientMessageSelectRefitOption.CODEC);
+        // Cosmetic animation-particle fingerprints (26.1.2/26.3 parity). The classes were present on this
+        // line but never registered, so canSend() stayed false and remote players saw no animation particles.
+        PayloadTypeRegistry.playC2S().register(AnimationParticleMessages.Request.TYPE, AnimationParticleMessages.Request.CODEC);
+        PayloadTypeRegistry.playS2C().register(AnimationParticleMessages.Delivery.TYPE, AnimationParticleMessages.Delivery.CODEC);
         PayloadTypeRegistry.playC2S().register(ClientMessageInstallVirtualAttachment.TYPE, ClientMessageInstallVirtualAttachment.CODEC);
         PayloadTypeRegistry.playC2S().register(ClientMessageAmmoStorageClick.TYPE, ClientMessageAmmoStorageClick.STREAM_CODEC);
         PayloadTypeRegistry.playC2S().register(ClientMessageAmmoStorageInteract.TYPE, ClientMessageAmmoStorageInteract.STREAM_CODEC);
@@ -90,6 +94,8 @@ public class NetworkHandler {
         registerPayloads();
 
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageSelectRefitOption.TYPE, (msg, ctx) -> msg.handle(ctx.player()));
+        ServerPlayNetworking.registerGlobalReceiver(AnimationParticleMessages.Request.TYPE, (message, context) ->
+                context.server().execute(() -> AnimationParticleMessages.relay(message, context.player())));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageInstallVirtualAttachment.TYPE, (msg, ctx) -> msg.handle(ctx.player()));
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageAmmoStorageClick.TYPE, ClientMessageAmmoStorageClick::handle);
         ServerPlayNetworking.registerGlobalReceiver(ClientMessageAmmoStorageInteract.TYPE, ClientMessageAmmoStorageInteract::handle);
@@ -139,6 +145,8 @@ public class NetworkHandler {
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageUpdateEntityData.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageSyncGunPackPart.TYPE, (msg, ctx) -> msg.handle(ctx.player().connection.getConnection()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessagePackWarnings.TYPE, ServerMessagePackWarnings::handle);
+        ClientPlayNetworking.registerGlobalReceiver(AnimationParticleMessages.Delivery.TYPE, (message, context) ->
+                context.client().execute(() -> com.tacz.guns.client.particle.RemoteAnimationParticles.accept(message)));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageSyncGunPack.TYPE, (msg, ctx) -> msg.handle(ctx.player(), ctx.responseSender()));
         ClientPlayNetworking.registerGlobalReceiver(ServerMessageBulletHitBlock.Incendiary.TYPE,
                 (p, ctx) -> ServerMessageBulletHitBlock.handle(p.hit(), ctx, true));

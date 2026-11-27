@@ -1,6 +1,6 @@
 # 给旧枪包加上 Fabric 1.21.11 兼容层
 
-**适用对象：** 正在移植 TaCZ 1.2 内容的 1.21.11 工作分支（[已验证的测试件与散列](PORT_1_2_1_21_11.md)），不是已发布的同名 R3-hotfix4。模组核心版本仍为 `1.1.8`，转换器不会改包的 `dependencies.tacz` 来绕过版本约束。
+**适用对象：** 正在移植 TaCZ 1.2 内容的 1.21.11 工作分支（[已验证的测试件与散列](PORT_1_2_1_21_11.md)），源码版本为 `1.2.0+fabric.1.21.11.R1`（源码版本不是 Release 公告）。模组 SemVer 核心为 `1.2.0`，转换器不会改包的 `dependencies.tacz` 来绕过版本约束。
 
 1. 先备份存档和枪包。把已有 `gunpack.meta.json` 的目录或根元数据 ZIP 放入测试实例的 `tacz/`。
 2. 用专服控制台或有权限的账号运行 `/tacz convert universal "Example Pack.zip" check`，只会在 `tacz-converted/` 写报告。`/tacz convert universal all check` 可批量检查。

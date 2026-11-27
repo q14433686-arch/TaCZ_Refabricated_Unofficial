@@ -444,6 +444,7 @@
   "message.tacz.unload.cannot": "当前不能卸载",
   "message.tacz.unload.unsupported": "该武器不支持快速卸载弹药",
   "message.tacz.unload.no_ammo": "没有可卸载的弹药",
+  "message.tacz.scope.thermal_unavailable": "热源采集失败，此镜片暂时仅显示光学画面。请查看 latest.log 中的错误；修正渲染器或光影配置后重载资源。",
   "tooltip.tacz.attachment.recoil_push": "+ 后坐力推进",
   "key.tacz.unload.desc": "卸弹",
   "key.tacz.view_tuning.desc": "打开持枪位置与准星编辑器",

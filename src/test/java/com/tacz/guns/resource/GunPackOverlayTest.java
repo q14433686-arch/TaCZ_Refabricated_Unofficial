@@ -43,12 +43,12 @@ class GunPackOverlayTest {
     }
 
     @Test void rangeDialectAndBundledDependency() throws Exception {
-        Version v = Version.parse("1.1.8+fabric.1.21.11.R3-hotfix4");
-        assertTrue(GunPackVersions.matches("[1.1.8]", v)); // build metadata does not change the core
-        assertFalse(GunPackVersions.matches("[1,1.1.8)", v));
+        Version v = Version.parse("1.2.0+fabric.1.21.11.R1");
+        assertTrue(GunPackVersions.matches("[1.2.0]", v)); // build metadata does not change the core
+        assertFalse(GunPackVersions.matches("[1.1.8,1.2.0)", v));
         assertFalse(GunPackVersions.matches("(1.2.0,)", v));
         assertTrue(GunPackVersions.matches(">=1.1.8", v));
-        assertFalse(GunPackVersions.matches("1.2.0", v)); // existing Fabric exact semantics
+        assertFalse(GunPackVersions.matches("1.1.8", v)); // existing Fabric exact semantics
         assertTrue(GunPackVersions.dependenciesMatch(Map.of("lrtactical", "[0.3.0]", "minecraft", "[1.21.1]"), true));
         assertFalse(GunPackVersions.dependenciesMatch(Map.of("lrtactical", ">=1"), true));
     }

@@ -401,3 +401,28 @@ f1f47537分发45832954441最终 **13/14**：仅none上述重启夹具遗漏confi
 说明：旧的全帧 darker/brighter 计数会把畸变移动棋盘格边缘与光影后处理混入，已改为径向环亮度比；阈值（边缘环 ≤0.96 且低于中心 0.03 以上，中心 0.97–1.03）依据实测与 authored 高斯宽度（约 0.054r）设定，Iris 与原版用同一门槛。诊断探针（`LensTrace*` mixin）只存在于验证源集，不进入产品 jar。
 
 边界：同提交 `build` 工作流失败于开发 `PackClientSmoke` 的 `Timeout loading world`（`PORT_WORLD_STALL`），即既有间歇性开放项，与本修复无关、未被修复。仅在 CI 的 Mesa 软件渲染（`LIBGL_ALWAYS_SOFTWARE=true`）下验证，不声称其他光影包、Iris 版本或真实 GPU 的表现。R6 仍 ACTIVE，未改版本、未发布。
+
+### R6 `1.2.0+fabric.1.21.11.R1` 版本号与 26.3 / 上游 1.21.1 双基准复核（2026-11-26，待 CI）
+
+**版本号**：`gradle.properties` → `1.2.0+fabric.1.21.11.R1`（1.21.11 从 1.2.0 重新以 R1 计数，与 26.1.2 `10f3f2b5`、26.3 `1.2.0+fabric.26.3.R1` 同规则）；`fabric.mod.json` 名称/描述、README 六处、`GUNPACK_CONVERSION_1_21_11.md` 当前态句同步；`GunPackOverlayTest#rangeDialectAndBundledDependency` 按 26.1.2 断言改为 `[1.2.0]` 真、`[1.1.8,1.2.0)`/`(1.2.0,)`/`"1.1.8"` 假、`>=1.1.8` 真。`check_release_consistency.sh --strict`（取自 `26.2(main)`）6 过 0 败 1 警告（工作分支名非 MC 系列，预期）。历史文档里的旧版本号是当时记录，未改。
+
+**基准**：`origin/26.3` `c5d536b7b`；上游 `Sh1roCu/TACZ-Refabricated` `1.21.1` `66d685053`（`1.0.1-neo1.2.0-hotfix+mc1.21.1`，depth=1 抓取）。
+
+**默认包**（比较成品有效包 = bundle + 源码覆盖 − retired，非 git 树）：
+- 对 26.3：路径集合相同（多出的 8 条正是 retired 清单）；17 个文件不同，均为 1.21.11 谓词/格式适配，另 1 个是本线有意偏离——`glock_17.animation.json` 删除了 draw 的 `p24_pi_golf17_stockskel_raise`（26.3 与上游仍引用，三方均无该声音定义；`4ba3a10d6` 删除，`docs/check_visible_bugs_39JqB2p.py` 锁定）。构建以源码覆盖优先，成品不含该坏引用。
+- 对上游：上游独有 454 条为 `compat_1_21_1/` 与复数 `recipes/`、`advancements/` 布局；26 个内容差异（状态机 `isAiming()`/装填 API、工作台 `id`/`components`）在 26.3 中完全相同，属 1.2 → 26.x 线继承，预期。
+
+**Java 路径**（26.3 独有 70 / 本线独有 51）：26.3 `build.gradle` 自身排除的 kubejs/playeranimator animation/optifine/AR 不计；26.3 平台适配（`DamageCooldownUtil`、`BufMapCodec`、`FirstPersonHandsAndItems*`、`IrisThermalDepthBias`）不适用 1.21.11；26.x 瞄具/feature 渲染架构由本线自有管线替代。`MinecraftAccessor`/`ShapedRecipeMixin`/`RecipeCompat`/`Thermal*Accessor`/`GuiGraphicsExtractorMixin` 已在 `PORT_GAP_MATRIX_1211.md` 映射到有回执的本版实现。`SoundInstanceVolumeMixin`：保留本线 `SoundEngineMixin`——26.x 的搬迁依据是 26.2 字节码，本线 R5 已对真实 SoundEngine 最终增益/豁免/到期通过且用户实测消声有效（`CHANGELOG_1_21_11.md` C 项），无 1.21.11 字节码反证，不改。`fabric:recipe_sync` 编码断连修复（26.3 `c71604804`）不适用：本线从未把任何序列化器登记进 `RecipeSynchronization`。
+
+**发现并修复的真实缺口（1 项）**：
+- **远端动画粒子网络从未注册**。`AnimationParticleMessages`（Request/Delivery）与 `RemoteAnimationParticles` 均已在本线，但 `NetworkHandler` 没有 `PayloadTypeRegistry` 注册和收包器 → `canSend()` 恒假，其他玩家看不到持枪者的动画粒子。26.1.2 与 26.3 均已注册。**更正**：上一节 R6 复核写的「`NetworkHandler` 仅 `playC2S/playS2C` 命名与注册顺序差」**有误**，当时只比了文件和配置键，没比注册的 TYPE 集合。已按 26.3 注册两个载荷和收包器（服务端 relay 保留 64 次/20 tick 限速、128 格、只信任本地包内 token），新增 `tests/test_network_payload_registration.py`：扫描 `network/` 下全部 46 个载荷 TYPE，要求每个都有 registry 注册和 global receiver；还原修复后该测试失败，修复后通过。**尚未实机验证**：26.3 的 `RemoteParticleSmoke` 依赖本线没有的 `port_acceptance` 包与 `runtime_probe` 夹具，未移植。
+
+**小项移植**：`message.tacz.scope.thermal_unavailable`（中英文，用 26.3 原文）——热源采集失败时在聊天栏提示一次（`failed` 在重载/登出前保持，本线 `close()` 已复位，提示里「重载资源」属实）。
+
+**记录、不移植**：
+- RenderConfig 26.3 多出 26 键：调试键与 Iris/瞄具键属 26.x 架构；`ConstraintCompensateMode` 默认 3 即「26.1.2 在体验证形态」，本线约束代码与 26.1.2 相同；`HandViewLockFix` 在 26.3 默认关闭（已证伪），`HandViewLockNormalize` 仅在其开启时有意义；`AimingSwayIntensity`（26.2 `8ec375a0b` 起的新功能，26.1.2/上游均无）为可选增强，未移植。
+- `config.tacz.common.ammo.sable_compat`：26.3 只有语言键，无 Java 引用。
+- `PhysicsModCompat`：服务于 26.2+ 的「镜内第二世界 pass」，本线 PIP 管线不同，未移植。
+- **上游 1.2 之后新增、26.3 同样没有的功能**：Sable/Simulated 联动（`compat/sable`、`compat/simulated`，需 1.21.11 版 Sable）、EMI、外部枪模型（`ExternalGunModel`/`client/renderer/external`）、第三人称枪口粒子（`ThirdPersonMuzzleParticleManager`）、枪架染色配方（`GunPegboardDyeRecipe`）、盔甲架持枪姿态（`ArmorStandMixin`）、`UnshadedVertexConsumer`、`ClientGunTimeResetEvent`、`PreLoadModConfig`、`GunPackCompatibilityWarning` 扩展。作为后续候选，本轮不声明支持。
+
+**本地验证**：`python3 -m unittest discover -s tests` 24 项通过；`verify_263_sync_baseline`、`verify_lr_assets`、`verify_block_drops`、`verify_block_entity_persistence`、`verify_bullet_hole_orientation`、`verify_recipe_viewer_reload` 通过；中英语言键 651=651。`docs/check_visible_bugs_39JqB2p.py` 有 2 项在未改动的 HEAD 上同样失败（一次性旧脚本：注释里出现已删方法名、对比基于 `dd2eb70ac` 前的动画数据），不在 CI 内，未处理。编译、`verify_mixin_targets`、成品运行仅能走 CI。
