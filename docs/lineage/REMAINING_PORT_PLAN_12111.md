@@ -426,3 +426,5 @@ f1f47537分发45832954441最终 **13/14**：仅none上述重启夹具遗漏confi
 - **上游 1.2 之后新增、26.3 同样没有的功能**：Sable/Simulated 联动（`compat/sable`、`compat/simulated`，需 1.21.11 版 Sable）、EMI、外部枪模型（`ExternalGunModel`/`client/renderer/external`）、第三人称枪口粒子（`ThirdPersonMuzzleParticleManager`）、枪架染色配方（`GunPegboardDyeRecipe`）、盔甲架持枪姿态（`ArmorStandMixin`）、`UnshadedVertexConsumer`、`ClientGunTimeResetEvent`、`PreLoadModConfig`、`GunPackCompatibilityWarning` 扩展。作为后续候选，本轮不声明支持。
 
 **本地验证**：`python3 -m unittest discover -s tests` 24 项通过；`verify_263_sync_baseline`、`verify_lr_assets`、`verify_block_drops`、`verify_block_entity_persistence`、`verify_bullet_hole_orientation`、`verify_recipe_viewer_reload` 通过；中英语言键 651=651。`docs/check_visible_bugs_39JqB2p.py` 有 2 项在未改动的 HEAD 上同样失败（一次性旧脚本：注释里出现已删方法名、对比基于 `dd2eb70ac` 前的动画数据），不在 CI 内，未处理。编译、`verify_mixin_targets`、成品运行仅能走 CI。
+
+**CI 回执（`dad6a83c`）**：Version consistency `45928248749` 通过；compile-check `45928248791` 通过；1.21.11 remapped distribution and TCP `45928248767` 15/15 通过（含真实 1.21.11 jar 的 mixin 目标核对与成品双端运行）；build `45928248730` 通过——开发世界 `PORT_WORLD_STALL` 本次未出现，但它是间歇性的，**不算修复**。远端动画粒子的实际可见性仍无专项实机测试（见上）。R6 仍为 ACTIVE；未发布 Release。
