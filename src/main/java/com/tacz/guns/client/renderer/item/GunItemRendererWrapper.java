@@ -477,11 +477,16 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             float viewX = handBasePoseEntry.m00() * dx + handBasePoseEntry.m01() * dy + handBasePoseEntry.m02() * dz;
             float viewY = handBasePoseEntry.m10() * dx + handBasePoseEntry.m11() * dy + handBasePoseEntry.m12() * dz;
             float viewZ = handBasePoseEntry.m20() * dx + handBasePoseEntry.m21() * dy + handBasePoseEntry.m22() * dz;
-            // FOV 比值换算作用于【视图空间】的深度 z（开镜时手部 FOV 与世界 FOV 分离的补偿）。
-            // 旧代码乘在 pose.m32() 上 —— 那在 vanilla 26.2 下是世界轴 Z（正北方向），与视深无关。
-            double fovScale = Math.tan(itemRenderFov / 2 * Math.PI / 180) / Math.tan(levelRenderFov / 2 * Math.PI / 180);
-            muzzleRenderOffset.set(viewX, viewY, (float) (viewZ * fovScale));
-            debugMuzzleSpace(mx0, my0, mz0, viewX, viewY, viewZ, fovScale);
+            // 【C1 · 上游 1.2.0 FirstPersonRenderMath#muzzleOffset 的 FOV 补偿语义】
+            // 在世界 FOV 下复现枪口在手部 FOV 下的屏幕位置：保留视图空间深度 z，
+            // 横纵分量乘 tan(worldFov/2)/tan(itemFov/2)。旧公式把这个比值乘在深度上——
+            // 屏幕位置相同，但开镜（手部 FOV ≠ 世界 FOV）时曳光弹近端被推到错误深度。
+            // 只作用在视图空间分量上，不能作用于基座旋转后的世界轴分量。
+            double itemTan = Math.tan(Math.toRadians(itemRenderFov) / 2);
+            double worldTan = Math.tan(Math.toRadians(levelRenderFov) / 2);
+            float lateral = itemTan > 1.0e-6 ? (float) (worldTan / itemTan) : 1.0f;
+            muzzleRenderOffset.set(viewX * lateral, viewY * lateral, viewZ);
+            debugMuzzleSpace(mx0, my0, mz0, viewX, viewY, viewZ, lateral);
         }
     }
 
@@ -489,7 +494,7 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
     private static long debugMuzzleSpaceLastLog = 0L;
 
     private static void debugMuzzleSpace(float rawX, float rawY, float rawZ,
-                                         float viewX, float viewY, float viewZ, double fovScale) {
+                                         float viewX, float viewY, float viewZ, double lateral) {
         try {
             boolean perFrame = RenderConfig.RECOIL_DEBUG != null && RenderConfig.RECOIL_DEBUG.get();
             if (RenderConfig.TRACER_DEBUG == null || !RenderConfig.TRACER_DEBUG.get()) {
@@ -507,11 +512,11 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             net.minecraft.client.Camera cam = Minecraft.getInstance().gameRenderer.mainCamera();
             Matrix4f modelViewAtHand = RenderSystem.getModelViewMatrixCopy();
             GunMod.LOGGER.info(
-                    "[TACZ MuzzleSpace] camera=({},{}) irisHand={} baseT=({},{},{}) rawMuzzle=({},{},{}) viewMuzzle=({},{},{}) fovScale={} modelViewRot=[{},{},{}; {},{},{}; {},{},{}] modelViewT=({},{},{})",
+                    "[TACZ MuzzleSpace] camera=({},{}) irisHand={} baseT=({},{},{}) rawMuzzle=({},{},{}) viewMuzzle=({},{},{}) lateral={} modelViewRot=[{},{},{}; {},{},{}; {},{},{}] modelViewT=({},{},{})",
                     trim2(cam.xRot()), trim2(cam.yRot()), IrisCompat.isHandRendererActive(),
                     trim2(handBasePose.m30()), trim2(handBasePose.m31()), trim2(handBasePose.m32()),
                     trim2(rawX), trim2(rawY), trim2(rawZ),
-                    trim2(viewX), trim2(viewY), trim2(viewZ), trim2(fovScale),
+                    trim2(viewX), trim2(viewY), trim2(viewZ), trim2(lateral),
                     trim2(modelViewAtHand.m00()), trim2(modelViewAtHand.m01()), trim2(modelViewAtHand.m02()),
                     trim2(modelViewAtHand.m10()), trim2(modelViewAtHand.m11()), trim2(modelViewAtHand.m12()),
                     trim2(modelViewAtHand.m20()), trim2(modelViewAtHand.m21()), trim2(modelViewAtHand.m22()),

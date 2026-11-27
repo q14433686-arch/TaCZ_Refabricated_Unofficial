@@ -56,7 +56,16 @@ public class GunPreviewRenderer extends PictureInPictureRenderer<GunPreviewRende
         poseStack.scale(1.0F, -1.0F, -1.0F);
         poseStack.mulPose(Axis.XP.rotationDegrees(state.pitch()));
         poseStack.mulPose(Axis.YP.rotationDegrees(state.yaw()));
-        state.item().submit(poseStack, collector, 15728880, OverlayTexture.NO_OVERLAY, 0);
+        // 【C2】Screen-owned draw：预览的 submit（含 LOD 判定）发生在 PIP 离屏纹理绘制里，
+        // 即 Screen#render 之后 —— ScreenRenderTracker 的 extract 窗口已经关了，
+        // 所以这里显式打开精确作用域（上游 1.2.0 ScreenItemVboContext 语义）：
+        // 预览始终用高模（不受 GunLodRenderDistance 影响），界面开着时世界里的枪保持 LOD。
+        com.tacz.guns.util.RenderDistance.beginScreenItemDraw();
+        try {
+            state.item().submit(poseStack, collector, 15728880, OverlayTexture.NO_OVERLAY, 0);
+        } finally {
+            com.tacz.guns.util.RenderDistance.endScreenItemDraw();
+        }
     }
 
     /**

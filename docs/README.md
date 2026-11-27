@@ -43,6 +43,7 @@
 |---|---|
 | [HANDOFF_LEDGER.md](lineage/HANDOFF_LEDGER.md) | **同步账本（单一事实源）**：所有跨分支交接的状态（OPEN/DONE/DECLINED） |
 | [从 26.2 接收 TaCZ 1.2.0](lineage/26.2-backports/README.md) | 当前 1.2.0 供体、分批验收；执行单：[Fabric 26.1.2](lineage/26.2-backports/26.1.2.md) · [Fabric 1.21.11](lineage/26.2-backports/1.21.11.md) · [NeoForge 姊妹仓](lineage/26.2-backports/neoforge.md) |
+| [26.2 应用 1.21.11 补漏清单的执行记录](lineage/GAPFILL_262_EXECUTION_20261127.md) | C1–C8 / 配置注释 / 语言对齐在本线的落地回执与待验收项（施工单见 1.21.11 线 `GAPFILL_26X_FROM_12111_UPSTREAM120.md`） |
 | `SYNC_ROUNDUP_R3_20260831.md` | **R3 定稿轮总纲（当前索引起点）**：四线进度底账、移植主次、工作流同步、旧指导时效标注 |
 | `FAMILY_TREE_2026_08_30.md` | 六分支谱系实测 |
 | `SYNC_GOVERNANCE_PROPOSAL.md` | 同步治理原则 |
