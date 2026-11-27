@@ -51,6 +51,10 @@ public class ClientAttachmentIndexMixin {
         TaczPolyMeshAttachmentModel polyModel = new TaczPolyMeshAttachmentModel(pojo, version);
         polyModel.setIsScope(display.isScope());
         polyModel.setIsSight(display.isSight());
+        // The replacement must carry the same display state as the model it replaces: the
+        // authored scope lens (vision mode / edge effects) is read from the rendering model, so
+        // omitting it silently degrades every lensed optic that ships a geo twin (e.g. scope_xl50).
+        polyModel.setScopeLens(display.getScopeLens());
         polyModel.loadPolyMesh(PolyMeshSupport.toGeoPath(modelId));
         try {
             Field field = ClientAttachmentIndex.class.getDeclaredField("attachmentModel");
@@ -93,6 +97,7 @@ public class ClientAttachmentIndexMixin {
         TaczPolyMeshAttachmentModel polyLodModel = new TaczPolyMeshAttachmentModel(pojo, version);
         polyLodModel.setIsScope(display.isScope());
         polyLodModel.setIsSight(display.isSight());
+        polyLodModel.setScopeLens(display.getScopeLens());
         polyLodModel.loadPolyMesh(PolyMeshSupport.toGeoPath(lodModelId));
         try {
             Field lodField = ClientAttachmentIndex.class.getDeclaredField("lodModel");

@@ -60,7 +60,7 @@ public final class UserEnvReadback {
     public static String modelLens(com.tacz.guns.client.resource.index.ClientAttachmentIndex index) {
         var model = index.getAttachmentModel();
         Object lens = field(com.tacz.guns.client.model.BedrockAttachmentModel.class, model, "scopeLens");
-        return "modelLens=" + mode(lens) + " sameAsDisplay=" + (lens == index.getScopeLens())
+        return "model=" + (model == null ? "null" : model.getClass().getSimpleName()) + " modelLens=" + mode(lens) + " sameAsDisplay=" + (lens == index.getScopeLens())
                 + " isScope=" + field(com.tacz.guns.client.model.BedrockAttachmentModel.class, model, "isScope")
                 + " isSight=" + field(com.tacz.guns.client.model.BedrockAttachmentModel.class, model, "isSight");
     }

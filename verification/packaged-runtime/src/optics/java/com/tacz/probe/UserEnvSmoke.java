@@ -138,6 +138,7 @@ public final class UserEnvSmoke extends PlayerProbe {
         String trace = ctx.computeOnClient(mc -> UserEnvReadback.stopTrace()
                 + " || " + UserEnvReadback.modelLens(TimelessAPI.getClientAttachmentIndex(OPTIC).orElseThrow()));
         System.out.println("PORT_USER_TRACE: " + label + " " + trace);
+        if (!trace.contains("sameAsDisplay=true")) problems.add("rendering model lost the authored scope lens (" + trace.substring(trace.indexOf("||")) + ")");
         String state = ctx.computeOnClient(mc -> UserEnvReadback.state());
         GunMod.LOGGER.info("USER_DIAG {} {}", label, state);
         var hot = ThermalFrames.frame(ctx, "user_" + label + "_thermal");
