@@ -455,3 +455,10 @@ f1f47537分发45832954441最终 **13/14**：仅none上述重启夹具遗漏confi
 - compile-check `45934164758` 通过。
 - build `45934164759` 通过，含「Upstream 1.2.0 text alignment」与 Lang key parity。
 - distribution `45934164761` 14/15。唯一失败的是 presentation 的 `PORT_HAND_FRAME`：delta = (0.2874, −0.1370, −0.330)，期望按旧 FOV 语义的 (0.237, −0.113, \*)。这是本轮按上游改动枪口 FOV 补偿造成的预期语义变化（深度保留，横纵 ×tan 比），不是渲染回归。探针改为读取同一 FOV 动态、断言新语义后重跑，结果在下面追加。
+
+**CI 回执（`593bb9cd`，探针修正后）**：
+- compile-check `45935383863` 通过。
+- distribution `45935383867` **15/15**：presentation 的 `PORT_HAND_FRAME` 按新语义通过；`RackChecks` 所在的专服作业通过（含 `pegboardCauldronWash`、`pegboardDyeCraft`）。
+- build `45935383877` 失败于开发 `PackClientSmoke` 的 `Timeout loading world`（`PORT_WORLD_STALL`，卡在 `PrepareSpawnTask`）。这是既有的间歇性开放项：同一份 `src/main` 在 `f3894a03` 的 build `45934164759` 通过，两次成品 jar 的 SHA-256 都是 `e03d5cdf…`，本提交只改了探针。不能重跑（`cannot be rerun`）。**不把它记为已修复，也不认为本轮引入了它。**
+
+**本节状态**：代码与文本对齐、编译、成品双端与专项 gametest 已有回执；`PORT_WORLD_STALL` 仍开放。ABSENT_FEATURE 各项（Sable/Simulated、SBM VBO/外部模型、EMI）没有可用的 1.21.11 构件，不发布、不声称。
