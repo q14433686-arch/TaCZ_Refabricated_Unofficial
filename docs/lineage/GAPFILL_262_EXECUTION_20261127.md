@@ -63,7 +63,8 @@
 | 层 | 状态 |
 |---|---|
 | 静态（本沙箱，已跑） | `align_config_text.py` 差异 0；`port_upstream_lang.py --check` clean；en/zh 键 parity OK；`check_release_consistency.sh --strict` 6 通过 0 失败；mixin 配置完整性 OK；方块掉落接线 OK；方块实体持久化 OK |
-| 编译 / JUnit / 专服 GameTest / 客户端 smoke | **待 CI**（push 后 `build.yml` 自动跑；`ViewTuningSmoke`（C1 新断言）在客户端 smoke 主流程真实执行） |
+| 编译 / 单测 / 成品 | **CI 全绿 @ `c0e0f026`**：`compile-check` [45942123094](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45942123094)（compileJava + gametest 源集编译）；`build` [45942123111](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45942123111)（全量构建、JUnit、专服 GameTest——202 产物结算回执、成品 JAR 审计、真实 Mesa 客户端 smoke）。首轮 `343dd5e2` 的 compile-check 抓出本执行中唯一的编码笔误（`AmmoConfig.GLOBAL_BULLET_SPEED_MODIFIER` 误写 `BooleanValue`），`c0e0f026` 修正后全绿 |
+| C1 探针 | `ViewTuningSmoke`（含改版后的 k 比例断言）在 `build` 45942123111 的「Real integrated client」步真实执行并通过（该 smoke 主流程含 `ViewTuningSmoke.run`，任何断言失败都会使整个 run 变红）；`26.2 gameplay and renderer` [45942123139](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45942123139) 与 `Iris thermal regression` [45942123104](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45942123104)（3 个光影作业）亦全绿 |
 | 实机专项 | **待维护者**：C2 的工作台预览 + 世界 LOD 回归、C6 装/不装 PAL 各暂停一次、C1 曳光近端深度目视（`TRACER_DEBUG` 日志键已改名 `lateral=`） |
 
 ## 未覆盖 / 与清单的偏差（逐条申报）

@@ -32,7 +32,7 @@
 | 19 | [1.2.0 公共验收](26.2-backports/README.md) · [26.1.2 执行单](26.2-backports/26.1.2.md) | refab 26.2 → refab 26.1.2 | **OPEN** | 接收基线 `569869f`；重点是资源 bundle、深度孔径与目标成品的专服重连。 |
 | 20 | [1.21.11 执行单](26.2-backports/1.21.11.md) | refab 26.2 → refab 1.21.11 | **OPEN** | 接收基线 `aac343a`；必须验 Java 21 remap 成品、Mixin 及 shader imports。 |
 | 21 | [NeoForge 执行单](26.2-backports/neoforge.md) | refab 26.2 → TaCZ_Renovated | **OPEN（本交接单）** | Neo 26.2 已有 `bf911b9` 的 B1-1/B1-2 工作；先对表，不另起一套协议。其它游戏版本分别验收。 |
-| 22 | 1211 侧 `docs/lineage/GAPFILL_26X_FROM_12111_UPSTREAM120.md`（1.21.11 `6262446e` 开出的 26.X 补漏施工单：C1–C8 + §2 配置注释 24 条 + §3 L1/L2 + §4 工具） | refab 1.21.11 → refab 26.2(main) | **26.2 已落码（工作分支 `arena/485f3381`，静态核对全绿）；26.1.2 / 26.3 / 26.4 = OPEN** | 执行回执 [GAPFILL_262_EXECUTION_20261127.md](GAPFILL_262_EXECUTION_20261127.md)：C1–C8 全部按本线 API 改写（C1 探针 `ViewTuningSmoke` 断言同步改版）、§2 逐条核对后采纳上游原文（`align_config_text.py` 差异 0）、§3 21 语言重建（与 1.21.11 成品共享键 0 差异）、`AmmoConfig` 顺序重排；§4 两脚本已移植、CI 对齐步骤**未装**（无 workflows 权限 + 镜像须逐字节同步）。编译/实机回执待 CI 与维护者：C2 预览/世界 LOD、C6 PAL 双态暂停、C1 曳光深度目视 |
+| 22 | 1211 侧 `docs/lineage/GAPFILL_26X_FROM_12111_UPSTREAM120.md`（1.21.11 `6262446e` 开出的 26.X 补漏施工单：C1–C8 + §2 配置注释 24 条 + §3 L1/L2 + §4 工具） | refab 1.21.11 → refab 26.2(main) | **26.2 已落码且 CI 全绿（`c0e0f026`，compile-check/build/客户端 smoke/Iris 回归五 workflow PASS）；26.1.2 / 26.3 / 26.4 = OPEN** | 执行回执 [GAPFILL_262_EXECUTION_20261127.md](GAPFILL_262_EXECUTION_20261127.md)：C1–C8 全部按本线 API 改写（C1 探针 `ViewTuningSmoke` 断言同步改版并在客户端 smoke 真实执行）、§2 逐条核对后采纳上游原文（`align_config_text.py` 差异 0）、§3 21 语言重建（与 1.21.11 成品共享键 0 差异）、`AmmoConfig` 顺序重排；§4 两脚本已移植、CI 对齐步骤**未装**（无 workflows 权限 + 镜像须逐字节同步）。实机专项待维护者：C2 预览/世界 LOD、C6 PAL 双态暂停、C1 曳光深度目视 |
 
 <a id="tacz-12-262"></a>
 ### TaCZ 1.2 行为回移：26.2 接收记录
