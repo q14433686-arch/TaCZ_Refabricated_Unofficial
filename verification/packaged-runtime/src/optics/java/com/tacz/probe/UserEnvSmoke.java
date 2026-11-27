@@ -166,27 +166,62 @@ public final class UserEnvSmoke extends PlayerProbe {
         tree.addProperty("distortion", 0); tree.addProperty("aberration", 0); tree.addProperty("vignette_strength", 0);
         var flat = new Gson().fromJson(tree, ScopeLensConfig.class);
         flat.init();
-        BufferedImage on, off;
+        BufferedImage on, off, off2;
+        float[] bounds;
         try {
             ctx.runOnClient(mc -> model.setScopeLens(normal));
             ctx.waitTicks(6);
             on = ThermalFrames.frame(ctx, "user_" + label + "_edge_on");
+            bounds = ctx.computeOnClient(mc -> com.tacz.guns.client.render.scope.ScopeLensFrame.currentBounds());
             ctx.runOnClient(mc -> model.setScopeLens(flat));
             ctx.waitTicks(6);
             off = ThermalFrames.frame(ctx, "user_" + label + "_edge_off");
+            ctx.waitTicks(6);
+            off2 = ThermalFrames.frame(ctx, "user_" + label + "_edge_off2");
         } finally {
             ctx.runOnClient(mc -> model.setScopeLens(authored));
             ctx.waitTicks(4);
         }
-        int darker = 0, brighter = 0;
+        int darker = 0, brighter = 0, noise = 0;
         for (int y = 0; y < on.getHeight(); y++) for (int x = 0; x < on.getWidth(); x++) {
             int d = luma(off.getRGB(x, y)) - luma(on.getRGB(x, y));
             if (d > 25) darker++;
             else if (d < -25) brighter++;
+            if (Math.abs(luma(off.getRGB(x, y)) - luma(off2.getRGB(x, y))) > 25) noise++;
         }
-        if (darker < 50 || darker < 3 * brighter) edgeProblems.add("no edge darkening: darker=" + darker + " brighter=" + brighter);
-        System.out.println("PORT_USER_LENS_EDGE: " + label + " darker=" + darker + " brighter=" + brighter
-                + (edgeProblems.isEmpty() ? " passed" : " FAILED " + edgeProblems));
+        // Radial profile inside the measured ocular (NDC bounds -> pixels). The authored vignette is a
+        // Gaussian of distance to the cutout, so the rim ring must darken while the centre must not.
+        String rings;
+        if (bounds == null) {
+            rings = "bounds=null";
+            edgeProblems.add("no measured ocular bounds on the edge-on frame");
+        } else {
+            double[] edges = {0, .4, .7, .85, 1.0, 1.15};
+            double[] sumOn = new double[5], sumOff = new double[5];
+            int[] count = new int[5];
+            int w = on.getWidth(), h = on.getHeight();
+            double cx = (bounds[0] + bounds[2]) * .25 * w + .5 * w, cy = h - ((bounds[1] + bounds[3]) * .25 * h + .5 * h);
+            double rx = (bounds[2] - bounds[0]) * .25 * w, ry = (bounds[3] - bounds[1]) * .25 * h;
+            double r0 = Math.min(rx, ry);
+            for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {
+                double r = Math.hypot((x + .5 - cx) / r0, (y + .5 - cy) / r0);
+                for (int b = 0; b < 5; b++) if (r >= edges[b] && r < edges[b + 1]) {
+                    sumOn[b] += luma(on.getRGB(x, y)); sumOff[b] += luma(off.getRGB(x, y)); count[b]++;
+                }
+            }
+            var sb = new StringBuilder(String.format("centre=(%.0f,%.0f) r=%.0f", cx, cy, r0));
+            double[] ratio = new double[5];
+            for (int b = 0; b < 5; b++) {
+                ratio[b] = count[b] == 0 || sumOff[b] == 0 ? Double.NaN : sumOn[b] / sumOff[b];
+                sb.append(String.format(" [%.2f-%.2f) n=%d on=%.1f off=%.1f ratio=%.3f", edges[b], edges[b + 1], count[b],
+                        count[b] == 0 ? 0 : sumOn[b] / count[b], count[b] == 0 ? 0 : sumOff[b] / count[b], ratio[b]));
+            }
+            rings = sb.toString();
+            if (!(ratio[3] <= .85)) edgeProblems.add("rim ring [0.85,1.0) not darkened: ratio=" + ratio[3]);
+            if (!(ratio[0] >= .9)) edgeProblems.add("centre darkened by edge terms: ratio=" + ratio[0]);
+        }
+        System.out.println("PORT_USER_LENS_EDGE: " + label + " darker=" + darker + " brighter=" + brighter + " noise(off/off2)=" + noise
+                + " " + rings + (edgeProblems.isEmpty() ? " passed" : " FAILED " + edgeProblems));
         problems.addAll(edgeProblems);
         if (!problems.isEmpty()) throw new AssertionError(problems.toString());
     }
