@@ -5,6 +5,22 @@
 
 ---
 
+## 1.2.0 R1：对上游 1.2.0-hotfix（`356bdf9`）全量对齐（2026-11-26；非发布）
+
+源码版本已在 `dad6a83c` 提升为 `1.2.0+fabric.1.21.11.R1`（README 同步，`check_release_consistency.sh --strict` 通过）。本轮按 upstream / 26.3 / 本线三方对照补齐，提交为 `f3894a03`、`593bb9cd`，逐项处置见[对齐记录](lineage/UPSTREAM_120_ALIGNMENT_12111.md)。
+
+- **玩法与界面**：挂板染色（`#minecraft:dyeable`）和炼药锅洗色；工作台制造按钮在无选中配方时禁用，并新增材料悬停提示；充能中不打开改装界面；暂停时在没有 PAL 的情况下照常计算第三人称持枪姿态。
+- **容错**：战利品注入对任意解析异常跳过单个文件；缺失枪械显示每个 id 每次重载只告警一次；配件标签保序去重；约束旋转取绝对值。
+- **渲染**：GUI 忽略 LOD 改为屏幕绘制期间的深度作用域（覆盖 PIP 预览），不再使用 100 ms 时间窗；曳光起点保留视图深度，横纵按世界/物品 FOV 的 tan 比缩放（CI 实测横纵 ×1.2127，深度不变）。
+- **文本**：配置注释与上游逐条核对，差异为 0，`HitParticleEnable` 按实际行为保留本线措辞；20 个上游语言（上游的 `tr-TR.json` 不会被 Minecraft 加载，因此未引入），残余 117 条全部登记（无构件 84 / 回落英文 18 / 适配 13 / 保留本地 2）。CI 新增「Upstream 1.2.0 text alignment」步骤。
+- **CI**：`593bb9cd` 的 compile-check 通过，distribution 15/15 通过。build 失败于 `PackClientSmoke` 的 `PORT_WORLD_STALL`（`PrepareSpawnTask` 卡住，成品 jar 的 SHA-256 与通过的那次相同）。这是间歇性问题，**未修复，也不计为通过**。
+- **没有构件、不宣称支持**：Sable/Simulated、simplebedrockmodel 的 VBO 与外部枪模型、EMI。AR/IF 仍为禁用桩。
+- **尚未处理**：`BedrockAttachmentModel` 的 oculus >127 防护；`GunDisplayInstance` 的 `hitSurfaceParticles`/`bulletHoleEnabled`/`validFov` 复核；`EnableOcularInflate` 的措辞。
+
+26.X 线据此需要补齐的项见 [GAPFILL_26X_FROM_12111_UPSTREAM120.md](lineage/GAPFILL_26X_FROM_12111_UPSTREAM120.md)。
+
+---
+
 ## 1.2 功能回移第一批（2026-11-26；施工中，非发布）
 
 保留 1.21.11 / Java 21 / remap 及 R3-hotfix4 的版本号和运行依赖；按 26.3 交接文档、对照 26.1.2 原生实现推进。当前不是 1.2 全量兼容：后续已整合同基线 `bb12ad2` 的玩法、弹药库/挂板、默认包、查看器增量刷新与账号 HUD；本分支 `faebdb47` 已通过全构建与 10 组发行物验收，热像/材质等画面缺口仍为 OPEN。
