@@ -36,6 +36,16 @@ public abstract class GlCommandEncoderScopeDepthCopyMixin {
     }
 
     /**
+     * 26.1.2 {@code 590d3e59}：目镜写深度那一次 draw 返回时立即冻结孔径深度，
+     * 早于任何镜身材质批次。HEAD 处被取消的 draw 不会走到这里（cancel 直接返回）。
+     * 目标方法与上面的 HEAD 注入相同，经同一 refmap 重映射，不引入新的混淆名。
+     */
+    @Inject(method = "drawFromBuffers", at = @At("RETURN"), require = 1)
+    private void tacz$freezeAperture(CallbackInfo ci) {
+        ScopeDepthCopyState.afterDraw();
+    }
+
+    /**
      * 1.21.11 的 {@code DepthTestFunction} 没有 ALWAYS；reticle 因而先声明为
      * {@code NO_DEPTH_TEST}，再在 vanilla 应用完管线状态后、真正 {@code glDraw*}
      * 前改回「深度测试开启 + GL_ALWAYS」。

@@ -59,6 +59,15 @@ public final class BodyMaterialContractSmoke {
             var scoped=new Collector();snapshot.submitMaterials(scoped.proxy,body,true,ScopeRenderTypes::apertureCopy);
             require(scoped.types.stream().map(ScopeRenderTypes::unwrapDepthCopy).toList().equals(List.of(body,illuminated,body)),
                     "Scope aperture wrapper hid material identity before the illuminated partition");
+            // Ordered ADS housing (26.1.2 590d3e59): the body batch is an outside-aperture material,
+            // and the illuminated range must keep a clipped unshaded variant rather than escaping the mask.
+            var housing=ScopeRenderTypes.clipHousing(body,texture);
+            require(housing!=body && ScopeRenderTypes.isClippedBody(housing,texture),"Active optic housing did not acquire the outside-aperture body");
+            require(ScopeRenderTypes.clipHousing(body,texture)==housing,"Housing clip type is not cached per texture");
+            var clippedLit=IlluminatedMaterials.forBody(housing,true);
+            require(clippedLit!=housing && clippedLit!=illuminated,"Clipped housing lost its own illuminated variant");
+            var clipped=new Collector();snapshot.submitMaterials(clipped.proxy,housing,true);
+            require(clipped.types.equals(List.of(housing,clippedLit,housing)),"Clipped housing material ranges were lost or reordered: "+clipped.types);
             int expected=IrisCompat.isUsingRenderPack()?((3<<20)|(15<<4)):15728880;
             require(seen.size()==4 && seen.get(0).light==ambient && seen.get(1).light==expected && seen.get(2).light==expected && seen.get(3).light==ambient,
                     "Frozen illuminated subtree did not preserve real-sky UV2 or polluted ordinary body light: "+seen);

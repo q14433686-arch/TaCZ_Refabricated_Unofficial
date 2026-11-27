@@ -362,3 +362,24 @@ f1f47537分发45832954441最终 **13/14**：仅none上述重启夹具遗漏confi
 **当前边界：R1–R5保持已关闭；R6仍ACTIVE，剩余明确开放项为间歇性dev configuration bootstrap定位/修复及任何后续审计发现。未升级版本、未发布，也未声明整体parity完成。**
 
 14:19 UTC：在上述14/14已完成后，尝试以相同源版本独立workflow_dispatch运行build.yml以捕获新增configuration-task诊断（不重跑失败断言、不给旧失败改状态），GitHub返回HTTP403 `Resource not accessible by integration`，未创建运行。当前集成无Actions dispatch权限；不能把未启动的诊断说成运行过，也不提交无意义源改动来绕过此权限。继续这项独立复现需要维护者手动运行build工作流或补足GitHub连接的Actions运行权限。已触发且完成的push CI结果不受此权限问题影响。
+
+### R6 以 26.1.2 `d12a3f2` 为基准的全量复核与 housing 孔径接续（2026-11-26，待 CI）
+
+**全量对照方法**（只读，结果可复现）：`git diff --numstat origin/26.1.2 HEAD -- src/main/java`（337 个共有文件不同，+7,036/−4,939）、`comm` 路径盘点、`RenderConfig`/Cloth/`SyncConfig`/网络载荷键集合比对、公有方法集合比对、中英语言键比对、默认包树比对，以及 `origin/26.1.2` 上 `5c8cf468..d12a3f22` 共 35 个 cherry-pick 的逐提交内容核对。
+
+- 路径：26.1.2 独有 10 个 Java 文件均有本版替代（`MinecraftAccessor`→`DeltaTracker`；`ShapedRecipeMixin`+`RecipeCompat`→`LegacyGunPackRecipeMigrator`/`LegacyGunPackPaths`；`TargetSkinResolver`→`TargetOwnerSkins`；`IrisScopeFragment`→`IrisDepthRestoreShaderMixin`+`ScopeDepthCopyState`；Thermal*Accessor→Preview*/RenderType*/TextureBinding 访问器；LRT 两个 mixin→`GuiGraphicsMixin`/`SoundEngineMixin`）。本版独有 26 个均为 1.21.11 平台实现。
+- 配置/网络：`RenderConfig` 键 54=54、Cloth entry 69=69、网络文件 48=48、`SyncConfig` 23=23；`NetworkHandler` 仅 `playC2S/playS2C` 命名与注册顺序差。
+- 方法集合：34 个文件有 26.1.2 独有公有方法，逐个核对为平台 API（GUI `extract*`、Ingredient codec、`KeyMappingHelper`→`KeyBindingHelper`、`BlockTintSource`→`ColorProviderRegistry`）或可见性/改名（`viewmodelFxClipApplies`→`shouldClipViewmodel`、`underlying`→`unwrapDepthCopy`、`maskOutsidePipeline`→`addOutsideApertureShader`）。
+- 语言：26.1.2 多出的 7 键为未移植的旧 VBO/Sable 面板与生产代码未引用的 `thermal_unavailable`（26.1.2 自身也只记日志），与前一轮结论一致。
+- 默认包：两线均 1,596 个源文件，仅 `gunpack.meta.json` 的 Minecraft 谓词不同。
+- 35 个 cherry-pick 的来源提交在 `arena/f2648a1b`（另一条从 `aac343a` 出发的接收线），均非 HEAD 祖先，只能按内容核对；抽查 flash 默认、split-FOV `lensZoomAtProgress`、rack cell outline、`bobHurt` 受伤倾斜均已以本版 API 存在。`arena/f2648a1b` 生产源码只多 `GunDisplayInstanceMixin`，已被本版 `GunRigBaker` 有意替代。
+
+**本轮确认的真实行为差（`590d3e59` ← `0e25f99b`）**：26.1.2 在目镜深度写入 draw 的 `drawFromBuffers` RETURN 冻结孔径（`afterDraw`），镜身按 `clipHousing` 作为孔外材质绘制——孔内镜身片元丢弃、即使 1x 也露出世界，不受放大倍率闸控制。本版只在首个镜身批次 HEAD 复制孔径，镜身仍是普通材质，靠深度测试；位于目镜平面之前的镜身片元会留在孔内。此前文档未覆盖该差异。
+
+本版适配（未复制 26.1.2 源文件）：
+- `GlCommandEncoderScopeDepthCopyMixin` 增加同一目标方法 `drawFromBuffers` 的 RETURN 注入（同一 refmap，未新增混淆名，非 lambda 目标）；HEAD 被取消的 draw 不会触发。
+- `ScopeDepthCopyState.afterDraw()` 只在 BACKUP draw 生效，复用本版“每次 BACKUP 只尝试一次（含失败）”标志；`APERTURE_COPY` 保留为空操作回退，没有删除。
+- `ScopeRenderTypes.clipHousing` 从 `clipForViewmodel` 中抽出，后者保留原倍率闸；`BedrockAttachmentModel` 有序 ADS 镜身改用 `clipHousing`，不再嵌套 `apertureCopy`（`DepthCopyRenderType` 共用一个 CURRENT，嵌套会互相覆盖）。发光镜身通过现有 `IlluminatedMaterials` CLIPPED 分支取得孔外 unshaded 变体；掩码周期无效时与其它 MASK_OUTSIDE 材质一样回退正常绘制。
+- `PORT_BODY_MATERIAL` 合约新增：housing 必须成为可识别的 clipped body、按纹理缓存、发光段取得独立 clipped 变体且 body/illuminated/body 顺序不变。
+
+验收边界：本地无 JDK/Loom 缓存，`verify_mixin_targets.py`/`verify_shader_imports.py` 无法本地运行；以 push CI 的 compile-check、完整 build（含 mixin 完整性静态检查）与 14 项分发矩阵（原生/Iris optics 像素门禁与 PORT_BODY_MATERIAL）为准。**CI 通过前不标 DONE；R6 仍 ACTIVE**，开发 configuration bootstrap 间歇超时仍为独立开放项。未改版本、未发布。

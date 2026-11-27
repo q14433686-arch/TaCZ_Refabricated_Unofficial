@@ -226,6 +226,26 @@ public final class ScopeDepthCopyState {
         CURRENT.set(operation);
     }
 
+    /**
+     * Step 3 on the ocular writer's own draw: {@code GlCommandEncoder#drawFromBuffers} RETURN.
+     *
+     * <p>26.1.2 {@code 590d3e59} semantics: freeze the aperture immediately after the native
+     * writer, before any (possibly differently lit, possibly split) housing material batch can
+     * touch the depth attachment. This is what lets the active optic's body draw as an ordinary
+     * {@link Operation#MASK_OUTSIDE} material (see {@code ScopeRenderTypes#clipHousing}) instead
+     * of carrying the {@link Operation#APERTURE_COPY} boundary itself. One attempt per BACKUP
+     * (including a failed one): the APERTURE_COPY boundary then stays a no-op fallback.</p>
+     */
+    public static void afterDraw() {
+        if (CURRENT.get() != Operation.BACKUP || apertureCopyAttempted) {
+            return;
+        }
+        RenderSystem.assertOnRenderThread();
+        apertureCopyAttempted = true;
+        maskValid = copyApertureDepth() && maskWorldValid;
+        if (maskValid) maskCycleFrame = frameCounter;
+    }
+
     /** @return whether GlCommandEncoder should execute the pending draw. */
     public static boolean beforeDraw() {
         RenderSystem.assertOnRenderThread();
@@ -276,8 +296,9 @@ public final class ScopeDepthCopyState {
                 yield true;
             }
             case APERTURE_COPY -> {
-                // Step 3 runs at the body draw boundary: nothing but the ocular draw at order -3 has
-                // written depth since the world backup, so this copy isolates the ocular footprint.
+                // Fallback boundary only: afterDraw() normally froze the aperture at the ocular
+                // writer's RETURN already. Nothing but the ocular draw at order -3 has written depth
+                // since the world backup, so a copy here still isolates the ocular footprint.
                 disableScopeBranches(program);
                 if (!apertureCopyAttempted) {
                     apertureCopyAttempted = true;

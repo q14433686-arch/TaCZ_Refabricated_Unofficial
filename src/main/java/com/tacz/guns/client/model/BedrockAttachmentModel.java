@@ -679,15 +679,15 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 }
             });
 
-            // Step 3 of the ocular screen-space mask happens at this draw boundary: the wrapped
-            // body type first copies the aperture depth (world depth plus only the ocular
-            // differences) into the mask texture, and only then does the ordinary scope body draw.
-            // Body fragments behind the invisible ocular still fail their normal depth test, so
-            // neither stencil nor framebuffer attachment changes are involved.
-            // Partition before adding the boundary wrapper, so illuminated scope housing keeps
-            // its unshaded material. APERTURE_COPY freezes once per BACKUP, before ANY body batch.
-            bodySnapshot.submitMaterials(collector.order(SCOPE_BODY_ORDER), renderType, true,
-                    ScopeRenderTypes::apertureCopy);
+            // Step 3 of the ocular screen-space mask: GlCommandEncoder#drawFromBuffers RETURN froze
+            // the writer above (ScopeDepthCopyState#afterDraw, 26.1.2 590d3e59), before ANY body
+            // batch. The housing therefore draws as an outside-aperture material: fragments inside
+            // the ocular footprint discard and leave world colour visible even for a 1x sight,
+            // without making its coating part of the reticle. Illuminated housing keeps its unshaded
+            // clipped variant (IlluminatedMaterials recognises the clipped body). Neither stencil nor
+            // framebuffer attachment changes are involved; an invalid cycle fails open.
+            bodySnapshot.submitMaterials(collector.order(SCOPE_BODY_ORDER),
+                    ScopeRenderTypes.clipHousing(renderType, texture), true);
 
             // Restore the aperture pixels from the exact pre-ocular world-depth backup. Iris renders water,
             // fog, particles and volumetric clouds after its solid-hand pass and needs the original depth.

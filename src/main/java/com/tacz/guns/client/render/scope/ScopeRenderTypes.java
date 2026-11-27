@@ -323,6 +323,18 @@ public final class ScopeRenderTypes {
         if (!applies || !shouldClipViewmodel()) {
             return original;
         }
+        return clipHousing(original, texture);
+    }
+
+    /**
+     * The active optic's housing, unlike other viewmodel parts, never occludes its own aperture
+     * (26.1.2 {@code ScopeRenderTypes#clipHousing}). Used for the ordered ADS body batch at
+     * {@code SCOPE_BODY_ORDER}, independent of the magnification gate in {@link #clipForViewmodel}:
+     * the ocular is already an invisible depth writer there, so a low-power sight must also show
+     * the world instead of its own coating. Fails open (draws unclipped) when this frame's mask
+     * cycle is not valid, exactly like the other {@code MASK_OUTSIDE} materials.
+     */
+    public static RenderType clipHousing(RenderType original, Identifier texture) {
         // Gun displays may opt into entityTranslucent; retain that blend/sort recipe rather than
         // silently forcing every body through cutout. AttachmentRender supplies cutout here.
         if (hasBlending(original)) {
