@@ -24,7 +24,7 @@ public class AmmoConfig {
     public static ForgeConfigSpec.BooleanValue IGNORE_TEAM_FRIENDLY_FIRE;
     public static ForgeConfigSpec.BooleanValue ENABLE_BULLET_DAMAGE_IGNORE_LIST;
     public static ForgeConfigSpec.ConfigValue<List<String>> BULLET_DAMAGE_IGNORE_LIST;
-    public static ForgeConfigSpec.BooleanValue GLOBAL_BULLET_SPEED_MODIFIER;
+    public static ForgeConfigSpec.DoubleValue GLOBAL_BULLET_SPEED_MODIFIER;
 
     public static void init(ForgeConfigSpec.Builder builder) {
         builder.push("ammo");
