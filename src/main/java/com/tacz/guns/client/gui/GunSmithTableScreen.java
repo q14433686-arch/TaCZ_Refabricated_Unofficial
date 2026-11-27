@@ -24,7 +24,6 @@ import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.inventory.GunSmithTableMenu;
 import com.tacz.guns.network.message.ClientMessageCraft;
 import com.tacz.guns.resource.pojo.data.block.TabConfig;
-import com.tacz.guns.util.RenderDistance;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
@@ -377,7 +376,11 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
     }
 
     private void addCraftButton() {
-        this.addRenderableWidget(new TaczImageButton(leftPos + 289, topPos + 162, 48, 18, 138, 164, 18, TEXTURE, b -> {
+        // 【C3 · 上游 1.2.0】没有选中配方时按钮保持贴图原样但不可点：active=false、
+        // 悬停偏移取 0（禁用态落在普通贴图上，不做 hover 位移）、文字变灰 0xFF888888
+        // （灰色画在下面的 drawModCenteredString 里）。
+        boolean hasRecipe = this.selectedRecipe != null;
+        TaczImageButton craftButton = this.addRenderableWidget(new TaczImageButton(leftPos + 289, topPos + 162, 48, 18, 138, 164, hasRecipe ? 18 : 0, TEXTURE, b -> {
             if (this.selectedRecipe != null && playerIngredientCount != null) {
                 List<GunSmithTableIngredient> inputs = selectedRecipe.getInputs();
                 int size = inputs.size();
@@ -395,6 +398,7 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
                 ClientPlayNetworking.send(new ClientMessageCraft(this.selectedRecipe.getId(), this.menu.containerId));
             }
         }));
+        craftButton.active = hasRecipe;
     }
 
     /** 枪包主页链接。【本轮还原】改回上游贴图按钮（UV 149,211，18×18）。 */
@@ -579,7 +583,8 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
         // 面板上的「制造」二字一直都由这一行负责。
         // 现在 addCraftButton() 已恢复为贴图按钮（TaczImageButton），
         // 不再有第二处绘制，把这一行补回来才是上游的样子。
-        drawModCenteredString(graphics, font, Component.translatable("gui.tacz.gun_smith_table.craft"), leftPos + 312, topPos + 167, 0xFFFFFFFF);
+        drawModCenteredString(graphics, font, Component.translatable("gui.tacz.gun_smith_table.craft"), leftPos + 312, topPos + 167,
+                this.selectedRecipe != null ? 0xFFFFFFFF : 0xFF888888);
         if (!this.filterEnabled && this.selectedRecipe != null) {
             this.renderLeftModel(graphics, this.selectedRecipe);
             this.renderPackInfo(graphics, this.selectedRecipe);
@@ -591,6 +596,58 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
 
         ((ScreenAccessor) this).tacz$getRenderables().stream().filter(w -> w instanceof ResultButton)
                 .forEach(w -> ((ResultButton) w).renderTooltips(stack -> graphics.setTooltipForNextFrame(font, stack, mouseX, mouseY)));
+        // 【C4 · 上游 1.2.0】材料格悬停提示；只在配方列表非空时调用。
+        if (selectedRecipeList != null && !selectedRecipeList.isEmpty()) {
+            this.renderIngredientTooltip(graphics, mouseX, mouseY);
+        }
+    }
+
+    /**
+     * 【C4 · 上游 1.2.0】悬停在材料格上时显示该物品的 tooltip，并把所属创造栏插在第 2 行。
+     * 使用与 {@link #renderIngredient} 相同的格子和每秒一次的候选轮换；
+     * 材料尚未解析出来（null）时跳过，与 renderIngredient 的判空一致。
+     */
+    private void renderIngredientTooltip(GuiGraphicsExtractor gui, int mouseX, int mouseY) {
+        if (this.selectedRecipe == null || this.minecraft == null || this.minecraft.level == null) {
+            return;
+        }
+        List<GunSmithTableIngredient> inputs = this.selectedRecipe.getInputs();
+        for (int i = 0; i < 6; i++) {
+            for (int j = 0; j < 2; j++) {
+                int index = i * 2 + j;
+                if (index >= inputs.size()) {
+                    return;
+                }
+                int offsetX = leftPos + 254 + 45 * j;
+                int offsetY = topPos + 62 + 17 * i;
+                if (mouseX < offsetX || mouseX >= offsetX + 16 || mouseY < offsetY || mouseY >= offsetY + 16) {
+                    continue;
+                }
+                Ingredient ingredient = inputs.get(index).getIngredient();
+                ItemStack[] items = ingredient == null
+                        ? new ItemStack[0]
+                        : ingredient.display().resolveForStacks(SlotDisplayContext.fromLevel(this.minecraft.level)).toArray(ItemStack[]::new);
+                if (items.length == 0) {
+                    return;
+                }
+                ItemStack item = items[((int) (GunTime.nowMillis() / 1_000)) % items.length];
+                if (!item.isEmpty()) {
+                    gui.setTooltipForNextFrame(font, getIngredientTooltip(item), java.util.Optional.empty(), mouseX, mouseY);
+                }
+                return;
+            }
+        }
+    }
+
+    private List<Component> getIngredientTooltip(ItemStack item) {
+        List<Component> tooltip = new ArrayList<>(getTooltipFromContainerItem(item));
+        for (net.minecraft.world.item.CreativeModeTab tab : net.minecraft.core.registries.BuiltInRegistries.CREATIVE_MODE_TAB) {
+            if (tab.contains(item)) {
+                tooltip.add(Math.min(1, tooltip.size()), tab.getDisplayName().copy().withStyle(net.minecraft.ChatFormatting.BLUE));
+                break;
+            }
+        }
+        return tooltip;
     }
 
     private void renderPackInfo(GuiGraphicsExtractor gui, GunSmithTableRecipe recipe) {
@@ -746,8 +803,10 @@ public class GunSmithTableScreen extends AbstractContainerScreen<GunSmithTableMe
      * {@code FIXED} 上下文 + 固定 seed 0。</p>
      */
     private void renderLeftModel(GuiGraphicsExtractor graphics, GunSmithTableRecipe recipe) {
-        // 先标记一下，渲染高模（与上游同序：LOD 判定依赖它）
-        RenderDistance.markGuiRenderTimestamp();
+        // 【C2】不再标 100ms 时间戳：预览的 LOD 豁免由 GunPreviewRenderer 里的
+        // RenderDistance.beginScreenItemDraw() 精确作用域保证（上游 1.2.0 改为精确的
+        // 屏幕绘制语境；26.2 的预览是 PIP，submit 在 Screen 的 extract 之后才真正发生，
+        // 所以作用域开在那里）。extract 阶段本身已在 ScreenRenderTracker 窗口内。
         if (recipe == null) {
             return;
         }

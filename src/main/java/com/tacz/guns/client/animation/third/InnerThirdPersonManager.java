@@ -14,11 +14,13 @@ import net.minecraft.world.item.ItemStack;
 
 public class InnerThirdPersonManager {
     public static void setRotationAnglesHead(LivingEntity entityIn, ModelPart rightArm, ModelPart leftArm, ModelPart body, ModelPart head, float limbSwingAmount) {
-        // 游戏暂停时不进行动画计算，否则会 StackOverflow
+        // 【C6 · 上游 1.2.0 删除「暂停即 return」】暂停菜单后面的第三人称玩家应保持持枪姿态。
+        // 旧注释里的 StackOverflow 来自 PlayerAnimator 在模型阶段播放动画；26.2 的 PAL 仍在
+        // 这里 updatePlayerLayers，所以暂停时只跳过 PAL 这一支（装了 PAL 才 return），
+        // 纯数学的原版持枪姿态照常计算 —— 不装 PAL 时与上游表现一致。
         if (Minecraft.getInstance().isPaused()) {
-            return;
-        }
-        if (PlayerAnimatorCompat.updatePlayerLayers(entityIn)) return;
+            if (PlayerAnimatorCompat.isInstalled()) return;
+        } else if (PlayerAnimatorCompat.updatePlayerLayers(entityIn)) return;
         if (entityIn instanceof IGunOperator operator) {
             ItemStack mainHandItem = entityIn.getMainHandItem();
             IGun iGun = IGun.getIGunOrNull(mainHandItem);

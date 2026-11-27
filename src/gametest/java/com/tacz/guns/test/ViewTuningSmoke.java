@@ -136,8 +136,17 @@ final class ViewTuningSmoke {
             ctx.waitFor(mc -> ScopePipRenderer.frameNumber() >= editedFrame+2);
             BufferedImage moved = frame(ctx, "moved");
             Vector3f delta = muzzle(ctx).sub(before);
-            check(Math.abs(delta.x - .237) < .035 && Math.abs(delta.y + .113) < .035 && delta.z < -.08f,
-                    "Actual hand muzzle did not follow right/down/away in paused editor: " + delta);
+            // C1（上游 1.2.0 FirstPersonRenderMath#muzzleOffset）：缓存的定位点保留手部视图深度，
+            // 横纵分量乘 tan(worldFov/2)/tan(itemFov/2)，所以保存的 XYZ 位移让它移动 (x·k, y·k, z)。
+            // k 从渲染器读取的同一 FOV 动态算出（世界已暂停，两个 FOV 都是稳定值）。
+            float k = ctx.computeOnClient(mc -> {
+                double itemTan = Math.tan(Math.toRadians(com.tacz.guns.client.event.CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get()) / 2);
+                double worldTan = Math.tan(Math.toRadians(com.tacz.guns.client.event.CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2);
+                return itemTan > 1.0e-6 ? (float) (worldTan / itemTan) : 1f;
+            });
+            check(Math.abs(delta.x - .237 * k) < .035 && Math.abs(delta.y + .113 * k) < .035
+                            && Math.abs(delta.z + .330) < .035,
+                    "Actual hand muzzle did not follow right/down/away in paused editor (lateral ×k=" + k + "): " + delta);
             int handPixels = changedInHand(idle, moved);
             check(handPixels > 150, "Only the editor changed, not the held gun: " + handPixels);
             ctx.clickScreenButton("gui.cancel"); ctx.waitForScreen(PauseScreen.class);

@@ -12,11 +12,10 @@ public class OtherConfig {
 
     public static void init(ForgeConfigSpec.Builder builder) {
         builder.push("other");
-        HIDE_GUN_PACK_COMPATIBILITY_WARNING = builder.comment("Hide client gun pack compatibility messages; does not convert or enable packs")
+        HIDE_GUN_PACK_COMPATIBILITY_WARNING = builder.comment("Hide warnings about gun packs that may need conversion for this Minecraft version.")
                 .define("HideGunPackCompatibilityWarning", false);
 
-        builder.comment("Deprecated: now move to .minecraft/tacz/tacz-pre.toml or <your version>/tacz/tacz-pre.toml");
-        builder.comment("When enabled, the reload command will not overwrite the default model file under config");
+        builder.comment("Deprecated and ignored: use [gunpack].DefaultPackDebug in <game directory>/tacz/tacz-pre.toml.");
         DEFAULT_PACK_DEBUG = builder.define("DefaultPackDebug", false);
 
         builder.comment("The farthest sound distance of the target, including minecarts type");

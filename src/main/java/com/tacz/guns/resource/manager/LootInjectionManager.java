@@ -3,7 +3,6 @@ package com.tacz.guns.resource.manager;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.pojo.data.loot.LootTableInjection;
@@ -45,8 +44,9 @@ public class LootInjectionManager extends SimplePreparableReloadListener<Map<Ide
                     for (Identifier lootTable : injection.lootTables()) {
                         injections.computeIfAbsent(lootTable, key -> new java.util.ArrayList<>()).add(injection);
                     }
-                } catch (JsonParseException | IllegalArgumentException e) {
-                    GunMod.LOGGER.error(marker, "Failed to load loot injection {}", id, e);
+                } catch (RuntimeException e) {
+                    // 【C8 · 上游 1.2.0】任意格式错误的注入文件都跳过该文件，不中断整个重载。
+                    GunMod.LOGGER.error(marker, "Failed to load loot injection {}; skipping", id, e);
                 }
             }
         }
