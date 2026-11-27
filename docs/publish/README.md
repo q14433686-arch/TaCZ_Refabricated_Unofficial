@@ -10,12 +10,22 @@
 | [本次文件说明（英文）](26.3-1.2.0-R1-notes.md) · [中文开发变更](../CHANGELOG_26_3_R1.md#120-r1) | GitHub Release / 平台 File changelog 草稿 | 只对应 26.3 1.2.0 R1 **含 #124** 的功能快照；不用于旧发布件 |
 | [玩家操作](../PLAYER_GUIDE_26_3.md) · [带图题的图册](../SCREENSHOTS_26_3.md) · [枪包 Wiki 补遗](../wiki/GUNPACK_26_3.md) | 仓库文档 / Wiki 素材 | Wiki 以原作实际已有的格式页为基础，本线新增开关单列，不改上游 Wiki |
 
+## 当前维护口径（2026-11-27）
+
+沿用 `26.2(main)` 的维护状态公告（`c97a9d6f`，PR #136）：
+
+- 项目整体从「积极维护」转为**不定时更新**。
+- 仅 **1.21.11**（旧 MC 版长期线）与 **26.3**（当前最新适配线）仍接收更新。
+- **26.1.2 与 26.2 已封存**：不再计划后续更新；已发布的 Release 继续可用，Issue 仍可提交，但不承诺修复。
+- 有意接手维护的开发者**可随意 fork**：代码 GPL-3.0，默认枪包资源 CC BY-NC-ND 4.0，fork 后再分发仍受原有许可约束。
+- 本次只同步仓库内文案与 Issue 模板，不代表外站或 GitHub About 已在线更新；历史下载、版本标签与 changelog 保留。
+
 ## GitHub 项目主页
 
 **About / Description**（仓库级简介，不更改默认分支）：
 
 ```text
-Unofficial Fabric port of Timeless & Classics Guns: Zero. MC 26.3 development: gunsmithing, display walls, ammo storage, account HUDs and optional muzzle/impact lighting. Separate files for 26.2, 26.1.2 and 1.21.11. Built-in TML; partial LRTactical. 非官方社区移植。
+Unofficial Fabric port of TaCZ. Irregular updates for MC 1.21.11 and 26.3 only; 26.1.2/26.2 archived. Existing releases remain available and issues stay open; no fixes promised. Forks welcome under existing licenses. 非官方移植，不定时更新；欢迎 fork。
 ```
 
 **Website** 建议填 [26.3 开发版介绍与版本选择](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3#readme)。默认分支 `26.2(main)` 的 README 属于 26.2；不要用 26.3 的版本表覆盖它。若在旧线首页引用，只需写：「[26.3 开发版](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3#readme)包含挂板、弹药库与账号准星；各 MC 版本单独构建，请按文件标注选择。」

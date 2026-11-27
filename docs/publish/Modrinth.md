@@ -64,6 +64,16 @@ Craft guns at specialized workbenches, fit attachments and load community packs.
 
 Make guns and attachments at dedicated workbenches, load community gun packs and use the parts your pack allows. This is an **unofficial** community port of *Timeless and Classics Guns: Zero*. It is not affiliated with, reviewed by or endorsed by the TACZ Dev Team.
 
+## Maintenance status
+
+**This project is no longer actively maintained; updates are irregular.** Only the
+`1.21.11` and `26.3` branches still receive updates. The `26.1.2` and `26.2`
+branches are **archived** — existing releases keep working and the issue tracker
+stays open, but no further updates are planned for them. If you want to take the
+port over, forking is explicitly welcome: the code is GPL-3.0, and the bundled
+default gun pack's assets are CC BY-NC-ND 4.0 (see `LICENSES.md` in the repository
+for what that means for redistribution).
+
 ### Choose the right version
 
 Match the **exact Minecraft version** in Versions. Minecraft **26.3, 26.2 and 26.1.2 need Java 25**; **1.21.11 needs Java 21**. Each has its own Fabric jar and needs matching **Fabric API** and **Forge Config API Port**. The port adapts networking, resource loading and scopes to the target game. Supported high-poly packs can use the built-in TacZ Mesh Loader, and some LRTactical pack features are supported (not the entire mod).

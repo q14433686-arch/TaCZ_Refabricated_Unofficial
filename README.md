@@ -8,6 +8,14 @@
 
 这是一款把 TaCZ 带到新版 Minecraft 的**非官方 Fabric 移植**，基于 [TACZ Dev Team 的原作](https://github.com/MCModderAnchor/TACZ)和 [Sh1roCu 的 Fabric 移植](https://github.com/Sh1roCu/TACZ-Refabricated)。随包提供默认枪包、内置 TML 高模加载和部分 LRTactical 兼容；代码与美术的[许可不同](LICENSES.md)。本项目未获原作者审核或背书，遇到移植问题请到[本仓库反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)。
 
+> **维护状态公告 / Maintenance status（2026-11-27）**：本项目整体从「积极维护」转为**不定时更新**（no longer actively maintained; updates are irregular）。
+>
+> - 仍接收更新的只有两条分支：**`1.21.11`**（旧 MC 版长期线）与 **`26.3`**（当前最新 MC 版）；
+> - **`26.1.2` 与 `26.2` 已封存（archived）**：不再计划后续更新。已发布的 Release 继续可用，Issue 仍可提交，但不承诺修复；
+> - 有意接手维护的开发者**可随意 fork**：代码为 GPL-3.0；默认枪包资源为 CC BY-NC-ND 4.0，fork 后再分发仍受其约束（见 [`LICENSES.md`](LICENSES.md)）。
+>
+> 本分支（26.3）为上述**仍接收更新**的分支，后续以不定时更新为准。
+
 ### 26.3 开发版里可以做什么？
 
 **[从第一张工作台开始：玩家图文指南](docs/PLAYER_GUIDE_26_3.md)** · [实机图册](docs/SCREENSHOTS_26_3.md) · [枪包 Wiki：26.3 与上游的差异](docs/wiki/GUNPACK_26_3.md) · [开发版变更清单](docs/CHANGELOG_26_3_R1.md#120-r1)
@@ -34,12 +42,12 @@
 
 ### 选择你的 Minecraft 版本 / Pick your Minecraft version
 
-| Minecraft | Java | 源码分支 | 已发布的文件（不是本轮测试包） |
-|---|---|---|---|
-| **26.3** | 25 | [`26.3`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3) | [1.1.8 R1-hotfix3（旧版）](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.3%E7%9A%84mod%E6%96%87%E4%BB%B6_R1_HOTFIX-3) |
-| **26.2** | 25 | [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) | [R3-hotfix4](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.2%E7%9A%84mod%E6%96%87%E4%BB%B6_R3_HOTFIX-4) |
-| **26.1.2** | 25 | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) | [R3-hotfix4](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.1.2%E7%9A%84mod%E6%96%87%E4%BB%B6_R3_HOTFIX-4) |
-| **1.21.11** | 21 | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) | [R3-hotfix4](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/1.21.11%E7%9A%84mod%E6%96%87%E4%BB%B6_R3_HOTFIX-4) |
+| Minecraft | 状态 | Java | 源码分支 | 已发布的文件（不是本轮测试包） |
+|---|---|---|---|---|
+| **26.3** | 维护中 · 不定时更新 | 25 | [`26.3`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3) | [1.1.8 R1-hotfix3（旧版）](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.3%E7%9A%84mod%E6%96%87%E4%BB%B6_R1_HOTFIX-3) |
+| **1.21.11** | 维护中 · 不定时更新 | 21 | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) | [R3-hotfix4](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/1.21.11%E7%9A%84mod%E6%96%87%E4%BB%B6_R3_HOTFIX-4) |
+| **26.2** | **封存** | 25 | [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) | [R3-hotfix4](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.2%E7%9A%84mod%E6%96%87%E4%BB%B6_R3_HOTFIX-4) |
+| **26.1.2** | **封存** | 25 | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) | [R3-hotfix4](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.1.2%E7%9A%84mod%E6%96%87%E4%BB%B6_R3_HOTFIX-4) |
 
 四条线都需要对应 MC 版本的 Fabric API 和 Forge Config API Port。本文环境表和下方测试只对应 **26.3**。
 
