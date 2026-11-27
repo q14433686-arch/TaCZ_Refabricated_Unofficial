@@ -19,6 +19,10 @@ public class BedrockAnimation {
     @SerializedName("sound_effects")
     private SoundEffectKeyframes soundEffects;
 
+    @SerializedName("particle_effects")
+    private ParticleEffectKeyframes particleEffects;
+    public ParticleEffectKeyframes getParticleEffects() { return particleEffects; }
+
     public boolean isLoop() {
         return loop;
     }

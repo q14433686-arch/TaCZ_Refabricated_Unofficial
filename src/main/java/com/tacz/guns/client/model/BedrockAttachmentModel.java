@@ -6,6 +6,7 @@ import com.tacz.guns.client.model.IFunctionalSubmitter;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.bedrock.ModelRendererWrapper;
 import com.tacz.guns.client.model.functional.BeamRenderer;
+import com.tacz.guns.client.model.functional.ImpactMarkerRender;
 import com.tacz.guns.client.render.scope.IReticleRenderer;
 import com.tacz.guns.client.render.scope.ReticleRendererRegistry;
 import com.tacz.guns.client.render.scope.ScopeFinalOverlayState;
@@ -20,6 +21,8 @@ import com.tacz.guns.client.resource.pojo.display.gun.TextShow;
 import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
 import com.tacz.guns.client.resource.pojo.model.BedrockVersion;
 import com.tacz.guns.config.client.RenderConfig;
+import com.tacz.guns.config.ClientConfig;
+import com.tacz.guns.client.resource.pojo.model.BonesItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
@@ -28,6 +31,7 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Matrix4f;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -157,10 +161,29 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     protected @Nullable List<List<BedrockPart>> laserBeamPaths;
 
     private @Nullable ItemStack currentGunItem;
+    private @Nullable ImpactMarkerRender impactMarker;
     private @Nullable ItemStack attachmentItem;
 
     private boolean isScope = false;
     private boolean isSight = false;
+
+    private static final Pattern OCULAR_PATTERN = Pattern.compile(
+                "^(" + OCULAR_NODE + "|" + OCULAR_SIGHT_NODE + "|" + OCULAR_SCOPE_NODE + ")(_(\\d+))?$");
+
+    @Override
+    protected float getExtraCubeInflate(BonesItem bone) {
+        if (!ClientConfig.isLoaded() || !RenderConfig.ENABLE_OCULAR_INFLATE.get()) return 0;
+        return ocularInflate(bone, indexBones, RenderConfig.OCULAR_INFLATE.get().floatValue());
+    }
+
+    static float ocularInflate(BonesItem bone, Map<String, BonesItem> index, float amount) {
+        if (!Float.isFinite(amount) || amount <= 0) return 0;
+        for (int i = 0; bone != null && i < index.size(); i++) {
+            if (bone.getName() != null && OCULAR_PATTERN.matcher(bone.getName()).matches()) return amount;
+            bone = bone.getParent() == null ? null : index.get(bone.getParent());
+        }
+        return 0;
+    }
 
     public BedrockAttachmentModel(BedrockModelPOJO pojo, BedrockVersion version) {
         super(pojo, version);
@@ -179,11 +202,9 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         // 活动目镜会从 body 快照中移除并单独进入 invisible depth-aperture 批次。不能在这里永久
         // visible=false，因为 BedrockPart 是跨帧、跨显示上下文共享的。
         // 三种命名都要收：ocular / ocular_sight / ocular_scope（组合镜两组各一个）。
-        Pattern ocularPattern = Pattern.compile(
-                "^(" + OCULAR_NODE + "|" + OCULAR_SIGHT_NODE + "|" + OCULAR_SCOPE_NODE + ")(_(\\d+))?$");
         for (Map.Entry<String, ModelRendererWrapper> entry : modelMap.entrySet()) {
             String name = entry.getKey();
-            java.util.regex.Matcher ocularMatcher = name == null ? null : ocularPattern.matcher(name);
+            java.util.regex.Matcher ocularMatcher = name == null ? null : OCULAR_PATTERN.matcher(name);
             if (ocularMatcher != null && ocularMatcher.matches()) {
                 BedrockPart part = entry.getValue().getModelRenderer();
                 if (part != null) {
@@ -236,33 +257,16 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             path = getPath(divisionModel);
         }
         // 第 22 轮：解析准星（分划）节点集合，供 IReticleRenderer 策略使用。
+        indexViewOculars();
         this.reticleNodes = resolveReticleNodes();
     }
 
-    /**
-     * 扫描模型树，把准星节点分成「发光」与「蚀刻」两类。
-     *
-     * <h2>为什么必须单独扫描，而不能复用 divisionNodePaths</h2>
-     * 上面那段初始化把 {@code division} 整个 {@code setHidden(true)} 了，
-     * 而实测（默认枪包 33 个瞄具）发现 <b>{@code division_illuminated} 是
-     * {@code division} 的子节点</b>：
-     * <pre>
-     *   scope_acog_ta31:  division(5 cubes)  ← 黑色蚀刻线 + 遮光板
-     *                     └─ division_illuminated(1 cube)  ← 发光竖线
-     *   sight_exp3:       division(0 cubes)
-     *                     └─ division_illuminated(1 cube)  ← 全息红点
-     * </pre>
-     * 而快照遍历器 {@code BedrockRenderSnapshot#capturePart} 遇到
-     * {@code visible == false} 会<b>直接 return、连子节点都不遍历</b>。
-     * 于是父级一被隐藏，发光准星也跟着永远画不出来 ——
-     * 这正是「镜片掏空后什么都看不见」的直接原因。
-     *
-     * <p>因此这里<b>绕过父子关系</b>，直接把发光节点单独收集出来，
-     * 由 {@code IlluminatedReticleRenderer} 在 submit 阶段临时置为可见并单独提交。</p>
-     */
+    /** Use authored division roots, not their common grouping parent. Exclude luminous
+     * housing decorations from the independent fallback reticle list. */
     private ScopeNodeSet resolveReticleNodes() {
         List<BedrockPart> illuminated = new ArrayList<>();
-        List<BedrockPart> etched = new ArrayList<>();
+        List<BedrockPart> etched = new ArrayList<>(divisionByIndex.values());
+        var housing = modelMap.get("scope_body");
         for (Map.Entry<String, ModelRendererWrapper> entry : modelMap.entrySet()) {
             String name = entry.getKey();
             if (name == null) {
@@ -272,9 +276,13 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             if (part == null) {
                 continue;
             }
-            if (RETICLE_ILLUMINATED_PATTERN.matcher(name).matches()) {
+            if (RETICLE_ILLUMINATED_PATTERN.matcher(name).matches()
+                    && (divisionByIndex.isEmpty() || housing == null || !hasAncestor(part, housing.getModelRenderer())
+                    || divisionByIndex.values().stream().anyMatch(root -> hasAncestor(part, root)))) {
+                // E.g. TA31 also has red_illuminated on the *housing*. Replaying it here
+                // would punch it straight back through the aperture as a fake reticle.
                 illuminated.add(part);
-            } else if (RETICLE_ETCHED_PATTERN.matcher(name).matches()) {
+            } else if (divisionByIndex.isEmpty() && RETICLE_ETCHED_PATTERN.matcher(name).matches()) {
                 etched.add(part);
             }
         }
@@ -285,8 +293,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
     }
 
     /**
-     * 【第 35 轮】组合镜（both）当前激活的镜组：{@code 1} = 红点/全息分系统，
-     * {@code 2} = 筒镜分系统。非组合镜恒为 {@code 0}（表示"不适用，不做过滤"）。
+     * 组合镜（both）当前激活的 scope_view[_N] 序号，来自 display views[]。
+     * 不同模型的序号与筒镜/红点角色不同；{@code 0} 表示未指定，不做过滤。
      *
      * <p>由 {@code FirstPersonRenderGunEvent} 在计算定位时顺带写入 ——
      * 那里本来就要按 {@code views[zoomNumber]} 选 {@code scope_view} 定位组，
@@ -342,28 +350,39 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         return new ScopeNodeSet(etched, illuminated);
     }
 
-    /**
-     * 当前激活镜组对应的<b>目镜序号</b>。
-     *
-     * <p>{@code activeViewGroup} 取自 display json 的 {@code views[]}，
-     * 约定 {@code 1} = 红点分系统、{@code 2} = 筒镜分系统。这里把它翻译成
-     * 本模型内部的目镜序号 —— 两者<b>不能划等号</b>：
-     * {@code scope_standard_8x} 的筒镜是序号 1（{@code ocular_scope}）、
-     * 红点是序号 2（{@code ocular_sight_2}），与 hamr/vudu 正好相反。
-     * 因此必须查 {@link #ocularIsScopeByIndex} 这张构造时建好的表，
-     * 而不能假设「序号 = views 值」或「前缀 = views 值」。
-     *
-     * @return 匹配的目镜序号；找不到（非组合镜或命名不含分组信息）返回 {@code null}
-     */
+    /** Authored views[] indexes scope_view[_N], not a universal sight/scope role.
+     * Match that optical axis to its rest-pose ocular; the ocular suffix still selects division[_N]. */
     @Nullable
     private Integer activeOcularIndex() {
-        boolean wantScope = activeViewGroup == 2;
-        for (Map.Entry<Integer, Boolean> entry : ocularIsScopeByIndex.entrySet()) {
-            if (entry.getValue() == wantScope) {
-                return entry.getKey();
+        return ocularForView.get(activeViewGroup);
+    }
+
+    /** views[] selects scope_view[_N], not a universal sight/scope role. AMG10 and
+     * standard_8x use view 1 for their scope; HAMR uses view 2. Pair each rest-pose
+     * view axis with the ocular on that axis, retaining ocular suffixes for divisions. */
+    private final Map<Integer, Integer> ocularForView = new java.util.HashMap<>();
+
+    private void indexViewOculars() {
+        for (int view = 0; view < scopeViewPaths.size(); view++) {
+            Matrix4f inverseView = restPose(scopeViewPaths.get(view)).invert();
+            double best = Double.POSITIVE_INFINITY;
+            Integer selected = null;
+            for (var entry : ocularByIndex.entrySet()) {
+                var chain = new java.util.ArrayDeque<BedrockPart>();
+                for (var part = entry.getValue(); part != null; part = part.getParent()) chain.push(part);
+                var centre = restPose(new ArrayList<>(chain)).getTranslation(new org.joml.Vector3f());
+                inverseView.transformPosition(centre);
+                double error = centre.x * centre.x + centre.y * centre.y;
+                if (error < best) { best = error; selected = entry.getKey(); }
             }
+            if (selected != null) ocularForView.put(view + 1, selected);
         }
-        return null;
+    }
+
+    private static Matrix4f restPose(List<BedrockPart> path) {
+        PoseStack pose = new PoseStack();
+        for (var part : path) part.translateAndRotateAndScale(pose);
+        return new Matrix4f(pose.last().pose());
     }
 
     /** {@code part} 自身或其任一祖先是否为 {@code ancestor}。 */
@@ -413,6 +432,10 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         }
         return scopeViewPaths.get(viewSwitchCount);
     }
+
+    private com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig scopeLens;
+
+    public void setScopeLens(com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig lens) { this.scopeLens = lens; }
 
     public void setIsScope(boolean isScope) {
         this.isScope = isScope;
@@ -469,6 +492,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
      * 枪身上的文字（如弹匣计数）本就该常显。
      */
     public void setTextShowList(Map<String, TextShow> textShowList) {
+        impactMarker = ImpactMarkerRender.of(getPath(modelMap.get(ImpactMarkerRender.NODE)), textShowList);
         textShowList.forEach((name, textShow) -> this.setFunctionalRenderer(name,
                 bedrockPart -> {
                     // 未开镜（或刚开始开镜）时不提交：那时镜内画面不存在（裁剪后文字会整条被丢弃，
@@ -631,6 +655,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
         // lens picture overwrites both. When the PIP composite is active this frame we therefore run
         // the reticle/rim through the post-composite overlay even without Iris; normal vanilla stays
         // in its established immediate solid-pass order.
+        var frameLens = isScope && activeGroupIsScope() ? scopeLens : null;
+        if (orderedScopeSequence) com.tacz.guns.client.render.scope.ScopeLensFrame.observe(frameLens);
         boolean pipDefersReticle = ScopePipRenderState.shouldDeferReticleOverlay();
         boolean deferReticleToIrisFinalOverlay = orderedScopeSequence
                 && ((IrisCompat.isRenderingSolidHandPass()
@@ -647,19 +673,21 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             RenderType apertureWriter = ScopeRenderTypes.depthAperture(texture);
             OrderedSubmitNodeCollector apertureCollector = collector.order(SCOPE_APERTURE_ORDER);
             apertureCollector.submitCustomGeometry(identity, apertureWriter, (entryPose, consumer) -> {
+                com.tacz.guns.client.render.scope.ScopeLensFrame.ocular(frameLens, ocularSnapshots);
                 for (BedrockRenderSnapshot ocularSnap : ocularSnapshots) {
                     ocularSnap.write(consumer);
                 }
             });
 
-            // Step 3 of the ocular screen-space mask happens at this draw boundary: the wrapped
-            // body type first copies the aperture depth (world depth plus only the ocular
-            // differences) into the mask texture, and only then does the ordinary scope body draw.
-            // Body fragments behind the invisible ocular still fail their normal depth test, so
-            // neither stencil nor framebuffer attachment changes are involved.
-            RenderType bodyWithApertureCopy = ScopeRenderTypes.apertureCopy(renderType);
-            collector.order(SCOPE_BODY_ORDER).submitCustomGeometry(identity, bodyWithApertureCopy,
-                    (entryPose, consumer) -> bodySnapshot.write(consumer));
+            // Step 3 of the ocular screen-space mask: GlCommandEncoder#drawFromBuffers RETURN froze
+            // the writer above (ScopeDepthCopyState#afterDraw, 26.1.2 590d3e59), before ANY body
+            // batch. The housing therefore draws as an outside-aperture material: fragments inside
+            // the ocular footprint discard and leave world colour visible even for a 1x sight,
+            // without making its coating part of the reticle. Illuminated housing keeps its unshaded
+            // clipped variant (IlluminatedMaterials recognises the clipped body). Neither stencil nor
+            // framebuffer attachment changes are involved; an invalid cycle fails open.
+            bodySnapshot.submitMaterials(collector.order(SCOPE_BODY_ORDER),
+                    ScopeRenderTypes.clipHousing(renderType, texture), true);
 
             // Restore the aperture pixels from the exact pre-ocular world-depth backup. Iris renders water,
             // fog, particles and volumetric clouds after its solid-hand pass and needs the original depth.
@@ -716,11 +744,7 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                         (entryPose, consumer) -> ocularRingSnapshot.write(consumer));
             }
         } else {
-            if (!bodySnapshot.isEmpty()) {
-                PoseStack identity = new PoseStack();
-                collector.submitCustomGeometry(identity, renderType,
-                        (entryPose, consumer) -> bodySnapshot.write(consumer));
-            }
+            bodySnapshot.submitGeometry(collector, renderType, transformType != null && transformType.firstPerson());
             // 非镜内序列（腰射 / 非第一人称 / 没给孔径贴图）同样不能丢任务：文字工厂在未开镜时
             // 返回 null（见 setTextShowList 的 TEXT_SHOW_AIM_START 门禁），所以这里通常是空的；
             // 带文字但没有 ocular 骨骼的第三方瞄具靠这一句兜住。
@@ -740,9 +764,9 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
             ScopeNodeSet active = filterReticleByActiveView(reticleNodes);
             IReticleRenderer reticle = ReticleRendererRegistry.select(active);
             if (reticle != null && !active.isEmpty()) {
-                boolean etchedOnly = active.hasEtched() && !active.hasIlluminated() && texture != null;
+                boolean maskedReticle = apertureActive && texture != null && !ocularSnapshots.isEmpty();
                 RenderType baseReticleType;
-                if (etchedOnly) {
+                if (maskedReticle) {
                     if (deferReticleToIrisFinalOverlay) {
                         baseReticleType = ScopeRenderTypes.finalEtchedReticle(texture);
                     } else if (deferReticleToIrisTranslucent) {
@@ -754,8 +778,8 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                     baseReticleType = renderType;
                 }
                 RenderType baseIlluminatedType;
-                if (texture == null) {
-                    baseIlluminatedType = renderType;
+                if (!maskedReticle) {
+                    baseIlluminatedType = texture == null ? renderType : ScopeRenderTypes.emissive(texture);
                 } else if (deferReticleToIrisFinalOverlay) {
                     baseIlluminatedType = ScopeRenderTypes.finalVisibleReticle(texture);
                 } else if (deferReticleToIrisTranslucent) {
@@ -764,13 +788,13 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                     baseIlluminatedType = ScopeRenderTypes.visibleReticle(texture);
                 }
 
-                // Pure etched trees are CPU-filtered to retain thin marks and discard large blackout panels.
-                // Both renderers sample world/aperture depth per pixel and only retain the ocular interior.
+                // Both ink and luminous layers use the depth aperture, including hybrid scopes.
+                // Only the no-aperture luminous fallback is size-filtered during extraction.
                 reticle.submitReticle(new IReticleRenderer.Context(
                         poseStack, collector.order(SCOPE_RETICLE_ORDER),
                         transformType, baseReticleType, baseIlluminatedType,
-                        light, overlay, currentAimingProgress(), etchedOnly,
-                        deferReticleToIrisTranslucent, deferReticleToIrisFinalOverlay), active);
+                        light, overlay, currentAimingProgress(), maskedReticle,
+                        maskedReticle && deferReticleToIrisTranslucent, maskedReticle && deferReticleToIrisFinalOverlay), active);
             }
         }
 
@@ -798,6 +822,19 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                 // solid-pass rim rather than forcing an otherwise unnecessary deferred pass.
                 collector.order(SCOPE_OCULAR_RING_ORDER).submitCustomGeometry(new PoseStack(), renderType,
                         (entryPose, consumer) -> ocularRingSnapshot.write(consumer));
+            }
+        }
+
+        // 26.1.2: rangefinder impact-marker in the first-person scope path.
+        if (impactMarker != null && transformType != null && transformType.firstPerson()) {
+            Integer active = isScope && isSight && activeViewGroup != 0 ? activeOcularIndex() : null;
+            // Named division roots are hidden from the main pass; respect the active one, but a
+            // root-level locator is common to all groups. Do not draw a marker from the other view.
+            if (active == null || !divisionByIndex.containsKey(active) || divisionByIndex.values().stream().noneMatch(impactMarker.path()::contains)
+                    || impactMarker.path().contains(divisionByIndex.get(active))) {
+                var layer = deferReticleToIrisFinalOverlay ? ImpactMarkerRender.Layer.FINAL_APERTURE
+                        : orderedScopeSequence ? ImpactMarkerRender.Layer.APERTURE : ImpactMarkerRender.Layer.MODEL;
+                impactMarker.submit(currentGunItem, poseStack, collector, layer, overlay);
             }
         }
 
@@ -843,6 +880,23 @@ public class BedrockAttachmentModel extends BedrockAnimatedModel {
                     tasks.size(), scopeMaskEnabled);
         }
     }
+
+    private boolean activeGroupIsScope() {
+        if (isSight && !isScope) {
+            return false; // 纯红点/全息：上游 renderSight 从不裁镜身
+        }
+        if (isScope && !isSight) {
+            return true;  // 纯筒镜：目镜无论叫什么名都是物理高倍通道
+        }
+        // 组合镜（hamr/vudu/mk5hd）：views[zoom] 选出当前通道；通道组内没有
+        // 「名符其实」的筒镜目镜（如纯 plain-ocular 命名）时回退 true = 恒裁旧行为。
+        Integer activeIndex = activeViewGroup == 0 ? null : activeOcularIndex();
+        if (activeIndex == null) {
+            return true;
+        }
+        return Boolean.TRUE.equals(ocularIsScopeByIndex.get(activeIndex));
+    }
+
 
     private boolean isOcularInActiveGroup(BedrockPart ocular) {
         if (activeViewGroup == 0 || !(isScope && isSight)) {

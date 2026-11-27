@@ -48,6 +48,7 @@ public class ClientSetupEvent {
         // 注册键位 (26.2: MKB 不可用，直接注册 KeyMapping)
         KeyBindingHelper.registerKeyBinding(InspectKey.INSPECT_KEY);
         KeyBindingHelper.registerKeyBinding(ReloadKey.RELOAD_KEY);
+        KeyBindingHelper.registerKeyBinding(ReloadKey.UNLOAD_KEY);
         KeyBindingHelper.registerKeyBinding(ShootKey.SHOOT_KEY);
         KeyBindingHelper.registerKeyBinding(InteractKey.INTERACT_KEY);
         KeyBindingHelper.registerKeyBinding(FireSelectKey.FIRE_SELECT_KEY);
@@ -57,6 +58,7 @@ public class ClientSetupEvent {
         KeyBindingHelper.registerKeyBinding(ZoomKey.ZOOM_KEY);
         KeyBindingHelper.registerKeyBinding(MeleeKey.MELEE_KEY);
         KeyBindingHelper.registerKeyBinding(ConfigKey.OPEN_CONFIG_KEY);
+        ViewTuningKey.register();
     }
 
     public static void registerClientTooltips() {
@@ -64,6 +66,9 @@ public class ClientSetupEvent {
         TooltipComponentCallback.EVENT.register(tooltip -> {
             if (tooltip instanceof GunTooltip gunTooltip) {
                 return new ClientGunTooltip(gunTooltip);
+            }
+            if (tooltip instanceof com.tacz.guns.inventory.tooltip.AmmoStorageTooltip storage) {
+                return new com.tacz.guns.client.tooltip.ClientAmmoStorageTooltip(storage);
             }
             if (tooltip instanceof AmmoBoxTooltip ammoBoxTooltip) {
                 return new ClientAmmoBoxTooltip(ammoBoxTooltip);
@@ -90,6 +95,7 @@ public class ClientSetupEvent {
     public static void registerGuiOverlays() {
         HudElementRegistry.addLast(id("gun_hud"), (graphics, deltaTracker) -> GunHudOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
         HudElementRegistry.addLast(id("heat_bar"), (graphics, deltaTracker) -> HeatBarOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
+        HudElementRegistry.addLast(id("display_case_lock_hint"), com.tacz.guns.client.gui.overlay.DisplayCaseLockHint::render);
         HudElementRegistry.addLast(id("interact_key_text"), (graphics, deltaTracker) -> InteractKeyTextOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
         HudElementRegistry.addLast(id("kill_amount"), (graphics, deltaTracker) -> KillAmountOverlay.render(graphics, deltaTracker.getRealtimeDeltaTicks()));
     }

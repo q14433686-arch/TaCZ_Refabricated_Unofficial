@@ -27,4 +27,10 @@ public interface AmmoSource {
      * @return the number of rounds consumed, between {@code 0} and {@code requestedAmount}
      */
     int consumeAmmo(LivingEntity shooter, ItemStack gunItem, int requestedAmount);
+
+    /**
+     * Server-side quick unload into this source. Return the number actually accepted. Old providers
+     * opt out by default: their rounds stay loaded, never materialize in the vanilla inventory.
+     */
+    default int returnAmmo(LivingEntity shooter, ItemStack gunItem, int offered) { return 0; }
 }

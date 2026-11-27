@@ -70,7 +70,7 @@ public class SlotItemHandler extends Slot {
     public IItemHandler getItemHandler() {
         return itemHandler;
     }
-    
+
     /**
      * legacy external helper
      */

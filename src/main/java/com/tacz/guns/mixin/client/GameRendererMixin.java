@@ -10,12 +10,15 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.client.event.RenderItemInHandBobEvent;
 import com.tacz.guns.api.client.event.RenderLevelBobEvent;
 import com.tacz.guns.client.render.scope.ScopeDepthCopyState;
+import com.tacz.guns.client.renderer.crosshair.GunSpread;
 import com.tacz.guns.client.render.scope.ScopeFinalOverlayState;
 import com.tacz.guns.client.render.scope.ScopePipDepthDebug;
 import com.tacz.guns.client.render.scope.ScopePipRenderState;
 import com.tacz.guns.client.render.scope.ScopePipRerender;
 import com.tacz.guns.client.renderer.other.GunHurtBobTweak;
 import com.tacz.guns.compat.iris.IrisCompat;
+import com.tacz.guns.config.client.RenderConfig;
+import com.tacz.guns.api.item.gun.AbstractGunItem;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -31,6 +34,8 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** 1.21.11 bob / hand-pass hooks. */
@@ -130,6 +135,21 @@ public abstract class GameRendererMixin {
         }
     }
 
+    // Native 1.21.11 bytecode: Options.damageTiltStrength() is at offset 154, after
+    // the death roll and initial Y rotation; only the next Z rotation (offset 176) is modified.
+    // Do not use the donor's 26.x OptionsRenderState field or a global axis ordinal.
+    @ModifyArg(method = "bobHurt", slice = @Slice(from = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/Options;damageTiltStrength()Lnet/minecraft/client/OptionInstance;")),
+            at = @At(value = "INVOKE", target = "Lcom/mojang/math/Axis;rotationDegrees(F)Lorg/joml/Quaternionf;", ordinal = 0), index = 0)
+    private float tacz$heldGunHurtTilt(float angle) {
+        LocalPlayer player = minecraft.player;
+        if (player != null && minecraft.getCameraEntity() == player && minecraft.options.getCameraType().isFirstPerson()
+                && !player.isDeadOrDying() && player.getMainHandItem().getItem() instanceof AbstractGunItem) {
+            return GunHurtBobTweak.heldGunTilt(angle, player.getHurtDir(), RenderConfig.GUN_HURT_BOB_MULTIPLIER.get());
+        }
+        return angle;
+    }
+
     @Inject(method = "bobView", at = @At("HEAD"), cancellable = true)
     // 1.21.11: bobView(PoseStack, float partialTick)；26.1 是 (CameraRenderState, PoseStack)。
     private void tacz$bobView(PoseStack poseStack, float partialTick, CallbackInfo ci) {
@@ -174,12 +194,15 @@ public abstract class GameRendererMixin {
         // poly_mesh 世界 GPU：把「本帧正在跑世界渲染」这件事告诉渲染器（世界表的消费点
         // 挂在 renderAllFeatures 的 RETURN 上，那个 API 是公开的，必须圈定语境才安全）。
         // try/finally：世界渲染中途抛异常也不能把标志卡在 true。
+        GunSpread.setWorldProjectionY(projectionMatrix.m11());
         PolyMeshGpuRenderer.setLevelRenderActive(true);
+        com.tacz.guns.client.render.scope.ScopeThermalCapture.worldView(viewMatrix);
         try {
             ScopePipRerender.renderScopeView(levelRenderer, allocator, deltaTracker, blockOutline,
                     camera, viewMatrix, projectionMatrix, cullingMatrix, fogBuffer, fogColor, renderSky);
             levelRenderer.renderLevel(allocator, deltaTracker, blockOutline, camera,
                     viewMatrix, projectionMatrix, cullingMatrix, fogBuffer, fogColor, renderSky);
+            if (!IrisCompat.isUsingRenderPack()) com.tacz.guns.client.render.scope.ScopeThermalCapture.finish(minecraft.getMainRenderTarget(), viewMatrix);
         } finally {
             PolyMeshGpuRenderer.setLevelRenderActive(false);
         }
@@ -189,10 +212,12 @@ public abstract class GameRendererMixin {
     private void tacz$renderTickStart(DeltaTracker deltaTracker, boolean renderLevel, CallbackInfo ci) {
         // poly_mesh GPU：帧首归零绘制表 + 检测光影开关翻转（烘焙世代号）。
         PolyMeshGpuRenderer.beginFrame();
+        GunSpread.setWorldProjectionY(0);
         // 目镜掩码周期的帧戳推进（ScopeDepthCopyState#onClientFrameStart）：帧计数 +1，
         // 「本帧/上一帧有无掩码周期」的时效查询以此为基准。不清 maskValid —— 终局叠加
         // 在本帧手部阶段之前还要用它。
         ScopeDepthCopyState.onClientFrameStart();
+        com.tacz.guns.client.render.scope.ScopeLensFrame.beginFrame(minecraft);
         // 光影下的瞄具管线在这个「世界渲染之前、不在任何 render pass 内」的空档里建好；
         // 顺带按空闲释放计数把用不上的那套还回去（默认关）。整段 fail-open。
         ScopePipRerender.prewarmShaderPipelineIfNeeded();

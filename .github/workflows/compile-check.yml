@@ -50,7 +50,11 @@ jobs:
         run: |
           mkdir -p build-reports
           echo "commit: ${{ github.sha }}" > build-reports/compile-java.log
-          ./gradlew compileJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
+          ./gradlew --init-script scripts/ci-central.init.gradle compileJava compileTestJava compileGametestJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
+
+      - name: Record target render API for native porting
+        if: startsWith(github.ref, 'refs/heads/arena/')
+        run: python3 scripts/inspect_12111_render_api.py >> build-reports/compile-java.log 2>&1
 
       - name: Push compile log back via contents API
         # 只有 arena/** 回推：主分支的提交历史必须干净
@@ -69,9 +73,19 @@ jobs:
           echo "== job status: ${{ job.status }} ==" >> "$LOG"
           BRANCH="${{ github.ref_name }}"
           SHA=$(gh api "repos/${{ github.repository }}/contents/$LOG?ref=$BRANCH" --jq .sha 2>/dev/null || true)
-          ARGS=(-X PUT "repos/${{ github.repository }}/contents/$LOG"
-                -f message="ci-log: compile result (${{ job.status }}) for ${{ github.sha }}"
-                -f branch="$BRANCH"
-                -f content="$(base64 -w0 "$LOG")")
-          if [ -n "$SHA" ]; then ARGS+=(-f sha="$SHA"); fi
-          gh api "${ARGS[@]}" --jq .commit.sha
+          # A successful large compile can exceed Linux's per-argument size limit
+          # when its base64 log is passed with -f content=... (exit 126). Use stdin JSON.
+          REQUEST=$(mktemp)
+          trap 'rm -f "$REQUEST"' EXIT
+          python3 - "$REQUEST" "$LOG" "$BRANCH" "$SHA" <<'PY'
+          import base64, json, os, sys
+          output, log, branch, sha = sys.argv[1:]
+          with open(log, 'rb') as stream:
+              payload = dict(message=f"ci-log: compile result (${{ job.status }}) for {os.environ['GITHUB_SHA']}",
+                             branch=branch, content=base64.b64encode(stream.read()).decode('ascii'))
+          if sha:
+              payload['sha'] = sha
+          with open(output, 'w') as stream:
+              json.dump(payload, stream)
+          PY
+          gh api -X PUT "repos/${{ github.repository }}/contents/$LOG" --input "$REQUEST" --jq .commit.sha

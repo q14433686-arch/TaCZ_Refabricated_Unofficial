@@ -60,6 +60,7 @@ public class BedrockGunModel extends BedrockAnimatedModel {
     private boolean renderHand = true;
     private boolean renderMount;
     private ItemStack currentGunItem;
+    private @Nullable ImpactMarkerRender impactMarker;
     private int currentExtendMagLevel = 0;
 
     public BedrockGunModel(BedrockModelPOJO pojo, BedrockVersion version) {
@@ -241,6 +242,7 @@ public class BedrockGunModel extends BedrockAnimatedModel {
      * 添加枪械自定义的文本显示
      */
     public void setTextShowList(Map<String, TextShow> textShowList) {
+        impactMarker = ImpactMarkerRender.of(getPath(modelMap.get(ImpactMarkerRender.NODE)), textShowList);
         // 枪身文字（非瞄具 ocular 子树）不走目镜掩码：vanilla 管线按场景内容正常处理。
         textShowList.forEach((name, textShow) -> this.setFunctionalRenderer(name, bedrockPart -> new TextShowRender(this, textShow, currentGunItem, false)));
     }
@@ -336,6 +338,12 @@ public class BedrockGunModel extends BedrockAnimatedModel {
                 : ScopeRenderTypes.clipForViewmodel(renderType, gunTexture,
                         transformType != null && transformType.firstPerson());
         super.submit(poseStack, transformType, collector, bodyType, light, overlay);
+        // Resolve animation keyframes against the posed rig now; the same boundary updates
+        // attached emitter anchors even when this frame has no new keyframes.
+        com.tacz.guns.client.particle.AnimationParticleDispatcher.submit(gunItem, this, poseStack, transformType, collector, light);
+        // 26.1.2: rangefinder impact-marker prediction line in first-person.
+        if (impactMarker != null && transformType != null && transformType.firstPerson())
+            impactMarker.submit(gunItem, poseStack, collector, ImpactMarkerRender.Layer.MODEL, overlay);
     }
 
 

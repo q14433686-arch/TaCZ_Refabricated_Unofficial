@@ -3,9 +3,7 @@ package com.tacz.guns.client.gui.overlay;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
-import com.tacz.guns.api.entity.IGunOperator;
-import com.tacz.guns.api.item.IAmmo;
-import com.tacz.guns.api.item.IAmmoBox;
+import com.tacz.guns.client.gameplay.ClientAmmoCount;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.index.ClientGunIndex;
@@ -22,7 +20,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix3x2fStack;
 
@@ -45,12 +42,6 @@ public class GunHudOverlay {
     private static final DecimalFormat CURRENT_AMMO_FORMAT = new DecimalFormat("000");
     private static final DecimalFormat CURRENT_AMMO_FORMAT_PERCENT = new DecimalFormat("000%");
     private static final DecimalFormat INVENTORY_AMMO_FORMAT = new DecimalFormat("0000");
-    private static long checkAmmoTimestamp = -1L;
-    private static int cacheMaxAmmoCount = 0;
-    private static int cacheInventoryAmmoCount = 0;
-
-    private static final int MAX_AMMO_COUNT = 9999;
-
     public static void render(GuiGraphics graphics, float partialTick) {
         if (!RenderConfig.GUN_HUD_ENABLE.get()) {
             return;
@@ -75,15 +66,11 @@ public class GunHudOverlay {
         boolean useInventoryAmmo = iGun.useInventoryAmmo(stack);
         boolean useDummyAmmo = iGun.useDummyAmmo(stack);
         boolean overheatLocked = gunData.hasHeatData() && iGun.isOverheatLocked(stack);
-        handleCacheCount(player, stack, gunData, iGun, useInventoryAmmo);
-
-        int ammoCount = useInventoryAmmo ? cacheInventoryAmmoCount + (iGun.hasBulletInBarrel(stack) && gunData.getBolt() != Bolt.OPEN_BOLT ? 1 : 0) :
-                iGun.getCurrentAmmoCount(stack) + (iGun.hasBulletInBarrel(stack) && gunData.getBolt() != Bolt.OPEN_BOLT ? 1 : 0);
-        ammoCount = Math.min(ammoCount, MAX_AMMO_COUNT);
-
-        // 【顺序】先算缓存, 再画 —— 上游是先画后算, 导致首帧用的是上一帧的
-        // cacheMaxAmmoCount, 百分比模式下切枪瞬间会闪一下错误数字。这里修正。
-        handleCacheCount(player, stack, gunData, iGun, useInventoryAmmo);
+        int cacheInventoryAmmoCount = ClientAmmoCount.getCached(player, stack, iGun);
+        int cacheMaxAmmoCount = AttachmentDataUtils.getAmmoCountWithAttachment(stack, gunData);
+        int magazine = useInventoryAmmo ? cacheInventoryAmmoCount : iGun.getCurrentAmmoCount(stack);
+        int chamber = iGun.hasBulletInBarrel(stack) && gunData.getBolt() != Bolt.OPEN_BOLT ? 1 : 0;
+        int ammoCount = (int) Math.min((long) Math.max(0, magazine) + chamber, ClientAmmoCount.MAX_DISPLAY_COUNT);
 
         int width = graphics.guiWidth();
         int height = graphics.guiHeight();
@@ -113,7 +100,7 @@ public class GunHudOverlay {
 
         // 备弹文本: 背包直读模式不显示备弹; 无限备弹显示 ∞
         String inventoryAmmoCountText = useInventoryAmmo ? ""
-                : INVENTORY_AMMO_FORMAT.format(Math.min(cacheInventoryAmmoCount, MAX_AMMO_COUNT));
+                : INVENTORY_AMMO_FORMAT.format(Math.min(cacheInventoryAmmoCount, ClientAmmoCount.MAX_DISPLAY_COUNT));
         if (!useInventoryAmmo && gunData.getReloadData().isInfinite()) {
             inventoryAmmoCountText = "\u221e";
         }
@@ -211,41 +198,5 @@ public class GunHudOverlay {
             cachedVersionText = mcVersion + "-" + modVersion;
         }
         return cachedVersionText;
-    }
-
-    private static void handleCacheCount(LocalPlayer player, ItemStack stack, GunData gunData, IGun iGun, boolean useInventoryAmmo) {
-        if ((System.currentTimeMillis() - checkAmmoTimestamp) > 50) {
-            checkAmmoTimestamp = System.currentTimeMillis();
-            cacheMaxAmmoCount = AttachmentDataUtils.getAmmoCountWithAttachment(stack, gunData);
-            if (IGunOperator.fromLivingEntity(player).needCheckAmmo()) {
-                if (iGun.useDummyAmmo(stack)) {
-                    cacheInventoryAmmoCount = iGun.getDummyAmmoAmount(stack);
-                } else {
-                    handleInventoryAmmo(stack, player.getInventory());
-                }
-            } else {
-                cacheInventoryAmmoCount = MAX_AMMO_COUNT;
-            }
-            if (useInventoryAmmo) {
-                iGun.setCurrentAmmoCount(stack, cacheInventoryAmmoCount);
-            }
-        }
-    }
-
-    private static void handleInventoryAmmo(ItemStack stack, Inventory inventory) {
-        cacheInventoryAmmoCount = 0;
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
-            ItemStack inventoryItem = inventory.getItem(i);
-            if (inventoryItem.getItem() instanceof IAmmo iAmmo && iAmmo.isAmmoOfGun(stack, inventoryItem)) {
-                cacheInventoryAmmoCount += inventoryItem.getCount();
-            }
-            if (inventoryItem.getItem() instanceof IAmmoBox iAmmoBox && iAmmoBox.isAmmoBoxOfGun(stack, inventoryItem)) {
-                if (iAmmoBox.isAllTypeCreative(inventoryItem) || iAmmoBox.isCreative(inventoryItem)) {
-                    cacheInventoryAmmoCount = MAX_AMMO_COUNT;
-                    return;
-                }
-                cacheInventoryAmmoCount += iAmmoBox.getAmmoCount(inventoryItem);
-            }
-        }
     }
 }

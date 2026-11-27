@@ -1,0 +1,21 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.tacz.probe.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ThermalPoseObserver",
+    "AdsCompositeObserver",
+    "AdsStepControl",
+    "AdsForegroundObserver",
+    "ReceiverLightObserver",
+    "ReceiverViewObserver",
+    "ReceiverSlotObserver",
+    "LensTraceFrame",
+    "LensTraceHeat",
+    "LensTraceComposite"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

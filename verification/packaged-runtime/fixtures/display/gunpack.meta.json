@@ -1,0 +1,6 @@
+{
+  "namespace": "port_test",
+  "dependencies": {
+    "minecraft": "[1.21.11]"
+  }
+}

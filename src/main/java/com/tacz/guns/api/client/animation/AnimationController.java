@@ -37,6 +37,15 @@ public class AnimationController {
         return prototypes.containsKey(name);
     }
 
+    /** Resolve only locally authored prototype events; never consume a shared runner for a remote owner. */
+    public synchronized AnimationParticleEvent resolveParticleToken(String token) {
+        for(var animation:prototypes.values()){
+            var channel=animation.getParticleChannel();if(channel==null)continue;
+            for(var frame:channel.frames())for(var event:frame.events())if(event.token().equals(token))return event;
+        }
+        return null;
+    }
+
     @Nullable
     public ObjectAnimationRunner getAnimation(int track) {
         if (track >= currentRunners.size()) {
@@ -139,6 +148,15 @@ public class AnimationController {
         for (int i = 0; i < currentRunners.size(); i++) {
             updateByTrack(i, true);
         }
+    }
+
+    synchronized public java.util.List<AnimationParticleEvent> consumeParticleEvents() {
+        var result=new java.util.ArrayList<AnimationParticleEvent>();
+        for(var runner:currentRunners)if(runner!=null){
+            result.addAll(runner.consumeParticleEvents());
+            if(runner.getTransitionTo()!=null)result.addAll(runner.getTransitionTo().consumeParticleEvents());
+        }
+        return result.size()>256?java.util.List.copyOf(result.subList(0,256)):java.util.List.copyOf(result);
     }
 
     private void updateByTrack(int track, boolean isSoundOnly) {

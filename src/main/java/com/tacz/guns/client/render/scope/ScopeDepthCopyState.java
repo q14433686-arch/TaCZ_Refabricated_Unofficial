@@ -123,6 +123,17 @@ public final class ScopeDepthCopyState {
     }
 
     /**
+     * 26.2 的 {@code ScopePipRenderer#frameNumber()} 等价物：当前客户端帧号。
+     *
+     * <p>1.2.0 的表面光源/枪口锚点用它做"这份锚点还新不新鲜"的判定（{@code frame - a.frame <= 2}），
+     * 因此这里暴露的就是 {@link #onClientFrameStart()} 递增的那个计数，不再单独维护第二个计数器
+     * ——两个计数器一旦不同步，"新鲜度"判据会静默失效。</p>
+     */
+    public static int frameNumber() {
+        return frameCounter;
+    }
+
+    /**
      * 本帧手部阶段是否已完成整帧掩码周期（{@code maskValid} 且周期落在当前帧）。
      *
      * <p>供「与目镜序列同帧」的消费者使用：poly_mesh 手部批次的孔外剔除（目镜序列先
@@ -179,6 +190,9 @@ public final class ScopeDepthCopyState {
     private static @javax.annotation.Nullable DepthIdentity apertureDepthIdentity;
     private static boolean backupValid;
     private static boolean maskValid;
+    /** A split body must not recopy its own depth into the ocular footprint. Failed copies
+     * also consume the attempt: later housing is never a valid replacement for the aperture. */
+    private static boolean apertureCopyAttempted;
     /**
      * 帧计数（{@link #onClientFrameStart()} 递增）与最近一次成功掩码周期的帧戳。
      * 初值 MIN_VALUE：任何「本帧/上一帧」查询在第一个周期完成前都为假（fail-closed）。
@@ -212,6 +226,26 @@ public final class ScopeDepthCopyState {
         CURRENT.set(operation);
     }
 
+    /**
+     * Step 3 on the ocular writer's own draw: {@code GlCommandEncoder#drawFromBuffers} RETURN.
+     *
+     * <p>26.1.2 {@code 590d3e59} semantics: freeze the aperture immediately after the native
+     * writer, before any (possibly differently lit, possibly split) housing material batch can
+     * touch the depth attachment. This is what lets the active optic's body draw as an ordinary
+     * {@link Operation#MASK_OUTSIDE} material (see {@code ScopeRenderTypes#clipHousing}) instead
+     * of carrying the {@link Operation#APERTURE_COPY} boundary itself. One attempt per BACKUP
+     * (including a failed one): the APERTURE_COPY boundary then stays a no-op fallback.</p>
+     */
+    public static void afterDraw() {
+        if (CURRENT.get() != Operation.BACKUP || apertureCopyAttempted) {
+            return;
+        }
+        RenderSystem.assertOnRenderThread();
+        apertureCopyAttempted = true;
+        maskValid = copyApertureDepth() && maskWorldValid;
+        if (maskValid) maskCycleFrame = frameCounter;
+    }
+
     /** @return whether GlCommandEncoder should execute the pending draw. */
     public static boolean beforeDraw() {
         RenderSystem.assertOnRenderThread();
@@ -220,6 +254,7 @@ public final class ScopeDepthCopyState {
             case BACKUP -> {
                 disableScopeBranches(program);
                 maskValid = false;
+                apertureCopyAttempted = false;
                 maskWorldValid = false;
                 // Recorded on BOTH the Iris and vanilla paths: this is the surface the ocular draw
                 // is about to write near depth into, and step 3 must copy exactly this surface.
@@ -243,7 +278,7 @@ public final class ScopeDepthCopyState {
                     // so a bare-rim frame (or any frame where the reticle was not queued) must still
                     // force the private copy or the composite has no world depth to mask against.
                     if (ScopeFinalOverlayState.hasPendingReticles()
-                            || ScopePipRenderState.needsIrisWorldDepthCopy()) {
+                            || ScopeLensFrame.expected != null || ScopePipRenderState.needsIrisWorldDepthCopy()) {
                         boolean copied = copyCurrentDepth(WORLD_TARGET, "final-overlay world depth");
                         worldDepthIdentity = copied ? captureDepthIdentity() : null;
                         if (!copied) {
@@ -261,12 +296,14 @@ public final class ScopeDepthCopyState {
                 yield true;
             }
             case APERTURE_COPY -> {
-                // Step 3 runs at the body draw boundary: nothing but the ocular draw at order -3 has
-                // written depth since the world backup, so this copy isolates the ocular footprint.
+                // Fallback boundary only: afterDraw() normally froze the aperture at the ocular
+                // writer's RETURN already. Nothing but the ocular draw at order -3 has written depth
+                // since the world backup, so a copy here still isolates the ocular footprint.
                 disableScopeBranches(program);
-                maskValid = copyApertureDepth() && maskWorldValid;
-                if (maskValid) {
-                    maskCycleFrame = frameCounter;
+                if (!apertureCopyAttempted) {
+                    apertureCopyAttempted = true;
+                    maskValid = copyApertureDepth() && maskWorldValid;
+                    if (maskValid) maskCycleFrame = frameCounter;
                 }
                 yield true;
             }
@@ -468,17 +505,18 @@ public final class ScopeDepthCopyState {
 
     /**
      * Steps 6-8: bind the world-depth backup and the ocular aperture copy, then enable the mask
-     * branch. When anything is missing the draw falls back to the previous unmasked behavior
-     * (mode stays 0), which never produces stale or garbage masking.
+     * branch. Interior geometry may include authored blackout panels: missing uniforms,
+     * stale copies or a mismatched FBO MUST veto that draw. Outside-mask viewmodel FX
+     * retain their ordinary unmasked fallback. Small no-aperture reticles use Operation.NONE.
      */
     private static boolean prepareMaskDraw(int program, int maskMode) {
         if (program <= 0) {
-            return true;
+            return maskMode != 1;
         }
         int maskLocation = GL20.glGetUniformLocation(program, MASK_MODE_UNIFORM);
         if (maskLocation < 0) {
-            // The active program has no mask branch (not a reticle shader); draw it untouched.
-            return true;
+            // An interior draw without a mask branch is unsafe; ordinary outside FX may continue.
+            return maskMode != 1;
         }
         int finalOverlayLocation = GL20.glGetUniformLocation(program, FINAL_OVERLAY_UNIFORM);
         boolean finalOverlay = finalOverlayLocation >= 0;
@@ -490,7 +528,7 @@ public final class ScopeDepthCopyState {
             if (finalOverlay) {
                 GL20.glUniform1i(finalOverlayLocation, 0);
             }
-            return true;
+            return maskMode != 1;
         }
 
         // Final-overlay geometry samples only the two immutable private depth copies. It does not
@@ -508,7 +546,7 @@ public final class ScopeDepthCopyState {
                 GL20.glUniform1i(maskLocation, 0);
                 logFailure("scope mask target does not match the aperture copy surface (depth "
                         + currentDepth + " vs copied " + apertureDepthIdentity + ")");
-                return true;
+                return maskMode != 1;
             }
         }
 
@@ -519,7 +557,7 @@ public final class ScopeDepthCopyState {
         if (apertureLocation < 0) {
             GL20.glUniform1i(maskLocation, 0);
             logFailure("reticle shader has no ocular aperture sampler");
-            return true;
+            return maskMode != 1;
         }
         boolean irisWorld = !finalOverlay && useIrisPreHandDepth && irisWorldLocation >= 0;
         // The vanilla branch and final overlay may only bind a world-depth sampler when this cycle
@@ -527,7 +565,7 @@ public final class ScopeDepthCopyState {
         if (!irisWorld && (worldLocation < 0 || WORLD_TARGET.texture() == 0)) {
             GL20.glUniform1i(maskLocation, 0);
             logFailure("reticle shader has no usable world-depth source for the ocular mask");
-            return true;
+            return maskMode != 1;
         }
 
         // The ocular copy occupies the highest unit; the vanilla world backup sits one below it.

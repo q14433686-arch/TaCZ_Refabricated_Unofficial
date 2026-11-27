@@ -17,31 +17,16 @@
     python3 docs/verify_shader_imports.py
 退出码 0 = 全部 OK，1 = 存在悬空 import。
 """
+import glob
 import io
 import os
 import re
 import sys
-import glob
+from target_12111_jar import named_jar
 import zipfile
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 IMPORT_RE = re.compile(r'^\s*#moj_import\s*<\s*([a-z0-9_.-]+)\s*:\s*([^>\s]+)\s*>', re.M)
-
-
-def find_vanilla_jar():
-    pats = [
-        os.path.expanduser(
-            "~/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/"
-            "minecraft-merged/*/minecraft-merged-*.jar"),
-        os.path.expanduser(
-            "~/.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/"
-            "minecraft-merged/**/*.jar"),
-    ]
-    for p in pats:
-        hits = [h for h in glob.glob(p, recursive=True) if h.endswith(".jar")]
-        if hits:
-            return sorted(hits)[-1]
-    return None
 
 
 def collect_vanilla_includes(jar):
@@ -91,10 +76,7 @@ def mod_shader_files():
 
 
 def main():
-    jar = find_vanilla_jar()
-    if not jar:
-        print("!! 找不到 Loom 的 minecraft-merged jar。先跑: ./gradlew help --no-daemon")
-        return 2
+    jar = named_jar()
     print("vanilla jar: %s" % os.path.basename(jar))
 
     available = collect_vanilla_includes(jar) | collect_mod_includes()

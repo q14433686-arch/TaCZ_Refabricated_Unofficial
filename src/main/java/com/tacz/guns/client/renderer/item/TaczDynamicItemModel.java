@@ -126,6 +126,10 @@ public final class TaczDynamicItemModel implements ItemModel {
         this.transformation = new Matrix4f(transformation);
     }
 
+    static void visitExtents(Consumer<Vector3fc> output) {
+        for (var extent : EXTENTS.get()) output.accept(extent);
+    }
+
     /** Must run during client initialization, before client item JSON files are decoded. */
     public static void registerType() {
         ItemModels.ID_MAPPER.put(TYPE_ID, Unbaked.MAP_CODEC);
@@ -147,11 +151,17 @@ public final class TaczDynamicItemModel implements ItemModel {
             state.setAnimated();
         }
 
-        // 1.21.11: layer.setLocalTransform(...) 不存在，改由 submit() 施加（见 RenderArgument）。
-        RenderArgument argument = new RenderArgument(stack.copy(), displayContext, this.transformation);
+        // 1.21.11: layer.setLocalTransform(...) 不存在，两种 special renderer 都在 submit 应用它。
         layer.setExtents(EXTENTS);
-        layer.setupSpecialModel(SPECIAL_RENDERER, argument);
         this.properties.applyToLayer(layer, displayContext);
+        // 26.1.2: dropped-gun sprite fallback — freeze only the appearance, not the entity/stack/rig.
+        Identifier sprite = DroppedGunSprite.select(stack, displayContext, owner);
+        if (sprite != null) {
+            layer.setupSpecialModel(DroppedGunSprite.INSTANCE, new DroppedGunSprite.Argument(sprite, this.transformation));
+            state.appendModelIdentityElement(sprite);
+            return;
+        }
+        layer.setupSpecialModel(SPECIAL_RENDERER, new RenderArgument(stack.copy(), displayContext, this.transformation));
 
         // 26.2 修复：物品栏图标空白的根因。
         //
@@ -243,9 +253,7 @@ public final class TaczDynamicItemModel implements ItemModel {
 
         @Override
         public void getExtents(Consumer<Vector3fc> output) {
-            for (Vector3fc extent : EXTENTS.get()) {
-                output.accept(extent);
-            }
+            visitExtents(output);
         }
 
         @Override

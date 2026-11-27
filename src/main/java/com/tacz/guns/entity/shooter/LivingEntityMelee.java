@@ -1,5 +1,6 @@
 package com.tacz.guns.entity.shooter;
 
+import com.tacz.guns.util.time.GunTime;
 import cn.sh1rocu.tacz.api.LogicalSide;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
@@ -56,7 +57,7 @@ public class LivingEntityMelee {
         }
         NetworkHandler.sendToTrackingEntity(new ServerMessageGunMelee(shooter.getId(), currentGunItem), shooter);
         if (currentGunItem.getItem() instanceof AbstractGunItem logicGun) {
-            data.meleeTimestamp = System.currentTimeMillis();
+            data.meleeTimestamp = GunTime.nowMillis();
 
             Identifier muzzleId = logicGun.getAttachmentId(currentGunItem, AttachmentType.MUZZLE);
             MeleeData muzzleMeleeData = getMeleeData(muzzleId);
@@ -137,7 +138,7 @@ public class LivingEntityMelee {
 
     private long getTotalCooldownTime(GunMeleeData meleeData, float extraCooldownTime) {
         float totalCooldownTime = meleeData.getCooldown() + extraCooldownTime;
-        long coolDown = (long) (totalCooldownTime * 1000) - (System.currentTimeMillis() - data.meleeTimestamp);
+        long coolDown = (long) (totalCooldownTime * 1000) - (GunTime.nowMillis() - data.meleeTimestamp);
         // 给 5 ms 的窗口时间，以平衡延迟
         coolDown = coolDown - 5;
         if (coolDown < 0) {

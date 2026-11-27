@@ -160,7 +160,7 @@ public final class ScopePipDepthDebug {
                                     "minecraft", "core/screenquad"))
                             .withFragmentShader(Identifier.fromNamespaceAndPath(
                                     GunMod.MOD_ID, "core/scope_pip_debug"))
-                            .withVertexFormat(source.getVertexFormat(), source.getVertexFormatMode())
+                            .withVertexFormat(ScopeRenderTypes.declaredVertexFormat(source), source.getVertexFormatMode())
                             .withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM)
                             .withSampler(ScopeDepthCopyState.APERTURE_SAMPLER_UNIFORM)
                             .withCull(false)

@@ -34,6 +34,7 @@ public class GunMod {
         ModParticles.init();
         ModAttributes.init();
         ModPainting.init();
+        CommonRegistry.registerCauldronInteractions();
         if (FabricLoader.getInstance().isModLoaded("kubejs")) {
         }
 

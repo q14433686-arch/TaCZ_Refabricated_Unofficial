@@ -69,6 +69,41 @@ public final class IrisCompat {
         }
     }
 
+    /** Convenience alias: "an Iris render pack is active right now". */
+    public static boolean hasActiveIrisPack() {
+        return isUsingRenderPack();
+    }
+
+    /**
+     * 光影包存在时是否应当整条关掉目镜掩码。
+     *
+     * <p>26.2/PR#126 的结论：<b>不关</b>。路线是 assignPipeline → Iris 的 HAND 程序，再由
+     * {@code tacz.iris.mixins.json} 给 Iris 的 HAND shader 注入默认关闭的
+     * {@code tacz_ScopeMaskMode} 分支 —— 只有当前 draw 带着掩码采样器、且管线是我们自己的
+     * {@code tacz:pipeline/scope_*} 时才启用裁切。</p>
+     *
+     * <p>唯一的例外是 Sulkan：它没有公开等价的接管 API，无法保证"只有我们的 draw 被裁切"，
+     * 因此保守回退成整条关闭掩码（宁可没有镜内裁切，也不要整屏糊掉）。</p>
+     */
+    public static boolean shouldDisableScopeMaskUnderShaderPack() {
+        return FabricLoader.getInstance().isModLoaded("sulkan");
+    }
+
+    /** Route a TACZ pipeline into Iris' EMISSIVE_ENTITIES program slot. */
+    public static void assignEmissivePipeline(RenderPipeline pipeline) {
+        assignPipelineToIris(pipeline, "EMISSIVE_ENTITIES", "tacz_emissive");
+    }
+
+    /** Route a TACZ material pipeline into Iris' hand / emissive / entity program slot. */
+    public static void assignEntityPipeline(RenderPipeline pipeline, boolean hand, boolean emissive) {
+        assignPipelineToIris(pipeline, hand ? "HAND" : emissive ? "EMISSIVE_ENTITIES" : "ENTITIES", "tacz_material");
+    }
+
+    /** Route a TACZ outline pipeline into Iris' LINES program slot. */
+    public static void assignRackOutlinePipeline(RenderPipeline pipeline) {
+        assignPipelineToIris(pipeline, "LINES", "tacz_rack_outline");
+    }
+
     /** Classifies a TACZ custom pipeline through Iris' public API while keeping Iris optional. */
     public static synchronized boolean assignPipelineToIris(RenderPipeline pipeline,
                                                             String irisProgramName,
@@ -147,13 +182,14 @@ public final class IrisCompat {
     }
 
     /**
-     * The post-composite overlay hook is bytecode-audited specifically against Iris 1.10.7 for
-     * Minecraft 1.21.11. Other Iris lines retain the HAND_TRANSLUCENT fallback instead of risking
-     * an invisible reticle when internal final-render timing changes.
+     * The target 1.10.7 / 1.10.8 hooks finish the world composite before this overlay.
+     * The packaged 1.10.8 probe also records and checks beginHand/finalizeLevelRendering bytecode
+     * from the actual hash-pinned runtime JAR. Unknown Iris lines retain HAND_TRANSLUCENT.
      */
     public static boolean supportsFinalScopeOverlay() {
         return FabricLoader.getInstance().getModContainer(CompatRegistry.IRIS)
-                .map(container -> container.getMetadata().getVersion().getFriendlyString().startsWith("1.10.7"))
+                .map(container -> java.util.Set.of("1.10.7", "1.10.8").contains(
+                        container.getMetadata().getVersion().getFriendlyString().split("\\+", 2)[0]))
                 .orElse(false);
     }
 

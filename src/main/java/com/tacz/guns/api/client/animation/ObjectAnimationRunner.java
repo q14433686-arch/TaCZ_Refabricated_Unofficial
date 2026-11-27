@@ -1,5 +1,6 @@
 package com.tacz.guns.api.client.animation;
 
+import com.tacz.guns.util.time.GunTime;
 import com.tacz.guns.util.math.MathUtil;
 import net.minecraft.client.Minecraft;
 
@@ -59,8 +60,19 @@ public class ObjectAnimationRunner {
      * 用于动画过渡，储存的是过渡起点动画需要恢复到原位的channel
      */
     protected ArrayList<ObjectAnimationChannel> recoverChannels;
+    private final List<AnimationParticleEvent> pendingParticles = new ArrayList<>();
+    private boolean firstParticleUpdate = true;
+    public List<AnimationParticleEvent> consumeParticleEvents(){var result=List.copyOf(pendingParticles);pendingParticles.clear();return result;}
+    private void collectParticles(long elapsed){
+        var channel=animation.getParticleChannel();
+        if(channel!=null && running && !isTransitioning){
+            channel.collect(progressNs/1e9,elapsed/1e9,animation.getMaxEndTimeS(),animation.playType==ObjectAnimation.PlayType.LOOP,firstParticleUpdate,pendingParticles);
+            firstParticleUpdate=false;
+        }
+    }
     private boolean running = false;
     private boolean pausing = false;
+    private long lastUpdateEpoch = GunTime.epoch();
     private long lastUpdateNs;
     /**
      * 当前动画播放进度
@@ -90,7 +102,8 @@ public class ObjectAnimationRunner {
     public void run() {
         if (!running) {
             running = true;
-            lastUpdateNs = System.nanoTime();
+            lastUpdateEpoch = GunTime.epoch();
+            lastUpdateNs = GunTime.nowNanos();
         }
         pausing = false;
     }
@@ -111,6 +124,7 @@ public class ObjectAnimationRunner {
     }
 
     public void reset() {
+        pendingParticles.clear();firstParticleUpdate=true;
         progressNs = 0;
     }
 
@@ -119,6 +133,7 @@ public class ObjectAnimationRunner {
     }
 
     public void setProgressNs(long progressNs) {
+        pendingParticles.clear();firstParticleUpdate=progressNs==0;
         this.progressNs = progressNs;
     }
 
@@ -281,10 +296,9 @@ public class ObjectAnimationRunner {
 
     public void update(boolean blend) {
         long fromTimeNs = progressNs;
-        long currentNs = System.nanoTime();
-        long alphaProgress = currentNs - lastUpdateNs;
+        long alphaProgress = elapsedSinceLastUpdate();
+        collectParticles(alphaProgress);
         updateProgress(alphaProgress);
-        lastUpdateNs = currentNs;
         if (isTransitioning) {
             transitionProgressNs += alphaProgress;
             if (transitionProgressNs >= transitionTimeNs) {
@@ -304,9 +318,9 @@ public class ObjectAnimationRunner {
 
     public void updateSoundOnly() {
         long fromTimeNs = progressNs;
-        long currentNs = System.nanoTime();
-        updateProgress(currentNs - lastUpdateNs);
-        lastUpdateNs = currentNs;
+        long elapsed = elapsedSinceLastUpdate();
+        collectParticles(elapsed);
+        updateProgress(elapsed);
         ObjectAnimationSoundChannel soundChannel = animation.getSoundChannel();
         if (soundChannel != null && Minecraft.getInstance().player != null) {
             soundChannel.playSound(fromTimeNs / 1e9, progressNs / 1e9, Minecraft.getInstance().player, 16, 1, 1);
@@ -439,5 +453,14 @@ public class ObjectAnimationRunner {
         result[1] = ry;
         result[2] = rz;
         result[3] = rw;
+    }
+
+    private long elapsedSinceLastUpdate() {
+        long epoch = GunTime.epoch();
+        long now = GunTime.nowNanos();
+        long elapsed = epoch == lastUpdateEpoch ? Math.max(0, now - lastUpdateNs) : 0;
+        lastUpdateNs = now;
+        lastUpdateEpoch = epoch;
+        return elapsed;
     }
 }

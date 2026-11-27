@@ -1,0 +1,94 @@
+name: 1.21.11 remapped distribution and TCP
+on:
+  push:
+    branches: ['arena/**', '1.21.11']
+    paths: &paths ['src/main/**', 'gradle.properties', 'build.gradle', 'verification/packaged-runtime/**', 'scripts/test_12111_connection.py', 'scripts/test_12111_rei_give.py', 'scripts/test_12111_presentation.py', 'scripts/test_12111_player.py', 'scripts/test_12111_server.py', 'scripts/probe_12111_*.py', 'scripts/verify_12111_pack.py', 'scripts/default_pack_graph.py', '*_120.tsv', 'resources/retired-default-pack-paths.txt', 'scripts/audit_12111_jar.py', 'docs/verify_mixin_targets.py', 'docs/verify_shader_imports.py', 'docs/target_12111_jar.py', '.github/workflows/distribution-12111.yml']
+  pull_request:
+    paths: *paths
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: viewer-matrix-12111-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  packaged:
+    name: 1.21.11 production (${{ matrix.viewer }})
+    strategy:
+      fail-fast: false
+      matrix: {viewer: [none, jei, rei, rei-client-only, presentation, display, pal, controller, optics, optics-iris, receiver, receiver-iris, user-unbound-iris, platform, platform-zoomify]}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch only the pinned native previous export for the upgrade fixture
+        run: git fetch --no-tags --depth=1 origin aac343af891858589eaea69bbefc413c0f2b1977
+      - name: Check winning bytes and resource graph
+        run: python3 scripts/verify_12111_pack.py
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '21'}
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build the intermediary product
+        id: product
+        run: |
+          set -o pipefail
+          ./gradlew --init-script scripts/ci-central.init.gradle remapJar --console=plain 2>&1 | tee "$RUNNER_TEMP/product.log"
+          python3 scripts/audit_12111_jar.py build/libs/*.jar
+      # Loom verifies Mojang hashes. Retry only asset preparation, never a failed game assertion.
+      - name: Cache 1.21.11 client assets
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches/fabric-loom/assets
+          key: loom-assets-1.21.11-v1
+      - name: Prepare client assets
+        id: assets
+        run: |
+          for attempt in 1 2 3; do
+            ./gradlew --init-script scripts/ci-central.init.gradle downloadAssets --console=plain && exit 0
+            echo "::warning::Loom asset preparation failed (attempt $attempt of 3)"
+          done
+          exit 1
+      - name: Join, replace the directory pack with a ZIP, reload and reconnect
+        id: tcp
+        if: contains(fromJSON('["none", "rei", "jei"]'), matrix.viewer)
+        env: {LIBGL_ALWAYS_SOFTWARE: 'true', ALSOFT_DRIVERS: 'null'}
+        run: |
+          set -o pipefail
+          python3 -u scripts/test_12111_connection.py --viewer ${{ matrix.viewer }} --accept-test-eula build/libs/*.jar 2>&1 | tee "$RUNNER_TEMP/tcp.log"
+      - name: Compare the installed REI give backend with the same operator's component-bearing vanilla command
+        id: give
+        if: ${{ !cancelled() && steps.assets.outcome == 'success' && (matrix.viewer == 'rei-client-only' || matrix.viewer == 'rei') }}
+        env: {LIBGL_ALWAYS_SOFTWARE: 'true', ALSOFT_DRIVERS: 'null'}
+        run: |
+          set -o pipefail
+          python3 -u scripts/test_12111_rei_give.py --characterize-wire --backend ${{ matrix.viewer == 'rei' && 'matched' || 'client-only' }} --accept-test-eula build/libs/*.jar 2>&1 | tee "$RUNNER_TEMP/give.log"
+      - name: Open, save and cancel native HUD profiles under two launcher accounts; compare actual frames on relaunch
+        id: presentation
+        if: matrix.viewer == 'presentation'
+        env: {LIBGL_ALWAYS_SOFTWARE: 'true', ALSOFT_DRIVERS: 'null'}
+        run: python3 -u scripts/test_12111_presentation.py --accept-test-eula build/libs/*.jar
+      - name: Exercise a native display, a separately installed player integration, or the vanilla aperture mask
+        id: player
+        if: contains(fromJSON('["display", "pal", "controller", "optics", "optics-iris", "receiver", "receiver-iris", "user-unbound-iris", "platform", "platform-zoomify"]'), matrix.viewer)
+        env: {LIBGL_ALWAYS_SOFTWARE: 'true', ALSOFT_DRIVERS: 'null'}
+        run: python3 -u scripts/test_12111_player.py --suite ${{ matrix.viewer }} --accept-test-eula build/libs/*.jar
+      - name: Exercise the actual catalog, component stock, both upgrades and display inventory
+        id: checks
+        if: ${{ !cancelled() && matrix.viewer == 'none' && steps.product.outcome == 'success' }}
+        run: python3 scripts/test_12111_server.py --accept-test-eula build/libs/*.jar
+      - name: Check vanilla targets and shader imports against the target named JAR
+        if: ${{ !cancelled() && matrix.viewer == 'none' && steps.product.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          python3 docs/verify_shader_imports.py | tee "$RUNNER_TEMP/shaders.log"
+          python3 docs/verify_mixin_targets.py | tee "$RUNNER_TEMP/mixins.log"
+      - if: ${{ failure() && (steps.product.outcome == 'failure' || steps.tcp.outcome == 'failure' || steps.give.outcome == 'failure' || steps.checks.outcome == 'failure' || steps.presentation.outcome == 'failure' || steps.player.outcome == 'failure') }}
+        run: python3 scripts/report_ci_failures.py "$RUNNER_TEMP/product.log" "$RUNNER_TEMP/tcp.log" "$RUNNER_TEMP/give.log" build/packaged-evidence/presentation/*.log build/packaged-evidence/player-*/*.log build/packaged-evidence/give-*/*.log build/packaged-evidence/{client,server,restored}.log build/packaged-evidence/{client,server,restored}/logs/latest.log build/packaged-evidence/checks/{server,latest}.log
+      - name: Report target checks
+        if: ${{ !cancelled() && matrix.viewer == 'none' && steps.product.outcome == 'success' }}
+        run: |
+          grep -hE 'vanilla jar:|条 #moj_import|checked [0-9]+ items|OK - all targets' "$RUNNER_TEMP"/{shaders,mixins}.log | while read -r line; do echo "::notice::$line"; done
+          grep -h '^  \[' "$RUNNER_TEMP/mixins.log" | head -30 | while read -r line; do echo "::error::$line"; done || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: '1.21.11-tcp-${{ matrix.viewer }}-${{ github.sha }}', path: build/packaged-evidence, retention-days: 7}

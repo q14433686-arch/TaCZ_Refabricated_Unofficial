@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:function",
+  "environment": "minecraft:default",
+  "function": "tacz_server_checks:bad_reload_and_nested_failure_do_not_announce_success",
+  "structure": "fabric-gametest-api-v1:empty",
+  "max_ticks": 80,
+  "setup_ticks": 1,
+  "required": true
+}

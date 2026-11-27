@@ -1,0 +1,6 @@
+{
+  "model": "tacz:gun/ak47_geo", "texture": "tacz:gun/uv/ak47",
+  "animation": "tacz:ak47", "state_machine": "tacz:ak47_state_machine", "use_default_animation": "rifle",
+  "slot": "tacz:gun/slot/ak47", "hud": "tacz:gun/hud/ak47",
+  "lod": { "model": "port_test:rack_mesh", "texture": "port_test:gun/rack_mesh" }
+}

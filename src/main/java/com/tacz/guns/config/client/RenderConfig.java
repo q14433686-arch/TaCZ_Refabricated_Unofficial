@@ -4,6 +4,30 @@ import com.tacz.guns.client.renderer.crosshair.CrosshairType;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 public class RenderConfig {
+    public static ForgeConfigSpec.BooleanValue ENABLE_OCULAR_INFLATE;
+    public static ForgeConfigSpec.DoubleValue OCULAR_INFLATE;
+    public static final int DEFAULT_DROPPED_GUN_SPRITE_DISTANCE = 8;
+    public static ForgeConfigSpec.IntValue DROPPED_GUN_SPRITE_DISTANCE;
+    public static ForgeConfigSpec.BooleanValue HIT_PARTICLE_ENABLE;
+    public static ForgeConfigSpec.BooleanValue HIT_EXTRA_PARTICLE_ENABLE;
+    public static ForgeConfigSpec.IntValue HIT_PARTICLE_MAX_DISTANCE;
+    public static ForgeConfigSpec.BooleanValue RENDER_CREATIVE_PACK_SIDEBAR;
+    public static ForgeConfigSpec.BooleanValue ILLUMINATED_REAL_SKY;
+    /** 枪口烟独立于火光渲染（donor 26.1.2 {@code RenderMuzzleSmoke}）。 */
+    public static ForgeConfigSpec.BooleanValue RENDER_MUZZLE_SMOKE;
+    /** 枪口/爆炸/旧式曝光三类面光源开关（donor 26.1.2 同名三键）。 */
+    public static ForgeConfigSpec.BooleanValue MUZZLE_SURFACE_LIGHT, LEGACY_MUZZLE_LIGHT, EXPLOSION_SURFACE_LIGHT;
+    /** 给目镜孔径套上当前 display 的镜头（原生渲染器；donor 26.1.2 {@code EnableExperimentalScopeLens}）。 */
+    public static ForgeConfigSpec.BooleanValue EXPERIMENTAL_SCOPE_LENS;
+    /**
+     * 热成像镜头：捕获可见热源。donor 26.1.2 {@code EnableScopeThermal}。
+     * 使用实际 posed model 的 cutout 覆盖与独立场景深度；失败时保留普通光学镜片。
+     */
+    public static ForgeConfigSpec.BooleanValue SCOPE_THERMAL_ENABLE;
+    /** YSM（Yes Steve Model）兼容：被请求时才让位第一人称枪械渲染（donor 26.1.2 {@code YsmCompat}）。 */
+    public static ForgeConfigSpec.BooleanValue YSM_COMPAT;
+    /** 调试：整体关闭枪口火光（donor 26.1.2 {@code DebugDisableMuzzleFlash}）。 */
+    public static ForgeConfigSpec.BooleanValue DEBUG_DISABLE_MUZZLE_FLASH;
     public static ForgeConfigSpec.BooleanValue ENABLE_LASER_FADE_OUT;
     public static ForgeConfigSpec.IntValue GUN_LOD_RENDER_DISTANCE;
     public static ForgeConfigSpec.IntValue BULLET_HOLE_PARTICLE_LIFE;
@@ -103,8 +127,9 @@ public class RenderConfig {
      * 二次渲染用窄 FOV 真画一遍，镜内是<b>原生分辨率</b>，代价是每帧多跑一遍世界渲染。
      * 与 26.2 的 {@code ScopePipRerender} 同名同义。</p>
      *
-     * <p><b>注意</b>：本分支当前只实现无光影（vanilla）路径；Iris 光影下仍走现有
-     * 屏幕空间成品帧合成，此开关暂不生效（见配置 tooltip）。默认关闭。</p>
+     * <p>默认关闭。光影下还需 {@link #SCOPE_PIP_ALLOW_SHADER_PACKS}；隔离管线由
+     * {@link #SCOPE_PIP_ISOLATE_PIPELINE} 控制。已验证组合见移植验收文档，不能据此
+     * 推广为所有 Iris/光影包或 Voxy 组合均已实测。</p>
      */
     public static ForgeConfigSpec.BooleanValue SCOPE_PIP_RERENDER;
     /**
@@ -130,14 +155,65 @@ public class RenderConfig {
      */
     public static ForgeConfigSpec.BooleanValue SCOPE_PIP_DEBUG_PAINT_LENS;
 
+    public static ForgeConfigSpec.BooleanValue DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER;
+    public static ForgeConfigSpec.DoubleValue GUN_HURT_BOB_MULTIPLIER;
+
     public static void init(ForgeConfigSpec.Builder builder) {
         builder.push("render");
+
+        GUN_HURT_BOB_MULTIPLIER = builder.comment("First-person vanilla hurt tilt multiplier while holding a gun in the main hand. 0 disables it, 1 preserves vanilla side-hit strength. Front/back hits use half this multiplier, with smooth transitions for diagonal hits. Multiplies the vanilla Damage Tilt setting; gunshot-specific hurt effects keep their gun data settings.")
+                .defineInRange("GunHurtBobMultiplier", 0.1, 0, 1);
+
+        DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER = builder.comment("Disable third-person rendering of guns stored in the offhand and unselected hotbar slots. Main-hand gun rendering is unaffected.")
+                .define("DisableThirdPersonOffhandAndHotbarGunRender", false);
+
+        ENABLE_OCULAR_INFLATE = builder.comment("Try enabling this if you see flickering black spots when aiming through a scope. Expands ocular cubes during model baking to close small gaps. Reload client resources after changing this setting.")
+                .define("EnableOcularInflate", true);
+        OCULAR_INFLATE = builder.comment("Extra inflate added to ocular cubes in Bedrock model units. Requires EnableOcularInflate. Reload client resources after changing this setting.")
+                .defineInRange("OcularInflate", 0.0005, 0.0, (double) Float.MAX_VALUE);
 
         builder.comment("Whether or not apply fadeout effect on the laser beam. Close this may improve laser performance under some shaders.");
         ENABLE_LASER_FADE_OUT = builder.define("EnableLaserFadeOut", true);
 
         builder.comment("How far to display the lod model, 0 means always display");
         GUN_LOD_RENDER_DISTANCE = builder.defineInRange("GunLodRenderDistance", 0, 0, Integer.MAX_VALUE);
+
+        builder.comment("Without a usable pack LOD, draw dropped guns as their slot icon from this distance (blocks).",
+                "-1 means never.");
+        DROPPED_GUN_SPRITE_DISTANCE = builder.defineInRange("DroppedGunSpriteDistance", DEFAULT_DROPPED_GUN_SPRITE_DISTANCE, -1, Integer.MAX_VALUE);
+
+        builder.comment("Whether or not to spawn block hit particles when bullets hit blocks, whether or not a bullet hole decal is left");
+        HIT_PARTICLE_ENABLE = builder.define("HitParticleEnable", true);
+
+        builder.comment("Whether or not to spawn display-configured extra hit particles. Disabling this keeps the basic block hit particles.");
+        HIT_EXTRA_PARTICLE_ENABLE = builder.define("HitExtraParticleEnable", true);
+
+        builder.comment("The farthest distance to spawn extra hit particles, 0 means always spawn");
+        HIT_PARTICLE_MAX_DISTANCE = builder.defineInRange("HitParticleMaxDistance", 64, 0, Integer.MAX_VALUE);
+
+        builder.comment("Whether or not to display the content pack sidebar in TACZ creative tabs. Disabling this also restores all items in the current tab.");
+        RENDER_CREATIVE_PACK_SIDEBAR = builder.define("RenderCreativePackSidebar", true);
+
+        builder.comment("Under shader packs, give illuminated parts the real sky light column instead of full bright.",
+                "Prevents emissive parts from inheriting sky brightness at night.");
+        ILLUMINATED_REAL_SKY = builder.define("IlluminatedRealSky", true);
+
+        // ---- 以下五组键随 f26 渲染接线一并引入，定义逐字取自 donor 26.1.2（bc05ca6） ----
+        builder.comment("Whether or not to render the renew (snowstorm particle) muzzle smoke. Disable this if translucent smoke has issues with shaders.");
+        RENDER_MUZZLE_SMOKE = builder.define("RenderMuzzleSmoke", true);
+        builder.comment("Briefly light nearby terrain, world entities and displayed objects on a successful shot (client visual only).");
+        MUZZLE_SURFACE_LIGHT = builder.define("MuzzleSurfaceLight", true);
+        builder.comment("Estimate shot exposure for old textured flashes and explosive launchers that omit the flash. Never enables disabled renew effects.");
+        LEGACY_MUZZLE_LIGHT = builder.define("LegacyMuzzleLight", true);
+        builder.comment("Project a short-range pulse for standard explosion notifications (including TNT) and tracked LR stun bursts.");
+        EXPLOSION_SURFACE_LIGHT = builder.define("ExplosionSurfaceLight", true);
+        builder.comment("Enable scope lens effects configured by each attachment display. Uses the existing scope window and keeps the normal aiming magnification.");
+        EXPERIMENTAL_SCOPE_LENS = builder.define("EnableExperimentalScopeLens", true);
+        builder.comment("Allow thermal imaging for attachments whose display selects a thermal vision mode. Disabling this uses their normal optical lens and skips thermal entity capture. Requires EnableExperimentalScopeLens.");
+        SCOPE_THERMAL_ENABLE = builder.define("EnableScopeThermal", true);
+        builder.comment("Yield the first-person gun render only if the installed Yes Steve Model requests it this tick.");
+        YSM_COMPAT = builder.define("YsmCompat", true);
+        DEBUG_DISABLE_MUZZLE_FLASH = builder.define("DebugDisableMuzzleFlash", false);
 
         builder.comment("The existence time of bullet hole particles, in tick");
         BULLET_HOLE_PARTICLE_LIFE = builder.defineInRange("BulletHoleParticleLife", 400, 0, Integer.MAX_VALUE);

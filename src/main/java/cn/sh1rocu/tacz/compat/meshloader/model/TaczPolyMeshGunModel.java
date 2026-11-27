@@ -162,7 +162,9 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             return;
         }
 
-        boolean gpu = PolyMeshGpuRenderer.shouldSubmitGpu() && ensureBaked(texture, light);
+        // The preview collector owns per-vertex opacity. A resident world VBO would bypass it.
+        boolean preview = collector instanceof com.tacz.guns.client.renderer.block.RackPreviewCollector;
+        boolean gpu = !preview && PolyMeshGpuRenderer.shouldSubmitGpu() && ensureBaked(texture, light);
         // 世界语境（第三人称手持 / 掉落物 / 展示框 / 展示台）的 GPU 路径。两级闸门：
         // ① isWorldGpuContext —— 按 transformType 排除 GUI 系语境（热栏图标以 GUI 语境在
         //    HUD 里提取，<b>没有 Screen</b>，ScreenRenderTracker 拦不住，只能按语境挡；
@@ -170,7 +172,7 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
         // ② PolyMeshGpuRenderer.shouldSubmitGpuWorld —— 手部/Screen 提取/镜内/阴影/
         //    光影未放行 逐个拒收，并要求世界 flush 钩子的存活证明。
         Map<String, PolyMeshGpuRenderer.BakedBone> worldBaked = null;
-        if (!gpu && isWorldGpuContext(transformType)) {
+        if (!preview && !gpu && isWorldGpuContext(transformType)) {
             if (PolyMeshGpuRenderer.shouldSubmitGpuWorld()) {
                 worldBaked = ensureWorldBaked(light);
                 if (worldBaked == null && worldBakedByLight.isEmpty()) {
@@ -255,9 +257,9 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
      *       视角下手里那把枪」被两个语境各登记一次；</li>
      *   <li>{@code FIXED} / {@code HEAD} 是双面语境（世界展示框/雕像 vs 枪匠桌 GUI 预览）：
      *       Screen 内的预览已被 {@code ScreenRenderTracker} 拦，这里再按
-     *       {@code com.tacz.guns.util.RenderDistance.isGuiRender()}（枪匠桌的 100ms
-     *       标记）补一道 ——
-     *       代价只是「枪匠桌开着的瞬间世界雕像回退 collector」，比反向泄漏便宜得多。</li>
+     *       {@code com.tacz.guns.util.RenderDistance.isGuiRender()} 补一道 —— 它是精确作用域
+     *       （Screen#render 期间，或枪匠桌预览 PIP 绘制期间），不再是旧的 100ms 时间戳窗口，
+     *       所以枪匠桌开着时世界里的展示框/雕像仍走世界 GPU 表。</li>
      * </ul>
      */
     private static boolean isWorldGpuContext(ItemDisplayContext transformType) {
@@ -414,7 +416,7 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
             return cached;
         }
         int cap = Math.max(1, MeshyConfig.GPU_LIGHT_CACHE_SIZE.get());
-        if (!PolyMeshGpuRenderer.tryReserveBake(cap)) {
+        if (!PolyMeshGpuRenderer.tryReserveBake()) {
             return null;
         }
         Map<String, PolyMeshGpuRenderer.BakedBone> bones = new HashMap<>();
@@ -474,6 +476,13 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
         }
         worldBakedByLight.clear();
         worldBakedFormat = null;
+    }
+
+    public void retire() {
+        releaseWorldBaked();
+        bakedBones.values().forEach(PolyMeshGpuRenderer::releaseDeferred);
+        bakedBones.clear();
+        gpuBaked = false;
     }
 
     private void releaseBaked() {

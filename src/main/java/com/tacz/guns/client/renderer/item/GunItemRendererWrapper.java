@@ -13,6 +13,7 @@ import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.animation.screen.RefitTransform;
 import com.tacz.guns.client.animation.statemachine.GunAnimationConstant;
 import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
+import com.tacz.guns.client.render.ViewmodelFlash;
 import com.tacz.guns.client.event.CameraSetupEvent;
 import com.tacz.guns.client.event.FirstPersonRenderGunEvent;
 import com.tacz.guns.client.model.BedrockGunModel;
@@ -79,6 +80,34 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
 
     public static void copyHandCameraRotation(Matrix3f dst) {
         dst.set(handCameraRotation);
+    }
+
+    /** Convert an extracted hand locator to a detached world emitter, normalizing the hand
+     * pass base once. Do not use global ModelView, whose contract differs under Iris.
+     * <p>本线的入口基座字段是 {@link #handBasePose}（donor/PR#126 侧叫 handBasePoseEntry，
+     * 语义相同：渲染线程写入的完整入口矩阵）。 */
+    public static Matrix4f muzzleWorldPose(Matrix4f locator) {
+        var mc = Minecraft.getInstance();
+        var camera = mc.gameRenderer.getMainCamera();
+        Matrix4f local = new Matrix4f(handBasePose).invert().mul(locator);
+        double ratio = Math.tan(Math.toRadians(CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get()) / 2)
+                / Math.tan(Math.toRadians(CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2);
+        if (Double.isFinite(ratio) && ratio > 0) local.m32((float)(local.m32()*ratio));
+        var pos = camera.position();
+        return new Matrix4f().translation((float)pos.x,(float)pos.y,(float)pos.z).rotate(camera.rotation()).mul(local);
+    }
+
+    /** Camera-relative muzzle transform. Include the attachment offset in the same hand/world basis. */
+    public static Matrix4f surfaceLocator(Matrix4f locator, boolean first) {
+        if (!first) return new Matrix4f(locator);
+        return new Matrix4f().rotation(Minecraft.getInstance().gameRenderer.getMainCamera().rotation())
+                .scale(1, 1, 1 / muzzleWorldScale()).mul(new Matrix4f(handBasePose).invert()).mul(locator);
+    }
+
+    public static float muzzleWorldScale() {
+        double ratio = Math.tan(Math.toRadians(CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2)
+                / Math.tan(Math.toRadians(CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get()) / 2);
+        return Double.isFinite(ratio) && ratio > 0 ? (float)ratio : 1f;
     }
 
     /**
@@ -278,8 +307,10 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             RenderType renderType = display.enablesTransparency()
                     ? RenderTypes.entityTranslucent(display.getModelTexture())
                     : RenderTypes.entityCutout(display.getModelTexture());
-            gunModel.submit(poseStack, stack, ctx, collector, renderType,
-                    display.getModelTexture(), light, OverlayTexture.NO_OVERLAY);
+            // 26.1.2: ViewmodelFlash adjusts the hand-pass light for muzzle/scope flash effects.
+            ViewmodelFlash.submit(stack, light, baseLight ->
+                    gunModel.submit(poseStack, stack, ctx, collector, renderType,
+                            display.getModelTexture(), baseLight, OverlayTexture.NO_OVERLAY));
             // 缓存枪口位置，为第一人称曳光弹渲染作准备
             cacheMuzzlePosition(poseStack, gunModel);
             // 恢复手臂渲染
@@ -315,10 +346,13 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             float viewY = handBasePose.m10() * dx + handBasePose.m11() * dy + handBasePose.m12() * dz;
             float viewZ = handBasePose.m20() * dx + handBasePose.m21() * dy + handBasePose.m22() * dz;
 
-            // FOV 比值只应缩放视图空间深度，不能缩放基座旋转后的世界 Z 分量。
-            double fovScale = Math.tan(itemRenderFov / 2 * Math.PI / 180)
-                    / Math.tan(levelRenderFov / 2 * Math.PI / 180);
-            muzzleRenderOffset.set(viewX, viewY, (float) (viewZ * fovScale));
+            // 上游 1.2.0（FirstPersonRenderMath#muzzleOffset）：在世界 FOV 下复现枪口在手部 FOV 下的屏幕位置，
+            // 保留视图空间深度、按 tan(worldFov/2)/tan(itemFov/2) 缩放横纵分量。旧做法缩放深度，屏幕位置相同，
+            // 但曳光弹近端会被推到错误的深度。只在视图空间做，不能作用于基座旋转后的世界分量。
+            double itemTan = Math.tan(Math.toRadians(itemRenderFov) / 2);
+            double worldTan = Math.tan(Math.toRadians(levelRenderFov) / 2);
+            float lateral = itemTan > 1.0e-6 ? (float) (worldTan / itemTan) : 1.0f;
+            muzzleRenderOffset.set(viewX * lateral, viewY * lateral, viewZ);
         }
     }
 
@@ -362,20 +396,13 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
                 return;
             }
             // 剩下的渲染
-            BedrockGunModel gunModel;
-            Identifier gunTexture;
-            Pair<BedrockGunModel, Identifier> lodModel = gunIndex.getLodModel();
-            if (lodModel == null || RenderDistance.inRenderHighPolyModelDistance(poseStack)) {
-                gunModel = gunIndex.getGunModel();
-                gunTexture = gunIndex.getModelTexture();
-            } else {
-                gunModel = lodModel.getLeft();
-                gunTexture = lodModel.getRight();
-            }
-            if (gunModel == null) {
+            var rig = gunIndex.getExternalModel(!RenderDistance.inRenderHighPolyModelDistance(poseStack));
+            if (rig == null) {
                 renderSlotTexture(poseStack, collector, pPackedLight, pPackedOverlay, gunIndex.getSlotTexture());
                 return;
             }
+            var gunModel = rig.getLeft();
+            var gunTexture = rig.getRight();
             // 移动到模型原点
             poseStack.translate(0.5, 2, 0.5);
             // 反转模型

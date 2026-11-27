@@ -454,7 +454,7 @@ public class GltfConstants {
      */
     public static final int GL_LINEAR_MIPMAP_LINEAR = 9987;
 
-    // glSamplerParameter 
+    // glSamplerParameter
 
     /**
      * The GL_REPEAT constant (10497)

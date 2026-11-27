@@ -44,6 +44,7 @@ public class SoundManager {
     /**
      * 空仓换弹声音
      */
+    public static final String UNLOAD_SOUND = "unload";
     public static String RELOAD_EMPTY_SOUND = "reload_empty";
     /**
      * 战术换弹声音

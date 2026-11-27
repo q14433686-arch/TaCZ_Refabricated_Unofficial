@@ -56,7 +56,7 @@ public class GunSmithTableResultSerializer implements JsonDeserializer<GunSmithT
                     result = new GunSmithTableResult(raw, tabOverride);
                 }
                 case GunSmithTableResult.CUSTOM -> {
-                    // 26.2: custom items must be constructed lazily. During reload, component binding is not
+                    // 1.21.11: custom items must be constructed lazily. During reload, component binding is not
                     // guaranteed yet; ItemStack(item) can throw "Components not bound yet" for newly registered
                     // LRTactical items. GunSmithTableResult#init runs later, when recipes are actually used.
                     // 形状归一见 normalizeCustomResultJson:第三方包常按 26.x 配方风格写 {"id": ...},
@@ -67,6 +67,10 @@ public class GunSmithTableResultSerializer implements JsonDeserializer<GunSmithT
                 default -> {
                     return new GunSmithTableResult(ItemStack.EMPTY, TabConfig.TAB_EMPTY);
                 }
+            }
+            if (jsonObject.has("components")) {
+                if (jsonObject.has("nbt")) throw new JsonParseException("Recipe result cannot have both nbt and components");
+                result.setComponents(GsonHelper.getAsJsonObject(jsonObject, "components"));
             }
             return result;
         }

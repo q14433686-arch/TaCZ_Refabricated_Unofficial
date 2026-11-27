@@ -370,8 +370,8 @@ public final class PolyMeshGpuRenderer {
      *   <li><b>不在</b> Screen 提取窗口 —— {@link ScreenRenderTracker} 框住 {@code Screen}
      *       的 extract 阶段，背包人偶 / 枪匠桌预览这类 GUI 内嵌 3D 的 submit 全在里面；
      *       它们的 pose 带 GUI 投影，落进世界表就是「枪画进世界」事故。
-     *       刻意<b>不用</b> {@code RenderDistance.isGuiRender()} 那种 100ms 时间戳窗口
-     *       （开着菜单时世界提取也会命中 ⇒ 一开背包全场景 mesh 枪跌回 collector）；</li>
+     *       （历史上 {@code RenderDistance.isGuiRender()} 是 100ms 时间戳窗口，开着菜单时世界提取也会命中；
+     *       现已按上游 1.2.0 改为精确作用域，但这里仍只认 {@link ScreenRenderTracker}）；</li>
      *   <li><b>允许</b>镜内那一遍（PIP 二次渲染）—— 1.21.11 的 {@code LevelRenderer#renderLevel}
      *       每次调用都自带提取（没有 26.x 的先 extract 后 render 分离），镜内那遍会<b>重新</b>
      *       提交一次世界；若在这里拒收，镜内那遍只能回 collector + 顶点预算，远处的世界 mesh
@@ -552,8 +552,12 @@ public final class PolyMeshGpuRenderer {
      * 摆在明暗边界上），没有额度闸门就会每帧「逐出-重烘」打摆 —— 烘焙风暴比 collector
      * 还慢。额度用完后本帧余下的枪回退 collector，下一帧额度重置，缓存逐帧收敛到稳态。</p>
      */
-    public static boolean tryReserveBake(int cachedLevels) {
-        if (bakesThisFrame >= Math.max(4, cachedLevels)) {
+    /** Binary/source compatibility for integrations using the old cache-coupled entry point. */
+    @Deprecated
+    public static boolean tryReserveBake(int cachedLevels) { return tryReserveBake(); }
+
+    public static boolean tryReserveBake() {
+        if (bakesThisFrame >= MeshyConfig.GPU_BAKE_BUDGET_PER_FRAME.get()) {
             return false;
         }
         bakesThisFrame++;

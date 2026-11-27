@@ -28,10 +28,26 @@ import net.minecraft.world.item.ItemStack;
 import java.util.EnumMap;
 import java.util.Optional;
 
-/** Controllable 0.26.x bindings and gun-fire rumble integration. */
+/** Controllable 0.25.7 bindings and gun-fire rumble integration. */
 public final class ControllableInner {
     public static final BindingContext GUN_KEY_CONFLICT =
             new GunKeyConflict(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "gun_key"));
+    private static final InGameContext CRAWL_CONTEXT = new InGameContext(Identifier.parse("tacz:crawl_input")) {
+        @Override public int priority() { return 1; }
+    };
+    private static boolean gunActive() {
+        var player = net.minecraft.client.Minecraft.getInstance().player;
+        return com.tacz.guns.util.InputExtraCheck.isInGame() && player != null && !player.isSpectator() && IGun.mainHandHoldGun(player);
+    }
+    private static boolean crawlActive() {
+        var player = net.minecraft.client.Minecraft.getInstance().player;
+        return com.tacz.guns.util.InputExtraCheck.isInGame() && player != null && !player.isSpectator() && !player.isPassenger()
+                && com.tacz.guns.config.sync.SyncConfig.ENABLE_CRAWL.get()
+                && (IGun.mainHandHoldGun(player) || com.tacz.guns.config.sync.SyncConfig.ENABLE_CRAWL_WITHOUT_GUN.get());
+    }
+    private static boolean aiming() {
+        return com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator.fromLocalPlayer(net.minecraft.client.Minecraft.getInstance().player).isAim();
+    }
     public static final ButtonBinding AIM = new ButtonBinding(
             Buttons.LEFT_TRIGGER, "key.tacz.aim.desc", "key.category.tacz", GUN_KEY_CONFLICT,
             OnPressAndReleaseHandler.create(
@@ -49,18 +65,18 @@ public final class ControllableInner {
     public static final ButtonBinding MELEE = new ButtonBinding(
             Buttons.X, "key.tacz.melee.desc", "key.category.tacz", GUN_KEY_CONFLICT,
             OnPressAndReleaseHandler.create(
-                    context -> Optional.of(() -> MeleeKey.onMeleeControllerPress(true)),
+                    context -> !aiming() ? Optional.of(() -> MeleeKey.onMeleeControllerPress(true)) : Optional.empty(),
                     context -> MeleeKey.onMeleeControllerPress(false)));
     public static final ButtonBinding ZOOM = new ButtonBinding(
             Buttons.X, "key.tacz.zoom.desc", "key.category.tacz", GUN_KEY_CONFLICT,
             OnPressAndReleaseHandler.create(
-                    context -> Optional.of(() -> ZoomKey.onZoomControllerPress(true)),
+                    context -> aiming() ? Optional.of(() -> ZoomKey.onZoomControllerPress(true)) : Optional.empty(),
                     context -> ZoomKey.onZoomControllerPress(false)));
     public static final ButtonBinding CRAWL = new ButtonBinding(
-            Buttons.LEFT_THUMB_STICK, "key.tacz.crawl.desc", "key.category.tacz", GUN_KEY_CONFLICT,
+            Buttons.LEFT_THUMB_STICK, "key.tacz.crawl.desc", "key.category.tacz", CRAWL_CONTEXT,
             OnPressAndReleaseHandler.create(
-                    context -> Optional.of(() -> CrawlKey.onCrawlControllerPress(true)),
-                    context -> CrawlKey.onCrawlControllerPress(false)));
+                    context -> crawlActive() ? Optional.of(() -> CrawlKey.onCrawlControllerPress(true)) : Optional.empty(),
+                    context -> crawlActive()));
     public static final ButtonBinding FIRE_SELECT = new ButtonBinding(
             Buttons.DPAD_LEFT, "key.tacz.fire_select.desc", "key.category.tacz", GUN_KEY_CONFLICT,
             OnPressAndReleaseHandler.create(
@@ -91,20 +107,15 @@ public final class ControllableInner {
         Controllable.getBindingRegistry().register(INTERACT);
         Controllable.getBindingRegistry().register(INSPECT);
 
-        // Controllable 0.26 moved its own hooks to FrameworkClientTickEvents. TACZ does not need
-        // Framework directly: Fabric's end-client-tick event provides the same polling boundary.
-        ClientTickEvents.END_CLIENT_TICK.register(client -> onClientTickEnd());
+        ClientTickEvents.START_CLIENT_TICK.register(client -> pollHeldBindings());
     }
 
-    private static void onClientTickEnd() {
-        if (!GUN_KEY_CONFLICT.isActive()) {
-            return;
-        }
-        Controller controller = Controllable.getController();
-        if (controller == null) {
-            return;
-        }
-        ShootKey.shootControllerTick(controller.isButtonPressed(SHOOT.getButton()));
+    private static void pollHeldBindings() {
+        Controller pad = Controllable.getController();
+        boolean active = pad != null && gunActive();
+        AimKey.setControllerAimDown(active && !AIM.isUnbound() && pad.isButtonPressed(AIM.getButton()));
+        ShootKey.shootControllerTick(active && !SHOOT.isUnbound() && pad.isButtonPressed(SHOOT.getButton()));
+        CrawlKey.setControllerDown(pad != null && crawlActive() && !CRAWL.isUnbound() && pad.isButtonPressed(CRAWL.getButton()));
     }
 
     public static void rumbleShoot(ItemStack mainHandItem, FireMode fireMode) {

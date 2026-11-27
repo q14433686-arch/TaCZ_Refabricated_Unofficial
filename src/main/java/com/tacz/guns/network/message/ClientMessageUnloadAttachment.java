@@ -3,7 +3,9 @@ package com.tacz.guns.network.message;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.advancement.GunRefitTrigger;
 import com.tacz.guns.network.NetworkHandler;
+import com.tacz.guns.util.VirtualOemAttachment;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.network.FriendlyByteBuf;
@@ -43,6 +45,7 @@ public class ClientMessageUnloadAttachment implements CustomPacketPayload {
 
     public void handle(ServerPlayer player, PacketSender responseSender) {
         Inventory inventory = player.getInventory();
+        if (gunSlotIndex != inventory.getSelectedSlot() || attachmentType == AttachmentType.NONE) return;
         ItemStack gunItem = inventory.getItem(gunSlotIndex);
         IGun iGun = IGun.getIGunOrNull(gunItem);
         if (iGun != null) {
@@ -61,12 +64,13 @@ public class ClientMessageUnloadAttachment implements CustomPacketPayload {
                 //
                 // 现在改为先卸，再校验确实卸掉了，最后才发物品；
                 // 若发不进背包（背包满）则回滚，避免配件凭空消失。
+                var before = gunItem.copy();
                 iGun.unloadAttachment(gunItem, attachmentType);
                 if (!iGun.getAttachment(gunItem, attachmentType).isEmpty()) {
                     // 卸载没生效，直接放弃，绝不发物品
                     return;
                 }
-                if (!inventory.add(attachmentItem)) {
+                if (!VirtualOemAttachment.isMarked(attachmentItem) && !inventory.add(attachmentItem)) {
                     // 背包放不下 -> 掉在地上，不能让配件蒸发
                     player.drop(attachmentItem, false);
                 }
@@ -76,6 +80,7 @@ public class ClientMessageUnloadAttachment implements CustomPacketPayload {
                 if (attachmentType == AttachmentType.EXTENDED_MAG) {
                     iGun.dropAllAmmo(player, gunItem);
                 }
+                GunRefitTrigger.INSTANCE.trigger(player, before, gunItem);
                 player.inventoryMenu.broadcastChanges();
                 NetworkHandler.sendToClientPlayer(new ServerMessageRefreshRefitScreen(), player);
             }

@@ -9,6 +9,7 @@ import net.minecraft.client.gui.screens.MenuScreens;
 @Environment(EnvType.CLIENT)
 public class ModContainerScreen {
     public static void registerScreens() {
+        MenuScreens.register(com.tacz.guns.inventory.AmmoStorageMenu.TYPE, com.tacz.guns.client.gui.AmmoStorageScreen::new);
         MenuScreens.register(GunSmithTableMenu.TYPE, GunSmithTableScreen::new);
     }
 }

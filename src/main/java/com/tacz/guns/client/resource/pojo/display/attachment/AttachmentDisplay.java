@@ -1,6 +1,8 @@
 package com.tacz.guns.client.resource.pojo.display.attachment;
 
+import org.joml.Vector3f;
 import com.google.common.collect.Maps;
+import com.tacz.guns.client.resource.pojo.display.SoundData;
 import com.google.gson.annotations.SerializedName;
 import com.tacz.guns.client.resource.pojo.display.IDisplay;
 import com.tacz.guns.client.resource.pojo.display.LaserConfig;
@@ -34,6 +36,14 @@ public class AttachmentDisplay implements IDisplay {
     @SerializedName("show_muzzle")
     private boolean showMuzzle = false;
 
+    /** 枪口火光相对枪口锚点的纵向偏移（donor 26.1.2 {@code muzzle_flash_offset}）。 */
+    @SerializedName("muzzle_flash_offset")
+    private float muzzleFlashOffset;
+
+    public float getMuzzleFlashOffset() {
+        return Float.isFinite(muzzleFlashOffset) && muzzleFlashOffset >= 0 ? muzzleFlashOffset : 0;
+    }
+
     @SerializedName("show_mount")
     private boolean showMount = true;
 
@@ -48,11 +58,23 @@ public class AttachmentDisplay implements IDisplay {
     @Nullable
     private int[] views;
 
+    @SerializedName("scope_lens")
+    private ScopeLensConfig scopeLens = new ScopeLensConfig();
+
+    public ScopeLensConfig getScopeLens() { return scopeLens; }
+
     @SerializedName("scope")
     private boolean isScope = false;
 
     @SerializedName("sight")
     private boolean isSight = false;
+
+    @SerializedName("idle_scope_height_adjust")
+    private float idleScopeHeightAdjust;
+
+    public float getIdleScopeHeightAdjust() {
+        return Float.isFinite(idleScopeHeightAdjust) ? idleScopeHeightAdjust : 0;
+    }
 
     @SerializedName("fov")
     private float fov = 70;
@@ -61,8 +83,16 @@ public class AttachmentDisplay implements IDisplay {
     @Nullable
     private float[] viewsFov;
 
+    @SerializedName("mode")
+    private String variantMode = "replace";
+    @SerializedName("mount_offset")
+    private @Nullable Vector3f mountOffset;
+
+    public String getVariantMode() { return variantMode; }
+    public @Nullable Vector3f getMountOffset() { return mountOffset != null && mountOffset.isFinite() ? mountOffset : null; }
+
     @SerializedName("sounds")
-    private Map<String, Identifier> sounds = Maps.newHashMap();
+    private Map<String, SoundData> sounds = Maps.newHashMap();
 
     public Identifier getSlotTextureLocation() {
         return slotTextureLocation;
@@ -126,8 +156,10 @@ public class AttachmentDisplay implements IDisplay {
     }
 
     public Map<String, Identifier> getSounds() {
-        return sounds;
+        return sounds == null ? null : Maps.transformValues(sounds, SoundData::getSound);
     }
+
+    public Map<String, SoundData> getSoundData() { return sounds; }
 
     @Nullable
     public LaserConfig getLaserConfig() {
@@ -136,6 +168,8 @@ public class AttachmentDisplay implements IDisplay {
 
     @Override
     public void init() {
+        if (scopeLens == null) scopeLens = new ScopeLensConfig();
+        scopeLens.init();
         if (slotTextureLocation != null) {
             slotTextureLocation = converter.idToFile(slotTextureLocation);
         }

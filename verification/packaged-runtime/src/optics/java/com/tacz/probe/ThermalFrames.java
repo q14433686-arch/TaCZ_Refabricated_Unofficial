@@ -1,0 +1,221 @@
+package com.tacz.probe;
+
+import com.google.gson.Gson;
+import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.client.render.scope.ScopeLensFrame;
+import com.tacz.guns.client.render.scope.ThermalReadback;
+import com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig;
+import com.tacz.guns.config.client.RenderConfig;
+import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
+import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+
+/** Real posed entities, real private heat attachment AND final lens pixels. The temporary
+ * lens is injected into the loaded model only, never distributed as modified default-pack data. */
+final class ThermalFrames {
+    static void verify(ClientGameTestContext ctx, TestSingleplayerContext world, BlockPos base, Identifier optic) {
+        var config = new Gson().fromJson("{\"vision_mode\":\"THERMAL_WHITE_HOT\",\"vision_noise\":0,\"distortion\":0,\"aberration\":0,\"vignette_strength\":0,\"tint_strength\":0}", ScopeLensConfig.class);
+        config.init();
+        var original = ctx.computeOnClient(mc -> {
+            try {
+                var model = TimelessAPI.getClientAttachmentIndex(optic).orElseThrow().getAttachmentModel();
+                var field = com.tacz.guns.client.model.BedrockAttachmentModel.class.getDeclaredField("scopeLens");
+                field.setAccessible(true);
+                return (ScopeLensConfig) field.get(model);
+            } catch (ReflectiveOperationException e) { throw new AssertionError(e); }
+        });
+        boolean pip = ctx.computeOnClient(mc -> RenderConfig.SCOPE_PIP_ENABLE.get());
+        boolean experimental = ctx.computeOnClient(mc -> RenderConfig.EXPERIMENTAL_SCOPE_LENS.get());
+        boolean enabled = ctx.computeOnClient(mc -> RenderConfig.SCOPE_THERMAL_ENABLE.get());
+        boolean rerender = ctx.computeOnClient(mc -> RenderConfig.SCOPE_PIP_RERENDER.get());
+        try {
+            ctx.runOnClient(mc -> {
+                TimelessAPI.getClientAttachmentIndex(optic).orElseThrow().getAttachmentModel().setScopeLens(config);
+                RenderConfig.EXPERIMENTAL_SCOPE_LENS.set(true);
+                RenderConfig.SCOPE_THERMAL_ENABLE.set(true);
+                RenderConfig.SCOPE_PIP_ENABLE.set(false);
+                RenderConfig.SCOPE_PIP_RERENDER.set(false);
+            });
+            backdrop(ctx,world,base,false);
+            ctx.waitTicks(8);
+            ctx.runOnClient(mc -> RenderConfig.SCOPE_THERMAL_ENABLE.set(false));
+            var emptyOptical = frame(ctx,"thermal_empty_optical");
+            ctx.runOnClient(mc -> RenderConfig.SCOPE_THERMAL_ENABLE.set(true));
+            ctx.waitTicks(6);
+            var empty = ThermalReadback.read(ctx);
+            var emptyThermal=frame(ctx,"thermal_empty_sensor");
+            if (empty.hot() != 0) throw new AssertionError("Empty thermal lane has heat: " + empty);
+            summon(ctx, world, base, "slime", "Size:2,NoAI:1b,NoGravity:1b,Silent:1b");
+            var exposed = ThermalReadback.read(ctx);
+            var hot = frame(ctx,"thermal_exposed");
+            if (exposed.centralHot() < 20 || white(hot) < 10) throw new AssertionError("Missing translucent posed heat / sensor pixels: " + exposed + " white=" + white(hot)
+                    + " diagnostic-only:" + ThermalReadback.diagnoseDepth(ctx));
+            wall(ctx,world,base,1);
+            var covered = ThermalReadback.read(ctx);
+            var behind = frame(ctx,"thermal_occluded");
+            if (covered.hot() != 0 || white(behind) > white(emptyThermal)+4) throw new AssertionError("Heat through opaque wall: " + covered + " white=" + white(behind));
+            wall(ctx,world,base,2);
+            var glass = ThermalReadback.read(ctx);
+            if (glass.centralHot() < 20) throw new AssertionError("Transparent occluder lost visible heat: " + glass);
+            frame(ctx,"thermal_glass");
+            wall(ctx,world,base,0);
+            ctx.runOnClient(mc -> RenderConfig.SCOPE_THERMAL_ENABLE.set(false));
+            ctx.waitTicks(6);
+            ctx.runOnClient(mc -> ThermalReadback.assertCleared());
+            var optical = frame(ctx,"thermal_disabled");
+            if (white(optical) >= white(hot)/2) throw new AssertionError("Disabling heat did not restore the optical lens");
+            int[] coverage = coverage(optical, emptyOptical, hot);
+            if (coverage[0] < 20 || coverage[1] < .83*coverage[0])
+                throw new AssertionError("Heat did not fill the independently visible optical body: " + coverage[1] + "/" + coverage[0]);
+            ctx.runOnClient(mc -> RenderConfig.SCOPE_THERMAL_ENABLE.set(true));
+            ctx.waitTicks(6);
+            if (ThermalReadback.read(ctx).centralHot() < 20) throw new AssertionError("Heat did not recover after disable");
+            try {
+                ctx.runOnClient(mc -> ThermalReadback.forceUnavailable(true));
+                ctx.waitTicks(6);
+                ctx.runOnClient(mc -> ThermalReadback.assertCleared());
+                var fallback=frame(ctx,"thermal_unavailable");
+                if(coverage(fallback,emptyOptical,hot)[0]<20 || white(fallback)>=white(hot)/2)
+                    throw new AssertionError("Unavailable heat did not preserve the real optical body");
+            } finally { ctx.runOnClient(mc -> ThermalReadback.forceUnavailable(false)); }
+            ctx.waitTicks(6);
+            if(ThermalReadback.read(ctx).centralHot()<20) throw new AssertionError("Heat failed to recover after unavailable source");
+            var camera=ctx.computeOnClient(mc -> mc.options.getCameraType());
+            try {
+                ctx.runOnClient(mc -> mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK));
+                ctx.waitTicks(6);
+                ctx.runOnClient(mc -> ThermalReadback.assertCleared());
+            } finally { ctx.runOnClient(mc -> mc.options.setCameraType(camera)); }
+            ctx.waitTicks(8);
+            if(ThermalReadback.read(ctx).centralHot()<20) throw new AssertionError("Heat failed to recover after camera change");
+            palettes(ctx,optic,config,optical,emptyOptical);
+            kill(ctx,world);
+            summon(ctx,world,base,"chicken","NoAI:1b,NoGravity:1b,Silent:1b");
+            var chicken=ThermalReadback.read(ctx);
+            if (chicken.centralHot()<3) throw new AssertionError("Missing cutout chicken heat: "+chicken);
+            kill(ctx,world);
+            summon(ctx,world,base,"chicken","NoAI:1b,NoGravity:1b,Silent:1b");
+            world.getServer().runCommand("effect give @e[tag=thermal_probe] minecraft:invisibility infinite 0 true");
+            ctx.waitTicks(6);
+            var invisible=ThermalReadback.read(ctx);
+            if(invisible.hot()!=0) throw new AssertionError("Invisible entity heated: "+invisible);
+            kill(ctx,world);
+            summon(ctx,world,base,"armor_stand","NoGravity:1b");
+            var blacklisted=ThermalReadback.read(ctx);
+            if(blacklisted.hot()!=0) throw new AssertionError("Blacklist failed: "+blacklisted);
+            kill(ctx,world);
+            summon(ctx,world,base,"minecart","NoGravity:1b");
+            var whitelisted=ThermalReadback.read(ctx);
+            if(whitelisted.centralHot()<3) throw new AssertionError("Nonliving whitelist failed: "+whitelisted);
+            ctx.runOnClient(mc -> ThermalReadback.releaseAndVerify());
+            ctx.waitTicks(8);
+            if (ThermalReadback.read(ctx).centralHot()<3) throw new AssertionError("Heat failed to reallocate after resource cleanup");
+            System.out.println("PORT_THERMAL_PIXELS: empty="+empty.hot()+" exposed="+exposed.centralHot()+" sensorWhite="+white(hot)
+                    +" opaque="+covered.hot()+" opaqueWhite="+white(behind)+" glass="+glass.centralHot()+" chicken="+chicken.centralHot()
+                    +" invisible="+invisible.hot()+" blacklist="+blacklisted.hot()+" whitelist="+whitelisted.centralHot()
+                    +" opticalBody="+coverage[1]+"/"+coverage[0]+" optical fallback and recovery passed");
+            ThermalPoseFrames.verify(ctx,world,base);
+        } finally {
+            kill(ctx,world);
+            wall(ctx,world,base,0);
+            backdrop(ctx,world,base,true);
+            ctx.runOnClient(mc -> {
+                TimelessAPI.getClientAttachmentIndex(optic).orElseThrow().getAttachmentModel().setScopeLens(original);
+                RenderConfig.EXPERIMENTAL_SCOPE_LENS.set(experimental);
+                RenderConfig.SCOPE_THERMAL_ENABLE.set(enabled);
+                RenderConfig.SCOPE_PIP_ENABLE.set(pip);
+                RenderConfig.SCOPE_PIP_RERENDER.set(rerender);
+                ScopeLensFrame.clear();
+            });
+        }
+    }
+    private static void palettes(ClientGameTestContext ctx,Identifier optic,ScopeLensConfig white,
+                                 BufferedImage optical,BufferedImage empty) {
+        try {
+            for(String mode:new String[]{"THERMAL_BLACK_HOT","THERMAL_IRONBOW"}) {
+                var json=new Gson().toJsonTree(white).getAsJsonObject(); json.addProperty("vision_mode",mode);
+                var lens=new Gson().fromJson(json,ScopeLensConfig.class); lens.init();
+                ctx.runOnClient(mc -> TimelessAPI.getClientAttachmentIndex(optic).orElseThrow().getAttachmentModel().setScopeLens(lens));
+                ctx.waitTicks(6);
+                var image=frame(ctx,"thermal_"+mode.toLowerCase(java.util.Locale.ROOT));
+                int w=image.getWidth(),h=image.getHeight(),r=h/7,visible=0,filled=0;
+                for(int y=h/2-r;y<h/2+r;y++) for(int x=w/2-r;x<w/2+r;x++) {
+                    if(!greenDelta(optical,empty,x,y) || !greenDelta(optical,empty,x-1,y) || !greenDelta(optical,empty,x+1,y)
+                            || !greenDelta(optical,empty,x,y-1) || !greenDelta(optical,empty,x,y+1)) continue;
+                    visible++;
+                    int p=image.getRGB(x,y),red=p>>16&255,g=p>>8&255,b=p&255;
+                    if(mode.equals("THERMAL_BLACK_HOT") ? Math.max(red,Math.max(g,b))<76 && Math.max(red,Math.max(g,b))-Math.min(red,Math.min(g,b))<15
+                            : red>200 && g>100) filled++;
+                }
+                if(visible<20 || filled<.83*visible || ThermalReadback.read(ctx).centralHot()<20)
+                    throw new AssertionError("Thermal palette "+mode+" body="+filled+"/"+visible);
+                System.out.println("PORT_THERMAL_MODE: "+mode+" opticalBody="+filled+"/"+visible+"; unavailable/camera recovery passed");
+            }
+        } finally { ctx.runOnClient(mc -> TimelessAPI.getClientAttachmentIndex(optic).orElseThrow().getAttachmentModel().setScopeLens(white)); }
+        ctx.waitTicks(6);
+    }
+    static void summon(ClientGameTestContext ctx,TestSingleplayerContext world,BlockPos base,String type,String nbt) {
+        world.getServer().runCommand("summon minecraft:"+type+" "+(base.getX()+.5)+" "+(base.getY()+1.2)+" "+(base.getZ()+16.5)+" {Tags:[\"thermal_probe\"],"+nbt+"}");
+        ctx.waitTicks(12);
+    }
+    static void kill(ClientGameTestContext ctx,TestSingleplayerContext world) {
+        world.getServer().runCommand("kill @e[tag=thermal_probe]");
+        ctx.waitTicks(25); // living death animation must be gone, not an occluding corpse
+    }
+    static void wall(ClientGameTestContext ctx,TestSingleplayerContext world,BlockPos base,int mode) {
+        var block=mode==0?Blocks.AIR:mode==1?Blocks.STONE:Blocks.GLASS;
+        var mid=base.south(8);
+        world.getServer().runOnServer(s->{var level=s.getPlayerList().getPlayers().getFirst().level();
+            for(int y=-2;y<=6;y++) for(int x=-4;x<=4;x++) level.setBlock(mid.offset(x,y,0),block.defaultBlockState(),Block.UPDATE_ALL);
+        });
+        ctx.waitFor(mc->mc.level.getBlockState(mid).is(block));
+        world.getClientWorld().waitForChunksRender(); ctx.waitTicks(6);
+    }
+    private static void backdrop(ClientGameTestContext ctx,TestSingleplayerContext world,BlockPos base,boolean restore) {
+        world.getServer().runOnServer(s->{var level=s.getPlayerList().getPlayers().getFirst().level();
+            for(int y=-8;y<=8;y++) for(int x=-8;x<=8;x++) level.setBlock(base.offset(x,y,40),
+                    (restore && (x+y)%2==0 ? Blocks.ORANGE_CONCRETE : Blocks.LIGHT_BLUE_CONCRETE).defaultBlockState(),Block.UPDATE_ALL);
+        });
+        ctx.waitTicks(6); world.getClientWorld().waitForChunksRender(); ctx.waitTicks(4);
+    }
+    static int[] coverage(BufferedImage optical,BufferedImage empty,BufferedImage heat) {
+        int w=optical.getWidth(),h=optical.getHeight(),r=h/7,visible=0,filled=0;
+        for(int y=h/2-r;y<h/2+r;y++) for(int x=w/2-r;x<w/2+r;x++) {
+            if (!greenDelta(optical,empty,x,y) || !greenDelta(optical,empty,x-1,y) || !greenDelta(optical,empty,x+1,y)
+                    || !greenDelta(optical,empty,x,y-1) || !greenDelta(optical,empty,x,y+1)) continue;
+            visible++;
+            if (isWhite(heat.getRGB(x,y))) filled++;
+        }
+        return new int[]{visible,filled};
+    }
+    private static boolean greenDelta(BufferedImage target,BufferedImage empty,int x,int y) {
+        int a=target.getRGB(x,y),b=empty.getRGB(x,y);
+        return ((a>>8&255)-(a&255))-((b>>8&255)-(b&255))>35;
+    }
+    private static boolean isWhite(int p) {
+        int r=p>>16&255,g=p>>8&255,b=p&255;
+        return Math.min(r,Math.min(g,b))>180 && Math.max(r,Math.max(g,b))-Math.min(r,Math.min(g,b))<15;
+    }
+    static BufferedImage frame(ClientGameTestContext ctx,String name) {
+        ctx.waitTicks(4);
+        try { return ImageIO.read(ctx.takeScreenshot("tacz_"+name).toFile()); }
+        catch(IOException e){throw new UncheckedIOException(e);}
+    }
+    static int white(BufferedImage frame) {
+        int w=frame.getWidth(),h=frame.getHeight(),r=h/14,n=0;
+        for(int y=h/2-r;y<h/2+r;y++) for(int x=w/2-r;x<w/2+r;x++) {
+            int p=frame.getRGB(x,y),red=p>>16&255,g=p>>8&255,b=p&255;
+            if(Math.min(red,Math.min(g,b))>180 && Math.max(red,Math.max(g,b))-Math.min(red,Math.min(g,b))<15)n++;
+        }
+        return n;
+    }
+    private ThermalFrames(){}
+}

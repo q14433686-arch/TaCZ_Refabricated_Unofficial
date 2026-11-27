@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "tacz_server_checks",
+  "version": "1.0.0",
+  "name": "1.21.11 catalog and storage verification",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "com.tacz.probe.ServerChecks"
+    ]
+  },
+  "depends": {
+    "tacz": "*",
+    "minecraft": "1.21.11",
+    "fabric-gametest-api-v1": "*"
+  }
+}

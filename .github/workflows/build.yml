@@ -49,6 +49,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Receiver static regressions
+        run: |
+          python3 -m unittest discover -s tests -p 'test_audit_12111_jar.py' -v
+          python3 scripts/verify_263_sync_baseline.py
+          python3 scripts/verify_recipe_viewer_reload.py
+          python3 scripts/verify_bullet_hole_orientation.py
+
       - name: Mixin config integrity (json 里列的类必须真实存在)
         run: |
           python3 - <<'EOF'
@@ -115,6 +122,16 @@ jobs:
           sys.exit(1 if bad else 0)
           EOF
 
+      - name: "Upstream 1.2.0 text alignment (config comments/defaults + 21 locales vs Sh1roCu 356bdf9)"
+        run: |
+          # 只读校验：上游 1.2.0（Sh1roCu/TACZ-Refabricated 356bdf9）的每个配置键注释/默认值，以及 21 个语言
+          # 文件的每个键，必须与本线一致；有意差异逐条登记在脚本常量与
+          # docs/lineage/UPSTREAM_120_ALIGNMENT_12111.md。按 SHA 取单个提交，不引入上游分支。
+          git fetch -q --no-tags --depth=1 https://github.com/Sh1roCu/TACZ-Refabricated.git \
+            356bdf9d48f2225bac6ceb56adc5576a418517a8
+          python3 scripts/align_config_text.py
+          python3 scripts/port_upstream_lang.py --check
+
       - name: "Mesh config parity ([mesh_loader] TOML <-> Cloth 面板 <-> en/zh)"
         run: |
           # R3 反光轮次起：Cloth 面板是「TOML 里能改的局内也能改」的承诺的兑现处，
@@ -156,9 +173,57 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Full build
-        run: ./gradlew build --console=plain --stacktrace --no-daemon
+        run: |
+          set -o pipefail
+          ./gradlew --init-script scripts/ci-central.init.gradle build --console=plain --stacktrace --no-daemon 2>&1 | tee "$RUNNER_TEMP/build.log"
+
+      - name: Audit remapped production JAR
+        run: |
+          jars=(build/libs/*.jar)
+          found=0
+          for jar in "${jars[@]}"; do
+            case "$jar" in *-sources.jar|*-dev.jar|*-test*.jar) continue;; esac
+            python3 scripts/audit_12111_jar.py "$jar"
+            python3 scripts/audit_12111_foundation_jar.py "$jar"
+            found=$((found + 1))
+          done
+          test "$found" -eq 1
+
+      - name: Dedicated receiver GameTests
+        run: |
+          set -o pipefail
+          ./gradlew --init-script scripts/ci-central.init.gradle runGameTest --console=plain --stacktrace --no-daemon 2>&1 | tee "$RUNNER_TEMP/server.log"
+          grep -F 'PORT_RECEIVER_SERVER: conversion codec and export assertions passed' "$RUNNER_TEMP/server.log"
+          grep -F 'PORT_RECEIVER_SERVER: export upgrade backup assertions passed' "$RUNNER_TEMP/server.log"
+
+      - name: Client pack export, reload and synchronized indexes
+        env:
+          LIBGL_ALWAYS_SOFTWARE: 'true'
+          ALSOFT_DRIVERS: 'null'
+        run: |
+          set -o pipefail
+          xvfb-run -a ./gradlew --init-script scripts/ci-central.init.gradle -PtaczClientSmoke runClientGameTest --console=plain --no-daemon 2>&1 | tee "$RUNNER_TEMP/client.log"
+          grep -F 'exported ZIP loaded through /reload path' build/run/clientGameTest/logs/latest.log
+
+      - name: Receiver failure diagnostics
+        if: failure()
+        run: python3 scripts/report_ci_failures.py "$RUNNER_TEMP/build.log" "$RUNNER_TEMP/server.log" "$RUNNER_TEMP/client.log" build/run/{gameTest,clientGameTest}/logs/latest.log
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: receiver-tests-1.21.11-${{ github.sha }}
+          path: |
+            build/reports/tests/
+            build/test-results/
+            build/run/gameTest/logs/
+            build/run/clientGameTest/logs/
+            build/run/clientGameTest/screenshots/
+          if-no-files-found: warn
 
       - name: Upload jars
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           # 注意:artifact 名不能含 '/' 等字符,所以这里不能用 github.ref_name

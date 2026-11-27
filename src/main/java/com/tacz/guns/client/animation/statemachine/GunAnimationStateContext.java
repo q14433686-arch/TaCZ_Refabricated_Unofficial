@@ -1,5 +1,7 @@
 package com.tacz.guns.client.animation.statemachine;
 
+import com.tacz.guns.util.time.GunTime;
+import com.tacz.guns.client.gameplay.ClientAmmoCount;
 import cn.sh1rocu.tacz.api.extension.IMoveDistTracker;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
@@ -116,7 +118,7 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
     }
 
     /**
-     * 返回上次射击的 timestamp(系统时间)，单位为毫秒。此值在切枪时会重置为 -1。
+     * 返回上次射击的 timestamp(玩法毫秒)，单位为毫秒。此值在切枪时会重置为 -1。
      *
      * @return 上次射击的 timestamp，在切枪时会重置为 -1。
      */
@@ -124,12 +126,13 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
         return processGunOperator(operator -> operator.getDataHolder().clientLastShootTimestamp).orElse(-1L);
     }
 
-    /**
-     * 获取当前系统时间，单位毫秒。
-     *
-     * @return 当前系统时间
-     */
+    /** 枪械逻辑时间（毫秒），单人暂停时冻结。不是 Unix 时间戳。 */
     public long getCurrentTimestamp() {
+        return GunTime.nowMillis();
+    }
+
+    /** 真实系统时间（Unix 毫秒），用于需要日期的脚本，不用于动作冷却。 */
+    public long getRealSystemTimestamp() {
         return System.currentTimeMillis();
     }
 
@@ -152,7 +155,12 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
      * @return 返回弹匣中的备弹数，不计算已在枪管中的弹药。
      */
     public int getAmmoCount() {
-        return processGunData((iGun, gunIndex) -> iGun.getCurrentAmmoCount(currentGunItem)).orElse(0);
+        return processGunData((iGun, index) -> {
+            var player = Minecraft.getInstance().player;
+            if (iGun.useInventoryAmmo(currentGunItem) && player != null && player.getMainHandItem() == currentGunItem)
+                return ClientAmmoCount.getCached(player, currentGunItem, iGun);
+            return iGun.getCurrentAmmoCount(currentGunItem);
+        }).orElse(0);
     }
 
     /**
@@ -471,13 +479,10 @@ public class GunAnimationStateContext extends ItemAnimationStateContext {
                     shellRender.addShell(velocity);
                 }
 
-                var lod = display.getLodModel();
-                if (lod != null) {
-                    ShellRender lodShell = lod.getLeft().getShellRender(index);
-                    if (lodShell != null) {
-                        lodShell.addShell(velocity);
-                    }
-                }
+                display.forEachReadyExternalModel(rig -> {
+                    ShellRender external = rig.getShellRender(index);
+                    if (external != null) external.addShell(velocity);
+                });
             }
         }
     }

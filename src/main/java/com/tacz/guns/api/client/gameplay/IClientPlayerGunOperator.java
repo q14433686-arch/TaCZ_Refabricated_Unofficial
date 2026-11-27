@@ -42,6 +42,8 @@ public interface IClientPlayerGunOperator {
      */
     void reload();
 
+    default void unloadAmmo() {} // Existing third-party implementations need not support this optional action.
+
     /**
      * 客户端检视
      */

@@ -1,5 +1,6 @@
 package com.tacz.guns.network.message;
 
+import com.tacz.guns.util.time.GunTime;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.client.gameplay.LocalPlayerDataHolder;
@@ -43,7 +44,7 @@ public class ServerMessageSyncBaseTimestamp implements CustomPacketPayload {
 
     @Environment(EnvType.CLIENT)
     public void handle(LocalPlayer player, PacketSender responseSender) {
-        long timestamp = System.currentTimeMillis();
+        long timestamp = GunTime.nowMillis();
         updateBaseTimestamp(timestamp);
         responseSender.sendPacket(new ClientMessageSyncBaseTimestamp());
     }

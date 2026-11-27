@@ -20,3 +20,6 @@ crash-reports/
 
 # Local env
 .env
+# Python verification helpers
+__pycache__/
+*.pyc

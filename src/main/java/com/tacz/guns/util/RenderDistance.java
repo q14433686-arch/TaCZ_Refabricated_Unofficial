@@ -1,5 +1,6 @@
 package com.tacz.guns.util;
 
+import cn.sh1rocu.tacz.compat.meshloader.render.ScreenRenderTracker;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.config.client.RenderConfig;
 import net.fabricmc.api.EnvType;
@@ -8,9 +9,17 @@ import org.joml.Matrix4f;
 
 @Environment(EnvType.CLIENT)
 public final class RenderDistance {
-    private static long GUI_RENDER_TIMESTAMP = -1L;
+    /**
+     * Depth of screen-owned item draws that run outside {@code Screen#render}. Upstream 1.2.0 replaced the
+     * old "GUI drawn within 100 ms" timestamp with an exact screen-draw context ({@code ScreenItemVboContext}),
+     * because an open screen still renders the world first and the timestamp made every world gun skip LOD.
+     * On 1.21.11 a screen's 3D preview is a picture-in-picture element drawn after {@code Screen#render}
+     * returns, so {@link ScreenRenderTracker} alone does not cover it; the PIP renderer opens this scope.
+     */
+    private static int screenItemDrawDepth;
 
     public static boolean inRenderHighPolyModelDistance(PoseStack poseStack) {
+        // Only the active screen draw bypasses LOD; an open screen still renders the world first.
         if (isGuiRender()) {
             return true;
         }
@@ -23,19 +32,21 @@ public final class RenderDistance {
         return viewDistance < distance * distance;
     }
 
-    public static void markGuiRenderTimestamp() {
-        GUI_RENDER_TIMESTAMP = System.currentTimeMillis();
+    /** Opens a screen-owned item draw (e.g. the gunsmith table preview). Pair with {@link #endScreenItemDraw()}. */
+    public static void beginScreenItemDraw() {
+        screenItemDrawDepth++;
+    }
+
+    public static void endScreenItemDraw() {
+        if (screenItemDrawDepth > 0) screenItemDrawDepth--;
     }
 
     /**
-     * 最近 100ms 内是否有过 GUI（枪匠桌等）渲染标记。
-     *
-     * <p>公开给 poly_mesh 的语境闸门用（{@code TaczPolyMeshGunModel#isWorldGpuContext}）：
-     * {@code FIXED}/{@code HEAD} 是双面语境 —— 世界里的展示框/雕像与枪匠桌 GUI 预览共用
-     * 同一个 transformType，需要这个标记把后者挡在世界 GPU 表外。它是个时间戳窗口，
-     * 代价只是「枪匠桌开着的瞬间世界雕像回退 collector」，比反向泄漏便宜得多。</p>
+     * Whether the current draw belongs to a GUI screen: inside {@code Screen#render} or inside a screen-owned
+     * picture-in-picture draw. Also used by the poly_mesh context gate ({@code TaczPolyMeshGunModel#isWorldGpuContext}):
+     * {@code FIXED}/{@code HEAD} are shared by world display frames/statues and the gunsmith preview.
      */
     public static boolean isGuiRender() {
-        return System.currentTimeMillis() - GUI_RENDER_TIMESTAMP < 100;
+        return screenItemDrawDepth > 0 || ScreenRenderTracker.isRenderingScreen();
     }
 }

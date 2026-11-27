@@ -6,7 +6,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -17,7 +16,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.Set;
 
 import static com.tacz.guns.block.StatueBlock.FACING;
 
@@ -72,8 +70,8 @@ public class StatueBlockEntity extends BlockEntity {
     }
 
     public void setGun(ItemStack stack) {
-        this.dropItem();
-        this.gunItem = stack.copy();
+        dropItem(getBlockState(), false);
+        this.gunItem = stack.copyWithCount(1);
         if (level != null) {
             BlockState state = level.getBlockState(worldPosition);
             level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_ALL);
@@ -82,7 +80,7 @@ public class StatueBlockEntity extends BlockEntity {
     }
 
     public void dropItem() {
-        this.dropItem(this.getBlockState());
+        dropItem(getBlockState(), true);
     }
 
     /**
@@ -94,14 +92,16 @@ public class StatueBlockEntity extends BlockEntity {
      * facing from air"）。因此由调用方传入可用的状态，并对没有该属性的状态回退到
      * {@link Direction#NORTH}（扔在雕像正前方一格上方）。</p>
      */
-    private void dropItem(BlockState state) {
-        if (!gunItem.isEmpty() && level != null) {
-            Direction direction = state.hasProperty(FACING) ? state.getValue(FACING) : Direction.NORTH;
-            Block.popResource(level, worldPosition.relative(direction).above(), gunItem);
-            this.gunItem = ItemStack.EMPTY;
+    private void dropItem(BlockState state, boolean notify) {
+        if (gunItem.isEmpty() || level == null || level.isClientSide()) return;
+        Direction direction = state.hasProperty(FACING) ? state.getValue(FACING) : Direction.NORTH;
+        ItemStack dropped = gunItem;
+        gunItem = ItemStack.EMPTY;
+        Block.popResource(level, worldPosition.relative(direction).above(), dropped);
+        if (notify) {
             BlockState current = level.getBlockState(worldPosition);
             level.sendBlockUpdated(worldPosition, current, current, Block.UPDATE_ALL);
-            this.setChanged();
+            setChanged();
         }
     }
 
@@ -116,12 +116,13 @@ public class StatueBlockEntity extends BlockEntity {
     public void preRemoveSideEffects(BlockPos pos, BlockState state) {
         super.preRemoveSideEffects(pos, state);
         if (level != null && !level.isClientSide()) {
-            this.dropItem(state);
+            dropItem(state, false);
         }
     }
 
     @Override
     public void loadAdditional(net.minecraft.world.level.storage.ValueInput input) {
+        super.loadAdditional(input);
         // 26.2 data migration: ItemStack.OPTIONAL_CODEC may fail on legacy NBT data
         // where Item was stored as COMPOUND instead of the new string-based format.
         // Gracefully handle both formats.
@@ -135,15 +136,14 @@ public class StatueBlockEntity extends BlockEntity {
 
     @Override
     protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput output) {
-                output.store(ITEM_TAG, ItemStack.OPTIONAL_CODEC, gunItem);
+        super.saveAdditional(output);
+        output.store(ITEM_TAG, ItemStack.OPTIONAL_CODEC, gunItem);
     }
 
     @Override
     public CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.Provider provider) {
-        CompoundTag tag = super.getUpdateTag(provider);
-        ItemStack.OPTIONAL_CODEC.encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, gunItem)
-                .result().ifPresent(t -> tag.put(ITEM_TAG, t));
-        return tag;
+        // Dynamic-registry-backed components must use the world's RegistryOps, as on disk.
+        return saveWithoutMetadata(provider);
     }
 
     // In Minecraft 26.2+, getRenderBoundingBox() is handled differently

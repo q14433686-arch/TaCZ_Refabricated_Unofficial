@@ -1,5 +1,7 @@
 package com.tacz.guns.client.resource;
 
+import com.tacz.guns.client.resource.index.ClientAttachmentVariantIndex;
+import com.tacz.guns.client.resource.index.ClientSlotAdapterIndex;
 import com.google.common.collect.Maps;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.api.TimelessAPI;
@@ -34,14 +36,27 @@ public class ClientIndexManager {
     public static final Map<Identifier, ClientGunIndex> GUN_INDEX = Maps.newHashMap();
     public static final Map<Identifier, ClientAmmoIndex> AMMO_INDEX = Maps.newHashMap();
     public static final Map<Identifier, ClientAttachmentIndex> ATTACHMENT_INDEX = Maps.newHashMap();
+    public static final Map<Identifier, ClientAttachmentVariantIndex> ATTACHMENT_VARIANT_INDEX = Maps.newHashMap();
+    public static final Map<Identifier, ClientSlotAdapterIndex> SLOT_ADAPTER_INDEX = Maps.newHashMap();
     public static final Map<Identifier, ClientBlockIndex> BLOCK_INDEX = Maps.newHashMap();
 
+    private static volatile long revision;
+    static long revision() { return revision; }
+    /** Upstream 1.2.0: warn once per missing display per reload instead of on every lookup. */
+    private static final java.util.Set<Identifier> WARNED_MISSING_GUN_DISPLAYS = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
     public static void clear() {
+        com.tacz.guns.client.model.papi.RangefinderReadout.clear();
+        GUN_DISPLAY.values().forEach(GunDisplayInstance::retireModels);
+        ++revision;
         GUN_DISPLAY.clear();
         GUN_INDEX.clear();
         AMMO_INDEX.clear();
         ATTACHMENT_INDEX.clear();
+        ATTACHMENT_VARIANT_INDEX.clear();
+        SLOT_ADAPTER_INDEX.clear();
         BLOCK_INDEX.clear();
+        WARNED_MISSING_GUN_DISPLAYS.clear();
     }
 
     public static void reload() {
@@ -51,6 +66,17 @@ public class ClientIndexManager {
         loadAmmoIndex();
         loadAttachmentIndex();
         loadBlockIndex();
+        TimelessAPI.getAllCommonAttachmentVariantIndex().forEach(entry -> {
+            try { ATTACHMENT_VARIANT_INDEX.put(entry.getKey(), new ClientAttachmentVariantIndex(entry.getValue().getPojo())); }
+            catch (IllegalArgumentException e) { GunMod.LOGGER.warn("Invalid variant display for {}", entry.getKey(), e); }
+        });
+        TimelessAPI.getAllCommonSlotAdapterIndex().forEach(entry -> {
+            try { SLOT_ADAPTER_INDEX.put(entry.getKey(), new ClientSlotAdapterIndex(entry.getValue().getPojo())); }
+            catch (IllegalArgumentException e) { GunMod.LOGGER.warn("Invalid slot adapter display for {}", entry.getKey(), e); }
+        });
+        // Native cache parameters include features/permissions/registries, but not gun-pack data.
+        // Invalidate on the client thread so the open/next creative screen also rebuilds search tabs.
+        com.tacz.guns.mixin.client.CreativeModeTabsAccessor.tacz$setCachedParameters(null);
         warmUpInventoryModels();
 
         LocalPlayer player = Minecraft.getInstance().player;
@@ -92,7 +118,10 @@ public class ClientIndexManager {
         if (instance != null) {
             return instance;
         }
-        GunMod.LOGGER.warn("{} display instance is missing from cache", displayId);
+        if (WARNED_MISSING_GUN_DISPLAYS.add(displayId)) {
+            GunMod.LOGGER.warn("Gun display {} is unavailable (assets/{}/display/guns/{}.json);",
+                    displayId, displayId.getNamespace(), displayId.getPath());
+        }
         return null;
     }
 
@@ -211,6 +240,7 @@ public class ClientIndexManager {
         IAttachment attachment = IAttachment.getIAttachmentOrNull(stack);
         if (attachment != null) {
             TimelessAPI.getClientAttachmentIndex(attachment.getAttachmentId(stack)).ifPresent(ClientAttachmentIndex::warmUp);
+            TimelessAPI.getClientAttachmentVariantIndex(stack).ifPresent(ClientAttachmentVariantIndex::warmUp);
             return;
         }
         IAmmo ammo = IAmmo.getIAmmoOrNull(stack);

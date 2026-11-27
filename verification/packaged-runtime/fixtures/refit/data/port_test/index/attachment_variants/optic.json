@@ -1,0 +1,8 @@
+{
+  "name": "Test optic",
+  "display": "tacz:deltapoint_rifle_display",
+  "data": "port_test:optic",
+  "target_tags": [
+    "port_test:optics"
+  ]
+}

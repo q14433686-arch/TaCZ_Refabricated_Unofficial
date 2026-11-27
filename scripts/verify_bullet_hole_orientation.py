@@ -91,11 +91,23 @@ class BulletHoleOrientationChecks(unittest.TestCase):
                         expected = tuple(c + v * .05 for c, v in zip(center, rotate(direction, legacy)))
                         self.assertVector(actual, expected)
 
+    def test_frozen_surface_offset_moves_only_along_each_face_normal(self):
+        # Donor parity uses a per-particle frozen offset rather than scaling it with quad size.
+        # Preserve the legacy UV orientation and camera-relative center at every legal offset.
+        for normal, direction in FACES.values():
+            for offset in (.005, .0075, .009999):
+                for xy, legacy in zip(XY, LEGACY_XZ):
+                    actual = tuple(v * .05 + n * offset for v, n in zip(rotate(mul(direction, BASIS), xy), normal))
+                    tangent = rotate(direction, (legacy[0], 0, legacy[2]))
+                    self.assertVector(actual, tuple(v * .05 + n * offset for v, n in zip(tangent, normal)))
+
     def test_java_source_uses_tested_basis_and_coordinate_overload(self):
         source = re.sub(r"/\*.*?\*/|//[^\n]*", "", SOURCE.read_text(), flags=re.S)
         source = re.sub(r"\s+", " ", source)
         self.assertIn("this.direction.getRotation() .mul(new Quaternionf().rotationX(-Mth.HALF_PI).rotateZ(Mth.PI))", source)
-        self.assertIn("float offset = 0.01F * this.getQuadSize(partialTicks);", source)
+        self.assertIn("private final float surfaceOffset;", source)
+        self.assertIn("this.surfaceOffset = this.random.nextFloat() * .005f + .005f;", source)
+        self.assertIn("float offset = this.surfaceOffset;", source)
         self.assertIn("Vec3 camPos = camera.position();", source)
         for coordinate, step in (("x", "X"), ("y", "Y"), ("z", "Z")):
             self.assertIn(

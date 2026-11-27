@@ -1,0 +1,185 @@
+import java.security.MessageDigest
+
+plugins { id 'net.fabricmc.fabric-loom-remap' }
+
+// Independent consumer. The named compile copy is for the test mod only. Launch both games
+// in intermediary with the unchanged distributable, never TaCZ's development classes.
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+version = '1.0.0'
+def product = file(property('productJar'))
+def client = project.hasProperty('probeClient')
+def checks = project.hasProperty('serverChecks')
+def presentation = providers.gradleProperty('presentation').getOrNull()
+def playerSuite = providers.gradleProperty('playerSuite').getOrNull()
+def viewer = providers.gradleProperty('viewer').getOrElse('none')
+if (!(viewer in ['none','jei','rei'])) throw new GradleException("Unknown viewer: $viewer")
+if (client && viewer != 'none') sourceSets.main.java.srcDir "src/$viewer/java"
+if (client && viewer == 'jei') processResources.filesMatching('fabric.mod.json') {
+    filter { line -> line.replace('"jei_mod_plugin": []', '"jei_mod_plugin": ["com.tacz.probe.JeiProbe"]') }
+}
+if (client && project.hasProperty('giveBackend')) {
+    assert viewer == 'rei' && project.property('giveBackend') in ['matched', 'client-only']
+    processResources.filesMatching('fabric.mod.json') {
+        filter { line -> line.replace('com.tacz.probe.PackagedConnectionProbe', 'com.tacz.probe.ReiGiveProbe') }
+    }
+}
+if (presentation != null) {
+    assert client && viewer == 'none' && presentation in ['a', 'b', 'a-return']
+    sourceSets.main.java.srcDir 'src/presentation/java'
+    processResources.filesMatching('fabric.mod.json') {
+        filter { line -> line.replace('com.tacz.probe.PackagedConnectionProbe', 'com.tacz.probe.PresentationProbe') }
+    }
+}
+if (playerSuite != null) {
+    assert client && presentation == null && viewer == 'none' && playerSuite in ['display', 'pal', 'controller', 'optics', 'optics-iris', 'receiver', 'receiver-iris', 'user-unbound-iris', 'platform', 'platform-zoomify']
+    // user-unbound-iris: the reported user combination; it reuses the optics probe sources.
+    def opticsLike = playerSuite.startsWith('optics') || playerSuite.startsWith('receiver') || playerSuite.startsWith('user')
+    sourceSets.main.java.srcDirs('src/player/java', "src/${opticsLike ? 'optics' : (playerSuite.startsWith('platform') ? 'platform' : playerSuite)}/java")
+    if (opticsLike) {
+        sourceSets.main.java.srcDir 'src/reticle-contract/java'
+        sourceSets.main.resources.srcDir 'src/optics/resources'
+    }
+    if (playerSuite.startsWith('platform')) {
+        sourceSets.main.resources.srcDir 'src/platform/resources'
+        loom.mixin { useLegacyMixinAp = true; defaultRefmapName = 'tacz_platform_probe.refmap.json' }
+    }
+    if (playerSuite == 'pal') {
+        sourceSets.main.resources.srcDir 'src/pal/resources'
+        loom.mixin { useLegacyMixinAp = true; defaultRefmapName = 'tacz_pal_probe.refmap.json' }
+    }
+    def entry = [pal: 'PalRuntimeSmoke', controller: 'ControllerSmoke', display: 'DisplayProbe', optics: 'OpticsApertureSmoke', 'optics-iris': 'OpticsApertureSmoke', receiver: 'ReceiverLightProbe', 'receiver-iris': 'ReceiverLightProbe', 'user-unbound-iris': 'UserEnvSmoke', platform: 'PlatformSmoke', 'platform-zoomify': 'PlatformSmoke'][playerSuite]
+    processResources.filesMatching('fabric.mod.json') {
+        filter { line ->
+            if (playerSuite.startsWith('platform')) {
+                line = line.replace('"environment": "client",', '"environment": "client", "mixins": ["tacz_platform_probe.mixins.json"],')
+                line = line.replace('"entrypoints": {', '"entrypoints": { "main": ["com.tacz.probe.PlatformItems"], "client": ["com.tacz.probe.PlatformGui"],')
+            }
+            if (playerSuite == 'pal') line = line.replace('"environment": "client",', '"environment": "client", "mixins": ["tacz_pal_probe.mixins.json"],')
+            if (opticsLike) line = line.replace('"environment": "client",', '"environment": "client", "mixins": ["tacz_optics_probe.mixins.json"],')
+            if (playerSuite == 'display') line = line.replace('"entrypoints": {', '"entrypoints": { "client": ["com.tacz.probe.HintInk"],')
+            line.replace('com.tacz.probe.PackagedConnectionProbe', "com.tacz.probe.$entry".toString())
+        }
+    }
+}
+if (checks) {
+    sourceSets.main.java.setSrcDirs(['src/checks/java'])
+    sourceSets.main.resources.setSrcDirs(['src/checks/resources'])
+}
+repositories {
+    maven { url = uri('https://raw.githubusercontent.com/Fuzss/modresources/main/maven/'); content { includeGroup 'fuzs.forgeconfigapiport' } }
+    maven { url = uri('https://jitpack.io'); content { includeGroup 'com.github.FiguraMC.luaj' } }
+    maven { url = uri('https://api.modrinth.com/maven'); content { includeGroup 'maven.modrinth' } }
+    maven { url = uri('https://maven.shedaniel.me'); content { includeGroup 'me.shedaniel'; includeGroup 'me.shedaniel.cloth' } }
+    maven { url = uri('https://maven.architectury.dev'); content { includeGroup 'dev.architectury' } }
+    if (playerSuite == 'controller') {
+        ['Controllable', 'Framework', 'ControllableSDL'].each { mod ->
+            boolean library = mod == 'ControllableSDL'
+            exclusiveContent {
+                forRepository {
+                    ivy {
+                        url = uri("https://github.com/MrCrayfish/$mod/releases/download")
+                        patternLayout { artifact(library ? 'v[revision]/[artifact]-[revision].[ext]' : 'v[revision]/[artifact]-[revision]-signed.[ext]') }
+                        metadataSources { artifact() }
+                    }
+                }
+                filter { includeModule('mrcrayfish.probe', library ? 'controllable-sdl' : mod.toLowerCase(Locale.ROOT) + '-fabric') }
+            }
+        }
+    }
+    mavenCentral()
+}
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${loader_version}"
+    productionRuntimeMods("net.fabricmc.fabric-api:fabric-api:${fabric_version}") { transitive = false }
+    productionRuntimeMods("fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${forge_config_api_port}") { transitive = false }
+    def viewerMods = viewer == 'jei' ? ["maven.modrinth:jei:${jei_version}"] : viewer == 'rei' ? [
+            "me.shedaniel:RoughlyEnoughItems-fabric:${rei_version}", "dev.architectury:architectury-fabric:${architectury_version}",
+            "me.shedaniel.cloth:cloth-config-fabric:${cloth_config_fabric}"] : []
+    viewerMods.each { mod ->
+        if (client) modCompileOnly(mod) { transitive = false }
+        productionRuntimeMods(mod) { transitive = false }
+    }
+    if (playerSuite != null && playerSuite.startsWith('platform')) {
+        def cloth = "me.shedaniel.cloth:cloth-config-fabric:${cloth_config_fabric}"
+        modCompileOnly(cloth) { transitive = false }
+        productionRuntimeMods(cloth) { transitive = false }
+    }
+    if (playerSuite == 'pal') {
+        def pal = "maven.modrinth:player-animation-library:${player_animation_lib}"
+        modCompileOnly pal
+        productionRuntimeMods(pal) { transitive = false }
+    }
+    // optics-iris: Iris and Sodium are placed in fixtures/optics-iris/mods by scripts/test_12111_player.py.
+    if (playerSuite == 'controller') {
+        // Signed, unmodified 1.21.11 artifacts in the game. Remap separate copies only for compiling the test mod.
+        ['mrcrayfish.probe:controllable-fabric:1.21.11-0.25.7', 'mrcrayfish.probe:framework-fabric:1.21.11-0.13.6'].each { spec ->
+            modCompileOnly(spec) { transitive = false }
+            productionRuntimeMods(spec) { transitive = false }
+        }
+        compileOnly 'mrcrayfish.probe:controllable-sdl:2.32.10-1.1.0' // the mod supplies it at runtime
+    }
+    if (client || checks) {
+        // Both probe sets reference the LuaTable return type; production already embeds this library.
+        compileOnly('com.github.FiguraMC.luaj:luaj-core:3.0.8-figura') { transitive = false }
+        modCompileOnly "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${forge_config_api_port}"
+        modCompileOnly files(product)
+        modCompileOnly "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+        def tests = fabricApi.module(checks ? 'fabric-gametest-api-v1' : 'fabric-client-gametest-api-v1', fabric_version)
+        modCompileOnly tests
+        productionRuntimeMods(tests) { transitive = false }
+    }
+}
+if (client) {
+    tasks.register('probeClient', net.fabricmc.loom.task.prod.ClientProductionRunTask) {
+        mods.setFrom(product, configurations.productionRuntimeMods, tasks.named('remapJar'))
+        runDir = layout.buildDirectory.dir(presentation == null ? 'instance' : "presentation-$presentation")
+        useXVFB = true
+        jvmArgs.addAll('-Xmx1500m', '-Dfabric.client.gametest', '-Dfabric.client.gametest.disableNetworkSynchronizer',
+                '-Dfabric.client.gametest.modid=tacz_packaged_probe', "-Dtacz.probe.viewer=$viewer".toString(), "-Dtacz.probe.jar=${product.absolutePath}".toString())
+        if (presentation != null) {
+            def owner = UUID.fromString(project.property('profileOwner'))
+            jvmArgs.addAll("-Dtacz.probe.presentation=$presentation".toString(), "-Dtacz.probe.owner=$owner".toString())
+            programArgs.addAll('--uuid', owner.toString())
+            def profiles = file(project.property('profileSeed'))
+            doFirst {
+                project.copy { from profiles; into runDir.dir('config/tacz/view-profiles').get().asFile }
+            }
+        } else if (playerSuite != null) {
+            jvmArgs.add("-Dtacz.probe.player=$playerSuite".toString())
+            if (playerSuite.startsWith('platform')) doFirst { project.copy { from 'fixtures/platform'; into runDir.dir('tacz/lang_probe').get().asFile } }
+            if (playerSuite == 'platform-zoomify') doFirst { project.copy { from 'fixtures/platform-zoomify'; into runDir.get().asFile } }
+            if (playerSuite == 'display') doFirst { project.copy { from 'fixtures/display'; into runDir.dir('tacz/display_probe').get().asFile } }
+            // The shader pack archive is fetched and hash-checked by scripts/test_12111_player.py before this copy.
+            if (playerSuite.endsWith('-iris')) doFirst { project.copy { from 'fixtures/optics-iris'; into runDir.get().asFile } }
+            if (playerSuite == 'controller') doFirst {
+                ['controllable-fabric': 'f15f53fce9357a199585b585be1c9364ebaa4218fdce38877a9dc54729f0890e',
+                 'framework-fabric': '9f7f5ab840a7d762921641a9ba1db85efca7853b825f787a2ab41f390ec4aa4d'].each { name, expected ->
+                    def raw = configurations.productionRuntimeMods.files.find { it.name.startsWith(name) }
+                    assert raw != null && MessageDigest.getInstance('SHA-256').digest(raw.bytes).encodeHex().toString() == expected
+                }
+            }
+        } else jvmArgs.addAll("-Dtacz.probe.ready=${project.property('probeReady')}".toString(), "-Dtacz.probe.port=${project.property('probePort')}".toString())
+        if (project.hasProperty('giveBackend')) jvmArgs.add("-Dtacz.probe.give=${project.property('giveBackend')}".toString())
+        programArgs.addAll('--username', 'PackProbe', '--version', minecraft_version, '--accessToken', '0')
+    }
+} else {
+    tasks.register('probeServer', net.fabricmc.loom.task.prod.ServerProductionRunTask) {
+        mods.setFrom(product, configurations.productionRuntimeMods) // the TCP server has no test mod
+        if (checks) {
+            mods.from(tasks.named('remapJar'))
+            jvmArgs.addAll('-Dfabric-api.gametest', '-Dfabric-api.gametest.filter=tacz_server_checks:*',
+                    "-Dfabric-api.gametest.report-file=${project.property('serverChecks')}".toString())
+        }
+        runDir = layout.buildDirectory.dir('instance')
+        jvmArgs.add('-Xmx1G')
+        // Gradle can remove stale output directories before @TaskAction. Seed on the task,
+        // after that cleanup and only from the EULA-opted-in ephemeral supervisor.
+        def seed = file(project.property('probeSeed'))
+        doFirst {
+            project.copy { from seed; into runDir.get().asFile }
+            assert runDir.file('eula.txt').get().asFile.text.trim() == 'eula=true'
+        }
+    }
+}

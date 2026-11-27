@@ -1,5 +1,6 @@
 package com.tacz.guns.mixin.client;
 
+import com.tacz.guns.util.time.GunTime;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import cn.sh1rocu.tacz.compat.meshloader.render.PolyMeshGpuRenderer;
@@ -220,7 +221,7 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
         // 「接管不会用一个静止视模顶掉正在播放的动画」由调用点保证：
         // LocalPlayerDraw#doPutAway 只在 AnimateGeoItemRenderer#hasInitializedStateMachine
         // 成立（旧枪确实一直在被渲染、INPUT_PUT_AWAY 确实已触发）时才调 keep。
-        long now = System.currentTimeMillis();
+        long now = GunTime.nowMillis();
         boolean sameKeptItem = tacz$KeepItem != null
                 && ItemStack.isSameItemSameComponents(tacz$KeepItem, itemStack);
         if (sameKeptItem && now + timeMs <= tacz$KeepTimestamp + tacz$KeepTimeMs) {
@@ -238,7 +239,7 @@ public class ItemInHandRendererMixin implements KeepingItemRenderer {
             return mainHandItem;
         }
         if (tacz$KeepItem != null) {
-            long time = System.currentTimeMillis() - tacz$KeepTimestamp;
+            long time = GunTime.nowMillis() - tacz$KeepTimestamp;
             if (time < tacz$KeepTimeMs) {
                 return tacz$KeepItem;
             } else {

@@ -1,0 +1,8 @@
+assets/tacz/tacz_sounds/rpk/rpk_inspect.ogg
+assets/tacz/tacz_sounds/rpk/rpk_reload_empty.ogg
+assets/tacz/tacz_sounds/rpk/rpk_reload_tactical.ogg
+assets/tacz/textures/attachment/uv/grip_magpul_afg_2_n.png
+assets/tacz/textures/attachment/uv/sight_sro_dot_n.png
+data/tacz/recipe/attachments/oem_stock_heavy.json
+data/tacz/recipe/attachments/oem_stock_light.json
+data/tacz/recipe/attachments/oem_stock_tactical.json

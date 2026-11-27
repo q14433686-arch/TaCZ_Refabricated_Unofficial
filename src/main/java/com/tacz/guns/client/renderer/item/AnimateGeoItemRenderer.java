@@ -1,5 +1,6 @@
 package com.tacz.guns.client.renderer.item;
 
+import com.tacz.guns.util.time.GunTime;
 import cn.sh1rocu.simplebedrockmodel.api.event.ViewportEvent;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.animation.IFPAnimationInstance;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.renderer.IFPGeoItemRenderer;
@@ -102,7 +103,7 @@ public abstract class AnimateGeoItemRenderer<M extends BedrockAnimatedModel, CTX
         if (stateMachine == null) {
             return false;
         }
-        return !stateMachine.isInitialized() && stateMachine.getExitingTime() < System.currentTimeMillis();
+        return !stateMachine.isInitialized() && stateMachine.getExitingTime() < GunTime.nowMillis();
     }
 
     /**

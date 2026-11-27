@@ -15,4 +15,9 @@ public enum DataType {
     ALLOW_ATTACHMENT_TAGS,
     BLOCK_DATA,
     BLOCK_INDEX,
+    // Append only: the 1.21.11 legacy codec writes enum ordinals.
+    ATTACHMENT_VARIANT_DATA, ATTACHMENT_VARIANT_INDEX,
+    SLOT_ADAPTER_DATA, SLOT_ADAPTER_INDEX;
+
+    public boolean needsExtendedSchema() { return ordinal() > BLOCK_INDEX.ordinal(); }
 }

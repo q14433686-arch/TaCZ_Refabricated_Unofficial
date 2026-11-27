@@ -18,6 +18,7 @@ import com.zigythebird.playeranimcore.animation.layered.modifier.AbstractFadeMod
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
 import com.zigythebird.playeranimcore.easing.EasingType;
 import com.zigythebird.playeranimcore.enums.PlayState;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.Identifier;
@@ -32,7 +33,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** PAL 1.2.5 implementation of TACZ's four legacy third-person animation layers. */
+/** PAL 1.1.9 implementation of TACZ's four legacy third-person animation layers. */
 public final class PalAnimationManager {
     private static final AtomicBoolean INITIALIZED = new AtomicBoolean();
 
@@ -48,6 +49,9 @@ public final class PalAnimationManager {
         registerController(PlayerAnimatorCompat.ONCE_UPPER_ANIMATION, 95);
         registerController(PlayerAnimatorCompat.ROTATION_ANIMATION, 96);
 
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            if (mc.level != null && !mc.isPaused()) mc.level.players().forEach(PlayerAnimatorCompat::updatePlayerLayers);
+        });
         PalAnimationManager manager = new PalAnimationManager();
         GunShootEvent.CALLBACK.register(manager::onFire);
         GunReloadEvent.CALLBACK.register(manager::onReload);
@@ -74,6 +78,26 @@ public final class PalAnimationManager {
         return fileId != null && PalAssetManager.INSTANCE.contains(fileId);
     }
 
+    // The same player can be extracted repeatedly (inventory, hand, PIP) or not at all when
+    // outside the frustum. Only decide clips once per entity tick; PAL advances its own clock.
+    private static final class Update { int tick = Integer.MIN_VALUE; boolean playing; }
+    private static final Map<AbstractClientPlayer, Update> updates = new WeakHashMap<>();
+
+    public static boolean update(AbstractClientPlayer player) {
+        if (player.tickCount <= 0) return false;
+        var state = updates.computeIfAbsent(player, unused -> new Update());
+        if (state.tick == player.tickCount || Minecraft.getInstance().isPaused()) return state.playing;
+        state.tick = player.tickCount;
+        var stack = player.getMainHandItem();
+        var display = !skipLocalFirstPerson(player) && stack.getItem() instanceof IGun && player.getPose() != Pose.SLEEPING
+                && !player.onClimbable() && !player.isSwimming() && player.getPose() != Pose.FALL_FLYING
+                ? TimelessAPI.getGunDisplay(stack).orElse(null) : null;
+        state.playing = display != null && hasAnimations(display);
+        if (state.playing) play(player, display, player.walkAnimation.speed());
+        else stopAll(player, 8);
+        return state.playing;
+    }
+
     public static void play(AbstractClientPlayer player, GunDisplayInstance display, float limbSwingAmount) {
         discardProneTransitionOnStand(player);
         playLower(player, display, limbSwingAmount);
@@ -91,6 +115,7 @@ public final class PalAnimationManager {
 
     private static void playLower(AbstractClientPlayer player, GunDisplayInstance display, float limbSwingAmount) {
         if (isPlayerLie(player)) {
+            stop(player, PlayerAnimatorCompat.LOWER_ANIMATION, 8);
             return;
         }
         String name;

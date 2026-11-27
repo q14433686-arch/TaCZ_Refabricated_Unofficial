@@ -1,6 +1,11 @@
 package com.tacz.guns.client.input;
 
 import cn.sh1rocu.tacz.api.event.InputEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+import org.lwjgl.glfw.GLFW;
+
 import com.mojang.blaze3d.platform.InputConstants;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.item.IGun;
@@ -11,7 +16,6 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import org.lwjgl.glfw.GLFW;
 
 import static com.tacz.guns.util.InputExtraCheck.isInGame;
 
@@ -23,42 +27,26 @@ public class AimKey {
             TaCZKeyCategory.TACZ);
 
     public static void onAimPress(InputEvent.MouseButton.Post event) {
-        if (isInGame() && AIM_KEY.matchesMouse(new net.minecraft.client.input.MouseButtonEvent(0.0, 0.0, new net.minecraft.client.input.MouseButtonInfo(event.getButton(), event.getModifiers())))) {
-            LocalPlayer player = Minecraft.getInstance().player;
-            if (player == null || player.isSpectator()) {
-                return;
-            }
-            if (!(player instanceof IClientPlayerGunOperator operator)) {
-                return;
-            }
-            if (IGun.mainHandHoldGun(player)) {
-                boolean action = true;
-                if (!KeyConfig.HOLD_TO_AIM.get()) {
-                    action = !operator.isAim();
-                }
-                if (event.getAction() == GLFW.GLFW_PRESS) {
-                    IClientPlayerGunOperator.fromLocalPlayer(player).aim(action);
-                }
-                if (KeyConfig.HOLD_TO_AIM.get() && event.getAction() == GLFW.GLFW_RELEASE) {
-                    IClientPlayerGunOperator.fromLocalPlayer(player).aim(false);
-                }
-            }
-        }
+        var input = new MouseButtonEvent(0, 0,
+                new MouseButtonInfo(event.getButton(), event.getModifiers()));
+        if (event.getAction() == GLFW.GLFW_PRESS && AIM_KEY.matchesMouse(input)) onAimControllerPress(true);
     }
 
-    /**
-     * 该监听器能正确处理 按住瞄准模式 下的
-     * 1.预输入（典型：按住瞄准切换武器后，能保持瞄准状态）
-     * 2.键盘按键输入
-     *
-     * 建议将按下切换瞄准也支持 键盘按键输入
-     * */
+    public static void onAimKey(InputEvent.Key event) {
+        if (event.getAction() == GLFW.GLFW_PRESS && AIM_KEY.matches(new KeyEvent(
+                event.getKey(), event.getScanCode(), event.getModifiers()))) onAimControllerPress(true);
+    }
+
+    // A release from either device must not cancel the other's hold. Re-poll both in hold mode.
+    private static boolean controllerAimDown;
+    public static void setControllerAimDown(boolean down) { controllerAimDown = down; }
+
     public static void onAimHoldingPreInput(Minecraft client) {
         if (!KeyConfig.HOLD_TO_AIM.get()) {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
-        boolean press = AimKey.AIM_KEY.isDown();
+        boolean press = AIM_KEY.isDown() || controllerAimDown;
         if (InputExtraCheck.isInGame()) {
             LocalPlayer player = mc.player;
             if (player == null || player.isSpectator()) {
@@ -104,7 +92,7 @@ public class AimKey {
             return true;
         }
         if (KeyConfig.HOLD_TO_AIM.get()) {
-            IClientPlayerGunOperator.fromLocalPlayer(player).aim(false);
+            IClientPlayerGunOperator.fromLocalPlayer(player).aim(AIM_KEY.isDown() || controllerAimDown);
             return true;
         }
         return false;

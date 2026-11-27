@@ -261,7 +261,8 @@ public final class ScopePipRerender {
         if (!ScopePipRenderState.suppressesWorldFovZoom(partialTicks)) {
             return false;
         }
-        float magnification = ScopePipRenderState.currentZoom();
+        // The source itself is magnified; ramp its FOV with the same interpolated ADS clock.
+        float magnification = ScopePipRenderState.currentDetailZoom();
         if (magnification <= 1.0f) {
             return false;
         }
@@ -271,7 +272,7 @@ public final class ScopePipRerender {
         // 代数守卫：窗口缩放/格式变化会重建离屏画布（sceneTargetGeneration++），新画布里内容是
         // 未定义的，绝不能当成"上一帧"端出去 —— 比"上次真渲时的代数"与"当前代数"即可拦下。
         scopeFrameCounter++;
-        int interval = rerenderInterval();
+        int interval = ScopeLensFrame.needsHeat() ? 1 : rerenderInterval();
         if (interval > 1 && sceneCaptured
                 && lastRenderGeneration == ScopePipRenderState.sceneTargetGeneration()
                 && scopeFrameCounter - lastRenderFrame < interval) {
@@ -327,6 +328,7 @@ public final class ScopePipRerender {
             // 保持宽视场（宽视锥裁剪 = 超集，结果正确，只稍费一点）。
             levelRenderer.renderLevel(allocator, deltaTracker, false, camera,
                     viewMatrix, NARROW_MATRIX, cullingMatrix, fogBuffer, fogColor, renderSky);
+            if (!irisPass) ScopeThermalCapture.finish(mc.getMainRenderTarget(), viewMatrix);
             // 立刻拷走：紧随其后的 vanilla 那遍会整屏重画主目标。
             sceneCaptured = ScopePipRenderState.captureSceneFromMain(mc);
             if (sceneCaptured) {

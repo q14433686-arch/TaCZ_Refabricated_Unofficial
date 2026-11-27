@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.tacz.probe.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "tacz_pal_probe.refmap.json",
+  "client": ["AvatarModelObserver"],
+  "injectors": {"defaultRequire": 1}
+}

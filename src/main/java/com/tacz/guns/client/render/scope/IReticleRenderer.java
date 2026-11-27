@@ -67,7 +67,8 @@ public interface IReticleRenderer {
      * @param aimingProgress 开镜进度 0~1，可用于淡入淡出
      * @param baseRenderType 准星应当使用的 RenderType。掩码生效时它是「反向裁剪」版
      *                       （只在目镜投影内绘制）；否则是普通的 entityCutout。
-     * @param maskActive     本帧目镜掩码是否真的生效。
+     * @param maskActive     本帧是否为该瞄具提交了目镜孔径几何。
+     *                       真正 draw 时还必须通过深度副本/FBO 身份检查；失效时拒绝整次镜内 draw。
      *                       <p>{@link EtchedReticleRenderer} 必须看这个标志：
      *                       {@code division} 里混着大块遮光板，只有在掩码把它们裁掉时
      *                       才能安全绘制，否则会糊住屏幕（第 9 轮的教训）。</p>
@@ -89,5 +90,8 @@ public interface IReticleRenderer {
                    boolean maskActive,
                    boolean deferToIrisTranslucent,
                    boolean deferToIrisFinalOverlay) {
+        public void submit(com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot snapshot, boolean emissive) {
+            ScopeLateReticleState.submitReticle(this, snapshot, emissive ? illuminatedRenderType : baseRenderType);
+        }
     }
 }

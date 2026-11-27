@@ -2,12 +2,14 @@ package com.tacz.guns.client.resource.index;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import com.tacz.guns.client.resource.pojo.display.SoundData;
 import com.tacz.guns.GunMod;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
 import com.tacz.guns.client.resource.ClientAssetLoadDispatcher;
 import com.tacz.guns.client.resource.ClientAssetsManager;
 import com.tacz.guns.client.resource.pojo.display.LaserConfig;
 import com.tacz.guns.client.resource.pojo.display.attachment.AttachmentDisplay;
+import com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig;
 import com.tacz.guns.client.resource.pojo.display.attachment.AttachmentLod;
 import com.tacz.guns.client.resource.pojo.display.gun.TextShow;
 import com.tacz.guns.client.resource.pojo.model.BedrockModelPOJO;
@@ -39,16 +41,21 @@ public class ClientAttachmentIndex {
     private @Nullable Pair<BedrockAttachmentModel, Identifier> lodModel;
     private Identifier slotTexture;
     private AttachmentData data;
+    private float idleScopeHeightAdjust;
+    public float getIdleScopeHeightAdjust() { return idleScopeHeightAdjust; }
     private float[] viewsFov;
     private float @Nullable [] zoom;
     private int[] views;
+    private float muzzleFlashOffset;
+
+    public float getMuzzleFlashOffset() { return muzzleFlashOffset; }
     private boolean isScope;
     private boolean isSight;
     private boolean showMuzzle;
     private boolean showMount;
     private @Nullable String adapterNodeName;
     private @Nullable String tooltipKey;
-    private Map<String, Identifier> sounds;
+    private Map<String, SoundData> sounds;
     private @Nullable LaserConfig laserConfig;
     private volatile boolean modelsLoaded = false;
     private volatile boolean modelsLoadFailed = false;
@@ -84,8 +91,9 @@ public class ClientAttachmentIndex {
         AttachmentDisplay display = ClientAssetsManager.INSTANCE.getAttachmentDisplay(pojoDisplay);
         Preconditions.checkArgument(display != null, "there is no corresponding display file");
         index.display = display;
+        index.idleScopeHeightAdjust = display.getIdleScopeHeightAdjust();
         index.viewsFov = display.getViewsFov();
-        if (index.viewsFov == null) {
+        if (index.viewsFov == null || index.viewsFov.length == 0) {
             Preconditions.checkArgument(display.getFov() > 0, "fov must > 0");
             index.viewsFov = new float[]{display.getFov()};
         } else {
@@ -102,7 +110,7 @@ public class ClientAttachmentIndex {
             }
         }
         index.views = display.getViews();
-        if (index.views == null) {
+        if (index.views == null || index.views.length == 0) {
             index.views = new int[]{1};
         } else {
             for (int i = 0; i < index.views.length; i++) {
@@ -111,6 +119,7 @@ public class ClientAttachmentIndex {
                 }
             }
         }
+        index.muzzleFlashOffset = display.getMuzzleFlashOffset();
         index.isScope = display.isScope();
         index.isSight = display.isSight();
         index.adapterNodeName = display.getAdapterNodeName();
@@ -160,6 +169,7 @@ public class ClientAttachmentIndex {
         if (index.attachmentModel != null) {
             index.attachmentModel.setIsScope(display.isScope());
             index.attachmentModel.setIsSight(display.isSight());
+            index.attachmentModel.setScopeLens(display.getScopeLens());
         }
         index.modelTexture = display.getTexture();
     }
@@ -289,7 +299,7 @@ public class ClientAttachmentIndex {
 
 
     private static void checkSounds(AttachmentDisplay display, ClientAttachmentIndex index) {
-        Map<String, Identifier> displaySounds = display.getSounds();
+        Map<String, SoundData> displaySounds = display.getSoundData();
         if (displaySounds == null) {
             index.sounds = Maps.newHashMap();
             return;
@@ -350,6 +360,22 @@ public class ClientAttachmentIndex {
         return null;
     }
 
+    public boolean hasRangefinder() {
+        return display.getTextShows().values().stream().anyMatch(t -> t != null && t.getRangefinder() != null);
+    }
+
+    public boolean hasImpactPrediction() {
+        return display.getTextShows().values().stream().anyMatch(t -> t != null && t.getRangefinder() != null && t.getRangefinder().showsImpact());
+    }
+
+    public boolean hasAmmoCounter() {
+        // Resolve at tooltip time so an open client switching languages sees the current text.
+        return display.getTextShows().values().stream().anyMatch(t -> t != null && t.getTextKey() != null
+                && net.minecraft.locale.Language.getInstance().getOrDefault(t.getTextKey()).contains("%ammo_count%"));
+    }
+
+    public ScopeLensConfig getScopeLens() { return display.getScopeLens(); }
+
     public boolean isScope() {
         return isScope;
     }
@@ -372,8 +398,10 @@ public class ClientAttachmentIndex {
     }
 
     public Map<String, Identifier> getSounds() {
-        return sounds;
+        return sounds == null ? null : Maps.transformValues(sounds, SoundData::getSound);
     }
+
+    public Map<String, SoundData> getSoundData() { return sounds; }
 
     public @Nullable LaserConfig getLaserConfig() {
         return laserConfig;

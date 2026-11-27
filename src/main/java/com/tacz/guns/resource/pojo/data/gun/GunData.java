@@ -44,6 +44,10 @@ public class GunData {
     @SerializedName("rpm")
     private int roundsPerMinute = 300;
 
+    @SerializedName("recoil_push")
+    @Nullable
+    private GunRecoilPushData recoilPushData;
+
     @SerializedName("bullet")
     private BulletData bulletData = new BulletData();
 
@@ -56,6 +60,18 @@ public class GunData {
     @SerializedName("sprint_time")
     private float sprintTime = 0.2f;
 
+    @SerializedName("force_aim_exit_on_reload")
+    private boolean forceAimExitOnReload;
+    @SerializedName("force_aim_exit_on_bolt")
+    private boolean forceAimExitOnBolt;
+
+    public boolean isForceAimExitOnReload() { return forceAimExitOnReload; }
+    public boolean isForceAimExitOnBolt() { return forceAimExitOnBolt; }
+
+    public boolean blocksAim(boolean reloading, boolean bolting) {
+        return (forceAimExitOnReload && reloading) || (forceAimExitOnBolt && bolting);
+    }
+
     @SerializedName("aim_time")
     private float aimTime = 0.2f;
 
@@ -67,6 +83,10 @@ public class GunData {
 
     @SerializedName("fire_sound")
     private FireSound fireSound = new FireSound();
+
+    @SerializedName("allow_ammo_unload")
+    private boolean allowAmmoUnload;
+    public boolean isAllowAmmoUnload() { return allowAmmoUnload; }
 
     @SerializedName("reload")
     private GunReloadData reloadData = new GunReloadData();
@@ -112,7 +132,7 @@ public class GunData {
     private float weight = 0f;
 
     @SerializedName("builtin_attachments")
-    private Map<AttachmentType, Identifier> builtInAttachments = Maps.newHashMap();
+    private Map<AttachmentType, BuiltInAttachment> builtInAttachments = Maps.newHashMap();
 
     @SerializedName("script")
     private Identifier script = null;
@@ -170,6 +190,10 @@ public class GunData {
             return 300;
         }
         return rpm;
+    }
+
+    public @Nullable GunRecoilPushData getRecoilPushData() {
+        return recoilPushData;
     }
 
     public BulletData getBulletData() {
@@ -278,7 +302,16 @@ public class GunData {
         return allowAttachments;
     }
 
+    /** Legacy pack API: an empty slot used to expose just its display id. */
     public Map<AttachmentType, Identifier> getBuiltInAttachments() {
+        var displays = new java.util.EnumMap<AttachmentType, Identifier>(AttachmentType.class);
+        builtInAttachments.forEach((type, option) -> {
+            if (option != null && option.getDisplayAttachment() != null) displays.put(type, option.getDisplayAttachment());
+        });
+        return displays;
+    }
+
+    public Map<AttachmentType, BuiltInAttachment> getBuiltInAttachmentOptions() {
         return builtInAttachments;
     }
 

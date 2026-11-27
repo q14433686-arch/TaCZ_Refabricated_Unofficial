@@ -45,7 +45,7 @@ public class AttachmentItem extends Item implements AttachmentItemDataAccessor, 
     }
 
     private static Comparator<Map.Entry<Identifier, CommonAttachmentIndex>> idNameSort() {
-        return Comparator.comparingInt(m -> m.getValue().getSort());
+        return com.tacz.guns.util.ContentPackOrder.byPackThenSort(CommonAttachmentIndex::getSort);
     }
 
     public static NonNullList<ItemStack> fillItemCategory(AttachmentType type) {

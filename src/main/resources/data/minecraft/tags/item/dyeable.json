@@ -1,4 +1,4 @@
 {
   "replace": false,
-  "values": ["tacz:ammo_box"]
+  "values": ["tacz:ammo_box", "tacz:gun_pegboard", "tacz:glow_gun_pegboard"]
 }

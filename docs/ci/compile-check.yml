@@ -1,10 +1,3 @@
-# 待上线：本文件是 .github/workflows/compile-check.yml 的替换件（v4）。
-# 沙箱凭据（GitHub App）没有 workflows 权限，推不动正式件：
-#   ! [remote rejected] ... refusing to allow a GitHub App to create or update workflow
-#     `.github/workflows/compile-check.yml` without `workflows` permission
-# 所以按 docs/ci/README.md 的约定由维护者粘贴上线。上线前，本分支的 CI 仍是旧版
-# （只有 arena/** 触发、没有 concurrency、主分支/PR 不编译）。
-
 name: compile-check
 
 # 编译验证闭环（1.21.11 分支，v4：对齐 26.2 侧 2026-08-31 的 compile-check v4）。
@@ -57,7 +50,11 @@ jobs:
         run: |
           mkdir -p build-reports
           echo "commit: ${{ github.sha }}" > build-reports/compile-java.log
-          ./gradlew compileJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
+          ./gradlew --init-script scripts/ci-central.init.gradle compileJava compileTestJava compileGametestJava --console=plain --stacktrace --no-daemon >> build-reports/compile-java.log 2>&1
+
+      - name: Record target render API for native porting
+        if: startsWith(github.ref, 'refs/heads/arena/')
+        run: python3 scripts/inspect_12111_render_api.py >> build-reports/compile-java.log 2>&1
 
       - name: Push compile log back via contents API
         # 只有 arena/** 回推：主分支的提交历史必须干净
@@ -76,9 +73,19 @@ jobs:
           echo "== job status: ${{ job.status }} ==" >> "$LOG"
           BRANCH="${{ github.ref_name }}"
           SHA=$(gh api "repos/${{ github.repository }}/contents/$LOG?ref=$BRANCH" --jq .sha 2>/dev/null || true)
-          ARGS=(-X PUT "repos/${{ github.repository }}/contents/$LOG"
-                -f message="ci-log: compile result (${{ job.status }}) for ${{ github.sha }}"
-                -f branch="$BRANCH"
-                -f content="$(base64 -w0 "$LOG")")
-          if [ -n "$SHA" ]; then ARGS+=(-f sha="$SHA"); fi
-          gh api "${ARGS[@]}" --jq .commit.sha
+          # A successful large compile can exceed Linux's per-argument size limit
+          # when its base64 log is passed with -f content=... (exit 126). Use stdin JSON.
+          REQUEST=$(mktemp)
+          trap 'rm -f "$REQUEST"' EXIT
+          python3 - "$REQUEST" "$LOG" "$BRANCH" "$SHA" <<'PY'
+          import base64, json, os, sys
+          output, log, branch, sha = sys.argv[1:]
+          with open(log, 'rb') as stream:
+              payload = dict(message=f"ci-log: compile result (${{ job.status }}) for {os.environ['GITHUB_SHA']}",
+                             branch=branch, content=base64.b64encode(stream.read()).decode('ascii'))
+          if sha:
+              payload['sha'] = sha
+          with open(output, 'w') as stream:
+              json.dump(payload, stream)
+          PY
+          gh api -X PUT "repos/${{ github.repository }}/contents/$LOG" --input "$REQUEST" --jq .commit.sha

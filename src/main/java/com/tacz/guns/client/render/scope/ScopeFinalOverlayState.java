@@ -10,6 +10,7 @@ import com.tacz.guns.client.renderer.snapshot.BedrockRenderSnapshot;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
 import net.minecraft.client.renderer.RenderBuffers;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -42,7 +43,8 @@ import java.util.List;
  */
 public final class ScopeFinalOverlayState {
     private static final int FINAL_RETICLE_ORDER = 20_000;
-    private static final int FINAL_OCULAR_RING_ORDER = 20_001;
+    private static final int FINAL_READOUT_ORDER = FINAL_RETICLE_ORDER + 1;
+    private static final int FINAL_OCULAR_RING_ORDER = FINAL_READOUT_ORDER + 1;
 
     private static final List<ReticleDraw> PENDING_RETICLES = new ArrayList<>();
     private static final List<RingDraw> PENDING_RINGS = new ArrayList<>();
@@ -115,6 +117,11 @@ public final class ScopeFinalOverlayState {
             return;
         }
         PENDING_TEXT.add(task);
+    }
+
+    /** Procedural lens symbology sits above the authored scale but below the physical rim. */
+    public static void queueReadout(PoseStack frozenPose, RenderType type, SubmitNodeCollector.CustomGeometryRenderer geometry) {
+        queueFunctionalTask(nodes -> nodes.order(FINAL_READOUT_ORDER).submitCustomGeometry(frozenPose, type, geometry));
     }
 
     static void queueReticle(BedrockRenderSnapshot snapshot, RenderType renderType) {
@@ -198,7 +205,7 @@ public final class ScopeFinalOverlayState {
             OrderedSubmitNodeCollector reticleCollector = submitNodes.order(FINAL_RETICLE_ORDER);
             for (ReticleDraw draw : reticles) {
                 reticleCollector.submitCustomGeometry(new PoseStack(), draw.renderType(),
-                        (entryPose, consumer) -> draw.snapshot().writeFiltered(consumer, ReticleMarkFilter::isThinMark));
+                        (entryPose, consumer) -> draw.snapshot().write(consumer));
             }
 
             OrderedSubmitNodeCollector ringCollector = submitNodes.order(FINAL_OCULAR_RING_ORDER);
