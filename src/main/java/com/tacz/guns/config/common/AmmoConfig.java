@@ -41,10 +41,10 @@ public class AmmoConfig {
         builder.comment("The distance at which the explosion effect can be seen");
         EXPLOSIVE_AMMO_VISIBLE_DISTANCE = builder.defineInRange("ExplosiveAmmoVisibleDistance", 192, 0, Integer.MAX_VALUE);
 
-        builder.comment("Those blocks that the ammo can pass through");
+        builder.comment("Blocks that bullets can pass through. Accepts block IDs and tags prefixed with #, e.g. minecraft:glass or #c:glass_blocks.");
         PASS_THROUGH_BLOCKS = builder.define("PassThroughBlocks", Lists.newArrayList());
 
-        builder.comment("Whether a ammo can break the glass");
+        builder.comment("Allow bullets to destroy blocks listed in DestroyBlocks without drops. The name is retained for compatibility; the list is not limited to glass.");
         DESTROY_GLASS = builder.define("DestroyGlass", true);
 
         builder.comment("Whether a ammo can ignite the block");
@@ -57,11 +57,11 @@ public class AmmoConfig {
         builder.comment("This is to compensate the side effects introduced while fixing the shooter variable input issue");
         GLOBAL_BULLET_SPEED_MODIFIER = builder.defineInRange("GlobalBulletSpeedModifier", 2.0, 0.01, 20);
 
-        DESTROY_BLOCKS = builder.define("DestroyBlocks", Lists.newArrayList(DEFAULT_DESTROY_BLOCKS));
-        DESTROY_BLOCK_HARDNESS_THRESHOLD = builder.defineInRange("DestroyBlockHardnessThreshold", 1.0, 0.0, Double.MAX_VALUE);
-        IGNORE_TEAM_FRIENDLY_FIRE = builder.define("IgnoreTeamFriendlyFire", false);
-        ENABLE_BULLET_DAMAGE_IGNORE_LIST = builder.define("EnableBulletDamageIgnoreList", false);
-        BULLET_DAMAGE_IGNORE_LIST = builder.define("BulletDamageIgnoreList", Lists.newArrayList(DEFAULT_BULLET_DAMAGE_IGNORE_LIST));
+        DESTROY_BLOCKS = builder.comment("Blocks that bullets can destroy when DestroyGlass is enabled, subject to DestroyBlockHardnessThreshold. Accepts block IDs and tags prefixed with #, e.g. minecraft:glass or #c:glass_blocks.").define("DestroyBlocks", Lists.newArrayList(DEFAULT_DESTROY_BLOCKS));
+        DESTROY_BLOCK_HARDNESS_THRESHOLD = builder.comment("Maximum block hardness for direct bullet destruction. Blocks above this threshold or with negative hardness (unbreakable) are never destroyed, even if listed in DestroyBlocks. Default: 1.0; vanilla glass has hardness 0.3.").defineInRange("DestroyBlockHardnessThreshold", 1.0, 0.0, Double.MAX_VALUE);
+        IGNORE_TEAM_FRIENDLY_FIRE = builder.comment("Bullets pass through members of the shooter's scoreboard team when friendly fire is disabled, without consuming pierce count").define("IgnoreTeamFriendlyFire", false);
+        ENABLE_BULLET_DAMAGE_IGNORE_LIST = builder.comment("Enable the entity bullet damage ignore list. Listed entities are ignored by bullet hit detection and take no damage or knockback from ammo explosions.").define("EnableBulletDamageIgnoreList", false);
+        BULLET_DAMAGE_IGNORE_LIST = builder.comment("Entity type IDs protected from bullets and ammo explosions when EnableBulletDamageIgnoreList is enabled.").define("BulletDamageIgnoreList", Lists.newArrayList(DEFAULT_BULLET_DAMAGE_IGNORE_LIST));
         builder.pop();
     }
 }

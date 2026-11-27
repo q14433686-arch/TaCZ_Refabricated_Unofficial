@@ -48,6 +48,7 @@ public class PackClientSmoke implements FabricClientGameTest {
             world.getConnection().waitForChunksRender();
             context.waitTicks(30);
             saveFrame(context, "tacz_held_default_gun");
+            PausedPoseSmoke.run(context);
             if (Boolean.getBoolean("tacz.test.pal")) { PalRuntimeSmoke.run(context); return; }
             if (Boolean.getBoolean("tacz.test.controller")) { ControllerSmoke.run(context, world); return; }
             SurfaceLightSmoke.run(context, world, true);
