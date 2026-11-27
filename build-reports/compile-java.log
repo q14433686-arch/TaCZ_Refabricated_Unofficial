@@ -1,4 +1,4 @@
-commit: 2ca3794f3cdea1cd33990a618ec80e64b71da3ae
+commit: 2cf84bcb303962838c5a585119715a4164fad04e
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build 
 
@@ -198,7 +198,7 @@ duplicate input class me/shedaniel/rei/api/common/registry/display/DisplayConsum
 duplicate input class me/shedaniel/rei/api/common/registry/display/DisplayConsumer$RecipeManagerConsumer$RecipeFillerBuilder, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
 duplicate input class me/shedaniel/rei/api/common/registry/display/DisplayConsumer$RecipeDisplayConsumer, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
 duplicate input class me/shedaniel/rei/api/common/registry/display/DisplayConsumer$RecipeDisplayConsumer$RecipeFillerBuilder, from /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-api-fabric/21.11.816/15b9edbc4f90a109778ddf566eb5b1a892c5b6cc/RoughlyEnoughItems-api-fabric-21.11.816.jar and /home/runner/.gradle/caches/modules-2/files-2.1/me.shedaniel/RoughlyEnoughItems-fabric/21.11.816/689cfb8ef912508e23bd1a794a7a441fe686ea2f/RoughlyEnoughItems-fabric-21.11.816.jar
-...[truncated 2764 lines total]...
+...[truncated 2767 lines total]...
 
 PORT_RENDER_BYTECODE: net.minecraft.client.Minecraft
   public void doWorldLoad(net.minecraft.world.level.storage.LevelStorageSource$LevelStorageAccess, net.minecraft.server.packs.repository.PackRepository, net.minecraft.server.WorldStem, boolean);
