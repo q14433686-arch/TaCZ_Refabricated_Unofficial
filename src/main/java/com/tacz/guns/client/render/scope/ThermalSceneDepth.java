@@ -18,7 +18,7 @@ final class ThermalSceneDepth extends AbstractTexture {
                     .withLocation(Identifier.parse("tacz:pipeline/thermal_scene_depth"))
                     .withVertexShader(Identifier.parse("minecraft:core/screenquad"))
                     .withFragmentShader(Identifier.parse("tacz:core/thermal_scene_depth"))
-                    .withVertexFormat(net.minecraft.client.renderer.RenderPipelines.ENTITY_OUTLINE_BLIT.getVertexFormat(),
+                    .withVertexFormat(ScopeRenderTypes.declaredVertexFormat(net.minecraft.client.renderer.RenderPipelines.ENTITY_OUTLINE_BLIT),
                             net.minecraft.client.renderer.RenderPipelines.ENTITY_OUTLINE_BLIT.getVertexFormatMode())
                     .withSampler(SAMPLER).withCull(false).withoutBlend().withColorWrite(false)
                     .withDepthTestFunction(com.mojang.blaze3d.platform.DepthTestFunction.LEQUAL_DEPTH_TEST)

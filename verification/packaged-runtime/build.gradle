@@ -31,9 +31,11 @@ if (presentation != null) {
     }
 }
 if (playerSuite != null) {
-    assert client && presentation == null && viewer == 'none' && playerSuite in ['display', 'pal', 'controller', 'optics', 'optics-iris', 'receiver', 'receiver-iris', 'platform', 'platform-zoomify']
-    sourceSets.main.java.srcDirs('src/player/java', "src/${(playerSuite.startsWith('optics') || playerSuite.startsWith('receiver')) ? 'optics' : (playerSuite.startsWith('platform') ? 'platform' : playerSuite)}/java")
-    if ((playerSuite.startsWith('optics') || playerSuite.startsWith('receiver'))) {
+    assert client && presentation == null && viewer == 'none' && playerSuite in ['display', 'pal', 'controller', 'optics', 'optics-iris', 'receiver', 'receiver-iris', 'user-unbound-iris', 'platform', 'platform-zoomify']
+    // user-unbound-iris: the reported user combination; it reuses the optics probe sources.
+    def opticsLike = playerSuite.startsWith('optics') || playerSuite.startsWith('receiver') || playerSuite.startsWith('user')
+    sourceSets.main.java.srcDirs('src/player/java', "src/${opticsLike ? 'optics' : (playerSuite.startsWith('platform') ? 'platform' : playerSuite)}/java")
+    if (opticsLike) {
         sourceSets.main.java.srcDir 'src/reticle-contract/java'
         sourceSets.main.resources.srcDir 'src/optics/resources'
     }
@@ -45,7 +47,7 @@ if (playerSuite != null) {
         sourceSets.main.resources.srcDir 'src/pal/resources'
         loom.mixin { useLegacyMixinAp = true; defaultRefmapName = 'tacz_pal_probe.refmap.json' }
     }
-    def entry = [pal: 'PalRuntimeSmoke', controller: 'ControllerSmoke', display: 'DisplayProbe', optics: 'OpticsApertureSmoke', 'optics-iris': 'OpticsApertureSmoke', receiver: 'ReceiverLightProbe', 'receiver-iris': 'ReceiverLightProbe', platform: 'PlatformSmoke', 'platform-zoomify': 'PlatformSmoke'][playerSuite]
+    def entry = [pal: 'PalRuntimeSmoke', controller: 'ControllerSmoke', display: 'DisplayProbe', optics: 'OpticsApertureSmoke', 'optics-iris': 'OpticsApertureSmoke', receiver: 'ReceiverLightProbe', 'receiver-iris': 'ReceiverLightProbe', 'user-unbound-iris': 'UserEnvSmoke', platform: 'PlatformSmoke', 'platform-zoomify': 'PlatformSmoke'][playerSuite]
     processResources.filesMatching('fabric.mod.json') {
         filter { line ->
             if (playerSuite.startsWith('platform')) {
@@ -53,7 +55,7 @@ if (playerSuite != null) {
                 line = line.replace('"entrypoints": {', '"entrypoints": { "main": ["com.tacz.probe.PlatformItems"], "client": ["com.tacz.probe.PlatformGui"],')
             }
             if (playerSuite == 'pal') line = line.replace('"environment": "client",', '"environment": "client", "mixins": ["tacz_pal_probe.mixins.json"],')
-            if ((playerSuite.startsWith('optics') || playerSuite.startsWith('receiver'))) line = line.replace('"environment": "client",', '"environment": "client", "mixins": ["tacz_optics_probe.mixins.json"],')
+            if (opticsLike) line = line.replace('"environment": "client",', '"environment": "client", "mixins": ["tacz_optics_probe.mixins.json"],')
             if (playerSuite == 'display') line = line.replace('"entrypoints": {', '"entrypoints": { "client": ["com.tacz.probe.HintInk"],')
             line.replace('com.tacz.probe.PackagedConnectionProbe', "com.tacz.probe.$entry".toString())
         }

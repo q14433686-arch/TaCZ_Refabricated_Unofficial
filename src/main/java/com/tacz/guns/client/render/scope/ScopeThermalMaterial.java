@@ -23,7 +23,7 @@ final class ScopeThermalMaterial {
         private final Map<Identifier, RenderType> materials = new HashMap<>();
         Depth(String name, boolean matchScene, boolean shifted) {
             var b = RenderPipeline.builder()
-                    .withVertexFormat(RenderPipelines.ENTITY_CUTOUT_NO_CULL.getVertexFormat(), RenderPipelines.ENTITY_CUTOUT_NO_CULL.getVertexFormatMode())
+                    .withVertexFormat(ScopeRenderTypes.declaredVertexFormat(RenderPipelines.ENTITY_CUTOUT_NO_CULL), RenderPipelines.ENTITY_CUTOUT_NO_CULL.getVertexFormatMode())
                     .withUniform("DynamicTransforms", com.mojang.blaze3d.shaders.UniformType.UNIFORM_BUFFER)
                     .withUniform("Projection", com.mojang.blaze3d.shaders.UniformType.UNIFORM_BUFFER)
                     .withSampler("Sampler0")

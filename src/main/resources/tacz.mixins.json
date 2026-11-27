@@ -35,6 +35,7 @@
     "client.PreviewRenderSetupAccessor",
     "client.PreviewTextureBindingAccessor",
     "client.RenderTypeStateAccessor",
+    "client.RenderPipelineVertexFormatAccessor",
     "client.RenderSetupTextureAccessor",
     "client.TextureBindingAccessor",
     "client.ScopeProjectionUploadMixin",

@@ -708,7 +708,7 @@ public final class ScopePipRenderState {
                         lens ? "pipeline/scope_pip_composite_lens" : "pipeline/scope_pip_composite"))
                 .withVertexShader(Identifier.fromNamespaceAndPath("minecraft", "core/screenquad"))
                 .withFragmentShader(Identifier.fromNamespaceAndPath(GunMod.MOD_ID, "core/scope_pip"))
-                .withVertexFormat(source.getVertexFormat(), source.getVertexFormatMode())
+                .withVertexFormat(ScopeRenderTypes.declaredVertexFormat(source), source.getVertexFormatMode())
                 .withUniform("DynamicTransforms", com.mojang.blaze3d.shaders.UniformType.UNIFORM_BUFFER)
                 .withSampler(SCENE_SAMPLER_UNIFORM)
                 .withSampler(ScopeDepthCopyState.MASK_WORLD_SAMPLER_UNIFORM)

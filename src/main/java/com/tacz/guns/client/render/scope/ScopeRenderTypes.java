@@ -981,6 +981,22 @@ public final class ScopeRenderTypes {
         return pipeline;
     }
 
+    /**
+     * The vertex format {@code source} was declared with, never Iris' per-frame redirect.
+     *
+     * <p>{@code getVertexFormat()} returns {@code IrisVertexFormats.*} while a pack is active and the
+     * level renders. Every pipeline TaCZ builds lazily (illuminated bodies, muzzle flash, Snowstorm,
+     * thermal coverage, scope clones) may be built at exactly that moment and is cached for the rest
+     * of the session; baking the redirected value crashed the first frame after the pack was turned
+     * off ({@code Missing elements in vertex: mc_midTexCoord, at_tangent}). Copy the declaration so
+     * Iris keeps extending our clones dynamically, as it does for the vanilla source.</p>
+     */
+    public static VertexFormat declaredVertexFormat(RenderPipeline source) {
+        VertexFormat declared = ((com.tacz.guns.mixin.client.RenderPipelineVertexFormatAccessor) (Object) source)
+                .tacz$declaredVertexFormat();
+        return declared != null ? declared : source.getVertexFormat();
+    }
+
     public static RenderPipeline.Builder clonePipeline(RenderPipeline source, Identifier location) {
         RenderPipeline.Builder builder = RenderPipeline.builder()
                 .withLocation(location)
@@ -988,7 +1004,7 @@ public final class ScopeRenderTypes {
                 .withFragmentShader(source.getFragmentShader())
                 .withPolygonMode(source.getPolygonMode())
                 .withCull(source.isCull())
-                .withVertexFormat(source.getVertexFormat(), source.getVertexFormatMode());
+                .withVertexFormat(declaredVertexFormat(source), source.getVertexFormatMode());
 
         source.getShaderDefines().flags().forEach(builder::withShaderDefine);
         source.getShaderDefines().values().forEach((name, value) -> copyDefine(builder, name, value));

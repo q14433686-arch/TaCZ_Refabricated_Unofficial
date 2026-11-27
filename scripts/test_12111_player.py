@@ -116,7 +116,50 @@ def prepare_iris_seed(work, evidence):
     print(f"::notice::PORT_IRIS_PACK: {IRIS_SEED['name']} commit {IRIS_SEED['commit'][:7]} archive SHA-256 {digest}", flush=True)
 
 
-def audit_iris_hooks(jar, evidence):
+USER_ENV = {
+    # Exactly the combination in the 2026-11-26 user report (latest.log): Iris 1.10.7+mc1.21.11,
+    # Sodium 0.8.12+mc1.21.11 and the ComplementaryUnbound_r5.8.1 shader pack. Unbound is not on
+    # GitHub; Modrinth's own SHA-1 is checked on download and the SHA-256 is recorded, not pinned.
+    'iris': '1.10.7', 'sodium': '0.8.12', 'pack_project': 'complementary-unbound', 'pack': 'r5.8.1',
+}
+
+
+def prepare_user_seed(work, evidence):
+    """The user's Iris/Sodium/shader-pack combination, resolved from Modrinth by exact version."""
+    import json
+    seed = work/'client/fixtures/optics-iris'
+    for sub in ('shaderpacks', 'config', 'mods'): (seed/sub).mkdir(parents=True, exist_ok=True)
+    query = '?loaders=%5B%22fabric%22%5D&game_versions=%5B%221.21.11%22%5D'
+    def pick(project, prefix, q=query):
+        versions = modrinth(f'/project/{project}/version{q}')
+        chosen = next((v for v in versions if v['version_number'].startswith(prefix)), None)
+        if chosen is None:
+            raise AssertionError(f'{project} {prefix} not found; available: {[v["version_number"] for v in versions]}')
+        return chosen
+    receipt = []
+    for project, prefix in (('iris', USER_ENV['iris'] + '+'), ('sodium', USER_ENV['sodium'] + '+')):
+        version = pick(project, prefix)
+        file = next((f for f in version['files'] if f.get('primary')), version['files'][0])
+        jar = seed/'mods'/file['filename']
+        sha256 = download_checked(file['url'], file['hashes']['sha1'], jar)
+        receipt.append({'project': project, 'version': version['version_number'], 'file': file['filename'], 'sha256': sha256})
+        print(f"::notice::PORT_USER_MOD: {project} {version['version_number']} {file['filename']} SHA-256 {sha256}", flush=True)
+        if project == 'iris':
+            try: audit_iris_hooks(jar, evidence, version['version_number'])
+            except Exception as e: print(f'::warning::PORT_USER_IRIS_AUDIT: {version["version_number"]}: {e}', flush=True)
+    versions = modrinth(f"/project/{USER_ENV['pack_project']}/version")
+    pack = next((v for v in versions if USER_ENV['pack'] in v['version_number'] or USER_ENV['pack'] in v.get('name', '')), None)
+    if pack is None:
+        raise AssertionError(f"{USER_ENV['pack_project']} {USER_ENV['pack']} not found; available: {[v['version_number'] for v in versions][:20]}")
+    file = next((f for f in pack['files'] if f.get('primary')), pack['files'][0])
+    sha256 = download_checked(file['url'], file['hashes']['sha1'], seed/'shaderpacks'/file['filename'])
+    receipt.append({'project': USER_ENV['pack_project'], 'version': pack['version_number'], 'file': file['filename'], 'sha256': sha256})
+    print(f"::notice::PORT_USER_PACK: {file['filename']} ({pack['version_number']}) SHA-256 {sha256}", flush=True)
+    (seed/'config/iris.properties').write_text('enableShaders=true\nshaderPack=' + file['filename'] + '\n')
+    (evidence/'user-env.json').write_text(json.dumps(receipt, indent=2) + '\n')
+
+
+def audit_iris_hooks(jar, evidence, label='1.10.8'):
     """Audit the actual intermediary runtime JAR, not a source branch or a dev dependency."""
     chosen = {}
     for name, methods in {
@@ -138,8 +181,8 @@ def audit_iris_hooks(jar, evidence):
     for method in ['renderSolid(', 'renderTranslucent(']:
         if 'iris$renderHandsWithCustomRenderer' not in chosen[method] or 'restoreProjectionMatrix' not in chosen[method]:
             raise AssertionError('Iris hand flush contract moved: ' + method)
-    (evidence/'iris-runtime-hooks.txt').write_text('\n\n'.join(chosen.values()))
-    print('::notice::PORT_IRIS_API: hash-pinned 1.10.8 runtime bytecode: pre-hand depth and post-world final overlay boundaries verified', flush=True)
+    (evidence/('iris-runtime-hooks.txt' if label == '1.10.8' else f'iris-runtime-hooks-{label}.txt')).write_text('\n\n'.join(chosen.values()))
+    print(f'::notice::PORT_IRIS_API: {label} runtime bytecode: pre-hand depth and post-world final overlay boundaries verified', flush=True)
 
 
 def report_receipts(receipts):
@@ -167,19 +210,25 @@ def report_receipts(receipts):
 def test(product, work, evidence, suite):
     copy_project(work, 'client')
     evidence.mkdir(parents=True, exist_ok=True)
-    if suite.endswith('-iris'): prepare_iris_seed(work, evidence)
+    if suite == 'user-unbound-iris': prepare_user_seed(work, evidence)
+    elif suite.endswith('-iris'): prepare_iris_seed(work, evidence)
     if suite == 'platform-zoomify': prepare_zoomify_seed(work, evidence)
     instance = work/'client/build/instance'
     log = evidence/'client.log'
     args = runtime_command(work, 'client', product, 'none', '-PprobeClient', f'-PplayerSuite={suite}', 'probeClient')
     try:
         with launch(args, log) as proc:
-            if proc.wait(1200 if suite.startswith('optics') else 720) != 0:
+            if proc.wait(1200 if suite.startswith(('optics', 'user')) else 720) != 0:
                 raise AssertionError(f'Production {suite} client failed: {log}')
     finally:
         latest = instance/'logs/latest.log'
         if latest.is_file(): shutil.copyfile(latest, evidence/'latest.log')
         if (instance/'screenshots').exists(): shutil.copytree(instance/'screenshots', evidence/'frames', dirs_exist_ok=True)
+        if suite == 'user-unbound-iris' and log.is_file():
+            # Pass or fail, every stage result and gate dump must reach the Checks UI in full.
+            rows = [row[row.find('PORT_USER_') if 'PORT_USER_' in row else row.find('USER_DIAG'):]
+                    for row in log.read_text(errors='replace').splitlines() if 'PORT_USER_' in row or 'USER_DIAG' in row]
+            if rows: report_receipts(rows)
     markers = {
         'display': {'PORT_INK:': 1, 'PORT_OUTLINE:': 1, 'PORT_RACK_PREVIEW:': 5, 'PORT_CASE_HINT:': 1},
         'controller': {'PORT_CONTROLLER:': 1},
@@ -187,6 +236,7 @@ def test(product, work, evidence, suite):
         **{name: {f'PORT_PLATFORM_{kind}:': 1 for kind in ['INPUT','SKIN','AUDIO','GUI','ZOOM','ADS','RECOIL','MODIFIERS','TRACER','MUZZLE','PARTICLES','MESH_BUDGET','SOUND_DATA','ATTACHMENT_TIPS','CARRIED_GUNS','HURT_TILT','SMITH_FILTER','LANGUAGES','LEGACY_PATHS','RANGEFINDER_TEXT','LOOSE_VARIANTS','IMPACTS','CLOTH_SETTINGS','SPRITE_TRANSFORM','INDEX_LIFECYCLE','SNOWSTORM_SPACE','STANCE','UI_LABELS']} for name in ['platform','platform-zoomify']},
         'receiver': {'PORT_RECEIVER_INPUT:': 1, 'PORT_RECEIVER_PIXEL:': 11, 'PORT_RECEIVER_PACK:': 1},
         'receiver-iris': {'PORT_RECEIVER_INPUT:': 1, 'PORT_RECEIVER_PIXEL:': 11, 'PORT_RECEIVER_PACK:': 1},
+        'user-unbound-iris': {'PORT_USER_ENV:': 1, 'PORT_USER_FORMAT:': 1, 'PORT_USER_THERMAL:': 2, 'PORT_USER_LENS_EDGE:': 2, 'PORT_USER_SHADER_TOGGLE:': 1},
         'optics': {'PORT_PIP_MOTION:': 16, 'PORT_PIP_WIDE:': 2, 'PORT_THERMAL_PIXELS:': 1, 'PORT_THERMAL_MODE:': 2, 'PORT_THERMAL_POSE:': 18, 'PORT_OPTIC:': 3, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_RETICLE_GROUPS:': 1, 'PORT_BODY_MATERIAL:': 1, 'PORT_OCULAR_BAKE:': 1, 'PORT_RETICLE_PIXELS:': 1},
         'optics-iris': {'PORT_PIP_MOTION:': 16, 'PORT_PIP_WIDE:': 2, 'PORT_THERMAL_PIXELS:': 1, 'PORT_THERMAL_MODE:': 2, 'PORT_THERMAL_POSE:': 18, 'PORT_OPTIC:': 3, 'PORT_IRIS:': 1, 'PORT_RETICLE_CONTRACT:': 1, 'PORT_RETICLE_GROUPS:': 1, 'PORT_BODY_MATERIAL:': 1, 'PORT_OCULAR_BAKE:': 1, 'PORT_RETICLE_PIXELS:': 1},
     }[suite]
@@ -197,7 +247,7 @@ def test(product, work, evidence, suite):
         if len(rows) != count: raise AssertionError(f'{suite}: expected {count} {marker} receipts, got {rows}')
         receipts.append(f'{marker} ' + ' | '.join(rows))
     report_receipts(receipts)
-    frames = {'optics': ['optic_raise', 'optic_steady', 'optic_hip'], 'optics-iris': ['optic_raise', 'optic_steady', 'optic_hip'], 'pal': ['pal_remote_rifle', 'pal_remote_pistol'], 'controller': [], 'receiver': [], 'receiver-iris': [], 'platform': [], 'platform-zoomify': [], 'display': [
+    frames = {'optics': ['optic_raise', 'optic_steady', 'optic_hip'], 'optics-iris': ['optic_raise', 'optic_steady', 'optic_hip'], 'pal': ['pal_remote_rifle', 'pal_remote_pistol'], 'controller': [], 'receiver': [], 'receiver-iris': [], 'user-unbound-iris': [f'user_{m}_{k}' for m in ['iris', 'vanilla'] for k in ['empty', 'thermal', 'edge_on', 'edge_off']] + ['user_after_toggle'], 'platform': [], 'platform-zoomify': [], 'display': [
         f'{scene}_{state}' for scene in ['rack', 'case', 'corner', 'vanilla_quad', 'mesh'] for state in ['empty', 'ghost', 'placed']
     ] + [f'case_hint_{s}' for s in ['gun_hover','gun_interact','empty_hover','look_away','tick_39','tick_40_held','sneak_unlock','unlocked']]}[suite]
     if suite.startswith('platform'):
@@ -229,7 +279,7 @@ def test(product, work, evidence, suite):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--accept-test-eula', required=True, action='store_true')
-    parser.add_argument('--suite', required=True, choices=['display','pal','controller','optics','optics-iris','receiver','receiver-iris','platform','platform-zoomify'])
+    parser.add_argument('--suite', required=True, choices=['display','pal','controller','optics','optics-iris','receiver','receiver-iris','user-unbound-iris','platform','platform-zoomify'])
     parser.add_argument('jar', type=Path)
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='tacz-12111-player-') as tmp:
