@@ -64,8 +64,8 @@ final class ViewTuningSmoke {
             // 从渲染器使用的同一 FOV 动力学读取比例 k（世界已暂停，两者均已稳定）。
             float k = ctx.computeOnClient(mc -> {
                 double item = Math.tan(Math.toRadians(CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get()) / 2);
-                double world = Math.tan(Math.toRadians(CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2);
-                return item > 1.0e-6 ? (float) (world / item) : 1f;
+                double worldTan = Math.tan(Math.toRadians(CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2);
+                return item > 1.0e-6 ? (float) (worldTan / item) : 1f;
             });
             check(Math.abs(delta.x - .237 * k) < .035, "Muzzle X did not scale by fov ratio: delta=" + delta + ", k=" + k);
             check(Math.abs(delta.y + .113 * k) < .035, "Muzzle Y did not scale by fov ratio: delta=" + delta + ", k=" + k);
