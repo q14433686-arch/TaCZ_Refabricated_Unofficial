@@ -11,8 +11,14 @@
 
 > **非官方社区移植，不是 TaCZ 官方发布，也未获 TACZ Dev Team 审核或背书。**
 
+> [!IMPORTANT]
+> **26.1.2 线已于 2026-11-27 封档：除重大 bug 外，停止对 26.1.2 的支持。**
+> 此后本分支只接受重大缺陷修复（崩溃、存档损坏、无法启动或无法正常游玩的数据/安全问题）；
+> 常规 bug、平衡调整、新内容、可选模组适配不再受理，分支也不再跟进上游变更。
+> 存量 Release 继续可用；新内容请使用 [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) 分支。
+
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
- 的 1.2 内容基线，经已验收的 26.2 实现回移到 **Minecraft 26.1.2 Fabric**；本分支当前源码版本为 **`1.2.0+fabric.26.1.2.R1`**。
+ 的 1.2 内容基线，经已验收的 26.2 实现回移到 **Minecraft 26.1.2 Fabric**；本分支当前源码版本为 **`1.2.0+fabric.26.1.2.R1`**。该线已封档，仅重大 bug 修复（见上方公告）。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [问题反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)
@@ -27,7 +33,7 @@
 | Minecraft | 源码分支 |
 |---|---|
 | **26.2** | [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) |
-| **26.1.2** | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) |
+| **26.1.2**（已封档，仅重大 bug 修复） | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) |
 | **1.21.11** | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) |
 
 本页面对应 **26.1.2** 源码。源码版本不是 Release 公告。见[本线 1.2 回移与验收记录](docs/PORT_1_2_26_1_2.md)，不要用 26.2 的成品或画面代替本线回执。
@@ -243,6 +249,10 @@ gunpack.meta.json
 ## 9. 反馈
 
 请在[本仓库 Issues](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)提交：
+
+> **26.1.2 已封档**：针对本线的反馈只受理重大 bug（崩溃、存档损坏、无法启动或无法
+> 正常游玩）；常规问题建议先在 [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29)
+> 上验证并反馈，本线不再处理。重大 bug 报告请注明它在 26.1.2 与 26.2 上的复现差异。
 
 1. 完整 `latest.log` 或崩溃报告；
 2. Minecraft、Fabric Loader、Fabric API、Forge Config API Port 与本 mod 的完整版本；
