@@ -387,3 +387,17 @@ f1f47537分发45832954441最终 **13/14**：仅none上述重启夹具遗漏confi
 **`227c2e51` 回执**：compile-check [45914153194](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45914153194) SUCCESS；完整 build [45914153264](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45914153264) SUCCESS（mixin 完整性/注册、语言/mesh 键、方块掉落/持久化、版本一致性、remapped JAR 审计、专服 GameTest、客户端包导出/重载三次 fresh-world 均过）；remapped 分发/TCP [45914153168](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45914153168) **SUCCESS 14/14**。Checks 注解实际取得：原生 optics 与 optics-iris 都有 `PORT_BODY_MATERIAL`（含新增 clipped housing 断言）、`PORT_OPTIC valid=true background=private-world-copy`（RETURN 冻结后孔径周期有效）、`PORT_RETICLE_PIXELS` 墨线 95/恢复 95（发光 原生4/Iris33，controlNoise=0）、`PORT_RETICLE_CONTRACT`/`GROUPS`（含 TA31 housing 排除）、`PORT_PIP_MOTION`/`WIDE`、`PORT_THERMAL_PIXELS`/`POSE`/`MODE`。像素数与历史回执场景不同，不据此声称画质提升；本项只证明 housing 孔外化与 RETURN 冻结在两种成品环境未破坏既有光学门禁。孔内 housing 被丢弃这一新行为本身尚无专门的“孔内 housing 像素=0”正例，作为后续可补的测试缺口记录，不冒称已有像素证明。
 
 本次 full build 的开发 PackClientSmoke 三次 fresh-world 均成功；这**不**证明间歇性 configuration bootstrap 超时已修复（它从未在本轮被定位/修改）。R6 仍 ACTIVE。
+
+### R6 用户报告（Iris 1.10.7 + Sodium 0.8.12 + ComplementaryUnbound r5.8.1）复现与修复回执（2026-11-26）
+
+新增成品专项 `user-unbound-iris`：从 Modrinth 拉取用户同版本 Iris/Sodium/光影包（SHA-256 记入 `PORT_USER_MOD`/`PORT_USER_PACK`），默认包**未改动**的 `scope_xl50`（authored THERMAL_WHITE_HOT），先在光影下测热成像与镜片边缘，再经 Iris API 在开镜状态下关闭光影，继续 40 tick 并在原版路径重测。
+
+| 报告项 | 根因 | 修复 | 验证（distribution `45923280757`，job `140258824247`） |
+|---|---|---|---|
+| 关闭光影崩溃（`Missing elements in vertex: mc_midTexCoord, at_tangent`） | `clonePipeline` 缓存克隆时读 `getVertexFormat()`，在 Iris 渲染关卡期间被重定向为 Iris ENTITY 格式并烘焙进缓存管线 | `2cf84bcb`：经 `RenderPipelineVertexFormatAccessor` 复制声明格式（26.1.2 第 816 行存在同一潜在问题，未改供体分支） | `PORT_USER_SHADER_TOGGLE` 存活；26 条缓存管线无扩展格式 |
+| Iris 下热成像无效 | 1.21.11 独有的 TacZMeshLoader `ClientAttachmentIndexMixin` 在存在 geo 孪生模型时（xl50 有）换成 `TaczPolyMeshAttachmentModel`，只复制 isScope/isSight，**丢了 scopeLens**；`ScopeLensFrame.observe` 始终收到 null。26.1.2 无 mesh loader，故镜片移植未覆盖 | `5f35ec42`：主模型与 LOD poly 模型均复制 `setScopeLens` | 逐帧追踪由 `model=TaczPolyMeshAttachmentModel modelLens=null` 变为 `THERMAL_WHITE_HOT sameAsDisplay=true`；`PORT_USER_THERMAL iris white=4578 emptyWhite=0 centralHot=27270 heat.shaderPack=true passed`；原版 `white=4529 passed` |
+| 镜片边缘效果（畸变/暗角）缺失 | 同上：authored 镜片未到达渲染模型 | 同上 | 新径向门禁（测得目镜边界内）：Iris 边缘环/中心 = 0.921/1.000，原版 0.909/1.003，均 `passed` |
+
+说明：旧的全帧 darker/brighter 计数会把畸变移动棋盘格边缘与光影后处理混入，已改为径向环亮度比；阈值（边缘环 ≤0.96 且低于中心 0.03 以上，中心 0.97–1.03）依据实测与 authored 高斯宽度（约 0.054r）设定，Iris 与原版用同一门槛。诊断探针（`LensTrace*` mixin）只存在于验证源集，不进入产品 jar。
+
+边界：同提交 `build` 工作流失败于开发 `PackClientSmoke` 的 `Timeout loading world`（`PORT_WORLD_STALL`），即既有间歇性开放项，与本修复无关、未被修复。仅在 CI 的 Mesa/llvmpipe 软件渲染下验证，不声称其他光影包、Iris 版本或真实 GPU 的表现。R6 仍 ACTIVE，未改版本、未发布。

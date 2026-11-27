@@ -219,7 +219,7 @@ public final class UserEnvSmoke extends PlayerProbe {
             rings = sb.toString();
             // The authored vignette (scope_c79: strength 1, width 0.35) is a Gaussian of ~0.054r around the
             // cutout, so averaged over this 0.15r ring it darkens a few percent (vanilla reference: 0.929),
-            // while the centre must stay unchanged. Without the edge terms the rim ratio sits at 1.00 +/- 0.01.
+            // while the centre must stay unchanged. Rings the edge terms do not reach measured 0.98-1.02.
             if (!(ratio[3] <= .96 && ratio[3] < ratio[0] - .03)) edgeProblems.add("rim ring [0.85,1.0) not darkened: rim=" + ratio[3] + " centre=" + ratio[0]);
             if (!(ratio[0] >= .97 && ratio[0] <= 1.03)) edgeProblems.add("centre changed by edge terms: ratio=" + ratio[0]);
         }
