@@ -12,18 +12,20 @@
 
 ## 当前维护口径（2026-11-27）
 
-- 项目不再积极维护，所有版本均不承诺固定更新周期。
-- **26.1.2、26.2 封存**：保留源码和历史下载，不再安排更新或修复。
-- 仅 **Minecraft 1.21.11 与最新版本线**保留不定时维护；目前最新适配线为 **26.3**，不把尚未适配的新 MC 版本写成已支持，也不承诺响应、修复或适配时间。
-- 欢迎有意接手维护的维护者自行 **fork**、独立维护；原有代码／资源许可证和署名要求不变。
-- 本次更新的是仓库内文案及 Issue 模板，**不代表 CurseForge、Modrinth、MC 百科或 GitHub About 字段已在线更新**。旧文件的版本标签与历史 changelog 不因封存而删除。
+沿用 `26.2(main)` 的维护状态公告（`c97a9d6f`，PR #136）：
+
+- 项目整体从「积极维护」转为**不定时更新**。
+- 仅 **1.21.11**（旧 MC 版长期线）与 **26.3**（当前最新适配线）仍接收更新。
+- **26.1.2 与 26.2 已封存**：不再计划后续更新；已发布的 Release 继续可用，Issue 仍可提交，但不承诺修复。
+- 有意接手维护的开发者**可随意 fork**：代码 GPL-3.0，默认枪包资源 CC BY-NC-ND 4.0，fork 后再分发仍受原有许可约束。
+- 本次只同步仓库内文案与 Issue 模板，不代表外站或 GitHub About 已在线更新；历史下载、版本标签与 changelog 保留。
 
 ## GitHub 项目主页
 
 **About / Description**（仓库级简介，不更改默认分支）：
 
 ```text
-Unofficial Fabric port of TaCZ. Occasional updates only for MC 1.21.11 and the latest version line (currently ported: 26.3). 26.1.2/26.2 archived. Forks and independent continuation welcome under the existing licenses. 非官方移植，不定时更新；欢迎 fork 接手维护。
+Unofficial Fabric port of TaCZ. Irregular updates for MC 1.21.11 and 26.3 only; 26.1.2/26.2 archived. Existing releases remain available and issues stay open; no fixes promised. Forks welcome under existing licenses. 非官方移植，不定时更新；欢迎 fork。
 ```
 
 **Website** 建议填 [26.3 开发版介绍与版本选择](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3#readme)。默认分支 `26.2(main)` 的 README 属于 26.2；不要用 26.3 的版本表覆盖它。若在旧线首页引用，只需写：「[26.3 开发版](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3#readme)包含挂板、弹药库与账号准星；各 MC 版本单独构建，请按文件标注选择。」

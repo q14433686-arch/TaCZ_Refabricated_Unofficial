@@ -13,17 +13,19 @@ body:
         也可能是目录层级、资源路径、版本谓词或包本身不完整造成的。
         明确依赖 Arcana 的内容不受支持（Arcana 官方仅提供 1.20.1 Forge 文件）。
 
-        **维护公告**：本项目不再积极维护，仅保留 **1.21.11 与最新版本线**的不定时维护（当前最新适配线为 **26.3**）；**26.1.2、26.2 已封存**，不再安排更新或修复。兼容性请求不代表承诺支持或处理时间。欢迎有意接手维护的维护者自行 fork，原有许可证与署名要求不变。
-        **Maintenance:** Occasional updates only for 1.21.11 and the latest version line (currently ported: 26.3). 26.1.2/26.2 are archived. No compatibility or response deadlines; independent forks are welcome under the existing licenses.
+        **维护状态公告（2026-11-27）**：本项目整体从「积极维护」转为**不定时更新**。仅 **1.21.11 与 26.3** 仍接收更新；**26.1.2 与 26.2 已封存**，已发布的 Release 继续可用，Issue 仍可提交，但不承诺修复。有意接手维护的开发者可随意 fork（代码 GPL-3.0；默认枪包资源 CC BY-NC-ND 4.0，再分发仍受约束）。
+        **Maintenance:** Updates are irregular. Only 1.21.11 and 26.3 still receive updates; 26.1.2/26.2 are archived. Existing releases remain available and issues stay open, but fixes are not promised. Forks are welcome under the existing code and asset licenses.
 
   - type: dropdown
     id: mc_version
     attributes:
       label: Minecraft 版本
-      description: 仅列出保留不定时维护的版本；26.1.2、26.2 已封存。
+      description: 1.21.11 与 26.3 不定时更新；26.1.2、26.2 已封存，仍可提交 Issue，但不承诺修复。
       options:
         - "26.3"
         - "1.21.11"
+        - "26.2"
+        - "26.1.2"
     validations:
       required: true
 
