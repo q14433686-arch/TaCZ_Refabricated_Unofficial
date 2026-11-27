@@ -21,6 +21,50 @@ import java.util.Map;
 public final class UserEnvReadback {
     private UserEnvReadback() {}
 
+    // ---- Diagnostic per-frame trace (probe mixins LensTrace*); inert unless enabled. ----
+    private static volatile boolean tracing;
+    private static final StringBuilder TRACE = new StringBuilder();
+    private static int traceFrames;
+
+    public static void startTrace() { synchronized (TRACE) { TRACE.setLength(0); traceFrames = 0; tracing = true; } }
+    public static String stopTrace() { synchronized (TRACE) { tracing = false; return TRACE.toString(); } }
+    public static String mode(Object lens) {
+        return lens instanceof com.tacz.guns.client.resource.pojo.display.attachment.ScopeLensConfig c ? String.valueOf(c.getVisionMode()) : "null";
+    }
+    public static void trace(String s) {
+        if (!tracing) return;
+        synchronized (TRACE) { if (TRACE.length() < 3000) TRACE.append(s).append(' '); }
+    }
+    public static void traceFrame() {
+        if (!tracing) return;
+        trace("| F" + (++traceFrames) + " exp=" + mode(ScopeLensFrame.expected) + " needsHeat=" + ScopeLensFrame.needsHeat());
+    }
+    public static void traceFrameHead(net.minecraft.client.Minecraft mc) {
+        if (!tracing || mc.player == null) return;
+        trace("| pre obs=" + mode(field(ScopeLensFrame.class, "observed")) + " aim=" + com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator
+                .fromLocalPlayer(mc.player).getClientAimingProgress(mc.getDeltaTracker().getGameTimeDeltaPartialTick(false)));
+    }
+    public static void traceOcular(Object lens) {
+        trace("oc=" + mode(lens) + "/proj=" + (ScopeProjection.current() != null) + "/measured=" + field(ScopeLensFrame.class, "measured") + "/observed=" + mode(field(ScopeLensFrame.class, "observed")));
+    }
+    public static void traceHeat() {
+        trace("heat<ready=" + (ScopeThermalCapture.current() != null) + "/failed=" + field(ScopeThermalCapture.class, "failed")
+                + "/models=" + field(ScopeThermalCapture.class, "submittedModels"));
+    }
+    public static void traceComposite(String where) {
+        trace(where + "(cur=" + mode(ScopeLensFrame.current()) + "/scene=" + field(ScopePipRenderState.class, "sceneCaptured")
+                + "/mask=" + ScopeDepthCopyState.hasMaskCycleThisFrame() + ")");
+    }
+
+    /** Whether the model that renders the optic still carries the display's authored lens. */
+    public static String modelLens(com.tacz.guns.client.resource.index.ClientAttachmentIndex index) {
+        var model = index.getAttachmentModel();
+        Object lens = field(com.tacz.guns.client.model.BedrockAttachmentModel.class, model, "scopeLens");
+        return "modelLens=" + mode(lens) + " sameAsDisplay=" + (lens == index.getScopeLens())
+                + " isScope=" + field(com.tacz.guns.client.model.BedrockAttachmentModel.class, model, "isScope")
+                + " isSight=" + field(com.tacz.guns.client.model.BedrockAttachmentModel.class, model, "isSight");
+    }
+
     /** Every gate between an authored lens and a composited pixel, so a failure names its stage. */
     public static String state() {
         var s = new StringBuilder();

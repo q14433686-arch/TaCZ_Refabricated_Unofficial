@@ -10,7 +10,10 @@
     "AdsForegroundObserver",
     "ReceiverLightObserver",
     "ReceiverViewObserver",
-    "ReceiverSlotObserver"
+    "ReceiverSlotObserver",
+    "LensTraceFrame",
+    "LensTraceHeat",
+    "LensTraceComposite"
   ],
   "injectors": {
     "defaultRequire": 1

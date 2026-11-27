@@ -133,6 +133,11 @@ public final class UserEnvSmoke extends PlayerProbe {
         var empty = ThermalFrames.frame(ctx, "user_" + label + "_empty");
         ThermalFrames.summon(ctx, world, base, "slime", "Size:2,NoAI:1b,NoGravity:1b,Silent:1b");
         ctx.waitTicks(6);
+        ctx.runOnClient(mc -> UserEnvReadback.startTrace());
+        ctx.waitTicks(2);
+        String trace = ctx.computeOnClient(mc -> UserEnvReadback.stopTrace()
+                + " || " + UserEnvReadback.modelLens(TimelessAPI.getClientAttachmentIndex(OPTIC).orElseThrow()));
+        System.out.println("PORT_USER_TRACE: " + label + " " + trace);
         String state = ctx.computeOnClient(mc -> UserEnvReadback.state());
         GunMod.LOGGER.info("USER_DIAG {} {}", label, state);
         var hot = ThermalFrames.frame(ctx, "user_" + label + "_thermal");
