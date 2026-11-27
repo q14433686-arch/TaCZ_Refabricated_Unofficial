@@ -5,21 +5,22 @@
 [![CurseForge Versions](https://cf.way2muchnoise.eu/versions/1627909.svg)](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated/files)
 [![GitHub Downloads](https://img.shields.io/github/downloads/q14433686-arch/TaCZ_Refabricated_Unofficial/total?logo=github&label=GitHub%20Downloads)](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 
-> **Unofficial Fabric port of TaCZ (Timeless & Classics Guns: Zero) for Minecraft 26.2,
-> 26.1.2 and 1.21.11, with an LRTactical compatibility framework. Not an official TaCZ
+> **Unofficial Fabric port of TaCZ (Timeless & Classics Guns: Zero) for Minecraft 26.3,
+> 26.2, 26.1.2 and 1.21.11, with an LRTactical compatibility framework. Not an official TaCZ
 > release; not reviewed or endorsed by the TACZ Dev Team. GPL-3.0.**
 
 > **非官方社区移植，不是 TaCZ 官方发布，也未获 TACZ Dev Team 审核或背书。**
 
-> [!IMPORTANT]
-> **维护状态调整（2026-11-27 起）：本仓库全部版本线由积极维护转为不定时更新，不再有积极维护期。**
-> - **26.1.2：封档** —— 除重大 bug（崩溃、存档损坏、无法启动或无法正常游玩的数据/安全问题）外停止支持；常规 bug、平衡调整、新内容、可选模组适配不再受理，不再跟进上游变更。
-> - **26.2：封存** —— 功能冻结、不再积极开发；仅随「不定时更新」继续收到少量修复。
-> - **保留维护**：仅 **1.21.11** 与**当前最新版线（现为 [26.3](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3)）**，但同样只是不定时更新。
-> - 存量 Release 继续可用；**有意接手维护本项目的开发者可随意 fork。**
+> **维护状态公告 / Maintenance status（2026-11-27）**：本项目整体从「积极维护」转为**不定时更新**（no longer actively maintained; updates are irregular）。
+>
+> - 仍接收更新的只有两条分支：**`1.21.11`**（旧 MC 版长期线）与 **`26.3`**（当前最新 MC 版）；
+> - **`26.1.2` 与 `26.2` 已封存（archived）**：不再计划后续更新。已发布的 Release 继续可用，Issue 仍可提交，但不承诺修复；
+> - 有意接手维护的开发者**可随意 fork**：代码为 GPL-3.0；默认枪包资源为 CC BY-NC-ND 4.0，fork 后再分发仍受其约束（见 [`LICENSES.md`](LICENSES.md)）。
+>
+> 本分支（26.1.2）属上述**已封存**分支；以下说明保持冻结，供仍在使用该线的玩家查阅。
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
- 的 1.2 内容基线，经已验收的 26.2 实现回移到 **Minecraft 26.1.2 Fabric**；本分支当前源码版本为 **`1.2.0+fabric.26.1.2.R1`**。该线已封档，仅重大 bug 修复（见上方公告）。
+ 的 1.2 内容基线，经已验收的 26.2 实现回移到 **Minecraft 26.1.2 Fabric**；本分支当前源码版本为 **`1.2.0+fabric.26.1.2.R1`**。
 
 [下载构建](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 · [问题反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)
@@ -31,14 +32,14 @@
 
 ### 选择你的 Minecraft 版本 / Pick your Minecraft version
 
-| Minecraft | 源码分支 |
-|---|---|
-| **26.2**（封存，不定时更新） | [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) |
-| **26.1.2**（已封档，仅重大 bug 修复） | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) |
-| **1.21.11**（不定时更新） | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) |
-| **26.3**（当前最新版线，不定时更新） | [`26.3`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3) |
+| Minecraft | 状态 | 源码分支 |
+|---|---|---|
+| **26.3** | 维护中 · 不定时更新 | [`26.3`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3) |
+| **1.21.11** | 维护中 · 不定时更新 | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) |
+| **26.1.2（本分支）** | **封存** | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) |
+| **26.2** | **封存** | [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) |
 
-本页面对应 **26.1.2** 源码。源码版本不是 Release 公告。见[本线 1.2 回移与验收记录](docs/PORT_1_2_26_1_2.md)，不要用 26.2 的成品或画面代替本线回执。
+本页面对应 **26.1.2** 分支（已封存）。源码版本不是 Release 公告。见[本线 1.2 回移与验收记录](docs/PORT_1_2_26_1_2.md)，不要用 26.2 的成品或画面代替本线回执。
 
 ---
 
@@ -251,12 +252,6 @@ gunpack.meta.json
 ## 9. 反馈
 
 请在[本仓库 Issues](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)提交：
-
-> **维护状态（2026-11-27 起）**：全部版本线由积极维护转为不定时更新；**26.1.2 已封档**，
-> 针对本线的反馈只受理重大 bug（崩溃、存档损坏、无法启动或无法正常游玩），本线不再
-> 处理常规问题；26.2 已封存。常规问题建议在当前最新版线
-> [`26.3`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3)
-> 上验证并反馈。重大 bug 报告请注明它在 26.1.2 与 26.3 上的复现差异。
 
 1. 完整 `latest.log` 或崩溃报告；
 2. Minecraft、Fabric Loader、Fabric API、Forge Config API Port 与本 mod 的完整版本；
