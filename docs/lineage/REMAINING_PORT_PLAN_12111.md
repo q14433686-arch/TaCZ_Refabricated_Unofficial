@@ -383,3 +383,7 @@ f1f47537分发45832954441最终 **13/14**：仅none上述重启夹具遗漏confi
 - `PORT_BODY_MATERIAL` 合约新增：housing 必须成为可识别的 clipped body、按纹理缓存、发光段取得独立 clipped 变体且 body/illuminated/body 顺序不变。
 
 验收边界：本地无 JDK/Loom 缓存，`verify_mixin_targets.py`/`verify_shader_imports.py` 无法本地运行；以 push CI 的 compile-check、完整 build（含 mixin 完整性静态检查）与 14 项分发矩阵（原生/Iris optics 像素门禁与 PORT_BODY_MATERIAL）为准。**CI 通过前不标 DONE；R6 仍 ACTIVE**，开发 configuration bootstrap 间歇超时仍为独立开放项。未改版本、未发布。
+
+**`227c2e51` 回执**：compile-check [45914153194](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45914153194) SUCCESS；完整 build [45914153264](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45914153264) SUCCESS（mixin 完整性/注册、语言/mesh 键、方块掉落/持久化、版本一致性、remapped JAR 审计、专服 GameTest、客户端包导出/重载三次 fresh-world 均过）；remapped 分发/TCP [45914153168](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/actions/runs/45914153168) **SUCCESS 14/14**。Checks 注解实际取得：原生 optics 与 optics-iris 都有 `PORT_BODY_MATERIAL`（含新增 clipped housing 断言）、`PORT_OPTIC valid=true background=private-world-copy`（RETURN 冻结后孔径周期有效）、`PORT_RETICLE_PIXELS` 墨线 95/恢复 95（发光 原生4/Iris33，controlNoise=0）、`PORT_RETICLE_CONTRACT`/`GROUPS`（含 TA31 housing 排除）、`PORT_PIP_MOTION`/`WIDE`、`PORT_THERMAL_PIXELS`/`POSE`/`MODE`。像素数与历史回执场景不同，不据此声称画质提升；本项只证明 housing 孔外化与 RETURN 冻结在两种成品环境未破坏既有光学门禁。孔内 housing 被丢弃这一新行为本身尚无专门的“孔内 housing 像素=0”正例，作为后续可补的测试缺口记录，不冒称已有像素证明。
+
+本次 full build 的开发 PackClientSmoke 三次 fresh-world 均成功；这**不**证明间歇性 configuration bootstrap 超时已修复（它从未在本轮被定位/修改）。R6 仍 ACTIVE。
