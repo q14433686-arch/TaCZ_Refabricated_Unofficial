@@ -7,17 +7,12 @@ import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 /**
  * 「此刻是否正在执行 Screen 的提取（extract）阶段」的追踪器。
  *
- * <h2>为什么不能用 {@code minecraft.screen != null} 或
- * {@code RenderDistance.isGuiRender()}</h2>
+ * <h2>为什么不能用 {@code minecraft.screen != null}</h2>
  *
- * <p>世界提取与 GUI 提取在同一帧内是<b>分时</b>进行的。「菜单开着」
- * （{@code screen != null}）或「最近 100ms 内画过 GUI」（{@code
- * RenderDistance.isGuiRender()} 的时间戳窗口）这两种判定在<b>世界提取阶段</b>
- * 也为 true —— 拿它们做世界 GPU 路径的闸门，等于玩家一开背包，地上/别人手里
- * 的全部 mesh 枪瞬间跌回 collector 重路径。这正是上游 TML
- * {@code ScreenRenderTracker} 注释里记载的实机事故（菜单一开全场景掉帧），
- * 上游的解法就是本类的 1.21.1 版：用 Fabric 的 {@link ScreenEvents} 精确框住
- * Screen 渲染窗口。</p>
+ * <p>菜单开着不代表此刻正在提取 GUI；世界提取也会在菜单打开时运行。
+ * 用 Fabric 的 {@link ScreenEvents} 精确框住 Screen 提取窗口。
+ * {@code RenderDistance.isGuiRender()} 现在把本窗口与延迟 PIP 物品绘制的
+ * 显式作用域合并，不再使用会泄漏到世界阶段的 100ms 时间窗。</p>
  *
  * <p>26.2 差异：Fabric API 26.2 的 Screen 事件把 render 窗口改成了 extract
  * 窗口（{@code beforeExtract}/{@code afterExtract}，对照 fabric-screen-api-v1

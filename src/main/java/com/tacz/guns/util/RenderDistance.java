@@ -1,6 +1,7 @@
 package com.tacz.guns.util;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import cn.sh1rocu.tacz.compat.meshloader.render.ScreenRenderTracker;
 import com.tacz.guns.config.client.RenderConfig;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -8,7 +9,7 @@ import org.joml.Matrix4f;
 
 @Environment(EnvType.CLIENT)
 public final class RenderDistance {
-    private static long GUI_RENDER_TIMESTAMP = -1L;
+    private static int screenItemDrawDepth;
 
     public static boolean inRenderHighPolyModelDistance(PoseStack poseStack) {
         if (isGuiRender()) {
@@ -23,19 +24,19 @@ public final class RenderDistance {
         return viewDistance < distance * distance;
     }
 
-    public static void markGuiRenderTimestamp() {
-        GUI_RENDER_TIMESTAMP = System.currentTimeMillis();
+    /** Render-thread-only scope for deferred screen item draws (including PIP). */
+    public static void beginScreenItemDraw() {
+        ++screenItemDrawDepth;
     }
 
-    /**
-     * 最近 100ms 内是否有 GUI（枪匠桌等）标记过渲染时间戳。
-     *
-     * <p>公开给 meshloader 的近距离全模豁免用：FIXED/HEAD 语境既出现在
-     * 世界（展示台雕像、物品展示框、背枪）也出现在 GUI 预览（枪匠桌界面），
-     * 只有非 GUI 的那一侧才允许按相机距离豁免顶点预算——否则高模会被
-     * 全量画进 GUI 图标。</p>
-     */
+    public static void endScreenItemDraw() {
+        if (screenItemDrawDepth > 0) {
+            --screenItemDrawDepth;
+        }
+    }
+
+    /** True only inside screen extraction or an explicitly scoped deferred preview draw. */
     public static boolean isGuiRender() {
-        return System.currentTimeMillis() - GUI_RENDER_TIMESTAMP < 100;
+        return screenItemDrawDepth > 0 || ScreenRenderTracker.isExtractingScreen();
     }
 }

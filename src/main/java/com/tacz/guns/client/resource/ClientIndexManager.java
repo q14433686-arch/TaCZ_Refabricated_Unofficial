@@ -32,6 +32,7 @@ import java.util.Set;
 @Environment(EnvType.CLIENT)
 public class ClientIndexManager {
     private static final int HOTBAR_SLOT_COUNT = 9;
+    private static final Set<Identifier> WARNED_MISSING_GUN_DISPLAYS = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     public static final Map<Identifier, GunDisplayInstance> GUN_DISPLAY = Maps.newHashMap();
     public static final Map<Identifier, ClientGunIndex> GUN_INDEX = Maps.newHashMap();
@@ -50,6 +51,7 @@ public class ClientIndexManager {
         GUN_DISPLAY.values().forEach(GunDisplayInstance::retireModels);
         ++revision;
         GUN_DISPLAY.clear();
+        WARNED_MISSING_GUN_DISPLAYS.clear();
         GUN_INDEX.clear();
         AMMO_INDEX.clear();
         ATTACHMENT_INDEX.clear();
@@ -117,7 +119,10 @@ public class ClientIndexManager {
         if (instance != null) {
             return instance;
         }
-        GunMod.LOGGER.warn("{} display instance is missing from cache", displayId);
+        if (WARNED_MISSING_GUN_DISPLAYS.add(displayId)) {
+            GunMod.LOGGER.warn("Gun display {} is missing; expected assets/{}/display/guns/{}.json",
+                    displayId, displayId.getNamespace(), displayId.getPath());
+        }
         return null;
     }
 

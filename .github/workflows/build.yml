@@ -75,6 +75,13 @@ jobs:
           sys.exit(1 if bad else 0)
           EOF
 
+      - name: Upstream 1.2.0 text alignment (26.3)
+        run: |
+          git fetch --no-tags --depth=1 https://github.com/Sh1roCu/TACZ-Refabricated.git 356bdf9d48f2225bac6ceb56adc5576a418517a8
+          python3 scripts/test_text_alignment.py
+          python3 scripts/align_config_text.py
+          python3 scripts/port_upstream_lang.py --check
+
       - name: Verify pinned 1.2.0 imports and default-pack references
         run: python3 scripts/verify_120_resources.py
 

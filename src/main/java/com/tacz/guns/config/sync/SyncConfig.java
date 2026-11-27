@@ -40,8 +40,8 @@ public class SyncConfig {
     public static void init(ForgeConfigSpec.Builder builder) {
         interactKey(builder);
         builder.push("gun_pegboard");
-        GUN_PEGBOARD_WHITELIST_ITEMS = builder.comment("Additional item ids permitted on display walls").define("GunPegboardWhitelistItems", Lists.newArrayList());
-        GUN_PEGBOARD_BLACKLIST_ITEMS = builder.comment("Denied display item ids (overrides whitelist and built-ins)").define("GunPegboardBlacklistItems", Lists.newArrayList());
+        GUN_PEGBOARD_WHITELIST_ITEMS = builder.comment("Extra item ids allowed on the gun pegboard, in addition to TACZ guns, attachments, ammo, and ammo boxes").define("GunPegboardWhitelistItems", Lists.newArrayList());
+        GUN_PEGBOARD_BLACKLIST_ITEMS = builder.comment("Item ids denied on the gun pegboard. This list takes priority over the default allowed TACZ item types and whitelist").define("GunPegboardBlacklistItems", Lists.newArrayList());
         builder.pop();
         baseMultiplier(builder);
         misc(builder);

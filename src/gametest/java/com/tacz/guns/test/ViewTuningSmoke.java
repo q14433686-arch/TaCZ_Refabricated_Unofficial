@@ -136,7 +136,13 @@ final class ViewTuningSmoke {
             ctx.waitFor(mc -> ScopePipRenderer.frameNumber() >= editedFrame+2);
             BufferedImage moved = frame(ctx, "moved");
             Vector3f delta = muzzle(ctx).sub(before);
-            check(Math.abs(delta.x - .237) < .035 && Math.abs(delta.y + .113) < .035 && delta.z < -.08f,
+            double k = ctx.computeOnClient(mc -> {
+                double itemTan = Math.tan(Math.toRadians(com.tacz.guns.client.event.CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get()) / 2);
+                double worldTan = Math.tan(Math.toRadians(com.tacz.guns.client.event.CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2);
+                return itemTan <= 1e-6 ? 1d : worldTan / itemTan;
+            });
+            check(Math.abs(delta.x - .237 * k) < .035 && Math.abs(delta.y + .113 * k) < .035
+                            && Math.abs(delta.z + .330) < .035,
                     "Actual hand muzzle did not follow right/down/away in paused editor: " + delta);
             int handPixels = changedInHand(idle, moved);
             check(handPixels > 150, "Only the editor changed, not the held gun: " + handPixels);

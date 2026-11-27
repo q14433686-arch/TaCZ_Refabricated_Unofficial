@@ -14,8 +14,9 @@ import net.minecraft.world.item.ItemStack;
 
 public class InnerThirdPersonManager {
     public static void setRotationAnglesHead(LivingEntity entityIn, ModelPart rightArm, ModelPart leftArm, ModelPart body, ModelPart head, float limbSwingAmount) {
-        // 游戏暂停时不进行动画计算，否则会 StackOverflow
-        if (Minecraft.getInstance().isPaused()) {
+        // PAL still updates its layers here; keep its pause guard against recursive updates.
+        // Without PAL the vanilla gun-hold pose must also be applied in paused frames.
+        if (Minecraft.getInstance().isPaused() && PlayerAnimatorCompat.isInstalled()) {
             return;
         }
         if (PlayerAnimatorCompat.updatePlayerLayers(entityIn)) return;

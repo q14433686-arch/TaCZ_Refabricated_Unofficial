@@ -274,9 +274,8 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
      *       只能按语境挡；GUI 的 pose 是正交投影，进世界表必画错；</li>
      *   <li>{@code FIXED}/{@code HEAD} 是双面语境（世界展示框/雕像 vs 枪匠桌
      *       GUI 预览）：Screen 内的预览已被 {@code ScreenRenderTracker} 拦，
-     *       这里再按 {@code RenderDistance.isGuiRender()}（枪匠桌标记的 100ms
-     *       时间戳）补一道 —— 代价只是「枪匠桌开着的瞬间世界雕像回退 collector」，
-     *       比反过来（GUI 预览泄漏进世界表）便宜得多；</li>
+     *       这里再按 {@code RenderDistance.isGuiRender()} 拦住 Screen 提取之后
+     *       才提交的 PIP 预览；显式绘制作用域不会泄漏到后续世界提交；</li>
      *   <li>第一人称语境永远轮不到这里 —— 手部 pass 里
      *       {@code shouldSubmitGpuWorld} 的 isInHandPass 闸门直接拒收。</li>
      * </ul>

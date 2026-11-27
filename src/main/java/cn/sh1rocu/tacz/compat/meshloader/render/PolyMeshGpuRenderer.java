@@ -336,10 +336,9 @@ public final class PolyMeshGpuRenderer {
      *   <li><b>不在</b> Screen 提取窗口 —— {@link ScreenRenderTracker} 精确框住
      *       {@code Screen} 的 extract 阶段，背包人偶/枪匠桌预览这类 GUI 内嵌 3D
      *       的 submit 全落在这个窗口里；它们的 pose 是 GUI 投影，落进世界表就是
-     *       关 PR 的「枪画进世界」事故。刻意<b>不用</b>
-     *       {@code RenderDistance.isGuiRender()}：那是个 100ms 时间戳窗口，
-     *       开着菜单时世界提取阶段也会命中，等于「一开背包全场景 mesh 枪
-     *       跌回 collector」—— 上游 TML 注释里记载过的同款实机事故；</li>
+     *       关 PR 的「枪画进世界」事故。这里保留 Screen 的精确提取窗口；
+     *       延迟 PIP 预览另由物品语境的 {@code RenderDistance.isGuiRender()}
+     *       显式作用域拦截，不再依赖会影响世界提取的 100ms 时间窗；</li>
      *   <li><b>允许</b>镜内那一遍（PIP 二次渲染）—— 这条闸门在 2026-09-02 被
      *       <b>实机日志推翻后删除</b>。原以为「世界提交只发生在 extract 阶段、
      *       镜内那遍只是重画同一批节点」，但用户实机 latest.log 打出了本类自己的

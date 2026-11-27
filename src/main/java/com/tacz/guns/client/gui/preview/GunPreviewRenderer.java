@@ -3,6 +3,7 @@ package com.tacz.guns.client.gui.preview;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import com.tacz.guns.util.RenderDistance;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.render.pip.PictureInPictureRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -47,16 +48,21 @@ public class GunPreviewRenderer extends PictureInPictureRenderer<GunPreviewRende
 
     @Override
     protected void renderToTexture(GunPreviewRenderState state, PoseStack poseStack, SubmitNodeCollector collector) {
-        Minecraft.getInstance().gameRenderer.lighting().setupFor(Lighting.Entry.ITEMS_3D);
-        // 把原点从「预览框中心」移到上游的模型原点。
-        // 此刻 1 单位 = state.scale() 个 GUI 像素（prepare 里 scale(guiScale * scale)），
-        // 且 y 轴方向仍与 GUI 一致（向下为正），所以直接按 GUI 像素除以 scale 即可。
-        // 必须在下面的翻转之前做，否则 y 的符号会反。
-        poseStack.translate(state.offsetX() / state.scale(), state.offsetY() / state.scale(), 0.0F);
-        poseStack.scale(1.0F, -1.0F, -1.0F);
-        poseStack.rotate(Axis.XP.rotationDegrees(state.pitch()));
-        poseStack.rotate(Axis.YP.rotationDegrees(state.yaw()));
-        state.item().submit(poseStack, collector, 15728880, OverlayTexture.NO_OVERLAY, 0);
+        RenderDistance.beginScreenItemDraw();
+        try {
+            Minecraft.getInstance().gameRenderer.lighting().setupFor(Lighting.Entry.ITEMS_3D);
+            // 把原点从「预览框中心」移到上游的模型原点。
+            // 此刻 1 单位 = state.scale() 个 GUI 像素（prepare 里 scale(guiScale * scale)），
+            // 且 y 轴方向仍与 GUI 一致（向下为正），所以直接按 GUI 像素除以 scale 即可。
+            // 必须在下面的翻转之前做，否则 y 的符号会反。
+            poseStack.translate(state.offsetX() / state.scale(), state.offsetY() / state.scale(), 0.0F);
+            poseStack.scale(1.0F, -1.0F, -1.0F);
+            poseStack.rotate(Axis.XP.rotationDegrees(state.pitch()));
+            poseStack.rotate(Axis.YP.rotationDegrees(state.yaw()));
+            state.item().submit(poseStack, collector, 15728880, OverlayTexture.NO_OVERLAY, 0);
+        } finally {
+            RenderDistance.endScreenItemDraw();
+        }
     }
 
     /**

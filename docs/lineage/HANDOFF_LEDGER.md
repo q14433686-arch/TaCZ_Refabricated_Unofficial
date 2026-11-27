@@ -32,3 +32,4 @@
 | 19 | [26.3 → 26.2 执行单](26.3-backports/26.2.md) | refab `26.3` → `26.2(main)` | **OPEN** | 接收基线 `f9ae55a`；源码资源树、Blaze3D 目镜掩码、REI .820。 |
 | 20 | [26.3 → 26.1.2 执行单](26.3-backports/26.1.2.md) | refab `26.3` → `26.1.2` | **OPEN** | 接收基线 `569869f`；bundle 兜底、深度孔径、REI .819。 |
 | 21 | [26.3 → 1.21.11 执行单](26.3-backports/1.21.11.md) | refab `26.3` → `1.21.11` | **OPEN** | 接收基线 `aac343a`；Java 21、remap/refmap、发布 JAR 运行门禁。 |
+| 22 | [26.X 补漏施工单](GAPFILL_26X_FROM_12111_UPSTREAM120.md) · [26.3 执行回执](GAPFILL_26_3_EXECUTION.md) | refab 1.21.11 → refab 26.3 | **CLAIMED（26.3，已落码待编译／运行）** | 2026-11-27 接收 `c5d536b7b`；C1–C8、20 条配置注释及语言／工具已改，保留 4 条本线配置说明；离线检查通过，沙箱无 Java，JUnit／成品专项未跑，不标 DONE。其它 26.X 分支未改。 |
