@@ -400,4 +400,4 @@ f1f47537分发45832954441最终 **13/14**：仅none上述重启夹具遗漏confi
 
 说明：旧的全帧 darker/brighter 计数会把畸变移动棋盘格边缘与光影后处理混入，已改为径向环亮度比；阈值（边缘环 ≤0.96 且低于中心 0.03 以上，中心 0.97–1.03）依据实测与 authored 高斯宽度（约 0.054r）设定，Iris 与原版用同一门槛。诊断探针（`LensTrace*` mixin）只存在于验证源集，不进入产品 jar。
 
-边界：同提交 `build` 工作流失败于开发 `PackClientSmoke` 的 `Timeout loading world`（`PORT_WORLD_STALL`），即既有间歇性开放项，与本修复无关、未被修复。仅在 CI 的 Mesa/llvmpipe 软件渲染下验证，不声称其他光影包、Iris 版本或真实 GPU 的表现。R6 仍 ACTIVE，未改版本、未发布。
+边界：同提交 `build` 工作流失败于开发 `PackClientSmoke` 的 `Timeout loading world`（`PORT_WORLD_STALL`），即既有间歇性开放项，与本修复无关、未被修复。仅在 CI 的 Mesa 软件渲染（`LIBGL_ALWAYS_SOFTWARE=true`）下验证，不声称其他光影包、Iris 版本或真实 GPU 的表现。R6 仍 ACTIVE，未改版本、未发布。
