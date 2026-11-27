@@ -6,6 +6,10 @@
 [![CurseForge Versions](https://cf.way2muchnoise.eu/versions/1627909.svg)](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated/files)
 [![GitHub Downloads](https://img.shields.io/github/downloads/q14433686-arch/TaCZ_Refabricated_Unofficial/total?logo=github&label=GitHub%20Downloads)](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 
+> **维护状态：26.1.2 已封存。** 自 2026-11-27 起，26.1.2 与 26.2 不再安排更新或修复，现有源码和发布文件保留供查阅。本项目不再积极维护；仅保留 Minecraft **1.21.11 与最新版本线**的不定时维护，目前最新适配线为 **26.3**，不承诺更新、响应或修复时间。有意接手维护的维护者欢迎自行 **fork**，并遵守代码与资源原有的[许可证](LICENSES.md)及署名要求。
+>
+> **Archived:** No further 26.1.2 or 26.2 updates or fixes are planned. Only 1.21.11 and the latest version line (currently ported: 26.3) remain maintenance targets, with occasional updates and no schedule. Forks and independent continuation are welcome under the existing licenses.
+>
 > **非官方社区移植，不是 TaCZ 官方发布，也未获 TACZ Dev Team 审核或背书。**
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)

@@ -4,6 +4,16 @@
 [![CurseForge Versions](https://cf.way2muchnoise.eu/versions/1627909.svg)](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated/files)
 [![GitHub Downloads](https://img.shields.io/github/downloads/q14433686-arch/TaCZ_Refabricated_Unofficial/total?logo=github&label=GitHub%20Downloads)](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 
+### 维护状态与接手维护 / Maintenance status
+
+**自 2026-11-27 起，本项目不再积极维护，所有版本均不承诺固定更新周期。**
+
+- **26.1.2、26.2 已封存**：保留现有源码与已发布文件供查阅，不再安排后续更新或修复。
+- **仅保留 Minecraft 1.21.11 与最新版本线的维护**，均为**不定时更新**，不承诺问题响应、修复或新版本适配的时间。目前本项目最新适配线为 **26.3**；这不代表尚未适配的 Minecraft 版本已获支持。
+- **欢迎接手维护**：如果你有意继续维护本项目，欢迎自行 **fork** 并独立维护，无需等待原维护者恢复更新。请保留署名并遵守代码及各项资源原有的[许可证](LICENSES.md)；此邀请不改变第三方资源的授权范围。
+
+> **Maintenance notice:** This project is no longer actively maintained. All versions have no regular update schedule. **26.1.2 and 26.2 are archived**, with no further updates or fixes planned. Only **Minecraft 1.21.11 and the latest version line** remain maintenance targets, with **occasional updates only** and no response, fix or porting deadlines. The latest port currently available in this repository is **26.3**; unported Minecraft releases are not supported. Anyone interested in continuing the project is welcome to **fork and maintain it independently**, subject to the existing code and asset licenses and attribution requirements.
+
 > **Unofficial Fabric port of TaCZ (Timeless & Classics Guns: Zero).** Craft at gunsmithing tables, fit attachments and load community gun packs. In the **26.3 development build**, refit the QR-24, fill an ammo cabinet, preview a gun on your pegboard or set a reticle for just one gun. Optional muzzle and explosion flashes light nearby walls. [In-game gallery](docs/SCREENSHOTS_26_3.md). The other Minecraft versions have separate builds; see the table below. Not an official TaCZ release.
 
 这是一款把 TaCZ 带到新版 Minecraft 的**非官方 Fabric 移植**，基于 [TACZ Dev Team 的原作](https://github.com/MCModderAnchor/TACZ)和 [Sh1roCu 的 Fabric 移植](https://github.com/Sh1roCu/TACZ-Refabricated)。随包提供默认枪包、内置 TML 高模加载和部分 LRTactical 兼容；代码与美术的[许可不同](LICENSES.md)。本项目未获原作者审核或背书，遇到移植问题请到[本仓库反馈](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/issues)。
@@ -34,12 +44,12 @@
 
 ### 选择你的 Minecraft 版本 / Pick your Minecraft version
 
-| Minecraft | Java | 源码分支 | 已发布的文件（不是本轮测试包） |
-|---|---|---|---|
-| **26.3** | 25 | [`26.3`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3) | [1.1.8 R1-hotfix3（旧版）](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.3%E7%9A%84mod%E6%96%87%E4%BB%B6_R1_HOTFIX-3) |
-| **26.2** | 25 | [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) | [R3-hotfix4](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.2%E7%9A%84mod%E6%96%87%E4%BB%B6_R3_HOTFIX-4) |
-| **26.1.2** | 25 | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) | [R3-hotfix4](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.1.2%E7%9A%84mod%E6%96%87%E4%BB%B6_R3_HOTFIX-4) |
-| **1.21.11** | 21 | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) | [R3-hotfix4](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/1.21.11%E7%9A%84mod%E6%96%87%E4%BB%B6_R3_HOTFIX-4) |
+| Minecraft | Java | 源码分支 | 已发布的文件（不是本轮测试包） | 维护状态 |
+|---|---|---|---|---|
+| **26.3** | 25 | [`26.3`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3) | [1.1.8 R1-hotfix3（旧版）](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.3%E7%9A%84mod%E6%96%87%E4%BB%B6_R1_HOTFIX-3) | 不定时更新（当前最新适配线） |
+| **26.2** | 25 | [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) | [R3-hotfix4](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.2%E7%9A%84mod%E6%96%87%E4%BB%B6_R3_HOTFIX-4) | **已封存 / Archived** |
+| **26.1.2** | 25 | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) | [R3-hotfix4](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/26.1.2%E7%9A%84mod%E6%96%87%E4%BB%B6_R3_HOTFIX-4) | **已封存 / Archived** |
+| **1.21.11** | 21 | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) | [R3-hotfix4](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases/tag/1.21.11%E7%9A%84mod%E6%96%87%E4%BB%B6_R3_HOTFIX-4) | 不定时更新 |
 
 四条线都需要对应 MC 版本的 Fabric API 和 Forge Config API Port。本文环境表和下方测试只对应 **26.3**。
 

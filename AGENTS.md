@@ -13,7 +13,12 @@ TaCZ（Timeless & Classics Guns: Zero）的**非官方** Fabric 移植，GPL-3.0
 上游是 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)（1.21.1 Fabric），
 原始项目是 [MCModderAnchor/TACZ](https://github.com/MCModderAnchor/TACZ)。
 
-**本次涉及四条独立的 Fabric 版本线，源码不能整树互换：**
+**维护政策（2026-11-27）**：本项目不再积极维护，所有版本均无固定更新周期。
+`26.1.2` 与 `26.2(main)` 已封存，不再安排更新或修复；仅保留 MC `1.21.11` 与最新版本线的不定时维护，
+当前最新适配线为 `26.3`，不承诺响应、修复或新版本适配时间。欢迎他人依原有许可证自行 fork、独立维护。
+下表列出四条版本线的历史构建环境，**不是四条线均在维护的承诺**。对外文案与 Issue 模板须保持此口径。
+
+**四条独立的 Fabric 版本线，源码不能整树互换：**
 
 | 分支 | Minecraft | Java | 混淆 |
 |---|---|---|---|

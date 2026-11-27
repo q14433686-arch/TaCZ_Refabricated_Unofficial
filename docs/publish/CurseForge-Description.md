@@ -2,6 +2,12 @@
 
 Build a gunsmithing table in survival, find the right parts for a gun and bring your own gun packs into Minecraft. This is a community port of **Timeless and Classics Guns: Zero (TaCZ)**. It is not an official TaCZ release or endorsed by the TACZ Dev Team.
 
+### Maintenance and continuation
+
+This project is **no longer actively maintained**. There is **no regular update schedule for any version**. **Minecraft 26.1.2 and 26.2 are archived**; their source and existing files remain available, but no further updates or fixes are planned. Only **1.21.11 and the latest version line** remain maintenance targets, with **occasional updates only** and no response, fix or porting deadlines. The latest port currently available in this project is **26.3**; unported Minecraft releases are not supported.
+
+If you would like to continue maintaining the project, you are welcome to **fork it and maintain your own continuation**. Retain attribution and follow the existing code and asset licenses; this invitation does not grant additional rights to third-party assets.
+
 ### Pick the file for your game
 
 In **Files**, match your **exact Minecraft version** and the **Fabric** loader. Install the matching **Fabric API** and **Forge Config API Port**. The four game versions use separate jars; do not install the Forge/NeoForge TaCZ jar alongside this one.
@@ -9,7 +15,7 @@ In **Files**, match your **exact Minecraft version** and the **Fabric** loader. 
 | Minecraft | Java | Which features are in my file? |
 |---|---|---|
 | **26.3** | **25** | The screenshots and highlights below show development of `1.2.0+fabric.26.3.R1`, including the PR #124 test build. The published **1.1.8 R1-hotfix3** file predates them. Check your file's changelog. |
-| 26.2 / 26.1.2 | 25 | Separate builds and changelogs for each version. |
+| 26.2 / 26.1.2 | 25 | **Archived.** Historical files only; no further updates or fixes planned. |
 | 1.21.11 | 21 | Use the 1.21.11 build, not a 26.x jar. |
 
 The port adapts pack loading, networking and scopes to Fabric. **TacZ Mesh Loader** is built in for supported high-poly models. It includes **part of LRTactical's data-driven framework**, not the full mod or its art collection.
@@ -44,6 +50,8 @@ Earlier menu and pegboard frames show the build label and key binding of the cap
 - A missing **vanilla crafting recipe**, a locked **recipe-book entry** and an empty **TaCZ bench** are different problems. Update both ends on a server. REI keeps server crafting entries when pack data arrives late. For a blank bench, try an empty hand or clear the held-item filter. Same-ID filters from different packs now combine; blacklist-only rules no longer hide the entire list on the client. Explicit server exclusions still apply. A blank item obtained via a viewer's cheat action may instead lack its pack ID; compare it with a stack from a TaCZ creative tab.
 
 ### 中文说明
+
+**维护公告（2026-11-27）：本项目不再积极维护，所有版本均不承诺固定更新周期。26.1.2、26.2 已封存，不再安排更新或修复；仅保留 Minecraft 1.21.11 与最新版本线的不定时维护，目前最新适配线为 26.3，不承诺响应、修复或新版本适配时间。** 有意接手维护的维护者欢迎自行 **fork** 并独立维护，请保留署名、遵守代码与资源原有许可证；此邀请不改变第三方资源的授权范围。
 
 本项目是 TaCZ 的**非官方 Fabric 移植**。请在「Files」按 MC 版本选文件：26.3、26.2、26.1.2 用 Java 25，1.21.11 用 Java 21；都需要对应版本的 Fabric API 与 Forge Config API Port。上图是 **26.3 的 `1.2.0+fabric.26.3.R1` 开发／试玩构建**，不是已发布的 1.1.8 R1-hotfix3，也不是另外三条线的功能承诺。
 
