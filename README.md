@@ -4,11 +4,19 @@
 [![CurseForge Versions](https://cf.way2muchnoise.eu/versions/1627909.svg)](https://www.curseforge.com/minecraft/mc-mods/unofficial-tacz-refabricated/files)
 [![GitHub Downloads](https://img.shields.io/github/downloads/q14433686-arch/TaCZ_Refabricated_Unofficial/total?logo=github&label=GitHub%20Downloads)](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/releases)
 
-> **Unofficial Fabric port of TaCZ (Timeless & Classics Guns: Zero) for Minecraft 26.2,
-> 26.1.2 and 1.21.11, with an LRTactical compatibility framework. Not an official TaCZ
+> **Unofficial Fabric port of TaCZ (Timeless & Classics Guns: Zero) for Minecraft 26.3,
+> 26.2, 26.1.2 and 1.21.11, with an LRTactical compatibility framework. Not an official TaCZ
 > release; not reviewed or endorsed by the TACZ Dev Team. GPL-3.0.**
 
 > **非官方社区移植，不是 TaCZ 官方发布，也未获 TACZ Dev Team 审核或背书。**
+
+> **维护状态公告 / Maintenance status（2026-11-27）**：本项目整体从「积极维护」转为**不定时更新**（no longer actively maintained; updates are irregular）。
+>
+> - 仍接收更新的只有两条分支：**`1.21.11`**（旧 MC 版长期线）与 **`26.3`**（当前最新 MC 版）；
+> - **`26.1.2` 与 `26.2` 已封存（archived）**：不再计划后续更新。已发布的 Release 继续可用，Issue 仍可提交，但不承诺修复；
+> - 有意接手维护的开发者**可随意 fork**：代码为 GPL-3.0；默认枪包资源为 CC BY-NC-ND 4.0，fork 后再分发仍受其约束（见 [`LICENSES.md`](LICENSES.md)）。
+>
+> 本分支（26.2）属上述**已封存**分支；以下说明保持冻结，供仍在使用该线的玩家查阅。
 
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
 的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.2 Fabric**。原移植基线为
@@ -24,13 +32,14 @@
 
 ### 选择你的 Minecraft 版本 / Pick your Minecraft version
 
-| Minecraft | 源码分支 |
-|---|---|
-| **26.2** | [1.2.0 基线说明](docs/CHANGELOG_26_2_1_2_0.md) · [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) |
-| **26.1.2** | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) |
-| **1.21.11** | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) |
+| Minecraft | 状态 | 源码分支 |
+|---|---|---|
+| **26.3** | 维护中 · 不定时更新 | [`26.3`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.3) |
+| **1.21.11** | 维护中 · 不定时更新 | [`1.21.11`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/1.21.11) |
+| **26.2（本分支）** | **封存** | [1.2.0 基线说明](docs/CHANGELOG_26_2_1_2_0.md) · [`26.2(main)`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.2%28main%29) |
+| **26.1.2** | **封存** | [`26.1.2`](https://github.com/q14433686-arch/TaCZ_Refabricated_Unofficial/tree/26.1.2) |
 
-本页面对应 **26.2** 分支。所有版本都需要 Fabric API 与 Forge Config API Port，
+本页面对应 **26.2** 分支（已封存）。所有版本都需要 Fabric API 与 Forge Config API Port，
 具体版本见下方表格与对应 Release 说明。
 
 > 仓库源码已使用 R1 版本号（1.2.0 基线）；Actions 测试构建不等于 Release。正式下载与发布日期以 Releases 页面为准。
