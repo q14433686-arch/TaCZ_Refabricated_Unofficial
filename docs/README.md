@@ -41,7 +41,7 @@
 | 文件 | 内容 |
 |---|---|
 | [26.3 → 三条旧线的平行移植指南](lineage/26.3-backports/README.md) | 已验收的 26.3 源码快照、共用批次，以及 26.2 / 26.1.2 / 1.21.11 各自的执行单和成品验收（账本 #19–21） |
-| [1.21.11 → 26.X 补漏施工单](lineage/GAPFILL_26X_FROM_12111_UPSTREAM120.md) · [26.3 执行回执](lineage/GAPFILL_26_3_EXECUTION.md) | C1–C8、配置／语言对齐；当前已落码，编译与成品运行待验收（账本 #22） |
+| [1.21.11 → 26.X 补漏施工单](lineage/GAPFILL_26X_FROM_12111_UPSTREAM120.md) · [26.3 执行回执](lineage/GAPFILL_26_3_EXECUTION.md) | C1–C8、配置／语言对齐；编译、JUnit、专服、普通客户端及可选模组 CI 已通过，逐项专项边界见回执（账本 #22） |
 | `HANDOFF_LEDGER.md` | **同步账本（单一事实源）**：所有跨分支交接的状态（OPEN/DONE/DECLINED） |
 | `SYNC_ROUNDUP_R3_20260831.md` | **R3 定稿轮总纲（当前索引起点）**：四线进度底账、移植主次、工作流同步、旧指导时效标注 |
 | `FAMILY_TREE_2026_08_30.md` | 六分支谱系实测 |
