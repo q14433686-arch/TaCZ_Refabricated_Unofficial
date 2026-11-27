@@ -91,7 +91,7 @@ en/zh 的中英键集仍然一致（CI「Lang key parity」）。
 
 | 项 | 上游 | 本线改动 |
 |---|---|---|
-| 枪口曳光起点 | `FirstPersonRenderMath#muzzleOffset`：保留视图深度，横纵分量乘 `tan(world/2)/tan(item/2)` | `GunItemRendererWrapper.cacheMuzzlePosition` 改用同一公式，作用在本线已有的视图空间换算（去掉手部基座）之后。旧公式缩放深度：屏幕位置相同，但近端深度错误 |
+| 枪口曳光起点 | `FirstPersonRenderMath#muzzleOffset`：保留视图深度，横纵分量乘 `tan(world/2)/tan(item/2)` | `GunItemRendererWrapper.cacheMuzzlePosition` 改用同一公式，作用在本线已有的视图空间换算（去掉手部基座）之后。旧公式缩放深度：屏幕位置相同，但近端深度错误。CI 实测（`f3894a03`）AK47 保存的 XYZ 偏移 (0.237, −0.113, −0.330) 使定位点移动 (0.2874, −0.1370, −0.330)：深度不变，横纵 ×1.2127，说明该场景手部 FOV ≠ 世界 FOV。旧探针按旧语义硬编码 x/y，已改为从同一 FOV 动态读取比例，断言横纵 = XYZ×比例、深度 = XYZ.z |
 | GUI 中忽略 LOD | `ScreenItemVboContext`：屏幕绘制期间使用深度计数 | `RenderDistance.isGuiRender()` = 深度计数 > 0 或 `ScreenRenderTracker.isRenderingScreen()`。删除旧的 100 ms 时间窗。见下文「RenderDistance 范围」 |
 | 工作台制造按钮 | 无选中配方时 `active=false`，标签变灰 | `TaczImageButton` 同样处理，文字为 `0xFF888888` |
 | 工作台材料悬停提示 | `renderIngredientTooltip`，附带所属创造栏 | 同样的格子与每秒轮换；用 1.21.11 的 `SlotDisplayContext` 解析，经 `setTooltipForNextFrame` 提交 |

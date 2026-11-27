@@ -145,10 +145,18 @@ public final class PresentationProbe implements FabricClientGameTest {
         var idle = frame(ctx, "hand_zero_draft");
         var delta = ctx.computeOnClient(mc -> at.sub(com.tacz.guns.client.renderer.item.GunItemRendererWrapper.muzzleRenderOffset));
         int changed = handPixels(idle, moved);
-        check(Math.abs(delta.x - .237) < .035 && Math.abs(delta.y + .113) < .035 && delta.z < -.08f && changed > 150,
-                "Paused hand frame/locator did not follow XYZ: delta=" + delta + ", changed=" + changed);
+        // Upstream 1.2.0 FirstPersonRenderMath#muzzleOffset: the cached locator keeps the hand view depth and
+        // scales x/y by tan(worldFov/2)/tan(itemFov/2), so a saved XYZ shift moves it by (x*k, y*k, z).
+        // Read k from the same FOV dynamics the renderer used (the world is paused, so both are settled).
+        float k = ctx.computeOnClient(mc -> {
+            double item = Math.tan(Math.toRadians(com.tacz.guns.client.event.CameraSetupEvent.ITEM_MODEL_FOV_DYNAMICS.get()) / 2);
+            double world = Math.tan(Math.toRadians(com.tacz.guns.client.event.CameraSetupEvent.WORLD_FOV_DYNAMICS.get()) / 2);
+            return item > 1.0e-6 ? (float) (world / item) : 1f;
+        });
+        check(Math.abs(delta.x - .237 * k) < .035 && Math.abs(delta.y + .113 * k) < .035 && Math.abs(delta.z + .330) < .035 && changed > 150,
+                "Paused hand frame/locator did not follow XYZ: delta=" + delta + ", fovScale=" + k + ", changed=" + changed);
         ctx.clickScreenButton("gui.cancel"); ctx.waitForScreen(PauseScreen.class); ctx.setScreen(() -> null);
-        System.out.println("PORT_HAND_FRAME: paused AK47 saved/zero draft: delta=" + delta + ", changed=" + changed + "; real full ADS and HUD return captured");
+        System.out.println("PORT_HAND_FRAME: paused AK47 saved/zero draft: delta=" + delta + ", fovScale=" + k + ", changed=" + changed + "; real full ADS and HUD return captured");
     }
     private static int handPixels(BufferedImage a, BufferedImage b) {
         int changed = 0;

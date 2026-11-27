@@ -450,3 +450,8 @@ f1f47537分发45832954441最终 **13/14**：仅none上述重启夹具遗漏confi
 **不发布、不声称**：Sable/Simulated、SBM VBO、SBM 外部枪模型、EMI；AR/IF 为禁用桩。
 
 **本地**：unittest 24 项通过；配置文本 0 差异；语言 `--check` 无过期；en/zh 键集一致；两份 `build.yml` 相同。编译、mixin 目标核对、gametest 和成品双端以 CI 为准，结果在下面追加。
+
+**CI 回执（`f3894a03`）**：
+- compile-check `45934164758` 通过。
+- build `45934164759` 通过，含「Upstream 1.2.0 text alignment」与 Lang key parity。
+- distribution `45934164761` 14/15。唯一失败的是 presentation 的 `PORT_HAND_FRAME`：delta = (0.2874, −0.1370, −0.330)，期望按旧 FOV 语义的 (0.237, −0.113, \*)。这是本轮按上游改动枪口 FOV 补偿造成的预期语义变化（深度保留，横纵 ×tan 比），不是渲染回归。探针改为读取同一 FOV 动态、断言新语义后重跑，结果在下面追加。
