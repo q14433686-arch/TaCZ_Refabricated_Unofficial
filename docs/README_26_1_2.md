@@ -8,6 +8,12 @@
 
 > **非官方社区移植，不是 TaCZ 官方发布，也未获 TACZ Dev Team 审核或背书。**
 
+> **维护状态公告 / Maintenance status（2026-11-27）**：本项目整体从「积极维护」转为**不定时更新**（no longer actively maintained; updates are irregular）。
+>
+> - 仍接收更新的只有两条分支：**`1.21.11`**（旧 MC 版长期线）与 **`26.3`**（当前最新 MC 版）；
+> - **`26.1.2` 与 `26.2` 已封存（archived）**——**本分支（26.1.2）属已封存分支**：不再计划后续更新。已发布的 Release 继续可用，Issue 仍可提交，但不承诺修复；
+> - 有意接手维护的开发者**可随意 fork**：代码为 GPL-3.0；默认枪包资源为 CC BY-NC-ND 4.0，fork 后再分发仍受其约束（见 `LICENSES.md`）。
+
 本分支把 [Sh1roCu/TACZ-Refabricated](https://github.com/Sh1roCu/TACZ-Refabricated)
 的 Minecraft 1.21.1 Fabric 分支移植到 **Minecraft 26.1.2 Fabric**。直接上游的版本号为
 `0.7.0-forge1.1.8-hotfix`；本分支当前源码版本为 **`1.1.8+fabric.26.1.2.R1`**。
