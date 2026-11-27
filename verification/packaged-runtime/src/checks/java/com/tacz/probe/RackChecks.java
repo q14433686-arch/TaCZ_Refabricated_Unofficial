@@ -4,6 +4,7 @@ import com.tacz.guns.api.item.builder.AmmoItemBuilder;
 import com.tacz.guns.block.GunDisplayCaseBlock;
 import com.tacz.guns.block.entity.GunDisplayCaseBlockEntity;
 import com.tacz.guns.init.ModBlocks;
+import com.tacz.guns.init.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
@@ -16,6 +17,9 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LayeredCauldronBlock;
+import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.phys.*;
 
@@ -60,7 +64,59 @@ public class RackChecks {
         level.removeBlock(pos, false);
         CatalogChecks.require(level.getEntitiesOfClass(ItemEntity.class, area).stream().filter(e -> ItemStack.isSameItemSameComponents(e.getItem(), held)).mapToInt(e -> e.getItem().getCount()).sum() == 1, "Normal removal did not drop exactly the displayed item");
         statueAndRotation(helper);
+        pegboardCauldronWash(helper);
+        pegboardDyeCraft(helper);
         helper.succeed();
+    }
+
+    /** Upstream 356bdf9 maps both pegboards to the vanilla cauldron dye wash; exercise the real dispatch. */
+    private static void pegboardCauldronWash(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var pos = helper.absolutePos(new BlockPos(0, 0, 2));
+        var hand = InteractionHand.MAIN_HAND;
+        var hit = new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false);
+        for (Item item : new Item[]{ModItems.GUN_PEGBOARD, ModItems.GLOW_GUN_PEGBOARD}) {
+            level.setBlock(pos, Blocks.WATER_CAULDRON.defaultBlockState().setValue(LayeredCauldronBlock.LEVEL, 3), Block.UPDATE_ALL);
+            var player = helper.makeMockPlayer(GameType.SURVIVAL);
+            var plain = new ItemStack(item);
+            player.setItemInHand(hand, plain);
+            level.getBlockState(pos).useItemOn(plain, level, player, hand, hit);
+            CatalogChecks.require(level.getBlockState(pos).getValue(LayeredCauldronBlock.LEVEL) == 3,
+                    "Undyed " + item + " consumed cauldron water");
+            var dyed = new ItemStack(item);
+            dyed.set(DataComponents.DYED_COLOR, new DyedItemColor(0x3366CC));
+            player.setItemInHand(hand, dyed);
+            var result = level.getBlockState(pos).useItemOn(dyed, level, player, hand, hit);
+            CatalogChecks.require(!dyed.has(DataComponents.DYED_COLOR), "Cauldron did not wash dye off " + item + " (" + result + ")");
+            CatalogChecks.require(level.getBlockState(pos).getValue(LayeredCauldronBlock.LEVEL) == 2,
+                    "Washing " + item + " did not lower the water level once");
+        }
+        level.removeBlock(pos, false);
+        System.out.println("PORT_PEGBOARD_WASH: both pegboards washed by a level-3 water cauldron (colour cleared, level 3->2); undyed boards ignored");
+    }
+
+    /**
+     * Upstream 356bdf9 registers its own {@code gun_pegboard_dye} recipe (one board + any dyes; a second board rejects).
+     * This line instead tags both boards {@code #minecraft:dyeable} and relies on vanilla dyeing; look up the real
+     * recipe through the server recipe manager so a tag or recipe regression fails here.
+     */
+    private static void pegboardDyeCraft(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var recipes = level.getServer().getRecipeManager();
+        for (Item item : new Item[]{ModItems.GUN_PEGBOARD, ModItems.GLOW_GUN_PEGBOARD}) {
+            var input = net.minecraft.world.item.crafting.CraftingInput.of(2, 1,
+                    java.util.List.of(new ItemStack(item), new ItemStack(Items.RED_DYE)));
+            var recipe = recipes.getRecipeFor(net.minecraft.world.item.crafting.RecipeType.CRAFTING, input, level)
+                    .orElseThrow(() -> new IllegalStateException("No dye recipe for " + item));
+            var out = recipe.value().assemble(input, level.registryAccess());
+            CatalogChecks.require(out.is(item) && out.getCount() == 1 && out.has(DataComponents.DYED_COLOR),
+                    "Dyeing " + item + " produced " + out);
+            var twoBoards = net.minecraft.world.item.crafting.CraftingInput.of(3, 1,
+                    java.util.List.of(new ItemStack(item), new ItemStack(item), new ItemStack(Items.RED_DYE)));
+            CatalogChecks.require(recipes.getRecipeFor(net.minecraft.world.item.crafting.RecipeType.CRAFTING, twoBoards, level).isEmpty(),
+                    "Two " + item + " plus dye matched a recipe");
+        }
+        System.out.println("PORT_PEGBOARD_DYE: both pegboards dyed by the real crafting recipe (1 board + dye); 2 boards rejected");
     }
 
     private static void statueAndRotation(GameTestHelper helper) {

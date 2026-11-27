@@ -41,8 +41,8 @@ public class SyncConfig {
     public static void init(ForgeConfigSpec.Builder builder) {
         interactKey(builder);
         builder.push("gun_pegboard");
-        GUN_PEGBOARD_WHITELIST_ITEMS = builder.comment("Additional item ids permitted on display walls").define("GunPegboardWhitelistItems", Lists.newArrayList());
-        GUN_PEGBOARD_BLACKLIST_ITEMS = builder.comment("Denied display item ids (overrides whitelist and built-ins)").define("GunPegboardBlacklistItems", Lists.newArrayList());
+        GUN_PEGBOARD_WHITELIST_ITEMS = builder.comment("Extra item ids allowed on the gun pegboard, in addition to TACZ guns, attachments, ammo, and ammo boxes").define("GunPegboardWhitelistItems", Lists.newArrayList());
+        GUN_PEGBOARD_BLACKLIST_ITEMS = builder.comment("Item ids denied on the gun pegboard. This list takes priority over the default allowed TACZ item types and whitelist").define("GunPegboardBlacklistItems", Lists.newArrayList());
         builder.pop();
         baseMultiplier(builder);
         misc(builder);
@@ -87,7 +87,7 @@ public class SyncConfig {
     private static void misc(ForgeConfigSpec.Builder builder) {
         builder.push("misc");
         // 随 f26 接线引入，定义逐字取自 donor 26.1.2（bc05ca6）。
-        BULLET_HIT_BLOCK_EFFECT_SEND_DISTANCE = builder.comment("Impact effect send radius; 0 means unlimited in the same level, shooter is always included").defineInRange("BulletHitBlockEffectSendDistance", 128, 0, Integer.MAX_VALUE);
+        BULLET_HIT_BLOCK_EFFECT_SEND_DISTANCE = builder.comment("The farthest distance for the server to send bullet hit block effect packets, 0 means no limit").defineInRange("BulletHitBlockEffectSendDistance", 128, 0, Integer.MAX_VALUE);
 
         builder.comment("The entity's head hitbox during the headshot");
         builder.comment("Format: touhou_little_maid:maid [-0.5, 1.0, -0.5, 0.5, 1.5, 0.5]");
@@ -101,13 +101,13 @@ public class SyncConfig {
 
         builder.comment("Whether or not players are allowed to use the crawl feature");
         ENABLE_CRAWL = builder.define("EnableCrawl", true);
-        ENABLE_CRAWL_WITHOUT_GUN = builder.comment("Allow players to crawl without a gun. Requires EnableCrawl")
+        ENABLE_CRAWL_WITHOUT_GUN = builder.comment("Allow players to crawl without holding a TACZ gun. EnableCrawl must also be enabled")
                 .define("EnableCrawlWithoutGun", true);
-        CRAWL_MAX_UP_ANGLE = builder.comment("Maximum upward look angle in degrees while crawling with a gun. Set both limits to 90 for vanilla pitch range")
+        CRAWL_MAX_UP_ANGLE = builder.comment("Maximum upward look angle in degrees while crawling with a gun. Set both crawl angle limits to 90 for the full vanilla pitch range")
                 .defineInRange("CrawlMaxUpAngle", 45.0D, 0.0D, 90.0D);
         CRAWL_MAX_DOWN_ANGLE = builder.comment("Maximum downward look angle in degrees while crawling with a gun")
                 .defineInRange("CrawlMaxDownAngle", 30.0D, 0.0D, 90.0D);
-        USE_HIP_FIRE_INACCURACY_WHILE_AIRBORNE = builder.comment("Use only move or stand hip-fire inaccuracy while airborne, ignoring aiming, prone and sneaking")
+        USE_HIP_FIRE_INACCURACY_WHILE_AIRBORNE = builder.comment("Use only move or stand hip-fire inaccuracy while not on the ground, including jumping and falling. Ignore aiming, prone, and sneaking inaccuracy")
                 .define("UseHipFireInaccuracyWhileAirborne", false);
 
         builder.comment("Enable the recipe limit of default gunsmith table or not");

@@ -428,3 +428,25 @@ f1f47537分发45832954441最终 **13/14**：仅none上述重启夹具遗漏confi
 **本地验证**：`python3 -m unittest discover -s tests` 24 项通过；`verify_263_sync_baseline`、`verify_lr_assets`、`verify_block_drops`、`verify_block_entity_persistence`、`verify_bullet_hole_orientation`、`verify_recipe_viewer_reload` 通过；中英语言键 651=651。`docs/check_visible_bugs_39JqB2p.py` 有 2 项在未改动的 HEAD 上同样失败（一次性旧脚本：注释里出现已删方法名、对比基于 `dd2eb70ac` 前的动画数据），不在 CI 内，未处理。编译、`verify_mixin_targets`、成品运行仅能走 CI。
 
 **CI 回执（`dad6a83c`）**：Version consistency `45928248749` 通过；compile-check `45928248791` 通过；1.21.11 remapped distribution and TCP `45928248767` 15/15 通过（含真实 1.21.11 jar 的 mixin 目标核对与成品双端运行）；build `45928248730` 通过——开发世界 `PORT_WORLD_STALL` 本次未出现，但它是间歇性的，**不算修复**。远端动画粒子的实际可见性仍无专项实机测试（见上）。R6 仍为 ACTIVE；未发布 Release。
+
+### R6 上游 1.2.0-hotfix（`356bdf9`）全量对齐，含边缘项（2026-11-26，待 CI）
+
+用户指出：只对齐 26.3、留下上游的边缘差异，是最危险的状态。本节把上游 `d2903554..356bdf9` 改动过的全部共有文件，连同配置文本、21 个语言文件和三方表面，逐项判为 PORTED、COVERED、ADAPT、ABSENT_FEATURE 或 KNOWN_TEXT_DEVIATION。完整清单见 [UPSTREAM_120_ALIGNMENT_12111.md](UPSTREAM_120_ALIGNMENT_12111.md)。
+
+**本轮代码**：
+- 枪口曳光的 FOV 补偿改为保留深度。
+- GUI 范围内的 LOD 豁免改用深度计数，并覆盖 PIP。
+- 工作台：无配方时制造按钮禁用；材料悬停提示。
+- 缺失枪械显示每次重载只告警一次。
+- 暂停时仍计算原版第三人称持枪姿态（装 PAL 时除外）。
+- 改装键在充能时不响应；战利品注入的容错放宽。
+- 挂板洗色；配件标签保序；约束旋转取绝对值。
+- `AmmoConfig` 按上游顺序；配置注释改为上游原文（逐条核对行为）；21 个语言由脚本生成。
+
+**新增检查**：
+- CI 步骤「Upstream 1.2.0 text alignment」（`align_config_text.py`、`port_upstream_lang.py --check`）。
+- gametest `RackChecks.pegboardCauldronWash` 与 `pegboardDyeCraft`。
+
+**不发布、不声称**：Sable/Simulated、SBM VBO、SBM 外部枪模型、EMI；AR/IF 为禁用桩。
+
+**本地**：unittest 24 项通过；配置文本 0 差异；语言 `--check` 无过期；en/zh 键集一致；两份 `build.yml` 相同。编译、mixin 目标核对、gametest 和成品双端以 CI 为准，结果在下面追加。

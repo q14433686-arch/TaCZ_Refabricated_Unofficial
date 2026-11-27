@@ -42,6 +42,8 @@ public class ClientIndexManager {
 
     private static volatile long revision;
     static long revision() { return revision; }
+    /** Upstream 1.2.0: warn once per missing display per reload instead of on every lookup. */
+    private static final java.util.Set<Identifier> WARNED_MISSING_GUN_DISPLAYS = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     public static void clear() {
         com.tacz.guns.client.model.papi.RangefinderReadout.clear();
@@ -54,6 +56,7 @@ public class ClientIndexManager {
         ATTACHMENT_VARIANT_INDEX.clear();
         SLOT_ADAPTER_INDEX.clear();
         BLOCK_INDEX.clear();
+        WARNED_MISSING_GUN_DISPLAYS.clear();
     }
 
     public static void reload() {
@@ -115,7 +118,10 @@ public class ClientIndexManager {
         if (instance != null) {
             return instance;
         }
-        GunMod.LOGGER.warn("{} display instance is missing from cache", displayId);
+        if (WARNED_MISSING_GUN_DISPLAYS.add(displayId)) {
+            GunMod.LOGGER.warn("Gun display {} is unavailable (assets/{}/display/guns/{}.json);",
+                    displayId, displayId.getNamespace(), displayId.getPath());
+        }
         return null;
     }
 

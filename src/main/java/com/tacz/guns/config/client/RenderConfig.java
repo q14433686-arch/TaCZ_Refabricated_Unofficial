@@ -161,15 +161,15 @@ public class RenderConfig {
     public static void init(ForgeConfigSpec.Builder builder) {
         builder.push("render");
 
-        GUN_HURT_BOB_MULTIPLIER = builder.comment("First-person ordinary hurt tilt while holding a gun; front/back hits are additionally halved")
+        GUN_HURT_BOB_MULTIPLIER = builder.comment("First-person vanilla hurt tilt multiplier while holding a gun in the main hand. 0 disables it, 1 preserves vanilla side-hit strength. Front/back hits use half this multiplier, with smooth transitions for diagonal hits. Multiplies the vanilla Damage Tilt setting; gunshot-specific hurt effects keep their gun data settings.")
                 .defineInRange("GunHurtBobMultiplier", 0.1, 0, 1);
 
-        DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER = builder.comment("Hide third-person offhand and unselected hotbar guns; keep main hand visible")
+        DISABLE_THIRD_PERSON_OFFHAND_AND_HOTBAR_GUN_RENDER = builder.comment("Disable third-person rendering of guns stored in the offhand and unselected hotbar slots. Main-hand gun rendering is unaffected.")
                 .define("DisableThirdPersonOffhandAndHotbarGunRender", false);
 
-        ENABLE_OCULAR_INFLATE = builder.comment("Expand only attachment ocular cubes when baking. Reload resources to apply.")
+        ENABLE_OCULAR_INFLATE = builder.comment("Try enabling this if you see flickering black spots when aiming through a scope. Expands ocular cubes during model baking to close small gaps. Reload client resources after changing this setting.")
                 .define("EnableOcularInflate", true);
-        OCULAR_INFLATE = builder.comment("Additional inflate in Bedrock model units (not screen-space mask padding).")
+        OCULAR_INFLATE = builder.comment("Extra inflate added to ocular cubes in Bedrock model units. Requires EnableOcularInflate. Reload client resources after changing this setting.")
                 .defineInRange("OcularInflate", 0.0005, 0.0, (double) Float.MAX_VALUE);
 
         builder.comment("Whether or not apply fadeout effect on the laser beam. Close this may improve laser performance under some shaders.");
@@ -182,16 +182,16 @@ public class RenderConfig {
                 "-1 means never.");
         DROPPED_GUN_SPRITE_DISTANCE = builder.defineInRange("DroppedGunSpriteDistance", DEFAULT_DROPPED_GUN_SPRITE_DISTANCE, -1, Integer.MAX_VALUE);
 
-        builder.comment("Show block impact particles");
+        builder.comment("Whether or not to spawn block hit particles when bullets hit blocks, whether or not a bullet hole decal is left");
         HIT_PARTICLE_ENABLE = builder.define("HitParticleEnable", true);
 
-        builder.comment("Show extra impact particles for special surfaces");
+        builder.comment("Whether or not to spawn display-configured extra hit particles. Disabling this keeps the basic block hit particles.");
         HIT_EXTRA_PARTICLE_ENABLE = builder.define("HitExtraParticleEnable", true);
 
-        builder.comment("Maximum impact-particle distance (0: unlimited)");
+        builder.comment("The farthest distance to spawn extra hit particles, 0 means always spawn");
         HIT_PARTICLE_MAX_DISTANCE = builder.defineInRange("HitParticleMaxDistance", 64, 0, Integer.MAX_VALUE);
 
-        builder.comment("Display a pack sidebar in TaCZ creative tabs. Disabling restores the full current tab.");
+        builder.comment("Whether or not to display the content pack sidebar in TACZ creative tabs. Disabling this also restores all items in the current tab.");
         RENDER_CREATIVE_PACK_SIDEBAR = builder.define("RenderCreativePackSidebar", true);
 
         builder.comment("Under shader packs, give illuminated parts the real sky light column instead of full bright.",
@@ -199,7 +199,7 @@ public class RenderConfig {
         ILLUMINATED_REAL_SKY = builder.define("IlluminatedRealSky", true);
 
         // ---- 以下五组键随 f26 渲染接线一并引入，定义逐字取自 donor 26.1.2（bc05ca6） ----
-        builder.comment("Render detached renew muzzle smoke independently of flash");
+        builder.comment("Whether or not to render the renew (snowstorm particle) muzzle smoke. Disable this if translucent smoke has issues with shaders.");
         RENDER_MUZZLE_SMOKE = builder.define("RenderMuzzleSmoke", true);
         builder.comment("Briefly light nearby terrain, world entities and displayed objects on a successful shot (client visual only).");
         MUZZLE_SURFACE_LIGHT = builder.define("MuzzleSurfaceLight", true);
@@ -207,9 +207,9 @@ public class RenderConfig {
         LEGACY_MUZZLE_LIGHT = builder.define("LegacyMuzzleLight", true);
         builder.comment("Project a short-range pulse for standard explosion notifications (including TNT) and tracked LR stun bursts.");
         EXPLOSION_SURFACE_LIGHT = builder.define("ExplosionSurfaceLight", true);
-        builder.comment("Apply the active display's lens to its masked aperture (native renderer).");
+        builder.comment("Enable scope lens effects configured by each attachment display. Uses the existing scope window and keeps the normal aiming magnification.");
         EXPERIMENTAL_SCOPE_LENS = builder.define("EnableExperimentalScopeLens", true);
-        builder.comment("Capture visible heat sources for thermal lenses; otherwise use their optics.");
+        builder.comment("Allow thermal imaging for attachments whose display selects a thermal vision mode. Disabling this uses their normal optical lens and skips thermal entity capture. Requires EnableExperimentalScopeLens.");
         SCOPE_THERMAL_ENABLE = builder.define("EnableScopeThermal", true);
         builder.comment("Yield the first-person gun render only if the installed Yes Steve Model requests it this tick.");
         YSM_COMPAT = builder.define("YsmCompat", true);

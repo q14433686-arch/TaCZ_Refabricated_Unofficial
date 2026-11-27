@@ -29,6 +29,8 @@ public class RefitKey {
         LocalPlayer player = mc.player;
         if (player == null || player.isSpectator()) return;
         if (isInGame() && IGun.mainHandHoldGun(player)) {
+            // Upstream 1.2.0: never open the refit screen while a charge is being held.
+            if (com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator.fromLocalPlayer(player).isCharging()) return;
             IGun gun = IGun.getIGunOrNull(player.getMainHandItem());
             if (gun != null && !gun.hasAttachmentLock(player.getMainHandItem())) mc.setScreen(new GunRefitScreen());
         } else if (mc.screen instanceof GunRefitScreen screen) screen.onClose();

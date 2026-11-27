@@ -257,9 +257,9 @@ public class TaczPolyMeshGunModel extends BedrockGunModel {
      *       视角下手里那把枪」被两个语境各登记一次；</li>
      *   <li>{@code FIXED} / {@code HEAD} 是双面语境（世界展示框/雕像 vs 枪匠桌 GUI 预览）：
      *       Screen 内的预览已被 {@code ScreenRenderTracker} 拦，这里再按
-     *       {@code com.tacz.guns.util.RenderDistance.isGuiRender()}（枪匠桌的 100ms
-     *       标记）补一道 ——
-     *       代价只是「枪匠桌开着的瞬间世界雕像回退 collector」，比反向泄漏便宜得多。</li>
+     *       {@code com.tacz.guns.util.RenderDistance.isGuiRender()} 补一道 —— 它是精确作用域
+     *       （Screen#render 期间，或枪匠桌预览 PIP 绘制期间），不再是旧的 100ms 时间戳窗口，
+     *       所以枪匠桌开着时世界里的展示框/雕像仍走世界 GPU 表。</li>
      * </ul>
      */
     private static boolean isWorldGpuContext(ItemDisplayContext transformType) {

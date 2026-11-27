@@ -2,7 +2,6 @@ package com.tacz.guns.resource.manager;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
@@ -54,7 +53,10 @@ public class AttachmentsTagManager extends SimplePreparableReloadListener<Map<Id
         for (Map.Entry<Identifier, List<JsonElement>> entry : pObject.entrySet()) {
             Identifier id = entry.getKey();
 
-            List<String> temp = new ArrayList<>();
+            // Upstream 1.2.0: merge every pack's file for this id in pack order, drop duplicates,
+            // and publish the same immutable ordered set to the server and to the network cache
+            // (CommonNetworkCache#resolveAttachmentTag rebuilds the identical set on the client).
+            LinkedHashSet<String> merged = new LinkedHashSet<>();
             for (JsonElement element : entry.getValue()) {
                 try {
                     List<String> data = parseJson(element);
@@ -62,7 +64,7 @@ public class AttachmentsTagManager extends SimplePreparableReloadListener<Map<Id
                         if (data.stream().anyMatch(Objects::isNull)) {
                             throw new JsonParseException("Null value found in JSON data");
                         } else {
-                            temp.addAll(data);
+                            merged.addAll(data);
                         }
                     }
                 } catch (JsonParseException e) {
@@ -70,14 +72,15 @@ public class AttachmentsTagManager extends SimplePreparableReloadListener<Map<Id
                 }
             }
 
+            Set<String> ordered = Collections.unmodifiableSet(new LinkedHashSet<>(merged));
             if (id.getPath().startsWith("allow_attachments/") && id.getPath().length() > 18) {
                 Identifier gunId = id.withPath(id.getPath().substring(18));
-                allow_attachments.computeIfAbsent(gunId, (v) -> Sets.newHashSet()).addAll(temp);
+                allow_attachments.put(gunId, ordered);
             } else {
-                tags.computeIfAbsent(id, (v) -> Sets.newHashSet()).addAll(temp);
+                tags.put(id, ordered);
             }
 
-            builder.put(entry.getKey(), gson.toJson(temp));
+            builder.put(entry.getKey(), gson.toJson(ordered));
         }
 
         this.networkCache = builder.build();

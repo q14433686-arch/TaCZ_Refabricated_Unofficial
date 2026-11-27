@@ -346,10 +346,13 @@ public class GunItemRendererWrapper extends AnimateGeoItemRenderer<BedrockGunMod
             float viewY = handBasePose.m10() * dx + handBasePose.m11() * dy + handBasePose.m12() * dz;
             float viewZ = handBasePose.m20() * dx + handBasePose.m21() * dy + handBasePose.m22() * dz;
 
-            // FOV 比值只应缩放视图空间深度，不能缩放基座旋转后的世界 Z 分量。
-            double fovScale = Math.tan(itemRenderFov / 2 * Math.PI / 180)
-                    / Math.tan(levelRenderFov / 2 * Math.PI / 180);
-            muzzleRenderOffset.set(viewX, viewY, (float) (viewZ * fovScale));
+            // 上游 1.2.0（FirstPersonRenderMath#muzzleOffset）：在世界 FOV 下复现枪口在手部 FOV 下的屏幕位置，
+            // 保留视图空间深度、按 tan(worldFov/2)/tan(itemFov/2) 缩放横纵分量。旧做法缩放深度，屏幕位置相同，
+            // 但曳光弹近端会被推到错误的深度。只在视图空间做，不能作用于基座旋转后的世界分量。
+            double itemTan = Math.tan(Math.toRadians(itemRenderFov) / 2);
+            double worldTan = Math.tan(Math.toRadians(levelRenderFov) / 2);
+            float lateral = itemTan > 1.0e-6 ? (float) (worldTan / itemTan) : 1.0f;
+            muzzleRenderOffset.set(viewX * lateral, viewY * lateral, viewZ);
         }
     }
 
