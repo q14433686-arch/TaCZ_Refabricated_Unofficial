@@ -217,8 +217,11 @@ public final class UserEnvSmoke extends PlayerProbe {
                         count[b] == 0 ? 0 : sumOn[b] / count[b], count[b] == 0 ? 0 : sumOff[b] / count[b], ratio[b]));
             }
             rings = sb.toString();
-            if (!(ratio[3] <= .85)) edgeProblems.add("rim ring [0.85,1.0) not darkened: ratio=" + ratio[3]);
-            if (!(ratio[0] >= .9)) edgeProblems.add("centre darkened by edge terms: ratio=" + ratio[0]);
+            // The authored vignette (scope_c79: strength 1, width 0.35) is a Gaussian of ~0.054r around the
+            // cutout, so averaged over this 0.15r ring it darkens a few percent (vanilla reference: 0.929),
+            // while the centre must stay unchanged. Without the edge terms the rim ratio sits at 1.00 +/- 0.01.
+            if (!(ratio[3] <= .96 && ratio[3] < ratio[0] - .03)) edgeProblems.add("rim ring [0.85,1.0) not darkened: rim=" + ratio[3] + " centre=" + ratio[0]);
+            if (!(ratio[0] >= .97 && ratio[0] <= 1.03)) edgeProblems.add("centre changed by edge terms: ratio=" + ratio[0]);
         }
         System.out.println("PORT_USER_LENS_EDGE: " + label + " darker=" + darker + " brighter=" + brighter + " noise(off/off2)=" + noise
                 + " " + rings + (edgeProblems.isEmpty() ? " passed" : " FAILED " + edgeProblems));
